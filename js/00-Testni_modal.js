@@ -2,9 +2,11 @@
    00-Testni_modal.js
    Testni modal – učitavanje fragmenta, otvaranje globalnom funkcijom (dvoklik na mail u 0-Poruke.js),
    zatvaranje tipkom Povratak ili Escape.
-   Ovisnosti: 0-Poruke.css (gumb Povratak, overlay tokeni), 0-Common po želji.
+   Ovisnosti: 0-Poruke.css (tablica, toggle, gumb Povratak, overlay), 0-Common po želji.
    Geometrija dijaloga (px) pamti se pri izlasku na desktopu i obnavlja pri sljedećem otvaranju.
-   Polja u tijelu: #vnlh_testni_modal_edit_povijest (gornji), #vnlh_testni_modal_edit_poruka (donji).
+   Lijevo: lista pošiljatelja (GET 0-Poruke_lista.php) – ista logika prikaza kao u 0-Poruke.js, bez učitavanja
+   poruka u desni dio (klik na red samo označava red).
+   Desno: #vnlh_testni_modal_edit_povijest (gornji), #vnlh_testni_modal_edit_poruka (donji).
    ========================================================= */
 (function () {
   'use strict';
@@ -49,8 +51,29 @@
    * Minimalne dimenzije dijaloga na desktopu (usklađeno s 00-Testni_modal.css).
    * Spremljena geometrija i nativni resize ne smiju biti manji od ovoga.
    */
-  var TESTNI_MODAL_MIN_DIALOG_W = 546;
-  var TESTNI_MODAL_MIN_DIALOG_H = 352;
+  var TESTNI_MODAL_MIN_DIALOG_W = 720;
+  var TESTNI_MODAL_MIN_DIALOG_H = 400;
+
+  /**
+   * ZAGLAVLJE_TABLICE_TESTNI (konceptualno – nema <thead> u DOM-u; stupci se iscrtavaju redom u <tr>).
+   * Isti model kao renderTablica u 0-Poruke.js.
+   *
+   * | key          | tdClass            | Uloga | Moguće vrijednosti / napomena |
+   * |--------------|--------------------|-------|--------------------------------|
+   * | avatar       | poruke__cell--img  | Slika | img src = API Clanovi_CRUD_slika_thumb_round.php?id=id_posiljatelj; onerror → .poruke__avatar-fallback |
+   * | ime          | poruke__cell--ime  | Tekst | prezime (bold), ime; prazno → „Nepoznati”/„Korisnik”; muted ako neprocitane===0 |
+   * | neprocitane  | poruke__cell--count| Badge | 0 = prazno; 1–99 broj; 100+ → „...” |
+   */
+  var ZAGLAVLJE_TABLICE_TESTNI = [
+    { key: 'avatar', tdClass: 'poruke__cell--img' },
+    { key: 'ime', tdClass: 'poruke__cell--ime' },
+    { key: 'neprocitane', tdClass: 'poruke__cell--count' }
+  ];
+
+  /** Keš liste s 0-Poruke_lista.php (isti JSON kao modal Poruke). */
+  var testniListaPosiljatelja = [];
+  /** id_posiljatelj označenog reda (vizualno); ne otvara se povijest poruka u ovom modalu. */
+  var testniOdabraniPosiljatelj = null;
 
   var modalLoaded = false;
   var modalOpen = false;
@@ -59,6 +82,162 @@
 
   function id(suffix) {
     return document.getElementById(ID_PREFIX + suffix);
+  }
+
+  /** Prazni oznaku retka u tablici testnog modala (bez API poziva). */
+  function testniOdznaciListu() {
+    testniOdabraniPosiljatelj = null;
+    var tbody = id('_tbody');
+    if (!tbody) return;
+    var rows = tbody.querySelectorAll('tr');
+    for (var i = 0; i < rows.length; i++) {
+      rows[i].classList.remove('poruke__row--selected');
+    }
+  }
+
+  /**
+   * Jedna ćelija retka tablice prema ključu iz ZAGLAVLJE_TABLICE_TESTNI.
+   * @param {string} key avatar | ime | neprocitane
+   * @param {object} item element liste s 0-Poruke_lista.php
+   * @returns {HTMLTableCellElement|null}
+   */
+  function testniGraditeljCelije(key, item) {
+    if (key === 'avatar') {
+      var tdImg = document.createElement('td');
+      tdImg.className = 'poruke__cell--img';
+      var img = document.createElement('img');
+      img.className = 'poruke__avatar';
+      img.src =
+        API_BASE +
+        'Clanovi_CRUD_slika_thumb_round.php?id=' +
+        encodeURIComponent(item.id_posiljatelj) +
+        '&t=' +
+        Date.now();
+      img.alt = '';
+      img.draggable = false;
+      img.onerror = function () {
+        var fallback = document.createElement('div');
+        fallback.className = 'poruke__avatar-fallback';
+        fallback.textContent = '?';
+        this.parentNode.replaceChild(fallback, this);
+      };
+      tdImg.appendChild(img);
+      return tdImg;
+    }
+    if (key === 'ime') {
+      var tdIme = document.createElement('td');
+      tdIme.className = 'poruke__cell--ime';
+      var prezime = item.prezime || '';
+      var ime = item.ime || '';
+      if (!prezime && !ime) {
+        prezime = 'Nepoznati';
+        ime = 'Korisnik';
+      }
+      var muted = item.neprocitane === 0 ? ' poruke__ime-line--muted' : '';
+      var line1 = document.createElement('span');
+      line1.className = 'poruke__ime-line poruke__ime-line--bold' + muted;
+      line1.textContent = prezime;
+      var line2 = document.createElement('span');
+      line2.className = 'poruke__ime-line' + muted;
+      line2.textContent = ime;
+      tdIme.appendChild(line1);
+      tdIme.appendChild(line2);
+      return tdIme;
+    }
+    if (key === 'neprocitane') {
+      var tdCount = document.createElement('td');
+      tdCount.className = 'poruke__cell--count';
+      if (item.neprocitane > 0) {
+        var badge = document.createElement('span');
+        badge.className = 'poruke__count-badge';
+        badge.textContent = item.neprocitane > 99 ? '...' : String(item.neprocitane);
+        tdCount.appendChild(badge);
+      }
+      return tdCount;
+    }
+    return null;
+  }
+
+  /**
+   * Iscrtaj tbody iz keša; disable toggle kao u 0-Poruke.js kad nema razgovora i filter je „sve”.
+   */
+  function renderTestniTablica(data) {
+    var tbody = id('_tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    var toggleInput = id('_toggle');
+    var toggleLabel = id('_toggle_label');
+    var imaRazgovora = data && data.length > 0;
+    var togChecked = toggleInput && toggleInput.checked;
+    var shouldDisable = !imaRazgovora && !togChecked;
+    if (toggleInput) toggleInput.disabled = shouldDisable;
+    if (toggleLabel) {
+      if (shouldDisable) toggleLabel.classList.add('poruke__toggle-label--disabled');
+      else toggleLabel.classList.remove('poruke__toggle-label--disabled');
+    }
+
+    for (var i = 0; i < (data || []).length; i++) {
+      var item = data[i];
+      var tr = document.createElement('tr');
+      tr._porukePosiljatelj = item.id_posiljatelj;
+      if (testniOdabraniPosiljatelj === item.id_posiljatelj) {
+        tr.classList.add('poruke__row--selected');
+      }
+      for (var c = 0; c < ZAGLAVLJE_TABLICE_TESTNI.length; c++) {
+        var col = ZAGLAVLJE_TABLICE_TESTNI[c];
+        var td = testniGraditeljCelije(col.key, item);
+        if (td) tr.appendChild(td);
+      }
+      (function (idPos) {
+        tr.addEventListener('click', function () {
+          testniOdabraniPosiljatelj = idPos;
+          var all = tbody.querySelectorAll('tr');
+          for (var r = 0; r < all.length; r++) {
+            if (all[r]._porukePosiljatelj === idPos) all[r].classList.add('poruke__row--selected');
+            else all[r].classList.remove('poruke__row--selected');
+          }
+        });
+      })(item.id_posiljatelj);
+      tbody.appendChild(tr);
+    }
+  }
+
+  /** GET 0-Poruke_lista.php – isti parametar samo_neprocitane kao modal Poruke. */
+  function fetchTestniLista() {
+    var toggleInput = id('_toggle');
+    var samoNeprocitane = toggleInput && toggleInput.checked ? '1' : '0';
+    var url = API_BASE + '0-Poruke_lista.php?samo_neprocitane=' + samoNeprocitane;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      var t = trim(xhr.responseText);
+      if (!t || t.charAt(0) !== '[') return;
+      try {
+        var novaLista = JSON.parse(t);
+        if (testniOdabraniPosiljatelj) {
+          var nadjen = false;
+          for (var i = 0; i < novaLista.length; i++) {
+            if (novaLista[i].id_posiljatelj === testniOdabraniPosiljatelj) {
+              nadjen = true;
+              break;
+            }
+          }
+          if (!nadjen) {
+            for (var j = 0; j < testniListaPosiljatelja.length; j++) {
+              if (testniListaPosiljatelja[j].id_posiljatelj === testniOdabraniPosiljatelj) {
+                novaLista.push(testniListaPosiljatelja[j]);
+                break;
+              }
+            }
+          }
+        }
+        testniListaPosiljatelja = novaLista;
+        renderTestniTablica(testniListaPosiljatelja);
+      } catch (e1) {}
+    };
+    xhr.send();
   }
 
   function ensureModalLoaded(cb) {
@@ -202,6 +381,20 @@
           } catch (eRef) {}
         }
         btnRef.classList.remove('poruke__refresh-btn--nova');
+        testniOdznaciListu();
+        fetchTestniLista();
+      });
+    }
+
+    var toggleInput = id('_toggle');
+    var toggleText = id('_toggle_text');
+    if (toggleInput) {
+      toggleInput.addEventListener('change', function () {
+        if (toggleText) {
+          toggleText.textContent = this.checked ? 'Samo nepročitane' : 'Sve poruke';
+        }
+        testniOdznaciListu();
+        fetchTestniLista();
       });
     }
 
@@ -238,6 +431,13 @@
           modal.classList.remove('testni-modal--pending-layout');
           modal.classList.add('kontrola-modal--open');
         }
+        /* Lista pošiljatelja: reset toggle i dohvat (kao openModal u 0-Poruke.js, bez desnog panela poruka). */
+        var ti = id('_toggle');
+        var tt = id('_toggle_text');
+        if (ti && ti.checked) ti.checked = false;
+        if (tt) tt.textContent = 'Sve poruke';
+        testniOdznaciListu();
+        fetchTestniLista();
       });
     });
   }

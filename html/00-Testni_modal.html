@@ -1,6 +1,7 @@
 <!-- =========================================================
      00-Testni_modal.html
-     Jednostavan modal za ispitivanje (zaglavlje s refreshom, tijelo, podnožje Povratak + nativni resize).
+     Modal za ispitivanje: lijevo toggle + tablica pošiljatelja (isti API kao Poruke), desno dva textarea,
+     zaglavlje s refreshom, podnožje Povratak + nativni resize.
      Učitava ga 00-Testni_modal.js preko fetch('00-Testni_modal.php'); __ID_PREFIX__ → jedinstveni id prefiks.
      ========================================================= -->
 <div id="__ID_PREFIX__" class="testni-modal kontrola-modal--dim" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="__ID_PREFIX___header">
@@ -13,16 +14,34 @@
             </button>
         </div>
         <div class="kontrola-modal__body testni-modal__body">
-            <!--
-              Napomene: uz desni rub, širina ⅔ tijela; visina tijela 70% / 30%.
-              ID-ovi: __ID_PREFIX___edit_povijest (gornji), __ID_PREFIX___edit_poruka (donji).
-            -->
-            <div class="testni-modal__napomene">
-                <div class="testni-modal__napomena-blok">
-                    <textarea id="__ID_PREFIX___edit_povijest" class="testni-modal__napomena testni-modal__edit-povijest" spellcheck="true" aria-label="Povijest"></textarea>
+            <!-- Lijevo: isti markup kao u 0-Poruke.html (stilovi iz 0-Poruke.css). -->
+            <div class="poruke__left">
+                <div class="poruke__toggle-row">
+                    <label class="poruke__toggle-label" id="__ID_PREFIX___toggle_label">
+                        <input type="checkbox" id="__ID_PREFIX___toggle" class="poruke__toggle-input" aria-label="Filtar poruka">
+                        <span class="poruke__toggle-slider"></span>
+                        <span class="poruke__toggle-text" id="__ID_PREFIX___toggle_text">Sve poruke</span>
+                    </label>
                 </div>
-                <div class="testni-modal__napomena-blok">
-                    <textarea id="__ID_PREFIX___edit_poruka" class="testni-modal__napomena testni-modal__edit-poruka" spellcheck="true" aria-label="Poruka"></textarea>
+                <div class="poruke__tablica-wrap" id="__ID_PREFIX___tablica_wrap">
+                    <table class="poruke__tablica" id="__ID_PREFIX___tablica">
+                        <tbody id="__ID_PREFIX___tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Desno: postojeća dva textarea polja (ispitivanje layouta). -->
+            <div class="testni-modal__desno">
+                <!--
+                  Napomene: uz desni rub, širina ⅔ desnog stupca; visina 70% / 30%.
+                  ID-ovi: __ID_PREFIX___edit_povijest (gornji), __ID_PREFIX___edit_poruka (donji).
+                -->
+                <div class="testni-modal__napomene">
+                    <div class="testni-modal__napomena-blok">
+                        <textarea id="__ID_PREFIX___edit_povijest" class="testni-modal__napomena testni-modal__edit-povijest" spellcheck="true" aria-label="Povijest"></textarea>
+                    </div>
+                    <div class="testni-modal__napomena-blok">
+                        <textarea id="__ID_PREFIX___edit_poruka" class="testni-modal__napomena testni-modal__edit-poruka" spellcheck="true" aria-label="Poruka"></textarea>
+                    </div>
                 </div>
             </div>
         </div>

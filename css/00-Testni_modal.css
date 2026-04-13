@@ -15,6 +15,14 @@
   justify-content: center;
   padding: 1rem;
   box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.testni-modal .poruke__tablica-wrap,
+.testni-modal .poruke__toggle-text {
+  -webkit-user-select: none;
+  user-select: none;
 }
 .testni-modal[aria-hidden="true"] {
   display: none;
@@ -40,18 +48,17 @@
 }
 
 /*
- * Početna širina = 420px + 30% = 546px; min-width = ista kao width da nativni resize ne smanjuje širinu ispod početne.
- * min(546px, 90vw): na uskom prozoru nema sukoba s max-width.
- * Visina +10% od 320px → 352px.
+ * Širina/visina: lijevi stupac (240px) + desno polja – veći početni okvir od „samo textarea”.
+ * Usklađeno s js/00-Testni_modal.js (TESTNI_MODAL_MIN_DIALOG_*).
  */
 .testni-modal__dialog {
   position: relative;
   z-index: 1;
-  max-width: 90vw;
-  width: min(546px, 90vw);
-  min-width: min(546px, 90vw);
-  height: min(352px, 85vh);
-  min-height: min(352px, 85vh);
+  max-width: 92vw;
+  width: min(720px, 92vw);
+  min-width: min(720px, 92vw);
+  height: min(400px, 85vh);
+  min-height: min(400px, 85vh);
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -82,19 +89,33 @@
   user-select: none;
 }
 
-.testni-modal .kontrola-modal__body {
+/*
+ * Tijelo: red kao u modalu Poruke – lijevo .poruke__left (stilovi u 0-Poruke.css), desno vlastiti stupac.
+ * padding: 0 ovdje; rub i font na .testni-modal__desno.
+ */
+.testni-modal .kontrola-modal__body.testni-modal__body {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
-  padding: 12px 12px 12px 1rem;
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  background: var(--modal_body_bg, #fff);
   font-family: var(--font_family, sans-serif);
   font-size: var(--font_size, 0.9rem);
   color: var(--text, #333);
-  user-select: text;
-  cursor: auto;
+}
+
+.testni-modal .testni-modal__desno {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  overflow: auto;
+  padding: 12px 12px 12px 1rem;
+  cursor: auto;
 }
 
 /*
@@ -138,6 +159,8 @@
   box-sizing: border-box;
   padding: 12px;
   font: inherit;
+  -webkit-user-select: text;
+  user-select: text;
   line-height: 1.4;
   color: inherit;
   border: 1px solid var(--edit_border, #ced4da);
@@ -183,5 +206,44 @@
     max-width: 95vw;
     min-width: 0;
     min-height: 0;
+  }
+
+  .testni-modal {
+    padding: 1rem 1rem 2rem 1rem;
+  }
+
+  .testni-modal .kontrola-modal__body.testni-modal__body {
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .testni-modal .poruke__left {
+    flex: 0 0 auto;
+    max-width: none;
+    min-width: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--panel_border, #ddd);
+  }
+
+  .testni-modal .testni-modal__desno {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding-bottom: 16px;
+  }
+
+  .testni-modal .poruke__avatar,
+  .testni-modal .poruke__avatar-fallback {
+    width: 30px;
+    height: 30px;
+  }
+  .testni-modal .poruke__cell--img {
+    width: 36px;
+  }
+  .testni-modal .poruke__tablica td {
+    padding: 4px 4px;
   }
 }
