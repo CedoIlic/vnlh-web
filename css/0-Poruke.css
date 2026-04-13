@@ -450,7 +450,12 @@
 
 /* --- Blok: Tablica pošiljatelja – scrollable wrap --- */
 .poruke__tablica-wrap {
-  flex: 1 1 auto;
+  /*
+   * flex-basis 0 (ne „auto”): u stupčanom flexu (.poruke__left) „auto” uzima min. glavnu veličinu = visinu
+   * sadržaja tablice pa stupac može gurnuti visinu modala umjesto da se pojavi unutarnji scroll.
+   * S 1 1 0 + min-height:0 omotač prima ostatak visine ispod toggle retka; tablica scrolla unutra.
+   */
+  flex: 1 1 0;
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;

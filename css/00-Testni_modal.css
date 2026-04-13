@@ -4,6 +4,8 @@
    i .poruke-btn (stranice već uključuju 0-Poruke.css prije ovog fajla).
    Nativni resize: both na .testni-modal__dialog – preglednik crta grip u donjem desnom
    kutu okvira dijaloga (vizualno uz podnožje).
+   Vanjski okvir: overflow:hidden (kao .poruke__dialog) da lista pošiljatelja ne širi dijalog –
+   scroll ostaje na .poruke__tablica-wrap (0-Poruke.css, flex-basis 0).
    ========================================================= */
 
 .testni-modal {
@@ -23,6 +25,137 @@
 .testni-modal .poruke__toggle-text {
   -webkit-user-select: none;
   user-select: none;
+}
+
+/*
+ * Vertikalni scrollbar – isti izgled i ponašanje kao u 0-Poruke.css:
+ *   • .poruke__tablica-wrap (lista pošiljatelja)
+ *   • .poruke__napomena-scroll (povijest) → ovdje .testni-modal__edit-povijest
+ *   • .poruke__input-napomena (polje odgovora) → ovdje .testni-modal__edit-poruka
+ * Varijable: --tablica_sirina_scrol_bara, --tablica_scroll_bg, --tablica_scroll_klizac, --tablica_scroll_klizac_hover, --napomena_radius.
+ */
+@supports not selector(::-webkit-scrollbar) {
+  .testni-modal .poruke__tablica-wrap {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara, 10px);
+  background: var(--tablica_scroll_bg, #f0f0f0);
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac, #aaa);
+  border-radius: 6px;
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, #888);
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara, 10px);
+  background: transparent;
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac, #aaa) transparent;
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac, #aaa) transparent transparent transparent;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .testni-modal .testni-modal__napomena.testni-modal__edit-povijest {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-povijest::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara, 10px);
+  background: var(--tablica_scroll_bg, #f0f0f0);
+  border-top-right-radius: var(--napomena_radius, 4px);
+  border-bottom-right-radius: var(--napomena_radius, 4px);
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-povijest::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac, #aaa);
+  border-radius: 6px;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-povijest::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, #888);
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-povijest::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-povijest::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-povijest::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara, 10px);
+  background: transparent;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-povijest::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac, #aaa) transparent;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-povijest::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac, #aaa) transparent transparent transparent;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-povijest::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .testni-modal .testni-modal__napomena.testni-modal__edit-poruka {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara, 10px);
+  background: var(--tablica_scroll_bg, #f0f0f0);
+  border-top-right-radius: var(--napomena_radius, 4px);
+  border-bottom-right-radius: var(--napomena_radius, 4px);
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac, #aaa);
+  border-radius: 6px;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, #888);
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara, 10px);
+  background: transparent;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac, #aaa) transparent;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac, #aaa) transparent transparent transparent;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-corner {
+  background: transparent;
 }
 .testni-modal[aria-hidden="true"] {
   display: none;
@@ -69,7 +202,7 @@
   background: var(--modal_body_bg, #fff);
   opacity: 0;
   transition: opacity var(--modal_fade_duration, 0.2s);
-  overflow: auto;
+  overflow: hidden;
   resize: both;
 }
 
@@ -113,7 +246,8 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  /* hidden: jedini vertikalni scroll na textarea poljima; visina stupca ostaje u tijelu modala (70/30 u .testni-modal__napomene). */
+  overflow: hidden;
   /* Jedini horizontalni razmak od vertikalne linije tablice (.poruke__left border-right): lijevo 1rem, ostalo 12px. */
   padding: 12px 12px 12px 1rem;
   cursor: auto;
@@ -122,9 +256,11 @@
 /*
  * Blok s dvije napomene (jedna ispod druge): 70% / 30% visine unutar desnog stupca.
  * Širina = 100% stupca (do ruba tablice ostaje samo padding na .testni-modal__desno).
+ * flex-basis 0: mora ispuniti .testni-modal__desno (ne visinu sadržaja), inače 7/3 dijele fiksnu malu kutiju
+ * i donji edit ostaje iste visine pri resizeu modala.
  */
 .testni-modal__napomene {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -148,8 +284,44 @@
 .testni-modal__napomena-blok:nth-child(1) {
   flex: 7 1 0;
 }
-.testni-modal__napomena-blok:nth-child(2) {
+
+/* Donji blok: poruka + tipka Pošalji u jednom redu (poravnanje dna s ikonom kao u modalu Poruke). */
+.testni-modal__napomena-blok--poruka {
   flex: 3 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * Red textarea | .poruke__posalji-btn: gap i širina kao .poruke__input-row (0-Poruke.css).
+ * align-items: stretch (ne flex-end): uz poprečnu os u retku textarea mora rasti s visinom donjeg bloka (udio 30%),
+ * inače ostaje intrinzična visina (rows + padding) i ne slijedi resize modala.
+ * Tipka: align-self:flex-end da vizualno ostane uz dno kao u modalu Poruke.
+ */
+.testni-modal__poruka-row {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.testni-modal__poruka-row .poruke__posalji-btn {
+  align-self: flex-end;
+  flex-shrink: 0;
+}
+
+/* U retku textarea dijeli širinu s fiksnom tipkom (width:0 + flex – isti trik kao .poruke__input-napomena). */
+.testni-modal__poruka-row .testni-modal__napomena {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  /* Najmanje ~2 retka; uz align-items:stretch na retku visina raste s donjim blokom (udio 30%). */
+  min-height: calc(2 * 1.4em + 24px);
+  align-self: stretch;
 }
 
 .testni-modal__napomena {

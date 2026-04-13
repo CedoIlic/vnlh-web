@@ -6,7 +6,9 @@
    Geometrija dijaloga (px) pamti se pri izlasku na desktopu i obnavlja pri sljedećem otvaranju.
    Lijevo: lista pošiljatelja (GET 0-Poruke_lista.php) – ista logika prikaza kao u 0-Poruke.js, bez učitavanja
    poruka u desni dio (klik na red samo označava red).
-   Desno: #vnlh_testni_modal_edit_povijest (gornji), #vnlh_testni_modal_edit_poruka (donji).
+   Desno: #vnlh_testni_modal_edit_povijest (gornji), #vnlh_testni_modal_edit_poruka + tipka #vnlh_testni_modal_posalji (donji red).
+   Pošalji: klase .poruke__posalji-btn (0-Poruke.css – sjene, disabled bez sjene). Omogućeno kad je odabran red u tablici i tekst nije prazan.
+   Opcionalni callback: window.vnlhTestniModalPosalji(id_posiljatelj, tekst).
    ========================================================= */
 (function () {
   'use strict';
@@ -93,6 +95,30 @@
     for (var i = 0; i < rows.length; i++) {
       rows[i].classList.remove('poruke__row--selected');
     }
+    testniSyncPorukaPanel(false);
+  }
+
+  /**
+   * Stanje polja „Poruka” i tipke Pošalji: kao clearSelection u 0-Poruke.js (textarea disabled dok nema odabranog pošiljatelja).
+   * @param {boolean} imaSelekciju true nakon klika na red u tablici
+   */
+  function testniSyncPorukaPanel(imaSelekciju) {
+    var inp = id('_edit_poruka');
+    var btn = id('_posalji');
+    if (inp) {
+      inp.disabled = !imaSelekciju;
+      inp.value = '';
+    }
+    if (btn) btn.disabled = true;
+    if (imaSelekciju) testniOsvjeziPosaljiDisabled();
+  }
+
+  /** Tipka Pošalji: disabled kad je textarea prazna ili disabled (logika kao 0-Poruke.js). */
+  function testniOsvjeziPosaljiDisabled() {
+    var inp = id('_edit_poruka');
+    var btn = id('_posalji');
+    if (!btn || !inp) return;
+    btn.disabled = inp.disabled || trim(inp.value) === '';
   }
 
   /**
@@ -197,6 +223,7 @@
             if (all[r]._porukePosiljatelj === idPos) all[r].classList.add('poruke__row--selected');
             else all[r].classList.remove('poruke__row--selected');
           }
+          testniSyncPorukaPanel(true);
         });
       })(item.id_posiljatelj);
       tbody.appendChild(tr);
@@ -402,6 +429,30 @@
     if (btnPov) {
       btnPov.addEventListener('click', function () {
         closeTestniModal();
+      });
+    }
+
+    var editPoruka = id('_edit_poruka');
+    var btnPosalji = id('_posalji');
+    if (editPoruka && btnPosalji) {
+      editPoruka.addEventListener('input', function () {
+        testniOsvjeziPosaljiDisabled();
+      });
+      editPoruka.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey && !btnPosalji.disabled) {
+          e.preventDefault();
+          btnPosalji.click();
+        }
+      });
+      btnPosalji.addEventListener('click', function () {
+        if (btnPosalji.disabled || !testniOdabraniPosiljatelj) return;
+        var tekst = trim(editPoruka.value);
+        if (!tekst) return;
+        if (typeof window.vnlhTestniModalPosalji === 'function') {
+          try {
+            window.vnlhTestniModalPosalji(testniOdabraniPosiljatelj, tekst);
+          } catch (ePos) {}
+        }
       });
     }
   }
