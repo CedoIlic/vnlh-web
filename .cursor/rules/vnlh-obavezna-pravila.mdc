@@ -31,7 +31,7 @@ Agent **mora** slijediti sve točke u ovom dokumentu. Nova obavezna pravila **do
 - U `00-Version.js` **prvo** povećaj **samo reviziju** kad zadatak to zahtijeva (promjena koda koju prati verzija).
 - **`?v=` i revizija u `00-Version.js`:** ažuriraj **isključivo u modulima / na HTML (ili PHP) ulazima na kojima se u tom zadatku radilo** — samo za `<script>` / `<link>` koji učitavaju **stvarno dirane** `.js` / `.css` datoteke. Primjer: promjena `Clanovi_CRUD.js` → samo `html/Clanovi_CRUD.html` (i drugi fajl u istom modulu ako eksplicitno uključuje taj JS), **ne** sve ostale CRUD stranice.
 - **`00-Version.js`:** novi `?v=` za `00-Version.js` **samo** na istim tim stranicama **ako** u tom koraku mijenjaš sadržaj `00-Version.js`; inače **ne** širi novi `?v=` na sve `.html` „zbog revizije”.
-- **Posebno:** ako se mijenja **samo** jedan resurs (npr. samo `00-Testni_modal.css`), digni `?v=` **samo** za taj resurs na stranicama koje ga učitavaju — **ne** masovno mijenjati `00-Version.js?v=` na stranicama izvan tog modula (npr. `Login.html`) ako nisu dio zadatka.
+- **Posebno:** ako se mijenja **samo** jedan resurs (npr. samo `0-Poruke.css`), digni `?v=` **samo** za taj resurs na stranicama koje ga učitavaju — **ne** masovno mijenjati `00-Version.js?v=` na stranicama izvan tog modula (npr. `Login.html`) ako nisu dio zadatka.
 
 ### 2.2. Zajednički (rijetko mijenjani) fajlovi
 

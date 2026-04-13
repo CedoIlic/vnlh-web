@@ -1,13 +1,13 @@
 /* =========================================================
    0-Poruke.css
-   Stilovi modala za sustav poruka (tablica pošiljatelja, toggle,
+   Stilovi modala za sustav poruka (tablica poÅ¡iljatelja, toggle,
    napomena s porukama, input odgovor, mail ikona u naslov-forme).
    Tokeni: 0-Common.css (--modal_*, --panel_*, --text, --font_*).
-   z-index: 10005 – iznad svih postojećih modala.
+   z-index: 10005 â€“ iznad svih postojeÄ‡ih modala.
    ========================================================= */
 
-/* --- Blok: Modal poruka – bazni stilovi (samodostatni, ne ovisi o 0-Kontrole.css) ---
-   Stranice poput Meni.html ne uključuju 0-Kontrole.css pa modal nema bazne
+/* --- Blok: Modal poruka â€“ bazni stilovi (samodostatni, ne ovisi o 0-Kontrole.css) ---
+   Stranice poput Meni.html ne ukljuÄuju 0-Kontrole.css pa modal nema bazne
    .kontrola-modal stilove. Ovdje ih definiramo pod .poruke-modal selektorom
    da modal poruka radi na SVIM stranicama neovisno. --- */
 .poruke-modal {
@@ -36,7 +36,7 @@
   opacity: calc(var(--modal_overlay_dim_intensity, 50) / 100);
 }
 
-/* Onemogući selekciju teksta na cijelom modalu osim textarea za odgovor */
+/* OnemoguÄ‡i selekciju teksta na cijelom modalu osim textarea za odgovor */
 .poruke-modal {
   -webkit-user-select: none;
   user-select: none;
@@ -46,11 +46,11 @@
   user-select: text;
 }
 
-/* --- Blok: Dialog – veličina, min/max, pozadina ---
-   Zadano: resize:none + overflow:hidden (mobitel). Na širokom ekranu: nativni resize:both kao
-   .obrada-slika__dialog (grip u kutu crta preglednik). Za resize dovoljno je overflow ≠ visible
-   (npr. hidden); overflow:auto na cijelom dijalogu činio bi ga scroll kontejnerom – tijelo bi
-   moglo „curiti” ispod podnožja pri prvom potezu resizea. */
+/* --- Blok: Dialog â€“ veliÄina, min/max, pozadina ---
+   Zadano: resize:none + overflow:hidden (mobitel). Na Å¡irokom ekranu: nativni resize:both kao
+   .obrada-slika__dialog (grip u kutu crta preglednik). Za resize dovoljno je overflow â‰  visible
+   (npr. hidden); overflow:auto na cijelom dijalogu Äinio bi ga scroll kontejnerom â€“ tijelo bi
+   moglo â€žcuritiâ€ ispod podnoÅ¾ja pri prvom potezu resizea. */
 .poruke__dialog {
   position: relative;
   z-index: 1;
@@ -76,7 +76,7 @@
   opacity: 1;
 }
 
-/* --- Bazni stilovi zaglavlja, tijela, podnožja (samodostatni) --- */
+/* --- Bazni stilovi zaglavlja, tijela, podnoÅ¾ja (samodostatni) --- */
 .poruke-modal .kontrola-modal__header {
   flex: 0 0 auto;
   padding: var(--modal_header_padding_y, 0.75rem) var(--modal_header_padding_x, 1rem);
@@ -112,8 +112,8 @@
   gap: 0.5rem;
 }
 
-/* --- Blok: 3D tipka Povratak (poruke-btn) – kopija lista-btn iz Lista.css ---
-   Samodostatna – ne ovisi o 0-Kontrole.css ni Lista.css.
+/* --- Blok: 3D tipka Povratak (poruke-btn) â€“ kopija lista-btn iz Lista.css ---
+   Samodostatna â€“ ne ovisi o 0-Kontrole.css ni Lista.css.
    Ista struktura: poruke-btn > __outer > __inner > __label. */
 .poruke-btn {
   all: unset;
@@ -236,7 +236,7 @@
     0 0 0 0.15rem var(--focus-ring, #4a90d9),
     0 6px 16px var(--c-shadow-35, rgba(0,0,0,0.35));
 }
-/* Povratak varijanta – jednobojna pozadina */
+/* Povratak varijanta â€“ jednobojna pozadina */
 .poruke-btn--povratak {
   --button_bg: var(--crud_povratak_bg, #6c757d);
   --button_outer_bg: var(--crud_povratak_bg, #6c757d);
@@ -251,7 +251,7 @@
   color: var(--crud_povratak_caption_click, #ccc);
 }
 
-/* Fallback za textarea kontrola-napomena (ako 0-Kontrole.css nije učitan) */
+/* Fallback za textarea kontrola-napomena (ako 0-Kontrole.css nije uÄitan) */
 .poruke-modal .kontrola-napomena {
   box-sizing: border-box;
   width: 100%;
@@ -288,7 +288,7 @@
   box-shadow: var(--napomena_focus_shadow_disabled, none);
 }
 
-/* --- Blok: Zaglavlje – naslov + refresh ikona --- */
+/* --- Blok: Zaglavlje â€“ naslov + refresh ikona --- */
 .poruke__header {
   display: flex;
   flex-direction: row;
@@ -303,7 +303,7 @@
 }
 
 /* --- Blok: Refresh tipka u zaglavlju ---
-   Sjena i veličina kopirani iz lista-reload-btn (Lista.css):
+   Sjena i veliÄina kopirani iz lista-reload-btn (Lista.css):
    default = button_outer_shadow, hover = edit_focus_shadow,
    active/nova = edit_focus_shadow_disabled (none). */
 .poruke__refresh-btn {
@@ -343,7 +343,7 @@
   flex-shrink: 0;
 }
 
-/* --- Blok: Tijelo modala – flex lijevo/desno --- */
+/* --- Blok: Tijelo modala â€“ flex lijevo/desno --- */
 .poruke__body {
   display: flex;
   flex-direction: row;
@@ -354,7 +354,7 @@
   overflow: hidden;
 }
 
-/* --- Blok: Lijeva strana – toggle + tablica pošiljatelja --- */
+/* --- Blok: Lijeva strana â€“ toggle + tablica poÅ¡iljatelja --- */
 .poruke__left {
   flex: 0 0 240px;
   min-width: 200px;
@@ -366,7 +366,7 @@
   overflow: hidden;
 }
 
-/* --- Blok: Toggle switch (slide) – Sve poruke / Samo nepročitane --- */
+/* --- Blok: Toggle switch (slide) â€“ Sve poruke / Samo neproÄitane --- */
 .poruke__toggle-row {
   padding: 8px 10px;
   border-bottom: 1px solid var(--panel_border, #ddd);
@@ -396,7 +396,7 @@
   pointer-events: none;
 }
 
-/* Slider – track (sjena kao ostale kontrole; disabled = none) */
+/* Slider â€“ track (sjena kao ostale kontrole; disabled = none) */
 .poruke__toggle-slider {
   position: relative;
   display: inline-block;
@@ -408,7 +408,7 @@
   flex-shrink: 0;
   box-shadow: var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0,0,0,0.30));
 }
-/* Slider – krug (knob) */
+/* Slider â€“ krug (knob) */
 .poruke__toggle-slider::after {
   content: '';
   position: absolute;
@@ -421,14 +421,14 @@
   transition: transform 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
-/* Uključen (checked) – pomak knoba desno + promjena boje track-a */
+/* UkljuÄen (checked) â€“ pomak knoba desno + promjena boje track-a */
 .poruke__toggle-input:checked + .poruke__toggle-slider {
   background: var(--c-blue-600, #2563eb);
 }
 .poruke__toggle-input:checked + .poruke__toggle-slider::after {
   transform: translateX(16px);
 }
-/* Focus ring za pristupačnost */
+/* Focus ring za pristupaÄnost */
 .poruke__toggle-input:focus-visible + .poruke__toggle-slider {
   outline: 2px solid var(--edit_border_focus, #666);
   outline-offset: 2px;
@@ -438,7 +438,7 @@
   white-space: nowrap;
 }
 
-/* Toggle disabled – kad nema nijednog razgovora, vizualno ugašen, sjena none */
+/* Toggle disabled â€“ kad nema nijednog razgovora, vizualno ugaÅ¡en, sjena none */
 .poruke__toggle-label--disabled {
   cursor: not-allowed;
   opacity: 0.45;
@@ -448,19 +448,19 @@
   box-shadow: none;
 }
 
-/* --- Blok: Tablica pošiljatelja – scrollable wrap --- */
+/* --- Blok: Tablica poÅ¡iljatelja â€“ scrollable wrap --- */
 .poruke__tablica-wrap {
   /*
-   * flex-basis 0 (ne „auto”): u stupčanom flexu (.poruke__left) „auto” uzima min. glavnu veličinu = visinu
-   * sadržaja tablice pa stupac može gurnuti visinu modala umjesto da se pojavi unutarnji scroll.
-   * S 1 1 0 + min-height:0 omotač prima ostatak visine ispod toggle retka; tablica scrolla unutra.
+   * flex-basis 0 (ne â€žautoâ€): u stupÄanom flexu (.poruke__left) â€žautoâ€ uzima min. glavnu veliÄinu = visinu
+   * sadrÅ¾aja tablice pa stupac moÅ¾e gurnuti visinu modala umjesto da se pojavi unutarnji scroll.
+   * S 1 1 0 + min-height:0 omotaÄ prima ostatak visine ispod toggle retka; tablica scrolla unutra.
    */
   flex: 1 1 0;
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
 }
-/* --- Blok: Scrollbar na tablici pošiljatelja – kopija iz 0-Kontrole.css --- */
+/* --- Blok: Scrollbar na tablici poÅ¡iljatelja â€“ kopija iz 0-Kontrole.css --- */
 @supports not selector(::-webkit-scrollbar) {
   .poruke__tablica-wrap {
     scrollbar-width: thin;
@@ -518,7 +518,7 @@
   background-color: var(--tablica_selected_bg, rgba(0, 100, 200, 0.12));
 }
 
-/* Ćelije */
+/* Ä†elije */
 .poruke__tablica td {
   padding: 6px 6px;
   vertical-align: middle;
@@ -528,7 +528,7 @@
   color: var(--text);
 }
 
-/* --- Blok: Kolona 1 – avatar slika pošiljatelja --- */
+/* --- Blok: Kolona 1 â€“ avatar slika poÅ¡iljatelja --- */
 .poruke__cell--img {
   width: 42px;
   text-align: center;
@@ -541,7 +541,7 @@
   display: block;
   box-shadow: var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0,0,0,0.30));
 }
-/* Fallback avatar za nepostojeće korisnike: sivi krug s "?" */
+/* Fallback avatar za nepostojeÄ‡e korisnike: sivi krug s "?" */
 .poruke__avatar-fallback {
   width: 36px;
   height: 36px;
@@ -558,7 +558,7 @@
   box-shadow: var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0,0,0,0.30));
 }
 
-/* --- Blok: Kolona 2 – prezime/ime u dva reda --- */
+/* --- Blok: Kolona 2 â€“ prezime/ime u dva reda --- */
 .poruke__cell--ime {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -573,12 +573,12 @@
 .poruke__ime-line--bold {
   font-weight: 600;
 }
-/* Prigušeno ime kad razgovor nema nepročitanih poruka */
+/* PriguÅ¡eno ime kad razgovor nema neproÄitanih poruka */
 .poruke__ime-line--muted {
   color: var(--c-gray-300, #d1d5db);
 }
 
-/* --- Blok: Kolona 3 – badge nepročitanih poruka (krug) ---
+/* --- Blok: Kolona 3 â€“ badge neproÄitanih poruka (krug) ---
    Krug istog promjera kao avatar (36px). Dvocifreni broj stane;
    3+ cifre prikazuju se kao "..." (JS logika). */
 .poruke__cell--count {
@@ -602,8 +602,8 @@
   -webkit-user-select: none;
 }
 
-/* --- Blok: Desna strana – poruke + input ---
-   Padding lijevo jednak padding desno (8px) – odmak od pregradne linije tablice. --- */
+/* --- Blok: Desna strana â€“ poruke + input ---
+   Padding lijevo jednak padding desno (8px) â€“ odmak od pregradne linije tablice. --- */
 .poruke__right {
   flex: 1 1 auto;
   min-width: 0;
@@ -617,10 +617,10 @@
   padding: 8px 8px 14px 8px;
 }
 
-/* --- Blok: Široki ekran (≥769px) – vanjski .poruke__dialog: nativni resize (kao .obrada-slika__dialog).
-   Custom kutni gumbe (.poruke__resize-corner) ostaju skriveni; unutarnji raspored osvježava 0-Poruke.js
+/* --- Blok: Å iroki ekran (â‰¥769px) â€“ vanjski .poruke__dialog: nativni resize (kao .obrada-slika__dialog).
+   Custom kutni gumbe (.poruke__resize-corner) ostaju skriveni; unutarnji raspored osvjeÅ¾ava 0-Poruke.js
    (ResizeObserver + izracunajVisinuNapomene). Povijest (#_napomena) i textarea nove poruke imaju nativni
-   vertikalni grip (vizualna usklađenost s npr. #edit_napomena u Clanovi_CRUD); detaljno ponašanje kasnije. */
+   vertikalni grip (vizualna usklaÄ‘enost s npr. #edit_napomena u Clanovi_CRUD); detaljno ponaÅ¡anje kasnije. */
 @media (min-width: 769px) {
   .poruke-modal .poruke__dialog {
     /* hidden: flex kolona (header / body / footer) ostaje u okviru visine; scroll samo unutar povijesti. */
@@ -633,11 +633,11 @@
     display: none !important;
     pointer-events: none !important;
   }
-  /* Nativni grip: div s overflow-y:auto podržava resize:vertical (Chrome/Edge/Firefox). */
+  /* Nativni grip: div s overflow-y:auto podrÅ¾ava resize:vertical (Chrome/Edge/Firefox). */
   .poruke-modal .poruke__napomena-scroll {
     resize: vertical;
   }
-  /* Isti obrazac kao .kontrola-napomena / #edit_napomena na CRUD formama – vertikalno povlačenje ruba. */
+  /* Isti obrazac kao .kontrola-napomena / #edit_napomena na CRUD formama â€“ vertikalno povlaÄenje ruba. */
   .poruke-modal .poruke__input-napomena {
     resize: vertical;
   }
@@ -652,10 +652,10 @@
   }
 }
 
-/* --- Blok: Povijest razgovora – dvoslojno: okvir + scroll ---
+/* --- Blok: Povijest razgovora â€“ dvoslojno: okvir + scroll ---
    Vanjski .poruke__napomena-div: border, border-radius, box-shadow; overflow:visible da sjena
-   nije odrezana. Unutarnji .poruke__napomena-scroll: overflow-y:auto; visinu na širokom ekranu
-   podešava izracunajVisinuNapomene u 0-Poruke.js (snimljeni min. visine povijesti). */
+   nije odrezana. Unutarnji .poruke__napomena-scroll: overflow-y:auto; visinu na Å¡irokom ekranu
+   podeÅ¡ava izracunajVisinuNapomene u 0-Poruke.js (snimljeni min. visine povijesti). */
 .poruke__napomena-div {
   flex: 0 0 auto;
   min-height: 3em;
@@ -669,14 +669,14 @@
   background: var(--napomena_bg, #fff);
 }
 .poruke__napomena-scroll {
-  /* flex: 0 0 auto – visinu postavlja JS na desktopu; na mobu @media pregazi s flex:1 1 auto. */
+  /* flex: 0 0 auto â€“ visinu postavlja JS na desktopu; na mobu @media pregazi s flex:1 1 auto. */
   flex: 0 0 auto;
   align-self: stretch;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   resize: none;
-  /* Isti radius kao vanjski okvir – sadržaj poruka ne „izlazi” iz zaobljenih kutova. */
+  /* Isti radius kao vanjski okvir â€“ sadrÅ¾aj poruka ne â€žizlaziâ€ iz zaobljenih kutova. */
   border-radius: var(--napomena_radius, 4px);
   padding: var(--napomena_padding_y, 8px) var(--napomena_padding_x, 10px);
   background: var(--napomena_bg, #fff);
@@ -686,7 +686,7 @@
   font-weight: var(--font_weight);
   line-height: 1.5;
 }
-/* --- Blok: Scrollbar za .poruke__napomena-scroll – kopija iz 0-Kontrole.css --- */
+/* --- Blok: Scrollbar za .poruke__napomena-scroll â€“ kopija iz 0-Kontrole.css --- */
 @supports not selector(::-webkit-scrollbar) {
   .poruke__napomena-scroll {
     scrollbar-width: thin;
@@ -742,35 +742,35 @@
 }
 .poruke__datum-separator::before,
 .poruke__datum-separator::after {
-  content: '—';
+  content: 'â€”';
   margin: 0 6px;
   opacity: 0.5;
 }
 
-/* --- Blok: Pojedinačna poruka u napomeni --- */
+/* --- Blok: PojedinaÄna poruka u napomeni --- */
 .poruke__msg {
   padding: 3px 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
-/* Primljena poruka – nepročitana (normalna boja) */
+/* Primljena poruka â€“ neproÄitana (normalna boja) */
 .poruke__msg--primljena {
   color: var(--text);
 }
-/* Primljena poruka – pročitana */
+/* Primljena poruka â€“ proÄitana */
 .poruke__msg--primljena-procitana {
   color: var(--c-shadow-30, #b0b0b0);
 }
-/* Odgovor (vlastita poruka) – nepročitan od primatelja */
+/* Odgovor (vlastita poruka) â€“ neproÄitan od primatelja */
 .poruke__msg--odgovor {
   color: var(--c-blue-600, #2563eb);
 }
-/* Odgovor – pročitan */
+/* Odgovor â€“ proÄitan */
 .poruke__msg--odgovor-procitan {
   color: var(--c-blue-300, #93c5fd);
 }
 
-/* Ime pošiljatelja ispred poruke (bold) */
+/* Ime poÅ¡iljatelja ispred poruke (bold) */
 .poruke__msg-autor {
   font-weight: 600;
   margin-right: 4px;
@@ -782,7 +782,7 @@
   margin-left: 6px;
   white-space: nowrap;
 }
-/* Dvostruka kvačica za pročitane poruke */
+/* Dvostruka kvaÄica za proÄitane poruke */
 .poruke__msg-procitano {
   color: var(--c-blue-500, #3b82f6);
   font-weight: 700;
@@ -790,25 +790,25 @@
   margin-left: 2px;
 }
 
-/* --- Blok: Textarea za odgovor + tipka Pošalji --- */
+/* --- Blok: Textarea za odgovor + tipka PoÅ¡alji --- */
 .poruke__input-row {
   display: flex;
   flex-direction: row;
   align-items: flex-end;
   gap: 6px;
   position: relative;
-  /* Gore razmak od povijesti; dolje 10px zrak ispod edita nove poruke prije ruba .poruke__right / podnožja. */
+  /* Gore razmak od povijesti; dolje 10px zrak ispod edita nove poruke prije ruba .poruke__right / podnoÅ¾ja. */
   padding: 6px 0 10px 0;
   margin-bottom: 0;
   flex-shrink: 0;
-  /* Omogući sužavanje textarea u redu (PC); inače width:auto može gurnuti .poruke__posalji-btn van panela. */
+  /* OmoguÄ‡i suÅ¾avanje textarea u redu (PC); inaÄe width:auto moÅ¾e gurnuti .poruke__posalji-btn van panela. */
   min-width: 0;
 }
 
-/* Textarea – višeredni odgovor; zadano resize:none (mob + baza). Na širokom ekranu @media (min-width:769px)
+/* Textarea â€“ viÅ¡eredni odgovor; zadano resize:none (mob + baza). Na Å¡irokom ekranu @media (min-width:769px)
    .poruke-modal .poruke__input-napomena dobiva resize:vertical (nativni grip kao napomena u edit panelu).
-   flex: 1 1 0; width: 0; min-width: 0 – dijeli red s .poruke__posalji-btn (flex-shrink: 0);
-   na PC-u textarea ne smije „pojesti” sav prostor. Na mobu isto pravilo jače u @media (0-Poruke.css). */
+   flex: 1 1 0; width: 0; min-width: 0 â€“ dijeli red s .poruke__posalji-btn (flex-shrink: 0);
+   na PC-u textarea ne smije â€žpojestiâ€ sav prostor. Na mobu isto pravilo jaÄe u @media (0-Poruke.css). */
 .poruke__input-napomena {
   flex: 1 1 0;
   min-width: 0;
@@ -821,7 +821,7 @@
 .poruke__input-napomena::placeholder {
   color: var(--c-gray-300, #ccc);
 }
-/* --- Blok: Scrollbar za textarea odgovora – kopija iz 0-Kontrole.css ---*/
+/* --- Blok: Scrollbar za textarea odgovora â€“ kopija iz 0-Kontrole.css ---*/
 @supports not selector(::-webkit-scrollbar) {
   .poruke__input-napomena {
     scrollbar-width: thin;
@@ -865,7 +865,7 @@
   background: transparent;
 }
 
-/* --- Blok: Tipka Pošalji – sjena i veličina kao lista-reload-btn (Lista.css) ---
+/* --- Blok: Tipka PoÅ¡alji â€“ sjena i veliÄina kao lista-reload-btn (Lista.css) ---
    Tri stanja: default = button_outer_shadow, hover = edit_focus_shadow,
    disabled = edit_focus_shadow_disabled (none). */
 .poruke__posalji-btn {
@@ -905,9 +905,9 @@
   flex-shrink: 0;
 }
 
-/* --- Blok: Podnožje – lijevo ikone, desno Povratak ---
-   Pojačan selektor da pregazi base .kontrola-modal__footer justify-content: center.
-   position: relative – anchor za eventualne apsolutno pozicionirane elemente u podnožju. */
+/* --- Blok: PodnoÅ¾je â€“ lijevo ikone, desno Povratak ---
+   PojaÄan selektor da pregazi base .kontrola-modal__footer justify-content: center.
+   position: relative â€“ anchor za eventualne apsolutno pozicionirane elemente u podnoÅ¾ju. */
 .poruke-modal .poruke__footer {
   justify-content: space-between;
   align-items: center;
@@ -923,8 +923,8 @@
   align-items: center;
 }
 
-/* --- Blok: Zajedničke icon-tipke u podnožju (nova poruka, brisanje) ---
-   Veličina, border, sjena i tri stanja kopirani iz lista-reload-btn (Lista.css). */
+/* --- Blok: ZajedniÄke icon-tipke u podnoÅ¾ju (nova poruka, brisanje) ---
+   VeliÄina, border, sjena i tri stanja kopirani iz lista-reload-btn (Lista.css). */
 .poruke__icon-btn {
   flex-shrink: 0;
   width: 2.25rem;
@@ -956,7 +956,7 @@
   box-shadow: var(--edit_focus_shadow_disabled, none);
 }
 
-/* Trash ikona – CSS mask (Heroicons outline, kopija iz 0-Kontrole.css kontrola-icon--trash) */
+/* Trash ikona â€“ CSS mask (Heroicons outline, kopija iz 0-Kontrole.css kontrola-icon--trash) */
 .poruke-icon--trash {
   display: inline-block;
   width: 20px;
@@ -974,7 +974,8 @@
 
 /* --- Blok: Popup za odabir korisnika (nova poruka) ---
    Pozicioniran apsolutno unutar dialoga, iznad podnožja lijevo.
-   Filter input na vrhu, scrollable lista ispod. */
+   Filter input na vrhu, scrollable lista ispod.
+   max-height: ne smije prijeći visinu modala; .poruke__popup-lista već ima overflow-y + isti scrollbar kao tablica. */
 .poruke__popup {
   position: absolute;
   bottom: 3.5rem;
@@ -991,29 +992,40 @@
   overflow: hidden;
 }
 
-/* Filter input na vrhu popupa */
+/* Unutar modala: popup nikad veći od unutrašnjosti dijaloga (100% = padding-box roditelja s position:relative). */
+.testni-modal__dialog > .poruke__popup,
+.poruke__dialog > .poruke__popup {
+  max-height: min(260px, calc(100% - 5.5rem));
+}
+
+/*
+ * Filter na vrhu popupa (nova poruka): pozadina --c-gray-200; umjesto placeholder teksta – lupa u „negativu”:
+ * tamni krug (boja kao --c-gray-700) + bijeli obrisi lupe (background-image lijevo). aria-label u HTML-u.
+ */
 .poruke__popup-filter {
   box-sizing: border-box;
   width: 100%;
-  padding: 6px 10px;
   margin: 0;
+  padding: 8px 10px 8px 36px;
   border: none;
   border-bottom: 1px solid var(--panel_border, #ddd);
   border-radius: 0;
-  background: var(--napomena_bg, #fff);
+  background-color: var(--c-gray-200, #ced4da);
+  /* Negativ: ispunjeni krug #4a5568 (= --c-gray-700), leća + ručka u bijelom */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%234a5568'/%3E%3Ccircle cx='10' cy='10' r='4.25' fill='none' stroke='%23ffffff' stroke-width='1.85'/%3E%3Cpath fill='none' stroke='%23ffffff' stroke-width='1.85' stroke-linecap='round' d='M13.35 13.35 18.25 18.25'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 9px 50%;
+  background-size: 18px 18px;
   color: var(--text, #333);
   font-family: var(--font_family, sans-serif);
   font-size: var(--font_size, 0.9rem);
   outline: none;
   flex-shrink: 0;
+  -webkit-user-select: text;
+  user-select: text;
 }
 .poruke__popup-filter:focus {
   border-bottom-color: var(--edit_border_focus, #4a90d9);
-}
-/* Dopusti selekciju teksta u filter inputu */
-.poruke__popup-filter {
-  -webkit-user-select: text;
-  user-select: text;
 }
 
 /* Scrollable lista korisnika */
@@ -1092,26 +1104,26 @@
 @media (max-width: 768px) {
   /* ==========================================================
      MOBILNI LAYOUT MODALA ZA PORUKE
-     Selektori prefiksirani s .poruke-modal da specifičnost (0,2,0)
+     Selektori prefiksirani s .poruke-modal da specifiÄnost (0,2,0)
      pregazi bazne stilove (.poruke-modal .kontrola-modal__body itd.)
-     koje imaju istu specifičnost na liniji ~87.
+     koje imaju istu specifiÄnost na liniji ~87.
      Struktura (odozgo prema dolje):
        1. Zaglavlje (header)
-       2. Tablica pošiljatelja – puna širina, fiksna visina (5 redova), scroll
+       2. Tablica poÅ¡iljatelja â€“ puna Å¡irina, fiksna visina (5 redova), scroll
        3. Input nova poruka + ikona slanja
-       4. Povijest razgovora – popunjava ostatak prostora
-       5. Podnožje (footer)
+       4. Povijest razgovora â€“ popunjava ostatak prostora
+       5. PodnoÅ¾je (footer)
      ========================================================== */
 
-  /* Vanjski omotač: donji „umetak” ostaje transparentan (ne prekriva sjenu),
-     veći padding-bottom ostavlja prostor da box-shadow dijaloga nije odrezan
+  /* Vanjski omotaÄ: donji â€žumetakâ€ ostaje transparentan (ne prekriva sjenu),
+     veÄ‡i padding-bottom ostavlja prostor da box-shadow dijaloga nije odrezan
      rubom viewporta. Overlay je zaseban child (absolute), ne ovaj sloj. */
   .poruke-modal {
     padding: 1rem 1rem 2rem 1rem;
     background: transparent;
   }
 
-  /* Dialog – centriran po X; overflow kao u bazi (hidden) radi zaobljenih kutova modala. */
+  /* Dialog â€“ centriran po X; overflow kao u bazi (hidden) radi zaobljenih kutova modala. */
   .poruke-modal .poruke__dialog {
     min-width: 300px;
     width: 95vw;
@@ -1125,10 +1137,10 @@
     overflow: hidden;
   }
 
-  /* Body – kolona: tablica gore, editi dolje.
+  /* Body â€“ kolona: tablica gore, editi dolje.
      Bazni stil (.poruke-modal .kontrola-modal__body, linija ~87) postavlja
      flex-direction: row i background. Ovaj selektor (0,2,0) ga pregazi. */
-  /* margin-bottom: razmak između tijela modala i podnožja (povijest ne „liježi” na footer). */
+  /* margin-bottom: razmak izmeÄ‘u tijela modala i podnoÅ¾ja (povijest ne â€žlijeÅ¾iâ€ na footer). */
   .poruke-modal .poruke__body {
     flex-direction: column;
     flex: 1 1 auto;
@@ -1137,7 +1149,7 @@
     margin-bottom: 10px;
   }
 
-  /* Lijeva strana (tablica) – puna širina, fiksna visina za 5 redova (~200px) */
+  /* Lijeva strana (tablica) â€“ puna Å¡irina, fiksna visina za 5 redova (~200px) */
   .poruke-modal .poruke__left {
     flex: 0 0 auto;
     max-width: none;
@@ -1148,7 +1160,7 @@
     border-bottom: 1px solid var(--panel_border, #ddd);
   }
 
-  /* Desna strana (editi) – popunjava ostatak */
+  /* Desna strana (editi) â€“ popunjava ostatak */
   .poruke-modal .poruke__right {
     flex: 1 1 auto;
     min-height: 0;
@@ -1159,35 +1171,56 @@
   }
 
   /* Input-row (nova poruka + ikona slanja) IDE IZNAD povijesti razgovora.
-     U DOM-u je input-row iza napomene; order:-1 ga vizualno premješta iznad. */
+     U DOM-u je input-row iza napomene; order:-1 ga vizualno premjeÅ¡ta iznad. */
   .poruke-modal .poruke__input-row {
     flex: 0 0 auto;
     order: -1;
   }
 
-  /* Textarea za novu poruku – flex da ne gura ikonu van ekrana. */
+  /* Textarea za novu poruku â€“ flex da ne gura ikonu van ekrana. */
   .poruke-modal .poruke__input-napomena {
     flex: 1 1 0 !important;
     width: 0 !important;
     min-width: 0 !important;
   }
 
-  /* Povijest razgovora – popunjava sav preostali prostor.
+  /* Povijest razgovora â€“ popunjava sav preostali prostor.
      !important jer izracunajVisinuNapomene() postavlja inline height na desktopu;
-     na mobilnom ta funkcija vraća return ali čuvamo za sigurnost. */
+     na mobilnom ta funkcija vraÄ‡a return ali Äuvamo za sigurnost. */
   .poruke-modal .poruke__napomena-div {
     flex: 1 1 auto !important;
     min-height: 60px !important;
     height: auto !important;
   }
   .poruke-modal .poruke__napomena-scroll {
-    /* Nadjačaj desktop 0 0 auto – unutar .poruke__napomena-div (flex:1) i dalje ispunjava visinu. */
+    /* NadjaÄaj desktop 0 0 auto â€“ unutar .poruke__napomena-div (flex:1) i dalje ispunjava visinu. */
     flex: 1 1 auto !important;
     min-height: 0 !important;
     resize: none !important;
   }
+  /*
+   * Chrome/Blink: nativni grip u kutu često je ::-webkit-resizer ili mali ::-webkit-scrollbar-corner
+   * uz prilagođeni scrollbar; display:none na resizeru nije pouzdan – opacity 0 + dimenzije 0.
+   */
+  .poruke-modal .poruke__napomena-scroll::-webkit-resizer {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    background: transparent !important;
+    background-image: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  .poruke-modal .poruke__napomena-scroll::-webkit-scrollbar-corner {
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+  }
 
-  /* Tablica: smanjeni avatar i padding za uštedu prostora na malom ekranu */
+  /* Tablica: smanjeni avatar i padding za uÅ¡tedu prostora na malom ekranu */
   .poruke-modal .poruke__avatar,
   .poruke-modal .poruke__avatar-fallback {
     width: 30px;
@@ -1238,13 +1271,13 @@
   outline-offset: 2px;
 }
 
-/* Mail ikona crvena kad postoje nepročitane poruke */
+/* Mail ikona crvena kad postoje neproÄitane poruke */
 .naslov-forme__poruke--neprocitane {
   color: var(--c-red-900);
   opacity: 1;
 }
 
-/* Lucide mail ikona – CSS mask (stroke-only SVG).
+/* Lucide mail ikona â€“ CSS mask (stroke-only SVG).
    Sjena prati naslov_forme_text_shadow (3px 3px 6px) jer je ikona
    u istom kontekstu kao tekst naslova forme. */
 .poruke-icon--mail {
@@ -1263,9 +1296,9 @@
   -webkit-mask-repeat: no-repeat;
 }
 
-/* --- Blok: Responsive – naslov-forme na mobilnom ---
-   Breakpoint usklađen s 0-Common.css (640px).
-   Učitava se nakon 0-Kontrole.css / Lista.css / Meni.css pa
+/* --- Blok: Responsive â€“ naslov-forme na mobilnom ---
+   Breakpoint usklaÄ‘en s 0-Common.css (640px).
+   UÄitava se nakon 0-Kontrole.css / Lista.css / Meni.css pa
    sigurno pregazi njihov padding shorthand na .naslov-forme. */
 @media (max-width: 640px) {
   .naslov-forme {
@@ -1275,5 +1308,589 @@
     position: static;
     transform: none;
     margin-top: 0;
+  }
+}
+
+
+/* ========= Dodatak: layout modala poruka (bivši zasebni 00-Testni_modal.css, sada u ovom fajlu) ========= */
+
+/* =========================================================
+   Testni-modal (CSS klase ostaju radi kompatibilnosti s HTML-om).
+   Oslanja se na 0-Poruke.css za .kontrola-modal__* i .poruke-btn (stranice uključuju 0-Poruke.css).
+   Nativni resize: both na .testni-modal__dialog – preglednik crta grip u donjem desnom
+   kutu okvira dijaloga (vizualno uz podnožje).
+   Vanjski okvir: overflow:hidden (kao .poruke__dialog) da lista pošiljatelja ne širi dijalog –
+   scroll ostaje na .poruke__tablica-wrap (0-Poruke.css, flex-basis 0). Povijest: .poruke__napomena-div + scroll.
+   ========================================================= */
+
+.testni-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10006;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.testni-modal .poruke__tablica-wrap,
+.testni-modal .poruke__toggle-text {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/*
+ * Vertikalni scrollbar – isti izgled i ponašanje kao u 0-Poruke.css:
+ *   • .poruke__tablica-wrap (lista pošiljatelja)
+ *   • .poruke__napomena-scroll (povijest) → #…_edit_povijest (resize:none kao textarea poruke)
+ *   • .poruke__input-napomena (polje odgovora) → ovdje .testni-modal__edit-poruka
+ * Varijable: --tablica_sirina_scrol_bara, --tablica_scroll_bg, --tablica_scroll_klizac, --tablica_scroll_klizac_hover, --napomena_radius.
+ */
+@supports not selector(::-webkit-scrollbar) {
+  .testni-modal .poruke__tablica-wrap {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara, 10px);
+  background: var(--tablica_scroll_bg, #f0f0f0);
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac, #aaa);
+  border-radius: 6px;
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, #888);
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara, 10px);
+  background: transparent;
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac, #aaa) transparent;
+}
+.testni-modal .poruke__tablica-wrap::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac, #aaa) transparent transparent transparent;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara, 10px);
+  background: var(--tablica_scroll_bg, #f0f0f0);
+  border-top-right-radius: var(--napomena_radius, 4px);
+  border-bottom-right-radius: var(--napomena_radius, 4px);
+}
+.testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac, #aaa);
+  border-radius: 6px;
+}
+.testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, #888);
+}
+.testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara, 10px);
+  background: transparent;
+}
+.testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac, #aaa) transparent;
+}
+.testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac, #aaa) transparent transparent transparent;
+}
+.testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .testni-modal .testni-modal__napomena.testni-modal__edit-poruka {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara, 10px);
+  background: var(--tablica_scroll_bg, #f0f0f0);
+  border-top-right-radius: var(--napomena_radius, 4px);
+  border-bottom-right-radius: var(--napomena_radius, 4px);
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac, #aaa);
+  border-radius: 6px;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, #888);
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara, 10px);
+  background: transparent;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac, #aaa) transparent;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac, #aaa) transparent transparent transparent;
+}
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka::-webkit-scrollbar-corner {
+  background: transparent;
+}
+.testni-modal[aria-hidden="true"] {
+  display: none;
+}
+
+/* Jedan frame pri otvaranju: cijeli sloj nevidljiv dok JS postavi left/top/width/height (nema â€žmiganjaâ€). */
+.testni-modal.testni-modal--pending-layout {
+  visibility: hidden;
+}
+.testni-modal.testni-modal--pending-layout > .kontrola-modal__overlay {
+  opacity: 0 !important;
+}
+
+.testni-modal > .kontrola-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--modal_overlay_bg, rgba(0, 0, 0, 0.5));
+  opacity: 0;
+  transition: opacity var(--modal_fade_duration, 0.2s);
+}
+.testni-modal.kontrola-modal--dim > .kontrola-modal__overlay {
+  opacity: calc(var(--modal_overlay_dim_intensity, 50) / 100);
+}
+
+/*
+ * Širina/visina: lijevi stupac (240px) + desno polja – veći početni okvir od „samo textarea”.
+ * Usklađeno s js/0-Poruke.js (TESTNI_MODAL_MIN_DIALOG_*).
+ */
+.testni-modal__dialog {
+  position: relative;
+  z-index: 1;
+  max-width: 92vw;
+  width: min(720px, 92vw);
+  min-width: min(720px, 92vw);
+  height: min(400px, 85vh);
+  min-height: min(400px, 85vh);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border: var(--modal_border_w, 1px) solid var(--modal_border, #ccc);
+  border-radius: var(--panel_radius, 12px);
+  box-shadow: var(--panel_sjena, 0 6px 16px rgba(0, 0, 0, 0.35));
+  background: var(--modal_body_bg, #fff);
+  opacity: 0;
+  transition: opacity var(--modal_fade_duration, 0.2s);
+  overflow: hidden;
+  resize: both;
+}
+
+.testni-modal.kontrola-modal--open .testni-modal__dialog {
+  opacity: 1;
+}
+
+.testni-modal .kontrola-modal__header {
+  flex: 0 0 auto;
+  padding: var(--modal_header_padding_y, 0.75rem) var(--modal_header_padding_x, 1rem);
+  background: var(--modal_header_bg, #f5f5f5);
+  color: var(--modal_header_text, #333);
+  font-family: var(--modal_header_font_family, var(--font_family, sans-serif));
+  font-size: var(--modal_header_font_size, 1rem);
+  font-weight: var(--modal_header_font_weight, 600);
+  border-bottom: var(--modal_header_border_bottom, 1px solid #ccc);
+  user-select: none;
+}
+
+/*
+ * Tijelo: red kao u modalu Poruke â€“ lijevo .poruke__left (stilovi u 0-Poruke.css), desno vlastiti stupac.
+ * padding: 0 ovdje; rub i font na .testni-modal__desno.
+ */
+.testni-modal .kontrola-modal__body.testni-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  background: var(--modal_body_bg, #fff);
+  font-family: var(--font_family, sans-serif);
+  font-size: var(--font_size, 0.9rem);
+  color: var(--text, #333);
+}
+
+.testni-modal .testni-modal__desno {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* hidden: jedini vertikalni scroll na textarea poljima; visina stupca ostaje u tijelu modala (70/30 u .testni-modal__napomene). */
+  overflow: hidden;
+  /* Jedini horizontalni razmak od vertikalne linije tablice (.poruke__left border-right): lijevo 1rem, ostalo 12px. */
+  padding: 12px 12px 12px 1rem;
+  cursor: auto;
+}
+
+/*
+ * Kutni handle za cijeli dijalog na mobitelu (donji desni kut podnožja .testni-modal__footer).
+ * Na širokom ekranu skriven; stilovi samodostatni (ne ovise o 0-Kontrole.css).
+ * Vizual usklađen s .obrada-slika__resize-handle (0-Obrada_Slike.css).
+ */
+.testni-modal__footer-resize-corner {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  z-index: 4;
+  box-sizing: border-box;
+}
+.testni-modal__footer-resize-icon {
+  display: none;
+}
+
+/*
+ * Blok s dvije napomene (jedna ispod druge): 70% / 30% visine unutar desnog stupca.
+ * Å irina = 100% stupca (do ruba tablice ostaje samo padding na .testni-modal__desno).
+ * flex-basis 0: mora ispuniti .testni-modal__desno (ne visinu sadrÅ¾aja), inaÄe 7/3 dijele fiksnu malu kutiju
+ * i donji edit ostaje iste visine pri resizeu modala.
+ */
+.testni-modal__napomene {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  padding: 0;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.testni-modal__napomena-blok {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.testni-modal__napomena-blok:nth-child(1) {
+  flex: 7 1 0;
+  min-height: 0;
+}
+
+/*
+ * Gornji blok: .poruke__napomena-div + .poruke__napomena-scroll kao u 0-Poruke.html â€“ isti okvir, font i
+ * klase poruka (.poruke__msg--primljena, â€¦) pa boje/tokeni dolaze iz 0-Poruke.css bez dupliranja.
+ */
+.testni-modal__napomena-blok--povijest .poruke__napomena-div.testni-modal__povijest-okvir {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest {
+  /* NadjaÄaj .poruke__napomena-scroll { flex: 0 0 auto } da ispunjava visinu gornjeg bloka (70%). */
+  flex: 1 1 0;
+  min-height: 3em;
+  max-height: none;
+  -webkit-user-select: text;
+  user-select: text;
+  /*
+   * Namjerno bez resize:vertical (za razliku od starog .poruke-modal #_napomena na desktopu):
+   * na divu s overflow-y Chrome crta ::-webkit-resizer koji izgleda kao „grip” i na širokim
+   * ekranima ostaje vidljiv; polje nove poruke (.testni-modal__edit-poruka) je textarea s resize:none
+   * pa tamo gripa nema. Visinu povijesti daje flex (.testni-modal__napomene) + resize cijelog dijaloga.
+   */
+  resize: none;
+}
+/* UÄitavanje / nema odabira / greÅ¡ka â€“ isti vizual kao prazan #_napomena u 0-Poruke.js */
+.testni-modal__povijest-placeholder {
+  color: var(--c-gray-400, #aaa);
+  font-style: italic;
+  padding: 12px 0;
+}
+
+/* Donji blok: poruka + tipka PoÅ¡alji u jednom redu (poravnanje dna s ikonom kao u modalu Poruke). */
+.testni-modal__napomena-blok--poruka {
+  flex: 3 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * Red textarea | .poruke__posalji-btn: gap i Å¡irina kao .poruke__input-row (0-Poruke.css).
+ * align-items: stretch (ne flex-end): uz popreÄnu os u retku textarea mora rasti s visinom donjeg bloka (udio 30%),
+ * inaÄe ostaje intrinziÄna visina (rows + padding) i ne slijedi resize modala.
+ * Tipka: align-self:flex-end da vizualno ostane uz dno kao u modalu Poruke.
+ */
+.testni-modal__poruka-row {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.testni-modal__poruka-row .poruke__posalji-btn {
+  align-self: flex-end;
+  flex-shrink: 0;
+}
+
+/* U retku textarea dijeli Å¡irinu s fiksnom tipkom (width:0 + flex â€“ isti trik kao .poruke__input-napomena). */
+.testni-modal__poruka-row .testni-modal__napomena {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  /* Najmanje ~2 retka; uz align-items:stretch na retku visina raste s donjim blokom (udio 30%). */
+  min-height: calc(2 * 1.4em + 24px);
+  align-self: stretch;
+}
+
+.testni-modal__napomena {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 12px;
+  font: inherit;
+  -webkit-user-select: text;
+  user-select: text;
+  line-height: 1.4;
+  color: inherit;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--modal_body_bg, #fff);
+  min-width: 0;
+  resize: none;
+  overflow: auto;
+  outline: none;
+  box-shadow: var(--button_outer_shadow, var(--kontrole_sjena_slaba_2, 0 6px 16px rgba(0, 0, 0, 0.35)));
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (hover: hover) {
+  .testni-modal__napomena:hover:not(:disabled) {
+    border-color: var(--edit_border_focus, #4a90d9);
+    box-shadow: var(--edit_focus_shadow, var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0, 0, 0, 0.3)));
+  }
+}
+
+.testni-modal__napomena:focus:not(:disabled) {
+  border-color: var(--edit_border_focus, #4a90d9);
+  box-shadow: var(--edit_focus_shadow, var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0, 0, 0, 0.3)));
+}
+
+/*
+ * Polje nove poruke nema klase .kontrola-napomena (0-Poruke.css) pa mu inaÄe nedostaje vizual â€ždisabledâ€.
+ * Tokeni usklaÄ‘eni s .poruke-modal .kontrola-napomena:disabled u 0-Poruke.css.
+ */
+.testni-modal .testni-modal__napomena.testni-modal__edit-poruka:disabled {
+  background: var(--napomena_bg_disabled, #f0f0f0);
+  color: var(--napomena_text_disabled, #999);
+  border-color: var(--napomena_border_disabled, #ddd);
+  cursor: not-allowed;
+  resize: none;
+  box-shadow: var(--napomena_focus_shadow_disabled, none);
+}
+
+/*
+ * PodnoÅ¾je: kao .poruke-modal .poruke__footer u 0-Poruke.css (space-between, lijevo +/trash, desno Povratak).
+ * Desni padding ostavlja zrak uz nativni resize grip dijaloga.
+ */
+.testni-modal .kontrola-modal__footer.testni-modal__footer.poruke__footer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--modal_footer_padding_y, 0.75rem) calc(var(--modal_footer_padding_x, 1rem) + 10px)
+    var(--modal_footer_padding_y, 0.75rem) var(--modal_footer_padding_x, 1rem);
+  background: var(--modal_footer_bg, #f5f5f5);
+  border-top: var(--modal_footer_border_top, 1px solid #ccc);
+}
+
+@media (max-width: 768px) {
+  .testni-modal__dialog {
+    resize: none;
+    width: 95vw;
+    max-width: 95vw;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .testni-modal {
+    padding: 1rem 1rem 2rem 1rem;
+  }
+
+  .testni-modal .kontrola-modal__body.testni-modal__body {
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  /*
+   * Mobitel: (1) tablica + toggle kroz cijelu širinu tijela modala; (2) ispod red „nova poruka“
+   * (textarea lijevo, tipka Pošalji desno – isti DOM kao na PC-u); (3) na dnu povijest ispunjava ostatak
+   * visine, scroll ostaje na #…_edit_povijest. PC ostaje red (lijevo tablica | desno napomene) – sve
+   * promjene samo u ovom @media bloku.
+   */
+  /*
+   * Lijevi stupac: u tijelu modala flex-direction je column, pa bazni .poruke__left { flex: 0 0 240px }
+   * (bez ovog overridea) postavlja VISINU 240px. Kad smo stavili flex: 0 0 auto, visina postane „auto“
+   * od sadržaja; .poruke__tablica-wrap ima flex: 1 1 0 + min-height: 0 pa u tom slučaju dobije 0 px – tablica
+   * nestane. Rješenje: fiksna glavna veličina (visina) bloka, scroll samo na .poruke__tablica-wrap.
+   */
+  .testni-modal .poruke__left {
+    flex: 0 0 200px;
+    align-self: stretch;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: none;
+    border-bottom: 1px solid var(--panel_border, #ddd);
+    box-sizing: border-box;
+  }
+
+  .testni-modal .poruke__left .poruke__tablica-wrap {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .testni-modal .testni-modal__desno {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    /* Vanjski stupac ne skrola – inače bi cijeli desni stupac imao scroll umjesto samo povijesti. */
+    overflow: hidden;
+    padding: 12px;
+    padding-bottom: 16px;
+    box-sizing: border-box;
+  }
+
+  /*
+   * Podnožje: kontekst za apsolutni kutni handle; desni padding rezervira prostor da tipka Povratak
+   * ne upada ispod 26px ikone (handle ostaje vizualno u kutu podnožja).
+   */
+  .testni-modal .kontrola-modal__footer.testni-modal__footer.poruke__footer {
+    position: relative;
+    padding-right: calc(var(--modal_footer_padding_x, 1rem) + 36px);
+  }
+
+  .testni-modal .testni-modal__napomene {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+  }
+
+  /* DOM: prvo povijest, pa poruka – order prebacuje vizualno: poruka gore, povijest dolje. */
+  .testni-modal .testni-modal__napomena-blok.testni-modal__napomena-blok--poruka {
+    order: 1;
+    flex: 0 0 auto !important;
+    min-height: 0;
+  }
+  .testni-modal .testni-modal__napomena-blok.testni-modal__napomena-blok--povijest {
+    order: 2;
+    flex: 1 1 auto !important;
+    min-height: 0;
+  }
+
+  .testni-modal__poruka-row {
+    flex: 0 0 auto;
+    min-height: 0;
+    width: 100%;
+  }
+
+  /* Kut podnožja: 26×26 px, ikona dijagonalnih strelica (isto kao obrada slike na mobu). */
+  .testni-modal__footer-resize-corner {
+    display: flex;
+    width: 26px;
+    height: 26px;
+    align-items: center;
+    justify-content: center;
+    cursor: se-resize;
+    color: var(--text, #333);
+    background: var(--modal_footer_bg, #f5f5f5);
+    border: 2px solid var(--panel_border, #999);
+    border-right: none;
+    border-bottom: none;
+    border-top-left-radius: 8px;
+    box-shadow: -2px -2px 6px rgba(0, 0, 0, 0.1);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .testni-modal__footer-resize-icon {
+    display: block;
+    width: 14px;
+    height: 14px;
+    position: relative;
+    right: -3px;
+    bottom: -3px;
+  }
+
+  .testni-modal .poruke__avatar,
+  .testni-modal .poruke__avatar-fallback {
+    width: 30px;
+    height: 30px;
+  }
+  .testni-modal .poruke__cell--img {
+    width: 36px;
+  }
+  .testni-modal .poruke__tablica td {
+    padding: 4px 4px;
   }
 }

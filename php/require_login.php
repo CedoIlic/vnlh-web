@@ -88,16 +88,14 @@ if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'
  *   (vnlh_emit_html_file html/0-Obrada_Slike.html). Učitava ga 0-Obrada_Slike.js preko fetch(); nije u meniju
  *   kao zasebna stavka. Bez ovog izuzetka fetch bi slijedio 302 na Meni.php i modal bi se ne pokrenuo.
  *   Zaštita: ista valjana sesija i ostale provjere u ovom fajlu kao za ostale stranice.
- * - 0-Poruke.php – HTML fragment modala za sustav poruka (vnlh_emit_html_file 0-Poruke.html).
- *   Učitava ga 0-Poruke.js preko fetch(); globalni modal, nije stavka menija.
- * - 00-Testni_modal.php – HTML fragment testnog modala (vnlh_emit_html_file; samo vnlh_paths, bez ovog require_login).
- *   Učitava ga 00-Testni_modal.js preko fetch().
+ * - 0-Poruke.php – HTML fragment glavnog modala „Poruke” (vnlh_emit_html_file html/0-Poruke.html).
+ *   Učitava ga js/0-Poruke.js preko fetch(); nije stavka menija.
  *
  * Kad dodaješ novi sličan „fragment“ endpoint, ili ga dodaj u ovaj uvjet (uz komentar), ili
  * uključi šablon u glavnu HTML stranicu da ne treba zaseban PHP.
  */
 $scriptBase = basename($_SERVER['SCRIPT_NAME'] ?? '');
-if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !== 'test.php' && $scriptBase !== '0-Obrada_Slike.php' && $scriptBase !== '0-Poruke.php' && $scriptBase !== '00-Testni_modal.php') {
+if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !== 'test.php' && $scriptBase !== '0-Obrada_Slike.php' && $scriptBase !== '0-Poruke.php') {
     $allowed = isset($_SESSION['vnlh_meni_dopustene']) && is_array($_SESSION['vnlh_meni_dopustene'])
         ? $_SESSION['vnlh_meni_dopustene'] : [];
     $wantHtml = preg_replace('/\.php$/i', '.html', $scriptBase);
