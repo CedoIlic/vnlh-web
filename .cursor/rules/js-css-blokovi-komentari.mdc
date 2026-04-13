@@ -1,0 +1,61 @@
+---
+description: Zaglavlja i komentari blokova u JS, CSS, HTML, PHP; tokeni s komentarom svrhe
+globs: "**/*.js, **/*.css, **/*.html, **/*.php"
+alwaysApply: false
+---
+
+# Zaglavlja i komentari blokova (JS, CSS, HTML, PHP)
+
+## JS datoteke s Tablica_Zaglavlje
+
+U **svakom** novostvorenom JS fajlu koji ima `Tablica_Zaglavlje`, **na početku** (odmah na vrhu, ispod eventualnog file-commenta) mora biti **zaglavlje s objašnjenjem**: što skripta radi, koje API-je koristi, kratki pregled strukture. Primjer:
+
+```javascript
+/* =========================================================
+   Stupnjevi_CRUD.js
+   Tablica stupnjeva po obredu + edit panel (Naziv stupnja, Stupanj).
+   Koristi CommonCRUD, 0-Kontrole, 0-Common (CommonNumericValidation).
+   API: Stupnjevi_CRUD_sve.php?obred_id=, _upis.php, _izmjena.php, _brisanje.php.
+   ========================================================= */
+```
+
+## Blokovi u JS i CSS
+
+- **Svaki novouvedeni blok** u JS i u CSS **mora započeti komentarom**.
+- Ovo vrijedi za: `function`, `var` (grupe varijabli), IIFE (`(function () { ... })();`), sekcije kao "Blok: API", "Blok: Razno", te sve druge logičke blokove.
+- Primjeri:
+  - `/* --- Blok: Konfiguracija tablice --- */`
+  - `/* --- Globalno stanje --- */`
+  - `/** Popuni select Obred iz Obredi_CRUD_sve.php. */` iznad funkcije
+  - U CSS: `/* --- Blok: Tijelo edit panela --- */`
+
+## Blokovi u HTML
+
+- **Komentiraj blokove** u HTML fajlovima **gdje god je to moguće**: paneli, sekcije, grupe kontrola, footer, header.
+- Koristi HTML komentare: `<!-- ... -->`.
+- Primjeri:
+  - `<!-- Blok: Panel – select Obred -->`
+  - `<!-- Blok: Panel tablice (Naziv, Stupanj) -->`
+  - `<!-- Blok: Edit panel – lijevo slika, desno kontrole; footer CRUD tipke -->`
+
+## Blokovi u PHP
+
+- **Komentiraj blokove** u PHP fajlovima **na isti način** kao u JS/CSS: svaki logički blok (grupa varijabli, funkcija, obrada zahtjeva, SQL, izlaz) započinje komentarom.
+- Koristi `//` ili `/* ... */` ovisno o duljini.
+- Primjeri:
+  - `// --- Blok: Dohvat parametara ---`
+  - `/* --- Validacija i priprema za upis --- */`
+  - `/** Vraća JSON niz stupnjeva za obred_id. */` iznad funkcije
+
+## Tokeni – svrha u komentaru
+
+- Kod **dodavanja novih tokena** (npr. kodovi poruka, konstante, ključevi) **napiši svrhu tokena u komentaru u istoj liniji**, u nastavku tokena.
+- Primjer:
+  - `'001',  // Upis uspješan`
+  - `const ERR_DUPLICATE = '106';  // Duplikat nije dopušten`
+  - U nizu: `'obred_id' => $id,  // ID obreda za filtriranje stupnjeva`
+
+## Neprekidno korištenje
+
+- **Nikad ne briši** ove komentare osim u slučaju kada se **briše cijeli blok** (npr. uklanjaš cijelu funkciju ili cijelu sekciju).
+- Pri refaktoriranju zadrži odgovarajuće komentare uz nove blokove; pri premještanju bloka premjesti i komentar.

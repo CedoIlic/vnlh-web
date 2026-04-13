@@ -1,0 +1,4 @@
+# Terminal: samo kad je potrebno
+
+- **Ne pokreći** terminal naredbe koje ništa ne rade za projekt (npr. `echo ...`, prazni echo, "no-op" naredbe, sleep za test).
+- Terminal koristi samo kad je stvarno potrebno: build, test, install, pokretanje servera, provjera izlaza, itd.

@@ -1,0 +1,19 @@
+---
+description: Kontekst – Cursor Welcome stranica greška i šta smo uradili
+alwaysApply: true
+---
+
+# Kontekst: Cursor Welcome stranica
+
+Korisnik je imao grešku pri otvaranju **Help → Welcome** u Cursor-u:
+- Poruka: "The editor could not be opened due to an unexpected error."
+- U Console (Developer Tools): **Unable to resolve resource walkThrough://vscode_getting_started_page**
+
+Šta smo uradili:
+1. Otvorili Developer Tools (Ctrl+Shift+P → Toggle Developer Tools), pogledali Console i dobili gornju grešku.
+2. Očistili cache: u **%APPDATA%\Cursor** preimenovali foldere **Cache** i **CachedData** u Cache_staro i CachedData_staro – greška ostala.
+3. Tražili **CachedExtensions** u istom folderu – folder nije postojao. Greška i dalje.
+4. U Apps (Windows) za Cursor postojala je samo opcija **Deinstaliraj**, nije bilo Repair/Modify.
+5. Korak koji sledi: **reinstalacija Cursor-a** – preuzeti sa https://cursor.com, zatvoriti Cursor, pokrenuti installer (reinstall preko postojeće), ne brisati %APPDATA%\Cursor, pa ponovo probati Help → Welcome.
+
+Ako korisnik nastavi razgovor o ovoj temi: pitaj da li je uradio reinstalaciju i da li Welcome sada radi; ako ne, nastavi od tog koraka.

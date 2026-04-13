@@ -1,0 +1,92 @@
+---
+description: Obavezna pravila VNLH WEB – kreni, verzija, komentari, tablice/zaglavlja
+alwaysApply: true
+---
+
+# Obavezna pravila (VNLH WEB)
+
+Agent **mora** slijediti sve točke u ovom dokumentu. Nova obavezna pravila **dodaj ovdje** (novi pododjeljak), ne u rasute zasebne datoteke osim ako je poseban razlog (npr. samo za jedan jezik).
+
+---
+
+## 1. Čekaj „kreni" prije pisanja koda
+
+- **Nikad ne piši kod** (izmjene, novi fajlovi, refaktoriranje) prije nego korisnik eksplicitno kaže **„kreni"** (ili ekvivalent: „nastavi", „radi", itd.).
+- Do tada: možeš planirati, objašnjavati, pitati, predložiti korake – ali **ne izvršavaj** pisanje koda.
+- Kad korisnik napiše „kreni" (ili slično), tek onda kreni s implementacijom.
+
+---
+
+## 2. Verzija aplikacije
+
+- **Broj verzije** (badge „V x.x.x", `Version_Check.php`, itd.) definira se **isključivo** u `js/00-Version.js`: linija `window.VNLH_VERZIJA = "…";`.
+- Format: **major.minor.revizija** (npr. `10.15.01`).
+  - **Major i minor** mijenja **isključivo korisnik** — agent ih **nikad ne smije** sam mijenjati.
+  - **Revizija** (treća grupa) — agent smije povećati reviziju pri bumpu verzije.
+- Parametri `?v=` na `<script>` / `<link>` služe samo za **keš** – nisu zasebna „verzija aplikacije".
+- **Agent ne pita** korisnika treba li bumpati verziju niti „gdje staviti `?v=`” — **bez pitanja automatski** primijeni pravila u odjeljcima **2.1–2.3** i **2.5**; u odgovoru **ne navodi** pitanja tipa „želiš li bump” osim ako korisnik eksplicitno zapita o verziji.
+
+### 2.1. Što mijenjati kad se digne samo **revizija** (rad na određenim modulima)
+
+- U `00-Version.js` **prvo** povećaj **samo reviziju** kad zadatak to zahtijeva (promjena koda koju prati verzija).
+- **`?v=` i revizija u `00-Version.js`:** ažuriraj **isključivo u modulima / na HTML (ili PHP) ulazima na kojima se u tom zadatku radilo** — samo za `<script>` / `<link>` koji učitavaju **stvarno dirane** `.js` / `.css` datoteke. Primjer: promjena `Clanovi_CRUD.js` → samo `html/Clanovi_CRUD.html` (i drugi fajl u istom modulu ako eksplicitno uključuje taj JS), **ne** sve ostale CRUD stranice.
+- **`00-Version.js`:** novi `?v=` za `00-Version.js` **samo** na istim tim stranicama **ako** u tom koraku mijenjaš sadržaj `00-Version.js`; inače **ne** širi novi `?v=` na sve `.html` „zbog revizije”.
+- **Posebno:** ako se mijenja **samo** jedan resurs (npr. samo `00-Testni_modal.css`), digni `?v=` **samo** za taj resurs na stranicama koje ga učitavaju — **ne** masovno mijenjati `00-Version.js?v=` na stranicama izvan tog modula (npr. `Login.html`) ako nisu dio zadatka.
+
+### 2.2. Zajednički (rijetko mijenjani) fajlovi
+
+- Ako se mijenja **zajednički** resurs od kojeg ovise gotovo sve stranice (npr. `0-Common.js`, `0-Poruke.js`, `0-Kontrole.css`, …) — tada **treba** uskladiti `?v=` na **svim** stranicama koje taj resurs učitavaju (to se događa rijetko).
+
+### 2.3. **Minor** ili **major** (mijenja korisnik)
+
+- Kad korisnik promijeni **minor** ili **major**, tada je u redu (i očekivano) **globalno** uskladiti `?v=` na svim relevantnim HTML / ulaznim predlošcima — „veliki” bump, puni cache-bust.
+
+### 2.4. Planirano: centralni `?v=` preko PHP (opcija 2)
+
+- **Status:** dogovoreno s korisnikom, **još nije** uvedeno u kod — primijeniti kad tim nađe vremena.
+- **Cilj:** smanjiti **masovno** ručno mijenjanje `?v=` u desecima `.html` datoteka: **jedan zajednički PHP include** (npr. `php/asset_versions.php` ili postojeći zajednički ulaz) koji izvozi jednu konstantu / varijablu (npr. `$VNLH_ASSET_V` ili čita reviziju iz jednog mjesta), a CRUD / meni predlošci u `<link>` / `<script>` koriste `?v=<?= … ?>`.
+- **Napomena za implementaciju:** `window.VNLH_VERZIJA` u `js/00-Version.js` i dalje je izvor za **badge** aplikacije; usklađivanje s centralnim `?v=` (isti string ili odvojeno) — odluka pri radu. Do uvođenja **2.4** vrijede odjeljci **2.1–2.3** i **2.5**.
+
+### 2.5. Moratorium: bez masovnog `?v=` na svim `.html` (do uvođenja **2.4**)
+
+- **Dok ne postoji** centralni PHP iz **2.4**, **zabranjeno** je u jednom koraku **ažurirati `?v=` na svim ili gotovo svim** `.html` datotekama repozitorija **samo** zbog nove **revizije** u `00-Version.js` / `window.VNLH_VERZIJA` ili „da sve stranice budu na istom broju” bez promjene major/minor.
+- **Dopušteno** masovno usklađivanje `?v=` na **svim** relevantnim ulazima **samo** kad korisnik promijeni **major** ili **minor** — vidi **2.3**.
+- **Ovo nije** zabranjeno (nije „bump verzije aplikacije na svim html” u smislu moratorija): ažurirati `?v=` **samo za URL konkretnog diranog** `.css` / `.js` na stranicama koje ga učitavaju (**2.1**), uključujući **sve** stranice koje uključuju **zajednički** resurs kad se on promijeni (**2.2**) — to je keš **tog** resursa, ne globalni sync cijelog predloška zbog revizije badgea.
+
+---
+
+## 3. Detaljno komentiranje koda
+
+- Novi i mijenjani kod **mora** imati **dovoljno detaljne komentare** da sljedeći čitatelj (ili agent) razumije namjeru, rubne slučajeve i ovisnosti.
+- Komentiraj **logiku** (zašto), ne samo što linija radi na razini sintakse ako je očito.
+- Za složenije funkcije, grane i integracije s API-jem/bazom: kratki blok komentara ili retci uz kritične dijelove.
+- Ne briši postojeće smisleno komentare; ako mijenjaš ponašanje, **ažuriraj** komentar.
+
+---
+
+## 4. JS s tablicom – konstanta zaglavlja i dokumentacija
+
+Primjenjuje se na **svaki** `*.js` koji definira ili puni **tablicu** (lista stupaca / redaka, grid).
+
+- Zaglavlje stupaca (nazivi, konfiguracija kolona, širine, tipovi, rendereri itd.) mora biti u **jednoj (ili jasno grupiranoj) konstanti** (npr. `ZAGLAVLJE_TABLICE`, `COLS_*`, `TABLE_HEADER` – ime uskladi s postojećim stilom datoteke).
+- **Neposredno prije** te konstante obavezno stavi **blok komentara** koji za **svaki parametar / svako polje** u objektu ili nizu objašnjava:
+  - **što znači** (uloga u tablici),
+  - **moguće vrijednosti** (enumeracija, tip, primjer) ili „npr. string | broj",
+  - ako je bitno: **default**, **obavezno/neobavezno**, ili veza s backend poljem.
+- Ako se struktura zaglavlja proširi ili promijeni, **ažuriraj** i komentar i konstantu.
+
+---
+
+## 5. Slovne greške (samo projekt)
+
+- U **datotekama projekta** (UI stringovi, komentari, dokumentacija u repou) **ispravljaj očite slovne/pisne greške** kad diraš taj tekst ili kad je ispravak svrha zadatka.
+- **Korisnikove poruke u chatu ne ispravljaj** i ne „popravljaj” ih u odgovoru, **osim** ako ti je oblik (tipfel, nedostaju slova) **potreban da uopće razumiješ** što traži — tada možeš ukratko parafrazirati ili pitati za potvrdu.
+- Kad ispraviš grešku u projektu, **kratko obavijesti** što si promijenio (npr. u komentaru ili stringu).
+
+---
+
+## 6. Modal poruke – visina (PC)
+
+- **Inicijalno snimanje:** `min_povjest`, `min_poruka`, `min_modal_visina`, `min_modal_sirina`, `size_diference` u `js/0-Poruke.js` (`snimiInicijalneMinDimenzijeModala`) nakon layouta; `size_diference` (= `min_modal_visina` − `min_povjest` − `min_poruka`) se osvježava nakon učitavanja sadržaja (`renderPoruke` / `clearSelection`).
+- **Vanjski okvir (široki ekran):** `.poruke__dialog` ima **`resize: both`** + `overflow: hidden` (nativni grip; `auto` na cijelom dijalogu činio bi scroll pa sadržaj može „curiti” ispod podnožja); `ResizeObserver` na dijalogu ne dopušta dimenzije ispod `min_modal_sirina` / `min_modal_visina` niti ispod visine koja zadovoljava formulu; pri vertikalnom resizeu modala mijenja se samo visina bloka povijesti (poruka zadržava visinu), dok se širina povijesti vizualno prati kroz flex desnog stupca uz konstantan `size_diference`. **`primijeniVisinuModalaFormulom`** postavlja `dialog.style.height` = povijest + poruka + `size_diference` (uz donje granice `min_povjest` / `min_poruka`). Povijest se ne smije povećavati korisničkim vertikalnim resizeom. Custom `.poruke__resize-corner` u DOM-u, CSS ga skriva. **Edit paneli:** `.kontrola-panel--resize-{y,x,both}` na desktopu nativni `resize` + skrivena `.kontrola-panel__resize-bar` (`0-Kontrole.css` @media min-width 769px); na mobu traka.
+- **Donja granica povijesti:** `izracunajVisinuNapomene` + `napomenaPocetnaVisina` / `porukeMinVisinaPovijestiPx` pri dragu.

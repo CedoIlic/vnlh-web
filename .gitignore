@@ -9,7 +9,6 @@
 
 # Editor/IDE postavke (osobne, ne dijele se)
 .vscode/
-.cursor/
 .idea/
 
 # OS smeće
@@ -24,9 +23,11 @@ Desktop.ini
 *~
 
 # VAŽNO: Konfiguracije s lozinkama
+# .cursor/ nije cijeli ignoriran: pravila u .cursor/rules/ mogu u git; MCP ostaje izvan repoa.
 php/vnlh_db_connect.php
 php/config.php
 config.php
+.cursor/mcp.json
 .env
 .env.local
 

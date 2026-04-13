@@ -1,0 +1,13 @@
+---
+description: PHP vraća -1 za uspjeh, inače kod greške (npr. 100)
+globs: php/**/*.php
+alwaysApply: false
+---
+
+# PHP – povratne vrijednosti
+
+- **Uspjeh:** PHP vraća **-1** kad je sve u redu (npr. `return -1;` na kraju include datoteke ili izlaz skripte).
+- **Greška:** U slučaju greške vraća **brojčani kod greške** (npr. 100 za nemogućnost konekcije na bazu, 200 za SQL grešku).
+- **SQL greška:** Pri SQL grešci skripta vraća **200** i kod(ove) SQL greške, npr. `echo '200,' . $mysqli->errno;` ili `echo '200,' . $e->getCode();`. Klijent prikazuje poruku 200 (0-Poruke_Tekstovi.js) i zamjenjuje placeholder #1 tim kodom/kodovima.
+- **00_db.php:** Pri uključivanju (`require_once`): kod nemogućnosti konekcije vraća **100**, inače vraća **-1**. Pozivatelj provjerava povratnu vrijednost i ako nije -1, šalje taj kod klijentu i prekida izvođenje.
+- **Obredi_CRUD (i ostali PHP koji koriste 00_db.php):** Nakon `require_once '00_db.php'` provjeri povratnu vrijednost; ako nije -1, ispiši je (npr. `echo $kod`) i `exit`.

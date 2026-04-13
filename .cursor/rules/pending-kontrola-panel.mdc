@@ -1,0 +1,26 @@
+---
+description: Na čekanju – kontrola panel/kartica (kao Bootstrap panel, bez Bootstrapa)
+globs: 
+alwaysApply: false
+---
+
+# Na čekanju: KONTROLA PANEL
+
+Korisnik želi kontrolu identičnu Bootstrapovom panelu/kontejneru, s **potpunom kontrolom bez Bootstrapa**.
+
+Kad kaže da nastavljamo s panelom (nakon što riješe sitne probleme s tablicom), uvesti:
+
+1. **Tokeni u 0-Common.css** – nova grupa npr. PANEL (ili KONTROLA PANEL): okvir (debljina, boja, radius), sjena (iz SJENE – KONTROLA), pozadina kontejnera/zaglavlja/podnožja, tipografija i padding zaglavlja/tijela/podnožja.
+
+2. **CSS u 0-Kontrole.css** – sekcija KONTROLA PANEL: `.kontrola-panel`, `.kontrola-panel__header`, `.kontrola-panel__body`, `.kontrola-panel__footer`; sva svojstva eksplicitno iz tokena, zaštita od Bootstrapa.
+
+3. **Struktura**: vanjski kontejner (okvir, radius, sjena, pozadina) + opcionalno zaglavlje + tijelo (sadržaj) + opcionalno podnožje. HTML primjer:
+   ```html
+   <div class="kontrola-panel">
+     <div class="kontrola-panel__header">Naslov</div>
+     <div class="kontrola-panel__body">Sadržaj...</div>
+     <div class="kontrola-panel__footer">Podnožje (opcionalno)</div>
+   </div>
+   ```
+
+Zaglavlje i podnožje opcionalni. Naziv PANEL ili KARTICA – po želji korisnika.
