@@ -1,0 +1,55 @@
+# Ulaz: prvo prijava (php/Login.php); index.php = početna nakon prijave; index.html → index.php.
+DirectoryIndex php/Login.php
+
+# --- Točka 6: Zabrana listinga direktorija ---
+Options -Indexes
+
+# --- Točka 3: PHP postavke (produkcija) ---
+# display_errors isključen – PHP greške ne smiju biti vidljive posjetiteljima.
+# log_errors uključen – greške i dalje idu u server log.
+php_flag display_errors Off
+php_flag log_errors On
+php_value error_reporting 0
+
+# --- Točka 5: Sigurnosni HTTP headeri ---
+<IfModule mod_headers.c>
+    # Zabrana umetanja u iframe (clickjacking zaštita)
+    Header always set X-Frame-Options "DENY"
+    # Browser ne smije "pogađati" MIME tip odgovora
+    Header always set X-Content-Type-Options "nosniff"
+    # Referrer: šalje samo origin, bez punog URL-a, samo na HTTPS
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # HSTS: uključiti tek nakon što potvrdiš da HTTPS radi ispravno na serveru.
+    # Kad potvrdiš, ukloni # na sljedećoj liniji.
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # --- Točka 4: HTTPS redirect (produkcija) ---
+    # Preskače localhost i 127.0.0.1 da lokalni razvoj i dalje radi na HTTP.
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP_HOST} !^localhost$ [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1$
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Stari bookmarki / linkovi na html/*.php → php/ (PHP je samo u php/; html/ je samo .html)
+    RewriteRule ^html/([^/]+\.php)$ php/$1 [L,R=301]
+
+    # html/...html: ako to NIJE stvarna datoteka (pogrešan .html uz ime php endpointa), preusmjeri na php/...php.
+    # Pokriva sve takve slučajeve; stvarni html/Clanovi_CRUD.html itd. ostaju (REQUEST_FILENAME postoji).
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^html/(.+)\.html$ php/$1.php [L,R=301,QSA,NC]
+
+    # U php/ ne postoje .html datoteke – bilo koji php/...html → ...php
+    RewriteRule ^php/(.+)\.html$ php/$1.php [L,R=301,QSA,NC]
+
+    # index u korijenu prije općeg ...html → php (da se index.html ne mapira na php/index.php)
+    RewriteRule ^index\.html$ index.php [L,R=302]
+
+    # Jedan segment ...html u korijenu (nije datoteka/mapa) → php/...php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^([^/]+)\.html$ php/$1.php [L,R=301,QSA,NC]
+</IfModule>

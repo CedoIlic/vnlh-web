@@ -1,0 +1,104 @@
+<!-- =========================================================
+     0-Poruke.html
+     Fragment modala za sustav poruka.
+     Učitava ga 0-Poruke.js preko fetch('0-Poruke.php');
+     placeholder __ID_PREFIX__ zamjenjuje se s idPrefix iz init opcija.
+     ========================================================= -->
+<div id="__ID_PREFIX__" class="poruke-modal kontrola-modal--dim" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="__ID_PREFIX___header">
+    <div class="kontrola-modal__overlay"></div>
+    <div class="poruke__dialog">
+
+        <!-- Blok: Zaglavlje – naslov "Poruke" + refresh ikona desno -->
+        <div class="kontrola-modal__header poruke__header" id="__ID_PREFIX___header">
+            <div class="poruke__header-title">Poruke</div>
+            <button type="button" id="__ID_PREFIX___refresh" class="poruke__refresh-btn" aria-label="Osvježi poruke" title="Osvježi poruke">
+                <svg class="poruke__refresh-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M2.985 19.644l3.181-3.182"/></svg>
+            </button>
+        </div>
+
+        <!-- Blok: Tijelo modala – lijevo tablica pošiljatelja, desno poruke + input -->
+        <div class="kontrola-modal__body poruke__body">
+
+            <!-- Blok: Lijeva strana – toggle + tablica pošiljatelja -->
+            <div class="poruke__left">
+
+                <!-- Blok: Toggle switch – Sve poruke / Samo nepročitane -->
+                <div class="poruke__toggle-row">
+                    <label class="poruke__toggle-label" id="__ID_PREFIX___toggle_label">
+                        <input type="checkbox" id="__ID_PREFIX___toggle" class="poruke__toggle-input" aria-label="Filtar poruka">
+                        <span class="poruke__toggle-slider"></span>
+                        <span class="poruke__toggle-text" id="__ID_PREFIX___toggle_text">Sve poruke</span>
+                    </label>
+                </div>
+
+                <!-- Blok: Tablica pošiljatelja – 3 kolone bez zaglavlja: slika, ime, nepročitane -->
+                <div class="poruke__tablica-wrap" id="__ID_PREFIX___tablica_wrap">
+                    <table class="poruke__tablica" id="__ID_PREFIX___tablica">
+                        <tbody id="__ID_PREFIX___tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Blok: Desna strana – scrollable div za poruke + input za odgovor -->
+            <div class="poruke__right">
+                <!-- Blok: Povijest razgovora – vanjski .poruke__napomena-div (border, sjena), overflow:visible;
+                     scroll na .poruke__napomena-scroll (overflow-y:auto). -->
+                <div class="poruke__napomena-div">
+                    <div id="__ID_PREFIX___napomena" class="poruke__napomena-scroll" aria-live="polite" aria-label="Poruke razgovora"></div>
+                    <!-- Resize u kutu: na PC-u mali grip (dvije paralelne crte); SVG strelice za eventualni mobilni prikaz. -->
+                    <button type="button" id="__ID_PREFIX___resize_povijest" class="poruke__resize-corner poruke__resize-corner--povijest" aria-label="Povuci za promjenu veličine" title="Promjena veličine">
+                        <span class="poruke__resize-grip" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true" width="11" height="11"><line x1="1" y1="8.5" x2="5" y2="4.5"/><line x1="4.5" y1="10.5" x2="9.5" y2="5.5"/></svg>
+                        </span>
+                        <svg class="poruke__resize-corner-icon poruke__resize-corner-icon--arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                    </button>
+                </div>
+
+                <!-- Blok: Textarea za odgovor + tipka Pošalji -->
+                <div class="poruke__input-row">
+                    <textarea id="__ID_PREFIX___input" class="kontrola-napomena poruke__input-napomena" placeholder="Upiši odgovor…" aria-label="Odgovor na poruku" rows="2" disabled></textarea>
+                    <button type="button" id="__ID_PREFIX___posalji" class="poruke__posalji-btn" aria-label="Pošalji" title="Pošalji" disabled>
+                        <svg class="poruke__posalji-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg>
+                    </button>
+                    <button type="button" id="__ID_PREFIX___resize_poruka" class="poruke__resize-corner poruke__resize-corner--poruka" aria-label="Povuci za promjenu veličine" title="Promjena veličine">
+                        <span class="poruke__resize-grip" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true" width="11" height="11"><line x1="1" y1="8.5" x2="5" y2="4.5"/><line x1="4.5" y1="10.5" x2="9.5" y2="5.5"/></svg>
+                        </span>
+                        <svg class="poruke__resize-corner-icon poruke__resize-corner-icon--arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blok: Podnožje – lijevo ikone (nova poruka + brisanje), desno Povratak -->
+        <div class="kontrola-modal__footer poruke__footer">
+            <div class="poruke__footer-left">
+                <button type="button" id="__ID_PREFIX___nova" class="poruke__icon-btn" aria-label="Nova poruka" title="Nova poruka">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                </button>
+                <button type="button" id="__ID_PREFIX___brisi" class="poruke__icon-btn" aria-label="Obriši razgovor" title="Obriši razgovor" disabled>
+                    <span class="poruke-icon--trash" aria-hidden="true"></span>
+                </button>
+            </div>
+            <div class="poruke__footer-right">
+                <button type="button" id="__ID_PREFIX___povratak" class="poruke-btn poruke-btn--povratak">
+                    <span class="poruke-btn__outer"><span class="poruke-btn__inner"><span class="poruke-btn__label">Povratak</span></span></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Resize modala: donji desni kut – PC grip; strelica u klasama za budući mob. -->
+        <button type="button" id="__ID_PREFIX___resize_modal" class="poruke__resize-corner poruke__resize-corner--modal" aria-label="Povuci za promjenu veličine" title="Promjena veličine">
+            <span class="poruke__resize-grip" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true" width="11" height="11"><line x1="1" y1="8.5" x2="5" y2="4.5"/><line x1="4.5" y1="10.5" x2="9.5" y2="5.5"/></svg>
+            </span>
+            <svg class="poruke__resize-corner-icon poruke__resize-corner-icon--arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </button>
+
+        <!-- Blok: Popup za odabir korisnika (nova poruka) – prikazuje se klikom na + -->
+        <div id="__ID_PREFIX___popup_korisnici" class="poruke__popup" style="display:none">
+            <input type="text" id="__ID_PREFIX___popup_filter" class="poruke__popup-filter" placeholder="Pretraži korisnika…" aria-label="Pretraži korisnika" />
+            <div id="__ID_PREFIX___popup_lista" class="poruke__popup-lista"></div>
+        </div>
+    </div>
+</div>

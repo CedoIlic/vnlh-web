@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Podešavanje Teme</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+</head>
+
+<body>
+
+<div class="naslov-forme">
+    <h2>Podešavanje Teme</h2>
+</div>
+
+<div class="page-container">
+    <!-- Panel 1: kontrola-tablica unutar panela -->
+    <div class="kontrola-panel-tablica kontrola-panel-tablica--has-footer kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div class="alati-teme__tablica-toolbar">
+                <span class="kontrola-labela mb-0" aria-hidden="true">Kolona (1–20):</span>
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="alatiTemeN" name="n" value="5" class="kontrola-edit alati-teme__edit-kolona" placeholder="5" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Kolona 1 do 20">
+                <button type="button" id="btnRefresh" class="kontrola-btn">
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label">Obnovi</span>
+                        </span>
+                    </span>
+                </button>
+            </div>
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+        <div class="kontrola-panel__footer alati-teme__tablica-footer">
+            <div class="alati-teme__tablica-footer-left">
+                <button type="button" id="btnDodajRed" class="kontrola-btn">
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label">Dodaj red</span>
+                        </span>
+                    </span>
+                </button>
+                <button type="button" id="btnObrisiRandom" class="kontrola-btn">
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label">Obriši red</span>
+                        </span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel 2: kontrole (Edit-delete, Edit, Select, Napomena + checkbox); tijelo: lijevo kontrole, sredina 3D, desno CRUD; footer: Aktivno-Neaktivno -->
+    <div class="kontrola-panel mb-3" id="kontrolePanel">
+        <div class="kontrola-panel__body alati-teme__kontrole-body">
+            <!-- Edit-delete, Edit, Select u istom redu -->
+            <div class="alati-teme__controls-row mb-3">
+                <div class="alati-teme__control-cell">
+                    <label class="kontrola-labela" for="ctrlEditDelete">Edit-delete kontrola</label>
+                    <div class="kontrola-edit-delete">
+                        <input id="ctrlEditDelete" type="text" class="kontrola-edit-delete__input" placeholder="Tekst koji se može obrisati...">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    </div>
+                </div>
+                <div class="alati-teme__control-cell">
+                    <label class="kontrola-labela" for="ctrlEdit">Edit kontrola</label>
+                    <input id="ctrlEdit" type="text" class="kontrola-edit" placeholder="Unesi tekst...">
+                </div>
+                <div class="alati-teme__control-cell">
+                    <label class="kontrola-labela" for="ctrlSelect">Select kontrola</label>
+                    <div class="kontrola-select">
+                        <select id="ctrlSelect">
+                            <option value="">Nije izabrano</option>
+                            <option value="A1">Ana</option>
+                            <option value="A2">Ante</option>
+                            <option value="B1">Boris</option>
+                            <option value="B2">Branko</option>
+                            <option value="C1">Cesar</option>
+                            <option value="D1">Dora</option>
+                            <option value="E1">Ema</option>
+                            <option value="F1">Filip</option>
+                            <option value="G1">Goran</option>
+                            <option value="H1">Hrvoje</option>
+                            <option value="I1">Ivana</option>
+                            <option value="J1">Janko</option>
+                            <option value="K1">Karla</option>
+                            <option value="L1">Lana</option>
+                            <option value="M1">Marko</option>
+                            <option value="N1">Nikola</option>
+                            <option value="T1">Vrlo dugačak naziv opcije za testiranje hover skrolanja 1</option>
+                            <option value="T2">Još jedan izuzetno dugačak tekst u opciji selekta za detaljno testiranje hover skrolanja 2</option>
+                            <option value="T3">Treća ekstremno duga opcija s puno teksta da se provjeri ponašanje skrolanja ulijevo kod overflowa</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Napomena (label lijevo, textarea desno) -->
+            <div class="mb-3 alati-teme__napomena-row">
+                <div class="alati-teme__napomena-left">
+                    <label class="kontrola-labela" for="ctrlNapomena">Napomena</label>
+                </div>
+                <div class="alati-teme__napomena-right">
+                    <textarea id="ctrlNapomena" class="kontrola-napomena" placeholder="Napomena..."></textarea>
+                </div>
+            </div>
+            <!-- Checkbox -->
+            <div class="mb-3">
+                <div class="alati-teme__checkbox-wrap">
+                    <input id="ctrlCheckbox" type="checkbox" class="kontrola-checkbox" aria-describedby="ctrlNapomena">
+                    <label class="kontrola-labela mb-0" for="ctrlCheckbox">Checkbox kontrola</label>
+                </div>
+            </div>
+
+            <!-- Prazan red između checkboxa i tipki -->
+            <div class="alati-teme__kontrole-spacer" aria-hidden="true"></div>
+
+            <!-- Red: Kod, Osvježi, Test (modal poruke) -->
+            <div class="alati-teme__kontrole-buttons-row">
+                <div class="alati-teme__kontrole-buttons-left">
+                    <div class="alati-teme__modal-test-wrap">
+                        <label class="kontrola-labela mb-0" for="modalTestSelect">Kod</label>
+                        <div class="kontrola-select">
+                            <select id="modalTestSelect" aria-label="Kod"></select>
+                        </div>
+                        <button type="button" id="btnModalOsvjezi" class="kontrola-btn" aria-label="Osvježi listu kodova">
+                            <span class="kontrola-btn__outer">
+                                <span class="kontrola-btn__inner">
+                                    <span class="kontrola-btn__label">Osvježi</span>
+                                </span>
+                            </span>
+                        </button>
+                        <button type="button" id="btnModalTest" class="kontrola-btn">
+                            <span class="kontrola-btn__outer">
+                                <span class="kontrola-btn__inner">
+                                    <span class="kontrola-btn__label">Test</span>
+                                </span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Prvi dodani red: lijevo Test Modal Tablica, desno 3D tipka -->
+            <div class="alati-teme__kontrole-grid-row alati-teme__kontrole-grid-row--two-cols">
+                <div class="alati-teme__kontrole-grid-left">
+                    <button type="button" id="btnTestModalTablica" class="kontrola-btn">
+                        <span class="kontrola-btn__outer">
+                            <span class="kontrola-btn__inner">
+                                <span class="kontrola-btn__label">Test Modal Tablica</span>
+                            </span>
+                        </span>
+                    </button>
+                </div>
+                <div class="alati-teme__kontrole-grid-right">
+                    <button type="button" class="kontrola-btn kontrola-btn--master">
+                        <span class="kontrola-btn__outer">
+                            <span class="kontrola-btn__inner">
+                                <span class="kontrola-btn__label">3D tipka</span>
+                            </span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <!-- Zadnji red: desno CRUD grupa (Upiši, Izbriši, Povratak) -->
+            <div class="alati-teme__kontrole-grid-row alati-teme__kontrole-grid-row--crud">
+                <div class="alati-teme__kontrole-grid-right">
+                    <div class="kontrola-crud-set" role="group" aria-label="CRUD akcije">
+                        <button type="button" class="kontrola-btn kontrola-btn--crud-upisi" id="btnCrudUpisi" aria-label="Upiši">
+                            <span class="kontrola-btn__outer">
+                                <span class="kontrola-btn__inner">
+                                    <span class="kontrola-btn__label">Upiši</span>
+                                </span>
+                            </span>
+                        </button>
+                        <button type="button" class="kontrola-btn kontrola-btn--crud-izbrisi" id="btnCrudIzbrisi">
+                            <span class="kontrola-btn__outer">
+                                <span class="kontrola-btn__inner">
+                                    <span class="kontrola-btn__label">Izbriši</span>
+                                </span>
+                            </span>
+                        </button>
+                        <button type="button" class="kontrola-btn kontrola-btn--crud-povratak" id="btnCrudPovratak" aria-label="Povratak na pozivnu formu">
+                            <span class="kontrola-btn__outer">
+                                <span class="kontrola-btn__inner">
+                                    <span class="kontrola-btn__label">Povratak</span>
+                                </span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer alati-teme__kontrole-footer">
+            <button type="button" id="btnToggleEnable" class="kontrola-btn">
+                <span class="kontrola-btn__outer">
+                    <span class="kontrola-btn__inner">
+                        <span class="kontrola-btn__label">Aktivno-Neaktivno</span>
+                    </span>
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Panel: paleta boja CORE (6 u redu, vrijednosti iz 0-Common.css) -->
+    <div class="kontrola-panel mb-3" id="paletaPanel">
+        <div class="kontrola-panel__body">
+            <h3 class="alati-teme__paleta-naslov">Paleta boja – CORE</h3>
+            <div id="paletaContainer" class="alati-teme__paleta-grid" aria-label="Paleta CORE boja"></div>
+        </div>
+    </div>
+</div>
+
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/alati_teme.js?v=10.15.04"></script>
+
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!-- =========================================================
+     Stupnjevi_CRUD.html
+     Izgled i funkcionalnost slično Loze_CRUD / Clanovi_CRUD:
+     top-row: panel slike (1:1,3), panel tablice s selectom Obred u zaglavlju.
+     Ispod: panel edit s CRUD tipkama. Resize tablice 60/40. Modal obrade slike default 1:1,3, omjer zaključan.
+     Skripte: 0-Kontrole.js, 0-Common.js, 0-Poruke_Tekstovi.js, 0-Obrada_Slike.js, Stupnjevi_CRUD.js
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Stupnjevi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Obrada_Slike.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+    <link rel="stylesheet" href="../css/Stupnjevi_CRUD.css?v=10.15.04">
+</head>
+<body>
+<div class="naslov-forme"><h2>Stupnjevi</h2></div>
+<div class="page-container stupnjevi-crud">
+    <div class="stupnjevi-crud__top-row">
+        <div class="kontrola-panel mb-3 stupnjevi-crud__panel-slika">
+            <div class="kontrola-panel__body">
+                <div class="stupnjevi-crud__edit-image-area" id="stupnjevi_image_area" aria-label="Prostor za sliku – dvoklik za uređivanje" tabindex="0">
+                    <button type="button" id="stupnjevi_image_delete_btn" class="stupnjevi-crud__edit-image-delete" aria-label="Obriši sliku" title="Obriši sliku" disabled><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
+                    <div id="stupnjevi_image_frame" class="obrada-slika__preview-wrap stupnjevi-crud__panel-preview-wrap">
+                        <img id="stupnjevi_image_preview" class="obrada-slika__img" src="" alt="" aria-hidden="true" style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-one-row kontrola-panel kontrola-panel--resize-y mb-3 stupnjevi-crud__panel-tablica">
+            <div class="kontrola-panel__header stupnjevi-crud__tablica-header">
+                <div class="stupnjevi-crud__header-row">
+                    <label class="kontrola-labela mb-0" for="select_obred">Obred</label>
+                    <div class="kontrola-select">
+                        <select id="select_obred" aria-label="Odaberi obred">
+                            <option value="0">Nije izabran</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="kontrola-panel__body">
+                <div id="tablicaContainer" class="kontrola-tablica"></div>
+            </div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body stupnjevi-crud__edit-body">
+            <div class="stupnjevi-crud__edit-cols">
+                <div class="stupnjevi-crud__edit-col">
+                    <div class="stupnjevi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_naziv">Naziv stupnja</label>
+                        <div class="kontrola-edit-delete">
+                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv stupnja...">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
+                    </div>
+                    <div class="stupnjevi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_stupanj">Stupanj</label>
+                        <input id="edit_stupanj" type="text" class="kontrola-edit" inputmode="numeric" placeholder="Stupanj">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer stupnjevi-crud__edit-footer">
+            <div class="stupnjevi-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="stupnjevi-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal obrade slike učitava se iz 0-Obrada_Slike.html -->
+<div id="obrada_slika_mount"></div>
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/0-Obrada_Slike.js?v=10.15.04"></script>
+<script src="../js/Stupnjevi_CRUD.js?v=10.15.04"></script>
+</body>
+</html>

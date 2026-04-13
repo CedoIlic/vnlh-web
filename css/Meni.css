@@ -1,0 +1,192 @@
+/* =========================================================
+   Meni.css
+   Glavni izbornik – stilovi trake menija.
+   Koristi iste klase kao Alati_Meni_Test (traka, hamburger, drawer).
+   Bez prikaza HTML fajla u izvršnim stavkama.
+   ========================================================= */
+
+@import url('Alati_Meni_Test.css');
+
+/* Naslov forme i badge verzije (duplikat – forma bez 0-Kontrole) */
+.naslov-forme {
+  position: relative;
+  background: linear-gradient(to right, var(--naslov_forme_grad_start), var(--naslov_forme_grad_end));
+  color: var(--naslov_forme_text);
+  padding: var(--naslov_forme_padding_y) var(--naslov_forme_padding_x);
+  text-align: center;
+  box-shadow: var(--naslov_forme_box_shadow);
+}
+.naslov-forme h2,
+.naslov-forme .h2 {
+  margin: 0;
+  padding: 0;
+  font-family: var(--naslov_forme_font);
+  font-weight: var(--naslov_forme_weight);
+  font-size: var(--naslov_forme_font_size);
+  line-height: 1.2;
+  letter-spacing: var(--naslov_forme_letter_spacing);
+  color: inherit;
+  text-shadow:
+    var(--naslov_forme_text_shadow),
+    -1px -1px 0 var(--naslov_forme_text_outline),
+    1px -1px 0 var(--naslov_forme_text_outline),
+    -1px 1px 0 var(--naslov_forme_text_outline),
+    1px 1px 0 var(--naslov_forme_text_outline);
+}
+/* Badge verzije (.vnlh-verzija-badge) premješten u 0-Common.css — jedino mjesto za sve forme */
+
+/* Modal promjene verzije (Razvoj=1, klik na badge) */
+.vnlh-verzija-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10004;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.5);
+}
+.vnlh-verzija-modal-dialog {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  background: #fff;
+  overflow: hidden;
+}
+.vnlh-verzija-modal-header {
+  flex: 0 0 auto;
+  padding: 0.75rem 1rem;
+  background: #f5f5f5;
+  color: #333;
+  font-family: var(--font_family);
+  font-size: 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid #ccc;
+}
+.vnlh-verzija-modal-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.vnlh-verzija-modal-body .kontrola-labela {
+  display: block;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+}
+.vnlh-verzija-modal-body .kontrola-edit {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+}
+.vnlh-verzija-modal-footer {
+  flex: 0 0 auto;
+  padding: 0.75rem 1rem;
+  background: #f5f5f5;
+  border-top: 1px solid #ccc;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+.vnlh-verzija-modal-footer .kontrola-btn {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  cursor: pointer;
+}
+.vnlh-verzija-modal-footer .kontrola-btn--primary {
+  background: var(--c-blue-600);
+  color: #fff;
+  border-color: var(--c-blue-600);
+}
+
+/* Glavni izbornik – podloga kao Login (--meni_glavni_page_bg); logo u ::before */
+body.meni-glavni {
+  position: relative;
+  background-color: var(--meni_glavni_page_bg);
+}
+/* Logirani korisnik (dužnost, prezime, ime) – tokeni u 0-Common.css; --logirani_korisnik_text na body od PHP */
+body.meni-glavni::after {
+  content: var(--logirani_korisnik_text);
+  position: fixed;
+  left: var(--logirani_korisnik_left);
+  right: var(--logirani_korisnik_right);
+  bottom: var(--logirani_korisnik_bottom);
+  z-index: var(--logirani_korisnik_z_index);
+  pointer-events: none;
+  text-align: var(--logirani_korisnik_text_align);
+  padding: 0 0 var(--logirani_korisnik_padding_bottom);
+  font-family: var(--logirani_korisnik_font_family);
+  font-size: var(--logirani_korisnik_font_size);
+  font-weight: var(--logirani_korisnik_font_weight);
+  color: var(--logirani_korisnik_color);
+}
+body.meni-glavni::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--vnlh_logo_meni_url);
+  background-size: min(var(--vnlh_logo_meni_sirina), 96vw) auto;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: var(--vnlh_logo_meni_prozirnost);
+  filter: var(--vnlh_logo_meni_sjena);
+}
+
+/* --- Blok: Mobilni (usk ekran) – vertikalni centar loga u pojasu između trake i donjeg teksta ---
+   Na desktopu ostaje inset:0 + center (centar cijelog body-ja). Na mobu body je nizak pa je logo
+   vizualno „pomaknut prema gore”; ovdje ::before pokriva samo trak između donjeg ruba #traka_h_menija
+   i rezerviranog prostora za fiksni red logiranog korisnika (::after), pa background-position: center
+   centrira sliku u tom pojasu. Breakpoint 640px kao traka menija (Alati_Meni_Test.css). */
+@media (max-width: 640px) {
+  body.meni-glavni {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  body.meni-glavni::before {
+    inset: unset;
+    left: 0;
+    right: 0;
+    /* Donji rub naslova + traka + margin-top trake (#traka_h_menija).
+       +130px: naslov u više redaka na uskom ekranu – procjena visine iznad 1.2*font-size (100+30). */
+    top: calc(
+      2 * var(--naslov_forme_padding_y) +
+      1.2 * var(--naslov_forme_font_size) +
+      130px +
+      20px +
+      var(--meni_traka_min_height)
+    );
+    /* Prostor za fiksni tekst na dnu (::after) + padding – procjena 2–3 reda */
+    bottom: calc(var(--logirani_korisnik_padding_bottom) + 4.5rem);
+    /* Cijela slika u pojasu: širinski „auto” reže gore/dolje kad je trak niži od slike; contain skalira u okvir. */
+    background-size: contain;
+  }
+}
+/* Samo naslov i traka iznad loga – NE na overlay/drawer (inače pobjeđuje position:fixed i drawer izgleda kao drugi meni u toku stranice). */
+body.meni-glavni > .naslov-forme,
+body.meni-glavni > #traka_h_menija {
+  position: relative;
+  z-index: 1;
+}
+
+/* Razmak između naslova i trake */
+#traka_h_menija {
+  margin-top: 20px;
+}

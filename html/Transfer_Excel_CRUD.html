@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<!--
+  Transfer_Excel_CRUD.html – Transfer članova iz Excel tablica.
+  Panel tablica: zaglavlje (master podaci + putanja), tablica preduvjeta (Ime fajla, Naziv lože, ID lože).
+  Dvoklik na red otvara modal za dodjelu lože (Transfer_Excel_CRUD_loze.php).
+  Ovisnosti: 0-Common.css, 0-Kontrole.css, Transfer_Excel_CRUD.css; 0-Kontrole.js, 0-Common.js, 0-Poruke_Tekstovi.js, Transfer_Excel_CRUD.js.
+-->
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Transfer članova iz Excel tablica</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+    <link rel="stylesheet" href="../css/Transfer_Excel_CRUD.css?v=10.15.04">
+</head>
+<body>
+<div class="naslov-forme"><h2>Transfer članova iz Excel tablica</h2></div>
+<div class="page-container transfer-excel-crud">
+    <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-four-rows kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__header transfer-excel-crud__tablica-header">
+            <div class="transfer-excel-crud__header-row">
+                <label class="kontrola-labela mb-0">Kontaktni telefon</label>
+                <input id="header_telefon_id" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="ID kontaktnog telefona">
+                <input id="header_telefon_naziv" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="Naziv kontaktnog telefona">
+            </div>
+            <div class="transfer-excel-crud__header-row">
+                <label class="kontrola-labela mb-0">Kontakti email</label>
+                <input id="header_email_id" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="ID kontaktnog emaila">
+                <input id="header_email_naziv" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="Naziv kontaktnog emaila">
+            </div>
+            <div class="transfer-excel-crud__header-row">
+                <label class="kontrola-labela mb-0">Kontaktna adresa</label>
+                <input id="header_adresa_id" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="ID kontaktne adrese">
+                <input id="header_adresa_naziv" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="Naziv kontaktne adrese">
+            </div>
+            <div class="transfer-excel-crud__header-row transfer-excel-crud__header-row--putanja">
+                <label class="kontrola-labela mb-0" for="header_putanja">Putanja Excel fajlova</label>
+                <input id="header_putanja" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly placeholder="Putanja do foldera sa excel fajlovima." aria-label="Putanja Excel fajlova – apsolutna putanja">
+                <button type="button" id="btn_folder_picker" class="transfer-excel-crud__folder-btn" aria-label="Odaberi folder" title="Odaberi folder"><span class="kontrola-icon--folder-open" aria-hidden="true"></span></button>
+                <button type="button" id="btn_reload_tablica" class="transfer-excel-crud__reload-btn" aria-label="Puni tablicu preduvjeta" title="Puni tablicu imenima Excel fajlova"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
+            </div>
+        </div>
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+
+    <!-- Panel tablice rezultata: zaglavlje (početna kolona/red, isključene kolone, putanja slika), 17 kolona, resize traka ispod h-scrolla, podnožje s Povratak -->
+    <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-two-rows kontrola-panel-tablica--has-footer kontrola-panel kontrola-panel--resize-y mb-3 transfer-excel-crud__panel-rezultat">
+        <div class="kontrola-panel__header transfer-excel-crud__rezultat-header">
+            <div class="transfer-excel-crud__header-row transfer-excel-crud__rezultat-header-row transfer-excel-crud__rezultat-header-row--tri">
+                <div class="transfer-excel-crud__rezultat-group transfer-excel-crud__rezultat-group--left">
+                    <label class="kontrola-labela mb-0" for="start_kolona">Početna kolona podataka</label>
+                    <input id="start_kolona" name="start_kolona" type="text" class="kontrola-edit transfer-excel-crud__rezultat-edit-50 transfer-excel-crud__rezultat-edit-ml" maxlength="1" placeholder="A" aria-label="Početna kolona (jedno slovo)">
+                </div>
+                <div class="transfer-excel-crud__rezultat-group transfer-excel-crud__rezultat-group--center">
+                    <label class="kontrola-labela mb-0" for="start_red">Početni red podataka</label>
+                    <input id="start_red" name="start_red" type="text" class="kontrola-edit transfer-excel-crud__rezultat-edit-50" maxlength="2" placeholder="1" aria-label="Početni red (1–99)">
+                </div>
+                <div class="transfer-excel-crud__rezultat-group transfer-excel-crud__rezultat-group--right">
+                    <label class="kontrola-labela mb-0" for="iskljucene_kolone">Isključene kolone</label>
+                    <input id="iskljucene_kolone" name="iskljucene_kolone" type="text" class="kontrola-edit transfer-excel-crud__rezultat-edit-200" placeholder="A,B,C" aria-label="Isključene kolone (slova i zarez)">
+                </div>
+            </div>
+            <div class="transfer-excel-crud__header-row transfer-excel-crud__header-row--putanja transfer-excel-crud__rezultat-header-row">
+                <label class="kontrola-labela mb-0" for="putanja_slike">Putanja mape sa slikama</label>
+                <input id="putanja_slike" name="putanja_slike" type="text" class="kontrola-edit transfer-excel-crud__ro transfer-excel-crud__rezultat-edit-ml" readonly placeholder="Putanja do foldera sa slikama." aria-label="Putanja mape sa slikama">
+                <button type="button" id="btn_folder_slike" class="transfer-excel-crud__folder-btn" aria-label="Odaberi folder" title="Odaberi folder"><span class="kontrola-icon--folder-open" aria-hidden="true"></span></button>
+                <button type="button" id="btn_reload_slike" class="transfer-excel-crud__reload-btn" aria-label="Puni radnu tablicu iz Excel fajlova" title="Puni radnu tablicu iz Excel fajlova. Omogućeno kad su svim redovima u prvom panelu dodijeljene lože, te su postavljeni početna kolona, početni red i folder slika."><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
+                <button type="button" id="btn_document_check" class="transfer-excel-crud__reload-btn" aria-label="Test dokument-check" title="Test kontrola podataka"><span class="kontrola-icon--check" aria-hidden="true"></span></button>
+            </div>
+        </div>
+        <div class="kontrola-panel__body transfer-excel-crud__rezultat-body">
+            <div class="transfer-excel-crud__rezultat-scroll-wrap">
+                <div class="transfer-excel-crud__rezultat-scroll">
+                    <div id="tablicaRezultatContainer" class="kontrola-tablica"></div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer transfer-excel-crud__footer">
+            <div class="transfer-excel-crud__footer-left">
+                <button type="button" id="btn_simuliraj" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Simuliraj</span></span></span></button>
+                <button type="button" id="btn_upisi" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upiši</span></span></span></button>
+                <label class="kontrola-labela transfer-excel-crud__footer-checkbox" for="chk_testirati_sifru">
+                    <input type="checkbox" id="chk_testirati_sifru" class="kontrola-checkbox" checked aria-label="Testirati šifru">
+                    <span class="transfer-excel-crud__footer-checkbox-label">Testirati šifru</span>
+                </label>
+            </div>
+            <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+        </div>
+    </div>
+
+    <!-- Log panel: iste dimenzije kao panel tablice, samo kontrola napomena (resize po visini). -->
+    <div class="kontrola-panel kontrola-panel--resize-y transfer-excel-crud__panel-log mb-3">
+        <div class="kontrola-panel__header transfer-excel-crud__log-header">
+            <span class="kontrola-labela mb-0">Log</span>
+        </div>
+        <div class="kontrola-panel__body transfer-excel-crud__log-body">
+            <div id="transfer_excel_log" class="transfer-excel-crud__log-content" aria-label="Log" role="log"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: odabir lože (struktura kao modal-tablica u Loze_Tip_CRUD) -->
+<div id="modal_odabir_loze" class="modal-tablica" aria-hidden="true" role="dialog" aria-label="Odaberi ložu">
+    <div class="modal-tablica__overlay"></div>
+    <div class="modal-tablica__dialog">
+        <div class="modal-tablica__header">Odaberi ložu</div>
+        <div class="modal-tablica__body">
+            <div class="modal-tablica__body-table-wrap">
+                <div id="modal_loze_container" class="kontrola-tablica transfer-excel-crud__modal-tablica"></div>
+            </div>
+        </div>
+        <div class="modal-tablica__footer">
+            <button type="button" id="modal_ok" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+            <button type="button" id="modal_odustani" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/Transfer_Excel_CRUD.js?v=10.15.04"></script>
+</body>
+</html>

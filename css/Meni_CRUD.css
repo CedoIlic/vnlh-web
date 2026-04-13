@@ -1,0 +1,118 @@
+/* =========================================================
+   Meni_CRUD.css
+   Stilovi specifični za Meni_CRUD formu (edit panel).
+   Layout: redovi i ćelije, bez vertikalnog razmaka između redova.
+   ========================================================= */
+
+/* --- Blok: Tablica – boja --c-blue-600 za redove s Opis (1., 2., 3. kolona kad nema html_fajl) --- */
+#tablicaContainer .meni-crud__cell--opis {
+  color: var(--c-blue-600);
+}
+
+/* --- Blok: Roditelj select – opcije bez html_fajl (cijeli redak) --- */
+.meni-crud__roditelj-opt--no-html {
+  color: var(--c-blue-600);
+}
+
+/* --- Blok: Tijelo edit panela (flex kolona) --- */
+.meni-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* --- Blok: Jedan red kontrola (flex, wrap) --- */
+.meni-crud__edit-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+}
+
+.meni-crud__edit-row:not(:last-child) {
+  margin-bottom: 1rem;
+}
+
+/* --- Blok: Prvi red – Naziv iste širine kao HTML fajl (red ispod), Opis poravnat s Putanja --- */
+.meni-crud__edit-row--naziv-opis {
+  display: flex;
+  gap: 1rem;
+}
+.meni-crud__edit-row--naziv-opis .meni-crud__edit-cell--naziv {
+  flex: 0 0 calc((100% - 2rem) / 3); /* ista širina kao jedna od tri ćelije u redu ispod */
+  min-width: 120px;
+}
+.meni-crud__edit-row--naziv-opis .meni-crud__edit-cell--opis {
+  flex: 1;
+  min-width: 120px;
+}
+.meni-crud__edit-row--naziv-opis .meni-crud__edit-cell--device {
+  flex: 0 0 25%;
+  min-width: 120px;
+}
+
+/* --- Blok: Red na cijelu širinu (npr. Napomena) --- */
+.meni-crud__edit-row--full {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0; /* Isti razmak labela–kontrola kao u ćelijama (samo margin-bottom na labeli) */
+}
+
+.meni-crud__edit-row--full .kontrola-labela {
+  margin-bottom: 4px;
+}
+
+/* --- Blok: Red s checkboxima (Aktivno, Test) --- */
+.meni-crud__edit-row--checkboxes {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+/* --- Blok: Ćelija u redu (labela + kontrola) --- */
+.meni-crud__edit-cell {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Blok: Uža ćelija (npr. Slijed) --- */
+.meni-crud__edit-cell--narrow {
+  flex: 0 0 auto;
+  min-width: 80px;
+  max-width: 120px;
+}
+
+/* --- Blok: Labela unutar ćelije --- */
+.meni-crud__edit-cell .kontrola-labela {
+  margin-bottom: 4px;
+}
+
+/* --- Blok: Slijed – desno poravnanje --- */
+#edit_redoslijed {
+  text-align: right;
+}
+
+/* --- Blok: Responsive – na uskom ekranu redovi u kolonu --- */
+@media (max-width: var(--page_breakpoint_narrow, 640px)) {
+  .meni-crud__edit-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .meni-crud__edit-row--naziv-opis .meni-crud__edit-cell--naziv,
+  .meni-crud__edit-row--naziv-opis .meni-crud__edit-cell--opis,
+  .meni-crud__edit-row--naziv-opis .meni-crud__edit-cell--device {
+    flex: none;
+    min-width: 0;
+  }
+  .meni-crud__edit-cell {
+    flex: none;
+    min-width: 0;
+  }
+  .meni-crud__edit-cell--narrow {
+    max-width: none;
+  }
+}

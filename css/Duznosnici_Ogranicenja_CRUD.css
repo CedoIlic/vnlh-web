@@ -1,0 +1,463 @@
+/* =========================================================
+   Duznosnici_Ogranicenja_CRUD.css
+   Panel tablice s zaglavljem: Dužnosnik (select + reload), Država, Regija, Loža (edit + ellipsis).
+   Na uskim uređajima/panelima: labela iznad, kontrole ispod (@container + @media).
+   VAŽNO ZA ODRŽAVANJE: u uvjetima @container i @media ispod koristi se literal max-width: 640px, NE var(--page_breakpoint_narrow).
+   Razlog: Safari/WebKit često odbaci cijeli blok ako je u uvjetu var(); tada na mobu nema presloženog zaglavlja (labela iznad).
+   Brojka mora ostati jednaka --page_breakpoint_narrow u 0-Common.css; kad ga tamo promijeniš, ažuriraj i oba 640px ovdje.
+   Čini se da kvar „pogađa samo kontrole u zaglavlju panela“ jer su pravila za .duznosnici-ogranicenja-crud__header-row uglavnom u tim blokovima;
+   ostatak stranice koristi druga pravila pa i dalje izgleda u redu dok query blok propadne.
+   Drugi panel: naslov „Prikaz stupnjeva po obredu“, tablica obreda; footer CRUD tipke.
+   Modal tablica (izbor retka): naslov lijevo, čekbox «Sve» desno u zaglavlju (samo ova forma).
+   ========================================================= */
+
+/* Modal tablica: zaglavlje kad JS doda .duznosnici-ogranicenja-crud__modal-header--sve */
+.modal-tablica .modal-tablica__header.duznosnici-ogranicenja-crud__modal-header--sve {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.duznosnici-ogranicenja-crud__modal-header-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.duznosnici-ogranicenja-crud__modal-sve-wrap {
+  flex: 0 0 auto;
+}
+
+.duznosnici-ogranicenja-crud__modal-sve-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* page-container: flex kolona da panel ne raste i ne ostavi prazan prostor ispod podnožja */
+.duznosnici-ogranicenja-crud {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Container za responsive preslagivanje – reagira na širinu panela */
+.duznosnici-ogranicenja-crud .kontrola-panel-tablica {
+  container-type: inline-size;
+  container-name: ogranicenja-panel;
+  flex: 0 0 auto; /* Panel ne raste – veličina prema sadržaju */
+}
+
+/* Razmak između resize trake i podnožja = razmak između tablice i resize trake (0); ukloni donji padding tijela.
+ * Gornji razmak = vodoravni (--panel_body_padding_x), isti kao lijevo/desno od tablice do ruba tijela. */
+.duznosnici-ogranicenja-crud .kontrola-panel-tablica .kontrola-panel__body:has(.kontrola-panel__resize-bar) {
+  padding-top: var(--panel_body_padding_x);
+  padding-bottom: 0;
+}
+
+/* Drugi panel (stupnjevi po obredu): za ~10px niži min. okvir od zadanog u 0-Kontrole, samo ova forma. */
+.page-container.duznosnici-ogranicenja-crud .kontrola-panel-tablica.duznosnici-ogranicenja-crud__panel-stupnjevi-po-obredu:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--kontrola-panel-tablica-footer-h) + var(--panel_header_min_height) - 10px);
+}
+
+/* --- Blok: Zaglavlje tablice (četiri reda) – široki prikaz --- */
+.duznosnici-ogranicenja-crud__tablica-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.duznosnici-ogranicenja-crud__header-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* Labela u prvom stupcu (0–150px), select i edit počinju na 150px od ruba panela */
+.duznosnici-ogranicenja-crud__header-row .kontrola-labela {
+  white-space: nowrap;
+  grid-column: 1;
+}
+
+.duznosnici-ogranicenja-crud__duznosnik-wrap,
+.duznosnici-ogranicenja-crud__edit-with-ellipsis {
+  grid-column: 2;
+}
+
+/* Dužnosnik: select + ikona reload */
+.duznosnici-ogranicenja-crud__duznosnik-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.duznosnici-ogranicenja-crud__duznosnik-wrap .kontrola-select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.duznosnici-ogranicenja-crud__reload-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--button_outer_shadow);
+}
+
+.duznosnici-ogranicenja-crud__reload-btn:disabled {
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  color: var(--label_text_disabled);
+  cursor: var(--edit_cursor_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled);
+}
+
+@media (hover: hover) {
+  .duznosnici-ogranicenja-crud__reload-btn:hover:not(:disabled) {
+    background: var(--c-gray-100, #eee);
+    box-shadow: var(--edit_focus_shadow);
+  }
+}
+
+.duznosnici-ogranicenja-crud__reload-btn:active:not(:disabled) {
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+/* Edit s ikonom ellipsis (Država, Regija, Loža) */
+.duznosnici-ogranicenja-crud__edit-with-ellipsis {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.duznosnici-ogranicenja-crud__edit-with-ellipsis .kontrola-edit {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.duznosnici-ogranicenja-crud__ellipsis-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.duznosnici-ogranicenja-crud__ellipsis-btn:hover:not(:disabled) {
+  background: var(--edit_bg_hover, var(--c-gray-100));
+  box-shadow: var(--kontrole_sjena_slaba_1);
+}
+
+.duznosnici-ogranicenja-crud__ellipsis-btn:active:not(:disabled) {
+  box-shadow: inset 0 2px 4px var(--c-shadow-30);
+}
+
+.duznosnici-ogranicenja-crud__ellipsis-btn:disabled {
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  color: var(--label_text_disabled);
+  cursor: var(--edit_cursor_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled);
+}
+
+.duznosnici-ogranicenja-crud__ellipsis-btn .kontrola-icon--ellipsis-horizontal {
+  width: 1.25rem;
+  height: 1.25rem;
+  mask-size: 1.25rem 1.25rem;
+  -webkit-mask-size: 1.25rem 1.25rem;
+}
+
+/* Tablica disabled – zaglavlje i kolone 1–2 siva po tokenima (nadjačaj plavu iz 0-Kontrole) */
+.duznosnici-ogranicenja-crud .kontrola-tablica.kontrola-tablica--disabled .kontrola-tablica__header {
+  background: linear-gradient(to bottom,
+    var(--tablica_head_bg_1_disabled),
+    var(--tablica_head_bg_2_disabled)
+  ) !important;
+}
+.duznosnici-ogranicenja-crud .kontrola-tablica.kontrola-tablica--disabled th.kontrola-tablica__th--no-sort,
+.duznosnici-ogranicenja-crud .kontrola-tablica.kontrola-tablica--disabled th.kontrola-tablica__th--no-sort:hover {
+  background: linear-gradient(to bottom,
+    var(--tablica_head_bg_1_disabled),
+    var(--tablica_head_bg_2_disabled)
+  ) !important;
+  color: var(--tablica_head_text_boja_disabled) !important;
+  opacity: 0.5;
+}
+
+/* --- Blok: Panel „Prikaz stupnjeva po obredu“ – naslov u zaglavlju --- */
+.duznosnici-ogranicenja-crud__stupnjevi-po-obredu-header {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding-block: 0.25rem;
+}
+
+.duznosnici-ogranicenja-crud__stupnjevi-po-obredu-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--panel_header_text, inherit);
+}
+
+/* --- Blok: Tablica stupnjeva – drugi stupac (tekst + ellipsis); široki prikaz = default iz 0-Kontrole --- */
+.duznosnici-ogranicenja-crud #tablicaContainerStupnjeviPoObredu td:nth-child(2) {
+  overflow: visible;
+}
+.duznosnici-ogranicenja-crud #tablicaContainerStupnjeviPoObredu td:nth-child(2) .kontrola-tablica__cell-inner {
+  min-width: 0;
+  width: 100%;
+  overflow: visible;
+}
+
+.duznosnici-ogranicenja-crud__stupnjevi-ids-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.duznosnici-ogranicenja-crud__stupnjevi-ids-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duznosnici-ogranicenja-crud__stupnjevi-row-ellipsis-btn {
+  flex-shrink: 0;
+  /* 25% manje od 2.25rem / 1.25rem (ikona) */
+  width: 1.6875rem;
+  height: 1.6875rem;
+  padding: 0;
+  margin-right: 0.4rem;
+  transform: translateX(-0.15rem);
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.duznosnici-ogranicenja-crud__stupnjevi-row-ellipsis-btn:hover:not(:disabled) {
+  background: var(--edit_bg_hover, var(--c-gray-100));
+  box-shadow: var(--kontrole_sjena_slaba_1);
+}
+
+.duznosnici-ogranicenja-crud__stupnjevi-row-ellipsis-btn:active:not(:disabled) {
+  box-shadow: inset 0 2px 4px var(--c-shadow-30);
+}
+
+.duznosnici-ogranicenja-crud__stupnjevi-row-ellipsis-btn:disabled {
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  color: var(--label_text_disabled);
+  cursor: var(--edit_cursor_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled);
+}
+
+.duznosnici-ogranicenja-crud__stupnjevi-row-ellipsis-btn .kontrola-icon--ellipsis-horizontal {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  mask-size: 0.9375rem 0.9375rem;
+  -webkit-mask-size: 0.9375rem 0.9375rem;
+}
+
+.duznosnici-ogranicenja-crud .kontrola-tablica.kontrola-tablica--disabled .duznosnici-ogranicenja-crud__stupnjevi-row-ellipsis-btn {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* --- Blok: Footer panela – CRUD tipke + Sve (sredina, uvjet sustav_varijable 1001) --- */
+.duznosnici-ogranicenja-crud__tablica-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.duznosnici-ogranicenja-crud__footer-left {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-start;
+}
+
+.duznosnici-ogranicenja-crud__footer-center {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.duznosnici-ogranicenja-crud__footer-right {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.duznosnici-ogranicenja-crud__btn-sve[hidden] {
+  display: none !important;
+}
+
+/* --- Blok: Uski prikaz – labela iznad, kontrole ispod --- */
+/*
+ * Uvjet mora biti literal 640px (ne var(...)) – vidi zaglavlje ove datoteke.
+ * @container: širina .kontrola-panel-tablica (container-name: ogranicenja-panel).
+ * @media ispod: isto ponašanje po širini viewporta (fallback / usklađenost s cijelom stranicom).
+ */
+@container ogranicenja-panel (max-width: 640px) {
+  .duznosnici-ogranicenja-crud__header-row {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .duznosnici-ogranicenja-crud__header-row .kontrola-labela {
+    order: 1;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    grid-column: unset;
+  }
+
+  .duznosnici-ogranicenja-crud__duznosnik-wrap,
+  .duznosnici-ogranicenja-crud__edit-with-ellipsis {
+    order: 2;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: nowrap;
+    display: flex;
+    grid-column: unset;
+  }
+
+  /*
+   * Prvi panel (BEZ podnožja): stacked zaglavlje → four_rows_stacked u min-heightu.
+   * Gornji: 3 vidljiva reda tablice; donji: 4 (niže zaglavlje + footer).
+   * !important: pouzdano nadjačava 0-Kontrole na mobu – inače computed min-height može kvariti resize (JS čita min-height panela).
+   */
+  .duznosnici-ogranicenja-crud .kontrola-panel-tablica.kontrola-panel-tablica--has-header-four-rows:not(.kontrola-panel-tablica--has-footer) {
+    --tablica_vidljivih_redova: 3;
+  }
+  .duznosnici-ogranicenja-crud .kontrola-panel-tablica.duznosnici-ogranicenja-crud__panel-stupnjevi-po-obredu {
+    --tablica_vidljivih_redova: 4;
+  }
+  .duznosnici-ogranicenja-crud .kontrola-panel-tablica.kontrola-panel-tablica--has-header-four-rows:not(.kontrola-panel-tablica--has-footer):has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+    min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--panel_header_min_height_four_rows_stacked)) !important;
+  }
+
+  /* Uski panel: tablica stupnjeva – sjena elipsisa, manji gumb (široki prikaz ne dirati) */
+  .duznosnici-ogranicenja-crud #tablicaContainerStupnjeviPoObredu td:nth-child(2) {
+    overflow: visible;
+  }
+  .duznosnici-ogranicenja-crud #tablicaContainerStupnjeviPoObredu td:nth-child(2) .kontrola-tablica__cell-inner {
+    overflow: visible;
+  }
+  .duznosnici-ogranicenja-crud #tablicaContainerStupnjeviPoObredu .duznosnici-ogranicenja-crud__stupnjevi-row-ellipsis-btn {
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-right: 0.5rem;
+    transform: translateX(-0.15rem);
+  }
+  .duznosnici-ogranicenja-crud #tablicaContainerStupnjeviPoObredu .duznosnici-ogranicenja-crud__stupnjevi-row-ellipsis-btn .kontrola-icon--ellipsis-horizontal {
+    width: 0.75rem;
+    height: 0.75rem;
+    mask-size: 0.75rem 0.75rem;
+    -webkit-mask-size: 0.75rem 0.75rem;
+  }
+}
+
+/* Uski viewport: isto kao @container; max-width literal 640px – vidi zaglavlje datoteke i komentar iznad @container. */
+@media (max-width: 640px) {
+  .page-container.duznosnici-ogranicenja-crud .kontrola-panel-tablica.kontrola-panel-tablica--has-header-four-rows:not(.kontrola-panel-tablica--has-footer) {
+    --tablica_vidljivih_redova: 3;
+  }
+  .page-container.duznosnici-ogranicenja-crud .kontrola-panel-tablica.duznosnici-ogranicenja-crud__panel-stupnjevi-po-obredu {
+    --tablica_vidljivih_redova: 4;
+  }
+  .page-container.duznosnici-ogranicenja-crud .kontrola-panel-tablica.kontrola-panel-tablica--has-header-four-rows:not(.kontrola-panel-tablica--has-footer):has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+    min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--panel_header_min_height_four_rows_stacked)) !important;
+  }
+
+  .duznosnici-ogranicenja-crud__header-row {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .duznosnici-ogranicenja-crud__header-row .kontrola-labela {
+    order: 1;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    grid-column: unset;
+  }
+
+  .duznosnici-ogranicenja-crud__duznosnik-wrap,
+  .duznosnici-ogranicenja-crud__edit-with-ellipsis {
+    order: 2;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: nowrap;
+    display: flex;
+    grid-column: unset;
+  }
+
+  .page-container.duznosnici-ogranicenja-crud #tablicaContainerStupnjeviPoObredu td:nth-child(2) {
+    overflow: visible;
+  }
+  .page-container.duznosnici-ogranicenja-crud #tablicaContainerStupnjeviPoObredu td:nth-child(2) .kontrola-tablica__cell-inner {
+    overflow: visible;
+  }
+  .page-container.duznosnici-ogranicenja-crud #tablicaContainerStupnjeviPoObredu .duznosnici-ogranicenja-crud__stupnjevi-row-ellipsis-btn {
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-right: 0.5rem;
+    transform: translateX(-0.15rem);
+  }
+  .page-container.duznosnici-ogranicenja-crud #tablicaContainerStupnjeviPoObredu .duznosnici-ogranicenja-crud__stupnjevi-row-ellipsis-btn .kontrola-icon--ellipsis-horizontal {
+    width: 0.75rem;
+    height: 0.75rem;
+    mask-size: 0.75rem 0.75rem;
+    -webkit-mask-size: 0.75rem 0.75rem;
+  }
+}

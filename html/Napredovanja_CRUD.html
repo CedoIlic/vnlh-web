@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!--
+  Napredovanja_CRUD.html – CRUD napredovanja.
+  Panel tablice s Država + reload, ispod red "Pronađi" + edit. Zatim panel panel_stupnjevi s tablicom i CRUD tipkama.
+-->
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Napredovanja - Sekretarijat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+    <link rel="stylesheet" href="../css/Napredovanja_CRUD.css?v=10.15.04">
+</head>
+<body>
+<div class="naslov-forme"><h2>Napredovanja - Sekretarijat</h2></div>
+<div class="page-container napredovanja-crud">
+    <div class="napredovanja-crud__panels-row">
+        <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-two-rows kontrola-panel kontrola-panel--resize-y mb-3 napredovanja-crud__panel-tablica napredovanja-crud__panel-min-equal" data-resize-sync-group="napredovanja-tablice">
+            <div class="kontrola-panel__header napredovanja-crud__tablica-header">
+            <div class="napredovanja-crud__header-row">
+                <label class="kontrola-labela mb-0" for="select_drzava">Država</label>
+                <div class="kontrola-select">
+                    <select id="select_drzava" aria-label="Odaberi državu">
+                        <option value="">— Odaberi državu —</option>
+                    </select>
+                </div>
+            </div>
+            <div class="napredovanja-crud__header-row napredovanja-crud__header-row--pronadi">
+                <label class="kontrola-labela mb-0 napredovanja-crud__label-pronadi" id="label_pronadi" for="edit_pronadi">Pronađi</label>
+                <div class="kontrola-edit-delete napredovanja-crud__edit-delete-pronadi">
+                    <input id="edit_pronadi" type="text" class="kontrola-edit-delete__input" aria-label="Pronađi" placeholder="Pronađi..." disabled>
+                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                </div>
+                <button type="button" id="btn_reload_tablica" class="napredovanja-crud__reload-btn" aria-label="Ponovno punjenje tablice" title="Puni tablicu"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
+            </div>
+        </div>
+            <div class="kontrola-panel__body">
+                <div id="tablicaContainer" class="kontrola-tablica kontrola-tablica--disabled"></div>
+            </div>
+        </div>
+        <div class="kontrola-panel kontrola-panel--resize-y mb-3 napredovanja-crud__panel-stupnjevi napredovanja-crud__panel-min-equal" id="panel_stupnjevi" data-resize-sync-group="napredovanja-tablice">
+            <div class="kontrola-panel__body">
+                <div id="tablicaStupnjeviContainer" class="kontrola-tablica"></div>
+            </div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body napredovanja-crud__edit-body">
+            <div class="napredovanja-crud__edit-row napredovanja-crud__edit-row--prvi">
+                <div class="napredovanja-crud__edit-prvi-blok">
+                    <span class="napredovanja-crud__bolt-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                        </svg>
+                    </span>
+                    <div class="napredovanja-crud__edit-cell napredovanja-crud__edit-cell--st">
+                        <label class="kontrola-labela mb-0" for="edit_st">Stupanj</label>
+                        <input id="edit_st" type="text" class="kontrola-edit napredovanja-crud__edit-st" readonly aria-label="Stupanj" maxlength="5">
+                    </div>
+                </div>
+                <div class="napredovanja-crud__edit-cell napredovanja-crud__edit-cell--select">
+                    <label class="kontrola-labela mb-0" for="select_izbor_stupnja">Izbor stupnja</label>
+                    <div class="kontrola-select">
+                        <select id="select_izbor_stupnja" aria-label="Izbor stupnja">
+                            <option value="">— Izbor stupnja —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="napredovanja-crud__edit-cell napredovanja-crud__edit-cell--select">
+                    <label class="kontrola-labela mb-0" for="select_tip_napredovanja">Tip napredovanja</label>
+                    <div class="kontrola-select">
+                        <select id="select_tip_napredovanja" aria-label="Tip napredovanja">
+                            <option value="">— Tip napredovanja —</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="napredovanja-crud__edit-row napredovanja-crud__edit-row--drugi">
+                <div class="napredovanja-crud__edit-cell napredovanja-crud__edit-cell--datum-st">
+                    <label class="kontrola-labela mb-0" for="edit_datum_st">Datum stupnja</label>
+                    <input id="edit_datum_st" type="date" class="kontrola-edit napredovanja-crud__edit-datum-st" aria-label="Datum stupnja">
+                </div>
+                <div class="napredovanja-crud__edit-cell napredovanja-crud__edit-cell--select">
+                    <label class="kontrola-labela mb-0" for="select_loza_napredovanja">Loža napredovanja</label>
+                    <div class="kontrola-select">
+                        <select id="select_loza_napredovanja" aria-label="Loža napredovanja">
+                            <option value="">— Loža napredovanja —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="napredovanja-crud__edit-cell napredovanja-crud__edit-cell--ime-loze">
+                    <label class="kontrola-labela mb-0" for="edit_ime_loze">Loža napredovanja</label>
+                    <input id="edit_ime_loze" type="text" class="kontrola-edit napredovanja-crud__edit-ime-loze" aria-label="Loža napredovanja">
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer napredovanja-crud__edit-footer">
+            <div class="napredovanja-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi" aria-label="Upiši"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upiši</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="napredovanja-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/Napredovanja_CRUD.js?v=10.15.04"></script>
+</body>
+</html>

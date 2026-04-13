@@ -1,0 +1,303 @@
+/* =========================================================
+   Stupnjevi_CRUD.css
+   Izgled i funkcionalnost slično Loze_CRUD / Clanovi_CRUD:
+   top-row: panel slike (1:1,3), panel tablice s Obred u zaglavlju. Resize 60/40.
+   Edit panel ispod. Modal obrade slike default 1:1,3, omjer zaključan.
+   ========================================================= */
+
+/* --- Tablica – kolona Stupanj 20% širine --- */
+.stupnjevi-crud .kontrola-tablica th:nth-child(2),
+.stupnjevi-crud .kontrola-tablica td:nth-child(2) {
+  width: 20%;
+  min-width: 60px;
+}
+
+/* --- Top row: slika + tablica (60/40 granica) --- */
+.stupnjevi-crud__top-row {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  max-height: 85vh;
+  min-height: 0;
+}
+
+.stupnjevi-crud__panel-slika {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  max-width: 60%;
+  overflow: hidden;
+}
+.stupnjevi-crud__panel-tablica {
+  flex: 1 1 40%;
+  min-width: 40%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.stupnjevi-crud__panel-slika .kontrola-panel__body {
+  position: relative;
+  aspect-ratio: 1 / 1.3;
+  min-height: 140px;
+  max-height: 85vh;
+  overflow: hidden;
+}
+.stupnjevi-crud__panel-slika .kontrola-panel__body > .stupnjevi-crud__edit-image-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+/* Preview wrap s paddingom (kao Loze/Clanovi), omjer 1:1,3 kao panel */
+.stupnjevi-crud__edit-image-area .stupnjevi-crud__panel-preview-wrap {
+  position: absolute;
+  left: var(--panel_body_padding_x);
+  top: var(--panel_body_padding_y);
+  right: var(--panel_body_padding_x);
+  bottom: var(--panel_body_padding_y);
+  width: auto;
+  height: auto;
+  flex: none;
+}
+.stupnjevi-crud__panel-preview-wrap.obrada-slika__preview-wrap {
+  aspect-ratio: 1 / 1.3;
+}
+
+/* Vlastiti resize handle (dodaje JS) – vidljiv samo na mobitelu */
+.stupnjevi-crud__panel-tablica .stupnjevi-crud__resize-handle {
+  display: none;
+}
+
+/* --- Zaglavlje panela tablice (Obred) --- */
+.stupnjevi-crud__tablica-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.stupnjevi-crud__header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.stupnjevi-crud__header-row .kontrola-labela {
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 8ch;
+  min-width: 8ch;
+  max-width: 8ch;
+  box-sizing: border-box;
+}
+.stupnjevi-crud__header-row .kontrola-select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* --- Edit panel: sjene kao na Clanovi/Loze --- */
+.stupnjevi-crud #edit_panel.kontrola-panel {
+  box-shadow: var(--tablica_sjena) !important;
+}
+.stupnjevi-crud #edit_panel.kontrola-panel:focus-within {
+  box-shadow: var(--edit_focus_shadow) !important;
+}
+.stupnjevi-crud #edit_panel.kontrola-panel.kontrola-panel--edit-disabled {
+  box-shadow: var(--edit_focus_shadow_disabled) !important;
+}
+
+.stupnjevi-crud__edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.stupnjevi-crud__footer-left,
+.stupnjevi-crud__footer-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.stupnjevi-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+}
+.stupnjevi-crud__edit-cols {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.stupnjevi-crud__edit-col {
+  flex: 1 1 0;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.stupnjevi-crud__edit-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.stupnjevi-crud__edit-row .kontrola-labela {
+  margin-bottom: 4px;
+}
+
+#edit_stupanj {
+  text-align: right;
+  width: 200px;
+  max-width: 100%;
+}
+
+/* --- Kontrola za sliku (okvir, preview wrap kao Clanovi/Loze) --- */
+.stupnjevi-crud__edit-image-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stupnjevi-crud__edit-image-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--slika_radius, 6px);
+  background: var(--panel_body_bg, #f5f5f5);
+  color: var(--edit_delete_caret_color, #666);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_1);
+}
+.stupnjevi-crud__edit-image-delete:hover:not(:disabled) {
+  background: var(--c-gray-200);
+  color: var(--text);
+}
+.stupnjevi-crud__edit-image-delete:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--edit_border_focus);
+}
+.stupnjevi-crud__edit-image-delete .kontrola-icon--trash {
+  width: 18px;
+  height: 18px;
+  mask-size: 18px 18px;
+  -webkit-mask-size: 18px 18px;
+}
+.stupnjevi-crud__edit-image-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: var(--edit_delete_caret_color_disabled, #ccc);
+}
+
+.stupnjevi-crud__edit-image-area:focus {
+  outline: none;
+}
+.stupnjevi-crud__edit-image-area:focus .obrada-slika__preview-wrap {
+  border-color: var(--slika_okvir_focus_boja);
+  box-shadow: var(--edit_focus_shadow);
+}
+.stupnjevi-crud__edit-image-area.stupnjevi-crud__edit-image-area--disabled {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.65;
+}
+
+.stupnjevi-crud__panel-preview-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  background: var(--slika_bg, var(--panel_body_bg, #f5f5f5));
+  border: var(--slika_border_w, 1px) solid var(--slika_border, #ccc);
+  border-radius: var(--slika_radius, 8px);
+  box-shadow: var(--slika_okvir_sjena);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.stupnjevi-crud__edit-image-area--disabled .stupnjevi-crud__panel-preview-wrap {
+  box-shadow: var(--slika_okvir_sjena_disabled);
+}
+.stupnjevi-crud__edit-image-area--disabled:focus .stupnjevi-crud__panel-preview-wrap {
+  border-color: var(--slika_border);
+  box-shadow: var(--slika_okvir_sjena_disabled);
+}
+
+.stupnjevi-crud__edit-image-area .obrada-slika__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Kod sažimanja: slika iznad tablice; literal 640px + touch (desktop viewport na mobu) – kao Clanovi/Loze. */
+@media (max-width: 640px),
+       ((hover: none) and (pointer: coarse) and (max-width: 1200px)) {
+  .stupnjevi-crud__top-row {
+    flex-direction: column;
+    max-height: none;
+  }
+  .stupnjevi-crud__panel-slika,
+  .stupnjevi-crud__panel-tablica {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .stupnjevi-crud__panel-slika {
+    max-height: none;
+    flex-shrink: 0;
+    align-self: stretch;
+  }
+  .stupnjevi-crud__panel-slika .kontrola-panel__body {
+    max-height: none;
+  }
+  .stupnjevi-crud__panel-tablica {
+    flex: 0 0 auto;
+    min-height: calc(var(--kontrola-panel-tablica-body-h) + 48px + var(--panel_header_min_height) + 48px);
+    height: calc(var(--kontrola-panel-tablica-body-h) + 48px + var(--panel_header_min_height) + 48px);
+  }
+  .stupnjevi-crud__panel-tablica .kontrola-panel__body {
+    padding-bottom: 0;
+  }
+  .stupnjevi-crud__panel-tablica .kontrola-panel__body .kontrola-panel__resize-bar {
+    display: none !important;
+  }
+  .stupnjevi-crud__panel-tablica .stupnjevi-crud__resize-handle {
+    display: flex;
+    flex: 0 0 48px;
+    height: 48px;
+    min-height: 48px;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: ns-resize;
+    align-items: center;
+    justify-content: center;
+    background: var(--panel_resize_bar_bg);
+    border-top: var(--panel_resize_bar_border_top);
+    color: var(--panel_resize_bar_color);
+  }
+  .stupnjevi-crud__panel-tablica .stupnjevi-crud__resize-handle::before {
+    content: '';
+    width: var(--panel_resize_bar_icon_width, 24px);
+    height: var(--panel_resize_bar_icon_height, 12px);
+    border-top: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    border-radius: 1px;
+  }
+}

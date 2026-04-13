@@ -1,0 +1,108 @@
+<!-- Alati_Aktivne_Sesije – pregled aktivnih sesija (sustav_sesije_aktivne) -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Aktivne sesije</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+    <link rel="stylesheet" href="../css/Alati_Aktivne_Sesije.css?v=10.15.04">
+</head>
+<body>
+
+<div class="naslov-forme">
+    <h2>Aktivne sesije</h2>
+</div>
+
+<div class="page-container">
+    <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel kontrola-panel--resize-y mb-3 alati-aktivne-sesije__panel-tablica">
+        <div class="kontrola-panel__header alati-aktivne-sesije__tablica-header">
+            <div class="alati-aktivne-sesije__header-row">
+                <label class="kontrola-labela mb-0" for="edit_interval">Interval</label>
+                <input id="edit_interval" type="number" class="kontrola-edit alati-aktivne-sesije__interval-edit" min="1" max="20" step="1" value="{{VNLH_DEFAULT_INTERVAL_OSVJEZI}}" inputmode="numeric" title="Interval osvježavanja tablice, 1–20 sekundi" aria-label="Interval osvježavanja u sekundama, od 1 do 20">
+                <span class="alati-aktivne-sesije__interval-unit">sekunde</span>
+                <div class="alati-aktivne-sesije__countdown-wrap" title="Preostalo do osvježavanja tablice">
+                    <svg class="alati-aktivne-sesije__countdown-svg" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
+                        <circle class="alati-aktivne-sesije__countdown-track" cx="18" cy="18" r="15" fill="none"></circle>
+                        <circle id="countdown_ring" class="alati-aktivne-sesije__countdown-ring" cx="18" cy="18" r="15" fill="none"></circle>
+                    </svg>
+                    <span id="countdown_secs" class="alati-aktivne-sesije__countdown-num" aria-live="polite" aria-atomic="true">—</span>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+
+    <div class="kontrola-panel mb-3" id="detail_panel">
+        <div class="kontrola-panel__body alati-aktivne-sesije__detail-body">
+            <div class="alati-aktivne-sesije__detail-grid">
+                <div class="alati-aktivne-sesije__detail-field">
+                    <label class="kontrola-labela mb-0" for="det_id">id</label>
+                    <input id="det_id" type="text" class="kontrola-edit" readonly autocomplete="off">
+                </div>
+                <div class="alati-aktivne-sesije__detail-field">
+                    <label class="kontrola-labela mb-0" for="det_otvorena_stranica">Otvorena stranica</label>
+                    <input id="det_otvorena_stranica" type="text" class="kontrola-edit" readonly autocomplete="off">
+                </div>
+                <div class="alati-aktivne-sesije__detail-field">
+                    <label class="kontrola-labela mb-0" for="det_ip_adresa">IP adresa korisnika</label>
+                    <input id="det_ip_adresa" type="text" class="kontrola-edit" readonly autocomplete="off">
+                </div>
+                <div class="alati-aktivne-sesije__detail-field">
+                    <label class="kontrola-labela mb-0" for="det_status">status</label>
+                    <input id="det_status" type="text" class="kontrola-edit" readonly autocomplete="off">
+                </div>
+                <div class="alati-aktivne-sesije__detail-row-2">
+                    <div class="alati-aktivne-sesije__detail-field">
+                        <label class="kontrola-labela mb-0" for="det_user_agent">Korisnički agent</label>
+                        <input id="det_user_agent" type="text" class="kontrola-edit" readonly autocomplete="off">
+                    </div>
+                    <div class="alati-aktivne-sesije__detail-field">
+                        <label class="kontrola-labela mb-0" for="det_session_id">ID sesije</label>
+                        <input id="det_session_id" type="text" class="kontrola-edit" readonly autocomplete="off">
+                    </div>
+                </div>
+                <!-- Samo na mobitelu: Login/Aktivnost iznad povijesti (u tablici su stupci često skriveni). -->
+                <div class="alati-aktivne-sesije__detail-mob-datumi">
+                    <div class="alati-aktivne-sesije__detail-field">
+                        <label class="kontrola-labela mb-0" for="det_login_vrijeme">Vrijeme logiranja</label>
+                        <input id="det_login_vrijeme" type="text" class="kontrola-edit" readonly autocomplete="off">
+                    </div>
+                    <div class="alati-aktivne-sesije__detail-field">
+                        <label class="kontrola-labela mb-0" for="det_zadnja_aktivnost">Vrijeme zadnje promjene</label>
+                        <input id="det_zadnja_aktivnost" type="text" class="kontrola-edit" readonly autocomplete="off">
+                    </div>
+                </div>
+                <div class="alati-aktivne-sesije__detail-napomena">
+                    <label class="kontrola-labela mb-0" for="det_povijest_sesije">Povijest sesije</label>
+                    <textarea id="det_povijest_sesije" class="kontrola-napomena" readonly rows="8" autocomplete="off"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer alati-aktivne-sesije__footer">
+            <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak">
+                <span class="kontrola-btn__outer">
+                    <span class="kontrola-btn__inner">
+                        <span class="kontrola-btn__label">Povratak</span>
+                    </span>
+                </span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/Alati_Aktivne_Sesije.js?v=10.15.04"></script>
+
+</body>
+</html>

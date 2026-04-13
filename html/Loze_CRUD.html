@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!--
+  Loze_CRUD.html – CRUD loza po drzavi/regiji.
+  Prvi panel ispod naslova: panel slike (1:1, bez resize). Pored njega: panel tablice s selectima Drzava i Regija.
+  Ispod: panel edit s CRUD tipkama. Dvoklik na kontrolu slike otvara modal obrade slike.
+  Ovisnosti: 0-Common.css, 0-Kontrole.css, 0-Obrada_Slike.css; 0-Kontrole.js, 0-Common.js, 0-Poruke_Tekstovi.js, 0-Obrada_Slike.js, Loze_CRUD.js. Stilovi ugrađeni u stranicu.
+-->
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Lože</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Obrada_Slike.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+    <link rel="stylesheet" href="../css/Loze_CRUD.css?v=10.15.04">
+</head>
+<body>
+<div class="naslov-forme"><h2>Lože</h2></div>
+<div class="page-container loze-crud">
+    <div class="loze-crud__top-row">
+        <div class="kontrola-panel mb-3 loze-crud__panel-slika">
+            <div class="kontrola-panel__body">
+                <div class="loze-crud__edit-image-area" id="loze_image_area" aria-label="Prostor za sliku – dvoklik za uređivanje" tabindex="0">
+                    <button type="button" id="loze_image_delete_btn" class="loze-crud__edit-image-delete" aria-label="Obriši sliku" title="Obriši sliku" disabled><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
+                    <div id="loze_image_frame" class="obrada-slika__preview-wrap loze-crud__panel-preview-wrap">
+                        <img id="loze_image_preview" class="obrada-slika__img" src="" alt="" aria-hidden="true" style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-two-rows kontrola-panel kontrola-panel--resize-y mb-3 loze-crud__panel-tablica">
+            <div class="kontrola-panel__header loze-crud__tablica-header">
+                <div class="loze-crud__header-row">
+                    <label class="kontrola-labela mb-0" for="select_drzava">Država</label>
+                    <div class="kontrola-select">
+                        <select id="select_drzava" aria-label="Odaberi državu">
+                            <option value="">— Odaberi državu —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="loze-crud__header-row">
+                    <label class="kontrola-labela mb-0" for="select_regija">Regija</label>
+                    <div class="kontrola-select">
+                        <select id="select_regija" aria-label="Odaberi regiju" disabled>
+                            <option value="">— Odaberi regiju —</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="kontrola-panel__body">
+                <div id="tablicaContainer" class="kontrola-tablica"></div>
+            </div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body loze-crud__edit-body">
+            <div class="loze-crud__edit-cols">
+                <div class="loze-crud__edit-col">
+                    <div class="loze-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_naziv">Naziv lože</label>
+                        <div class="kontrola-edit-delete">
+                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv lože...">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
+                    </div>
+                    <div class="loze-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="select_obred">Obred</label>
+                        <div class="kontrola-select">
+                            <select id="select_obred" aria-label="Odaberi obred">
+                                <option value="">— Odaberi obred —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="loze-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="select_tip_loze">Tip lože</label>
+                        <div class="kontrola-select">
+                            <select id="select_tip_loze" aria-label="Odaberi tip lože">
+                                <option value="">— Odaberi tip lože —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="loze-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_telefon">Telefon</label>
+                        <input id="edit_telefon" type="text" class="kontrola-edit" placeholder="+385 1 999 9999">
+                    </div>
+                    <div class="loze-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_email">E-mail</label>
+                        <input id="edit_email" type="email" class="kontrola-edit" placeholder="pero.peric@vnlh.eu">
+                    </div>
+                    <div class="loze-crud__edit-row loze-crud__edit-row--checkbox">
+                        <div class="loze-crud__aktivnost-wrap">
+                            <input type="checkbox" id="edit_aktivnost" class="kontrola-checkbox" value="1" aria-label="Aktivnost lože">
+                            <label class="kontrola-labela mb-0" for="edit_aktivnost">Aktivnost lože</label>
+                        </div>
+                        <div class="loze-crud__aktivnost-wrap">
+                            <input type="checkbox" id="edit_generiraj_thumb" class="kontrola-checkbox" value="1" aria-label="Generiraj novi thumb">
+                            <label class="kontrola-labela mb-0" for="edit_generiraj_thumb">Generiraj novi thumb</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="loze-crud__edit-col">
+                    <div class="loze-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_adresa_1">Adresa</label>
+                        <input id="edit_adresa_1" type="text" class="kontrola-edit" placeholder="Prvi red adrese">
+                    </div>
+                    <div class="loze-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_adresa_2">Dodatni red adrese</label>
+                        <input id="edit_adresa_2" type="text" class="kontrola-edit" placeholder="Drugi red adrese">
+                    </div>
+                    <div class="loze-crud__edit-row loze-crud__edit-row--inline">
+                        <div class="loze-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="edit_grad">Grad</label>
+                            <input id="edit_grad" type="text" class="kontrola-edit" placeholder="Grad">
+                        </div>
+                        <div class="loze-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="edit_posta">Pošta</label>
+                            <input id="edit_posta" type="text" class="kontrola-edit" inputmode="numeric" placeholder="broj pošte">
+                        </div>
+                    </div>
+                    <div class="loze-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="select_drzava_adrese">Država adrese</label>
+                        <div class="kontrola-select">
+                            <select id="select_drzava_adrese" aria-label="Odaberi državu adrese">
+                                <option value="">— Odaberi državu adrese —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="loze-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_datum">Datum nastanka lože</label>
+                        <input id="edit_datum" type="date" class="kontrola-edit">
+                    </div>
+                    <div class="loze-crud__edit-row loze-crud__edit-row--napomena">
+                        <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                        <textarea id="edit_napomena" class="kontrola-edit" rows="3" placeholder="Napomena"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer loze-crud__edit-footer">
+            <div class="loze-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="loze-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="obrada_slika_mount"></div>
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/0-Obrada_Slike.js?v=10.15.04"></script>
+<script src="../js/Loze_CRUD.js?v=10.15.04"></script>
+</body>
+</html>

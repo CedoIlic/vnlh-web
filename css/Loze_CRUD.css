@@ -1,0 +1,279 @@
+/* =========================================================
+   Loze_CRUD.css
+   Panel slike (1:1), panel tablice s Drzava/Regija, panel edit (dva stupca). Bez resize na edit panelu.
+   ========================================================= */
+
+.loze-crud__top-row {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+/* Desktop: 60/40 granica – slika max 60%, tablica min 40% */
+.loze-crud__panel-slika {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 60%;
+}
+.loze-crud__panel-tablica {
+  flex: 1 1 40%;
+  min-width: 40%;
+}
+.loze-crud__panel-slika .kontrola-panel__body {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  min-height: 140px;
+}
+.loze-crud__panel-slika .kontrola-panel__body > .loze-crud__edit-image-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Vlastiti resize handle (dodaje JS) – vidljiv samo na mobitelu */
+.loze-crud__panel-tablica .loze-crud__resize-handle {
+  display: none;
+}
+
+.loze-crud__tablica-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.loze-crud__header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.loze-crud__header-row .kontrola-labela {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.loze-crud__header-row .kontrola-select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.loze-crud__edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.loze-crud__footer-left,
+.loze-crud__footer-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* --- Edit body: redovi, labele desno, dva stupca --- */
+/* align-items: flex-start overrida [class*="crud__edit-row"] { align-items: center } iz 0-Kontrole – inače su labele na sredini */
+.loze-crud__edit-body .loze-crud__edit-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+.loze-crud__edit-body .loze-crud__edit-row:last-child {
+  margin-bottom: 0;
+}
+.loze-crud__edit-body .kontrola-labela {
+  text-align: left;
+}
+.loze-crud__edit-body .loze-crud__edit-row .kontrola-labela {
+  margin-bottom: 4px;
+}
+
+.loze-crud__edit-cols {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+/* Razmak između redova putem gap da bude isti u oba stupca (između Adresa 2 i Grad kao između Obred i Tip lože) */
+.loze-crud__edit-col {
+  flex: 1 1 0;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.loze-crud__edit-col .loze-crud__edit-row {
+  margin-bottom: 0;
+}
+.loze-crud__edit-col .loze-crud__edit-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Grad i Pošta u istom redu (grid) – veća specifičnost da override-a flex column iznad */
+.loze-crud__edit-body .loze-crud__edit-row.loze-crud__edit-row--inline {
+  display: grid;
+  grid-template-columns: 1fr 30%;
+  gap: 0.75rem;
+}
+.loze-crud__edit-row--inline .loze-crud__edit-cell {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;  /* isti razmak labela–kontrola kao u ostalim redovima (0-Kontrole crud__edit-row) */
+}
+.loze-crud__edit-body .loze-crud__edit-row.loze-crud__edit-row--inline .loze-crud__edit-cell .kontrola-labela {
+  margin-bottom: 0;  /* razmak daje gap na ćeliji */
+}
+
+.loze-crud__edit-body .kontrola-edit {
+  text-align: left;
+}
+#edit_posta {
+  text-align: right;
+}
+
+/* Datum: boja „placeholdera” (prazno polje) kao ostali placeholderi – isti token */
+#edit_datum.date-empty {
+  color: var(--edit_placeholder);
+}
+#edit_datum.date-empty::-webkit-datetime-edit {
+  color: var(--edit_placeholder);
+}
+
+/* Aktivnost i Generiraj novi thumb: vrh čekboxa u ravninu s vrhom kontrole Napomena */
+.loze-crud__edit-cols > .loze-crud__edit-col:first-child .loze-crud__edit-row--checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-top: calc(1.25em + 4px); /* visina labele + margin-bottom kao u redu s Napomenom */
+}
+.loze-crud__aktivnost-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.loze-crud__aktivnost-wrap .kontrola-checkbox {
+  margin: 0;
+}
+.loze-crud__aktivnost-wrap .kontrola-labela {
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.loze-crud__edit-row--napomena {
+  margin-top: 0;
+}
+/* Napomena: samo vertikalni resize; ne smije se smanjiti ispod visine edit kontrole */
+#edit_napomena {
+  resize: vertical;
+  min-height: var(--edit_height);
+}
+
+/* --- Kontrola za sliku (obrada-slika__preview-wrap, umanjeno za padding) --- */
+.loze-crud__edit-image-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+  cursor: pointer;
+}
+.loze-crud__edit-image-area .loze-crud__panel-preview-wrap {
+  position: absolute;
+  left: var(--panel_body_padding_x);
+  top: var(--panel_body_padding_y);
+  right: var(--panel_body_padding_x);
+  bottom: var(--panel_body_padding_y);
+  width: auto;
+  height: auto;
+  flex: none;
+}
+.loze-crud__edit-image-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--slika_radius);
+  background: var(--panel_body_bg);
+  color: var(--edit_delete_caret_color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_1);
+}
+.loze-crud__edit-image-delete:hover:not(:disabled) {
+  background: var(--c-gray-200);
+  color: var(--text);
+}
+.loze-crud__edit-image-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.loze-crud__edit-image-area:focus {
+  outline: none;
+}
+.loze-crud__edit-image-area.loze-crud__edit-image-area--disabled {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.65;
+}
+
+/* Literal 640px + touch (desktop viewport na mobu) – kao Clanovi_CRUD.css; var() u @media nije pouzdan. */
+@media (max-width: 640px),
+       ((hover: none) and (pointer: coarse) and (max-width: 1200px)) {
+  .loze-crud__top-row {
+    flex-direction: column;
+  }
+  /* Panel slike u 1-col: raširi po cijeloj dostupnoj širini */
+  .loze-crud__panel-slika {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex-shrink: 0;
+    align-self: stretch;
+  }
+  /* Panel tablice: puna širina; overflow hidden; flex 0 0 auto; min/height = body+header + 48px (resize) + 48px */
+  .loze-crud__panel-tablica {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    min-height: calc(var(--kontrola-panel-tablica-body-h) + 48px + var(--panel_header_min_height_two_rows) + 48px);
+    height: calc(var(--kontrola-panel-tablica-body-h) + 48px + var(--panel_header_min_height_two_rows) + 48px);
+  }
+  /* Minimalan razmak između tablice i resize trake */
+  .loze-crud__panel-tablica .kontrola-panel__body {
+    padding-bottom: 0;
+  }
+  /* Na mobitelu: vlastiti resize handle (Loze ga dodaje u JS) – vidljiv; traku iz 0-Kontrole sakrijemo */
+  .loze-crud__panel-tablica .kontrola-panel__body .kontrola-panel__resize-bar {
+    display: none !important;
+  }
+  .loze-crud__panel-tablica .loze-crud__resize-handle {
+    display: flex;
+    flex: 0 0 48px;
+    height: 48px;
+    min-height: 48px;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: ns-resize;
+    align-items: center;
+    justify-content: center;
+    background: var(--panel_resize_bar_bg);
+    border-top: var(--panel_resize_bar_border_top);
+    color: var(--panel_resize_bar_color);
+  }
+  .loze-crud__panel-tablica .loze-crud__resize-handle::before {
+    content: '';
+    width: var(--panel_resize_bar_icon_width, 24px);
+    height: var(--panel_resize_bar_icon_height, 12px);
+    border-top: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    border-radius: 1px;
+  }
+}

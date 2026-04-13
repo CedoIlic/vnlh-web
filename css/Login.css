@@ -1,0 +1,148 @@
+/* Login.html – kompaktan popup panel (tokeni: 0-Common GRUPA LOGIN PROZOR) */
+
+body.login-win {
+  margin: 0;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--login_win_page_bg);
+}
+
+.login-win__shell {
+  width: 100%;
+  max-width: 22rem;
+}
+
+.login-win__panel.kontrola-panel {
+  margin: 0;
+  border: var(--login_win_border_w) solid var(--login_win_border);
+  border-radius: var(--login_win_radius);
+  box-shadow: var(--panel_sjena);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: none;
+}
+
+.login-win__panel .kontrola-panel__header.login-win__header {
+  background: var(--login_win_header_bg);
+  flex-shrink: 0;
+}
+
+.login-win__title {
+  font-family: var(--panel_header_font_family);
+  font-size: var(--panel_header_font_size);
+  font-weight: var(--panel_header_font_weight);
+  color: var(--panel_header_text);
+}
+
+.login-win__panel .kontrola-panel__body.login-win__body {
+  background: var(--login_win_body_bg);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.login-win__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+/* [hidden] mora ostati skriven: gornje pravilo poništava UA display:none na atributu hidden */
+.login-win__field[hidden],
+#login_pass_hints[hidden] {
+  display: none !important;
+}
+
+.login-win__pass-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.login-win__pass-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Ikona 👁️: usklađeno s visinom edita */
+.login-win__toggle-pass {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: var(--edit_height);
+  min-width: var(--edit_height);
+  height: var(--edit_height);
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  box-shadow: var(--tablica_sjena);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (hover: hover) {
+  .login-win__toggle-pass:hover {
+    border-color: var(--edit_border_focus);
+  }
+}
+
+.login-win__toggle-pass:focus {
+  outline: none;
+}
+
+.login-win__toggle-pass:focus-visible {
+  box-shadow: var(--edit_focus_shadow);
+}
+
+.login-win__panel .kontrola-panel__footer.login-win__footer {
+  background: var(--login_win_footer_bg);
+  flex-shrink: 0;
+}
+
+.login-win__footer-btns {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Upute za lozinku (obvezna promjena): bez okvira, transparentna pozadina */
+#login_pass_hints:not([hidden]) {
+  display: block !important;
+}
+
+.login-win__hints {
+  margin-top: 0.25rem;
+}
+
+/* Tipografija kao .kontrola-napomena (0-Kontrole), bez okvira/paddinga */
+.login-win__hints-inner {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: 1.4;
+  color: var(--napomena_text);
+  text-align: justify;
+  text-justify: inter-word;
+}

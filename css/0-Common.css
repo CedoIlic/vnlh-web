@@ -1,0 +1,867 @@
+/* =========================================================
+   0-Common.css
+   Zajednički CORE tokeni aplikacije VNLH WEB.
+   Samo sirove vrijednosti; sve se veže na ove tokene.
+   ========================================================= */
+
+/* =========================================================
+   GRUPA: BOJE – CORE (paleta, sirove boje)
+   ========================================================= */
+:root {
+  --c-white: #ffffff;
+  --c-black: #000000;
+
+  --c-gray-50:  #f6f6f6;
+  --c-gray-100: #eeeeee;
+  --c-gray-200: #ced4da;
+  --c-gray-300: #9aa6b6;
+  --c-gray-700: #4a5568;
+  --c-gray-800: #0b1220;
+  --c-gray-900: #111827;
+
+  --c-blue-100: #d9e9ff;
+  --c-blue-200: #c3dcff;
+  --c-blue-500: #6fa8dc;
+  --c-blue-600: #0d6efd;
+  --c-blue-700: #7a8fb0;
+  --c-blue-800: #0b2a6f;
+
+  /* Toplije naglašene boje */
+  --c-yellow-500: #f8dd98;                                           /* Žuta za CRUD tipke */
+  --c-red-500:    #fa8b8b;                                           /* Crvena za CRUD tipke */
+  --c-red-900:    #fd0505;                                           /* Crvena za poruke */
+  --c-green-500:  #93fbb9;                                           /* Zelena za CRUD tipke */
+  --c-blue-300:   #79adfc;                                           /* Plava za CRUD tipke */
+  
+  --text: #0b2a6f;                                                   /* Boja sistmskog fonta */
+
+  --font_family: Arial, sans-serif;                                     /* Sistemski font */
+  --font_size: 16px;                                                    /* Veličina sistemskog fonta */
+  --font_weight: 400;                                                   /* Težina sistemskog fonta */
+
+  /* Stanka (ms) prije primjene filtra "Pronađi" po imenu/prezimenu u tablici. Koristi se u formi Napredovanja - Sekretarijat. Čita JS. */
+  --filter_pronadji_stanka_ms: 1000;
+
+  /* =========================================================
+     GRUPA: SJENE – CORE (sirove rgba vrijednosti)
+     Sirove boje sjene; koriste se u GRUPA: SJENE KONTROLA i naslov forme.
+     ========================================================= */
+  --c-shadow-30: rgba(0, 0, 0, 0.30);                                /* kontrole_sjena_slaba_1 – focus/edit/select/checkbox/napomena */
+  --c-shadow-35: rgba(0, 0, 0, 0.35);                                /* kontrole_sjena_slaba_2 – vanjska sjena tipki */
+  --c-shadow-45: rgba(0, 0, 0, 0.45);                                /* kontrole_sjena_tablica – okvir tablice i panela */
+  --c-shadow-60: rgba(0, 0, 0, 0.60);                                /* kontrole_sjena_jaca_1; naslov forme box-shadow */
+  --c-text-shadow-75: rgba(0, 0, 0, 0.75);                           /* kontrole_sjena_jaca_2 – najjača sjena; text-shadow */
+  --c-shadow-10: rgba(0, 0, 0, 0.1);                                 /* slaba sjena (npr. text-shadow) */
+
+  /* Tamne/bijele nijanse s prozirnošću – 3D tipke (vanjska donja/desna sjena, inset tamna + bijeli highlight) */
+  --c-near-black: rgba(5, 5, 5, 1);                                  /* čvrsta tamna – rub 3D tipke, vanjska sjena */
+  --c-near-black-10: rgba(5, 5, 5, 0.1);                             /* inset blaga tamna (border/edge) */
+  --c-near-black-25: rgba(5, 5, 5, 0.25);                            /* vanjska i inset sjena 3D tipki; refleksija tipke */
+  --c-near-black-50: rgba(5, 5, 5, 0.5);                             /* vanjska/inset sjena; button_reflection_color */
+  --c-near-black-75: rgba(5, 5, 5, 0.75);                            /* jača inset tamna (pressed stanje) */
+  --c-white-15: rgba(255, 255, 255, 0.15);                           /* inset bijeli highlight (gornji lijevi rub 3D tipke) */
+  --c-white-25: rgba(255, 255, 255, 0.25);                           /* inset jači highlight; pressed stanje */
+  --c-transparent: rgba(0, 0, 0, 0);                                 /* bez sjene / reset */
+
+  /* =========================================================
+     GRUPA: SJENE KONTROLA (samo za kontrole; grade se iz CORE)
+     Format: 0 6px 16px = pomak-x 0, pomak-y 6px, širina sjene (blur) 16px.
+     Koriste se: focus na edit/select/checkbox/napomena/edit-delete; 
+     okvir tablice i panela; vanjska sjena tipki.
+     ========================================================= */
+  --kontrole_sjena_slaba_1:  0 3px 8px var(--c-shadow-30);           /* focus kontrole (edit, select, checkbox, napomena, edit-delete) */
+  --kontrole_sjena_slaba_2:  0 6px 16px var(--c-shadow-35);          /* vanjska sjena tipki (button_outer_shadow) */
+  --kontrole_sjena_tablica:  0 6px 16px var(--c-shadow-45);          /* box-shadow okvira tablice i panela */
+  --kontrole_sjena_jaca_1:   0 6px 16px var(--c-shadow-60);          /* jača sjena (opcijski) */
+  --kontrole_sjena_jaca_2:   0 6px 16px var(--c-text-shadow-75);     /* najjača sjena (opcijski) */
+
+  /* =========================================================
+     GRUPA: NASLOV FORME
+     ========================================================= */
+  --naslov_forme_grad_start: var(--c-blue-800);                      /* Tamnija boja gradienta podloge naslova */
+  --naslov_forme_grad_end:   var(--c-blue-500);                      /* Svjetlija boja gradienta podloge naslova */
+  --naslov_forme_text: var(--c-white);                               /* Boja teksta naslova forme */
+  --naslov_forme_font: Arial, sans-serif;                            /* Font naslova forme */
+  --naslov_forme_weight: 700;                                        /* Težina fonta naslova form */
+  --naslov_forme_font_size: 1.8rem;                                  /* Veličina fonta naslova forme */
+  --naslov_forme_letter_spacing: 0.6px;                              /* Razmak znakova naslova forme */
+  --naslov_forme_padding_y: 14px;                                    /* Padding Y u naslovu forme */
+  --naslov_forme_padding_x: 0;                                       /* Padding X u naslovu forme */
+  --naslov_forme_box_shadow: 0 10px 24px var(--c-shadow-60);         /* Sjena podloge naslova forme */
+  --naslov_forme_text_shadow: 3px 3px 6px var(--c-text-shadow-75);   /* Sjena teksta naslova forme */
+  --naslov_forme_text_outline: var(--c-blue-800);                    /* boja outlajna teksta naslova forme */
+
+  /* =========================================================
+     GRUPA: GRADIENT POZADINE
+     Pozadinski gradient stranice (body) – ponavljajuće trake.
+     ========================================================= */
+  --pozadina_grad_dark:  var(--c-blue-100);                          /* tamniji dio trake (sredina) */
+  --pozadina_grad_light: var(--c-gray-50);                           /* svjetliji dio trake (rubovi) */
+  --pozadina_grad_band_h: 100px;                                     /* visina jedne trake u pikselima */
+
+  /* =========================================================
+     GRUPA: LAYOUT STRANICE (zamjena Bootstrap container/razmaci; responsive)
+     Koristi se na svim stranicama kad se ukloni Bootstrap.
+     ========================================================= */
+  --page_container_max_width: 1140px;                                /* max širina sadržaja (veliki ekran) */
+  --page_container_padding_x: 16px;                                  /* horizontalni padding (mali ekran) */
+  --page_container_padding_x_wide: 24px;                              /* horizontalni padding (širi ekran) */
+  --page_container_margin_top: 1.5rem;                                /* margin-top glavnog bloka (mt-4) */
+  --page_spacing_mb_0: 0;                                            /* bez donjeg razmaka (npr. labela u redu) */
+  --page_spacing_mb_3: 1rem;                                         /* ekv. Bootstrap mb-3 */
+  --page_spacing_mb_4: 1.5rem;                                       /* ekv. Bootstrap mb-4 */
+  --page_breakpoint_wide: 768px;                                     /* od ove širine veći padding / ponašanje */
+  --page_breakpoint_narrow: 640px;                                   /* ispod ove širine mobitel prikaz; u CSS: var(--page_breakpoint_narrow, 640px); u JS: getPageBreakpointNarrow() (0-Common.js). Lista.css / Lista.js ostaju na fiksnom 640px. Alati_Meni_Test.css (hamburger vs horizontalni meni) koristi literal 640px/641px u @media – pri promjeni ovog tokena uskladiti i tamo. */
+
+  /* Clanovi CRUD – širina viewporta ispod koje se redovi (Datum rođenja/Spol/Šifra, Datum inicijacije/Porijeklo, Datum stupnja/Na prijedlog) preslože u po jedan red po kontroli; editi tada 100% stupca (media query, ne container query) */
+  --clanovi_crud_edit_stack_viewport_breakpoint: 700px;
+
+  /* =========================================================
+     GRUPA: IZGLED GLAVNOG MENIA
+     Tokeni za izgled glavnog menija (traka, dropdown prozori).
+     ========================================================= */
+  /* --- Traka horizontalnog menija --- */
+  /*   boje */
+  --meni_traka_bg_1: var(--c-blue-500);                              /* pozadina trake (gradient start) */
+  --meni_traka_bg_2: var(--c-blue-500);                              /* pozadina trake (gradient end); isti kao _1 = jednobojno */
+  --meni_traka_text: var(--c-blue-800);                                 /* boja teksta stavki */
+  --meni_traka_hover_bg: var(--c-blue-200);                  /* pozadina stavke na hover */
+  --meni_traka_outline_boja: var(--c-gray-50);                      /* boja outline teksta stavki */
+  --meni_traka_linija_boja: var(--c-blue-800);                      /* boja horizontalne linije iznad i ispod trake */
+  /*   sjene */
+  --meni_traka_sjena: 0 6px 16px var(--c-shadow-45);                 /* box-shadow trake; none = bez sjene */
+  --meni_traka_text_sjena: 0 0 0 transparent;                       /* dodatna text-shadow (drop shadow); transparent = bez */
+  /*   efekti */
+  --meni_traka_gradient_direction: H;                                /* smjer gradienta: H = horizontalno, V = vertikalno (neovisno o veličini) */
+  --meni_traka_text_align: c;                                        /* poravnanje stavki: L = lijevo, R = desno, C = centar (neovisno o veličini) */
+  /*   tipografija */
+  --meni_traka_font: var(--font_family);                            /* font stavki u traci */
+  --meni_traka_font_size: 18px;                                      /* veličina fonta stavki */
+  --meni_dropdown_font_size: 16px;                                   /* veličina fonta u podmenijima i izvršnim stavkama */
+  --meni_traka_font_weight: 400;                                    /* težina fonta stavki */
+  --meni_traka_outline_debljina: 0;                                /* debljina outline; 0 = bez outline */
+  /*   ostalo */
+  --meni_traka_min_height: 50px;                                    /* minimalna visina trake */
+  --meni_traka_width: 100%;                                         /* širina trake (npr. 100%, 80%, 1200px) */
+  --meni_traka_max_width: none;                                     /* max-width trake; none = bez ograničenja */
+  --meni_traka_padding: 4px 16px;                                  /* padding trake: gore/dolje, lijevo/desno */
+  --meni_traka_stavka_padding_y: 6px;                               /* padding stavke gore/dolje; font centriran */
+  --meni_traka_stavka_padding_x: 30px;                              /* padding stavke lijevo/desno */
+  --meni_traka_linija_debljina: 1px;                                /* debljina linije; 0 = bez linije */
+  --meni_traka_hover_radius: 4px;                                    /* radijus kutova hover podloge; 0 = bez zaobljenja */
+  --meni_traka_end_padding: 100px;                                      /* padding na kraju orijentacije: L = padding-left, R = padding-right; tekst odmah iza njega */
+
+  /* --- Dropdown prozori --- */
+  /*   boje */
+  --meni_dropdown_bg: var(--c-white);                                /* pozadina dropdowna --c-white*/
+  --meni_dropdown_border: var(--c-gray-300);                        /* boja okvira */
+  --meni_dropdown_border_w: 1px;                                     /* debljina okvira */
+  --meni_podmeni_bg: var(--c-blue-500);                             /* pozadina stavke u negativu (podmeni) */
+  --meni_podmeni_bg_hover: var(--c-blue-600);                       /* pozadina podmenija na hover */
+  --meni_izvrsni_text: var(--c-gray-800);                           /* boja teksta izvršne stavke */
+  --meni_izvrsni_hover_bg: var(--c-blue-100);                       /* pozadina izvršne stavke na hover */
+  /*   sjene */
+  --meni_dropdown_sjena: 0 6px 16px var(--c-shadow-45);              /* sjena dropdowna */
+  /*   efekti */
+  /*   ostalo */
+  --meni_dropdown_radius: 12px;                                      /* radijus kutova dropdowna */
+  --meni_dropdown_padding: 4px;                                      /* unutarnji padding dropdowna (gore/dolje) */
+  --meni_dropdown_padding_x: 4px;                                    /* padding lijevo i desno u dropdown menijima (rub prozora – rub negativa) */
+  --meni_podmeni_text_indent: 30px;                                   /* razmak po x osi između ruba negativa i početka teksta */
+  --meni_dropdown_width_multiplier: 1.2;                             /* koliko je širina veća od najšire stavke (1.5 = jedan i pol puta) */
+  --meni_dropdown_min_width: 200px;                                 /* minimalna širina dropdown panela */
+
+  /* --- Logo VNLH na glavnom meniju (Meni.html) – WebP iz slike/ --- */
+  --vnlh_logo_meni_ime_datoteke: VNLH_Logo.webp;                      /* ime datoteke u folderu slike */
+  --vnlh_logo_meni_staza_od_css: ../slike/VNLH_Logo.webp;            /* relativna staza od css/ (npr. 0-Common.css, Meni.css) */
+  --vnlh_logo_meni_staza_od_html: ../slike/VNLH_Logo.webp;           /* relativna staza od html/Meni.html */
+  --vnlh_logo_meni_url: url("../slike/VNLH_Logo.webp");              /* body.meni-glavni::before background-image */
+  --vnlh_logo_meni_sirina: 560px;                                    /* širina u pozadini (800px − 30%); background-size */
+  --vnlh_logo_meni_prozirnost: 0.7;                                  /* opacity: 0.7 ≈ 70 % vidljivosti loga na Meni */
+  --vnlh_logo_meni_sjena: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.22)); /* body.meni-glavni::before filter; none = bez sjene */
+
+  /* =========================================================
+     GRUPA: TABLICA 
+     ========================================================= */
+  /* OSNOVNI TOKENI TABLICE */
+  --tablica_broj_kolona: 5;                                          /* broj kolona tablice */
+  --tablica_vidljivih_redova: 5;                                     /* minimalni broj vidljivih redova (za min-height) */
+  --tablica_podaci_h_linije: true;                                   /* ima li tablica horizontalne linije u podacima */
+  --tablica_podaci_v_linije: true;                                   /* ima li tablica vertikalne linije u podacima */
+  --tablica_zaglavlje_v_linije: true;                                /* ima li tablica vertikalne linije u zaglavlju */
+  --tablica_podaci_striped: false;                                   /* ima li tablica zebru u redovima */
+  --tablica_selekcija_više_redova: false;                            /* Je li dozvoljeno selektirati više redova u tablici */
+
+  /* TABLICA – DIMENZIJE & LAYOUT */
+  --tablica_head_h: 42px;                                            /* Visina zaglavlja (THEAD height) */
+  --tablica_row_h: 40px;                                             /* Visina reda (TBODY row height) */
+  --tablica_extra: -2px;                                              /* Dodatak visine (fine-tune za border/padding/račun) */
+  --tablica_border_w: 1px;                                           /* Debljina linije okvira tabele */
+  --tablica_zaglavlje_line_debljina: var(--tablica_border_w);        /* Debljina linije između kolona zaglavlja tabele */
+  --tablica_grid_v_line_debljina: var(--tablica_border_w);           /* Debljina vertikalnih linija u mreži tabele */
+  --tablica_grid_h_line_debljina: var(--tablica_border_w);           /* Debljina horizontalnih linija u mreži tabele */
+  --tablica_radius: 12px;                                            /* Radijus kutova tablice */
+  --tablica_sirina_scrol_bara: 12px;                                 /* Širina skrol bara */
+
+  /* TABLICA – BOJE OKVIRA & LINIJA & ZAGLAVLJA */
+  --tablica_border: var(--c-gray-300);                               /* Boja okvira tablice */
+  --tablica_zaglavlje_line: var(--c-gray-300);                       /* Boja linije ispod zaglavlja tablice */
+  --tablica_h_line: var(--c-gray-300);                               /* Boja horizontalnih linija tablice */
+  --tablica_v_line: var(--c-gray-300);                               /* Boja vertikalnih linija tablice */
+  --tablica_zaglavlje_v_line: var(--c-gray-300);                     /* Boja vertikalnih linija zaglavlja tablice */
+     /* Zaglavlje */
+  --tablica_bg: var(--c-gray-200);                                   /* Boja pozadine tablice */
+  --tablica_head_bg_1: var(--c-blue-100);                            /* primarna boja gradienta zaglavlja */
+  --tablica_head_bg_2: var(--c-blue-500);                            /* Sekundarna boja gradienta zaglavlja */
+  --tablica_head_bg: linear-gradient(to bottom,
+    var(--tablica_head_bg_1), var(--tablica_head_bg_2));             /* Gradient zaglavlja tablice */
+  --tablica_head_text_boja: var(--c-blue-800);                       /* Boja teksta zaglavlja */
+     /* Redovi podataka */
+  --tablica_row_bg              : var(--c-gray-50);                  /* Boja pozadine reda */
+  --tablica_row_fg              : var(--text);                       /* Boja teksta reda sa podacima*/
+  --tablica_row_hover_bg        : var(--c-blue-100);                 /* Boja pozadine reda na hover */
+  --tablica_row_selected_bg     : var(--c-blue-200);                 /* Boja pozadine reda na select */
+  --tablica_row_striped_bg      : var(--c-gray-100);                 /* Alternativna pozadina reda (striped) */
+ 
+  /* DISABLE STANJE – TABLICA (gradient, tekst, pozadine) */
+  --tablica_head_bg_1_disabled: var(--c-gray-100);                   /* Gornja boja gradienta zaglavlja u disable stanju */
+  --tablica_head_bg_2_disabled: var(--c-gray-300);                   /* Donja boja gradienta zaglavlja u disable stanju */
+  --tablica_head_text_boja_disabled: var(--c-gray-300);              /* Boja teksta i ikona zaglavlja u disable stanju */
+  --tablica_zaglavlje_font_family_disabled: var(--tablica_zaglavlje_font_family);   /* Font zaglavlja u disable stanju */
+  --tablica_zaglavlje_font_size_disabled: var(--tablica_zaglavlje_font_size);       /* Veličina fonta zaglavlja u disable stanju */
+  --tablica_zaglavlje_font_weight_disabled: var(--tablica_zaglavlje_font_weight);   /* Težina fonta zaglavlja u disable stanju */
+  --tablica_row_fg_disabled: var(--c-gray-300);                      /* Boja teksta redova u disable stanju */
+  --tablica_bg_disabled: var(--c-gray-50);                           /* Pozadina tablice u disable stanju */
+  --tablica_row_bg_disabled: var(--c-gray-50);                       /* Pozadina reda s podacima u disable stanju */
+  --tablica_row_selected_bg_disabled: var(--c-gray-100);             /* Pozadina selektiranog reda u disable stanju */
+  
+  /* Sjena – iz GRUPA: SJENE – KONTROLA */
+  --tablica_sjena               : var(--kontrole_sjena_tablica);     /* Sjena oko okvira tablice, none - bez sjene */
+  --tablica_sjena_disabled      : none;                              /* Sjena tablice (i okvira s h-scrollom) u disable stanju */
+  
+  /* TABLICA - SCROL BAR */
+  --tablica_scroll_bg           : var(--c-gray-100);                 /* Pozadina scrol bara tablice */
+  --tablica_scroll_klizac       : var(--c-gray-300);                 /* Boja klizača scroll bara */
+  --tablica_scroll_klizac_hover : var(--c-blue-500);                 /* Boja klizača scroll bara hover*/
+
+  /* TABLICA – hover skrol sadržaja ćelije: 1 = uključeno, 0 = isključeno; brzina u px/s (trajanje = udaljenost / brzina, neovisno o dužini). */
+  --tablica_cell_hover_scroll: 1;
+  --tablica_cell_hover_scroll_speed: 150;
+ 
+  /* TABLICA TIPOGRAFIJA */
+  --tablica_podaci_font_family         : var(--font_family);         /* Osnovni font tablice */
+  --tablica_podaci_font_size           : var(--font_size);           /* Veličina osnovnog fonta tablice */
+  --tablica_podaci_font_weight         : var(--font_weight);         /* Težina osnovnog fonta tablice */
+  --tablica_zaglavlje_font_family      : var(--font_family);         /* Osnovni font zaglavlja tablice */
+  --tablica_zaglavlje_font_size        : var(--font_size);           /* Veličina osnovnog fonta zaglavlja tablice */
+  --tablica_zaglavlje_font_weight      : 700;                        /* Težina osnovnog fonta zaglavlja tablice */
+ 
+  /* =========================================================
+     GRUPA: PANEL – OPĆE / OKVIR
+     ========================================================= */
+  --panel_border_w: 1px;                                             /* Širina okvira panela */
+  --panel_border: var(--c-gray-300);                                 /* Boja okvira panela */
+  --panel_radius: 12px;                                              /* Radius kutova panela */
+  --panel_sjena: var(--kontrole_sjena_tablica);                      /* Sjena oko panela */
+  --panel_bg: var(--c-white);                                        /* Pozadina cijelog panela, uključuje i zaglavlje i podnožje */
+  
+  /* GRUPA: PANEL – ZAGLAVLJE */
+  --panel_header_bg: var(--c-gray-100);                              /* Pozadina zaglavlja panela */
+  --panel_header_text: var(--text);                                  /* Boja teksta zaglavlja panela */
+  --panel_header_font_family: var(--font_family);                    /* Font-family teksta zaglavlja panela */
+  --panel_header_font_size: var(--font_size);                        /* Veličina fonta zaglavlja panela */
+  --panel_header_font_weight: 700;                                   /* Težina fonta zaglavlja panela */
+  --panel_header_padding_y: 12px;                                    /* Okomiti padding zaglavlja panela */
+  --panel_header_padding_x: 16px;                                    /* Vodoravni padding zaglavlja panela */
+  --panel_header_border_bottom: 1px solid var(--c-gray-300);         /* Donji obrub između zaglavlja i tijela panela */
+  --panel_header_min_height: calc(2 * var(--panel_header_padding_y) + var(--edit_height));  /* Minimalna visina zaglavlja (za izračun min-height panela kada ima header) */
+  --panel_header_min_height_two_rows: calc(2 * var(--panel_header_padding_y) + 2 * var(--edit_height) + 0.5rem);  /* Zaglavlje s dva reda kontrola (npr. Država + Regija); gap 0.5rem između redova */
+  --panel_header_min_height_three_rows: calc(2 * var(--panel_header_padding_y) + 3 * var(--edit_height) + 1rem);  /* Zaglavlje s tri reda kontrola (npr. Država + Regija + Loža); dva razmaka 0.5rem */
+  --panel_header_min_height_four_rows: calc(2 * var(--panel_header_padding_y) + 4 * var(--edit_height) + 1.5rem);  /* Zaglavlje s četiri reda kontrola (npr. Transfer Excel – 3 reda + putanja); ukupno tri razmaka između redova */
+  --panel_header_min_height_four_rows_stacked: calc(2 * var(--panel_header_padding_y) + 8 * var(--edit_height) + 3rem);  /* Zaglavlje s četiri reda u presloženom prikazu (labela iznad, kontrole ispod); npr. Duznosnici_Ogranicenja; 4 reda × 2 linije, tri razmaka 0.35rem + jedan 0.5rem */
+  --panel_min_height_buffer: 74px;                                     /* Buffer za min-height panela (footer + resize ostaju vidljivi pri smanjivanju) */
+
+  /* GRUPA: PANEL – TIJELO */
+  --panel_body_bg: var(--c-white);                                   /* Boja pozadine tijela panela (bez zaglavlja i podnožja) */
+  --panel_body_padding_y: 16px;                                      /* Okomiti padding unutar tijela panela */
+  --panel_body_padding_x: 16px;                                      /* Vodoravni padding unutar tijela panela */
+
+  /*  GRUPA: PANEL – PODNOŽJE */ 
+  --panel_footer_bg: var(--c-gray-50);                               /* Pozadina podnožja panela */
+  --panel_footer_text: var(--text);                                  /* Boja teksta u podnožju panela */
+  --panel_footer_padding_y: 12px;                                    /* Okomiti padding podnožja panela */
+  --panel_footer_padding_x: 16px;                                    /* Vodoravni padding podnožja panela */
+  --panel_footer_border_top: 1px solid var(--c-gray-300);            /* Gornji obrub između tijela i podnožja panela */
+
+  /* =========================================================
+     GRUPA: LOGIN PROZOR (popup stranica Login.html – kontrola-panel)
+     ========================================================= */
+  --login_win_page_bg: var(--c-blue-200);                             /* Pozadina cijele stranice Login.html (body) */
+  --login_win_shell_bg: var(--login_win_page_bg);                     /* Alias (popup „ljuska“ = ista kao stranica) */
+  --meni_glavni_page_bg: var(--login_win_page_bg);                    /* Glavni izbornik Meni.html (body) – ista podloga kao Login */
+  /* Meni – red s logiranim korisnikom (PHP na body postavlja --logirani_korisnik_text, JSON string za content) */
+  --logirani_korisnik_text: '';
+  --logirani_korisnik_color: var(--text);
+  --logirani_korisnik_font_family: var(--font_family);
+  --logirani_korisnik_font_size: var(--font_size);
+  --logirani_korisnik_font_weight: var(--font_weight);
+  --logirani_korisnik_text_align: center;
+  --logirani_korisnik_padding_bottom: 1rem;
+  --logirani_korisnik_left: 0;
+  --logirani_korisnik_right: 0;
+  --logirani_korisnik_bottom: 0;
+  --logirani_korisnik_z_index: 0;
+  --login_win_border_w: var(--panel_border_w);                        /* Debljina okvira panela prijave */
+  --login_win_border: var(--panel_border);                            /* Boja okvira panela prijave */
+  --login_win_radius: var(--panel_radius);                            /* Radius kutova panela prijave */
+  --login_win_header_bg: var(--panel_header_bg);                      /* Pozadina zaglavlja „Prijava VNLH“ */
+  --login_win_body_bg: var(--panel_body_bg);                          /* Pozadina tijela (edit polja) */
+  --login_win_footer_bg: var(--panel_footer_bg);                      /* Pozadina podnožja (tipke) */
+
+  /* GRUPA: PANEL – RESIZE TRAKA (kontrole za širenje panela)
+     Traka u tijelu panela, iznad footera; drag po Y (touch/mouse). JS je u 0-Kontrole.js (initPanelResizeBar).
+     U nastavku tokeni za ovu kontrolu: visina i prostor u layoutu, pozadina, obrub, boja ikone (crte), dimenzije ikone. */
+  --panel_resize_bar_height: 28px;                                   /* Visina trake; koristi se i u min-height tijela/panela */
+  --panel_resize_bar_bg: var(--c-transparent);                        /* Pozadina trake (transparent prema tokenu; sjena tablice ostaje vidljiva) */
+  --panel_resize_bar_border_top: 1px solid var(--c-transparent);      /* Gornji obrub trake (transparent da ne prekriva sjenu tablice) */
+  --panel_resize_bar_color: var(--c-gray-300);                        /* Boja ikone (crte) u traci */
+  --panel_resize_bar_color_hover: var(--c-gray-700);                  /* Boja ikone na hover */
+  --panel_resize_bar_icon_width: 24px;                                /* Širina crtica u traci */
+  --panel_resize_bar_icon_height: 4px;                                /* Visina bloka crtica */
+
+  /* =========================================================
+     GRUPA: MODAL WINDOW (prozor za obavijesti / greške)
+     Overlay + panel (dialog). Tijelo: lijevo slika+podloga, desno poruka. Stanja: ok, error, forbidden, information, warning.
+     ========================================================= */
+  /* Overlay – zatamnjenje */
+  --modal_overlay_dim_enabled: 1;                                    /* 1 = uključeno, 0 = isključeno */
+  --modal_overlay_dim_intensity: 50;                                 /* Intenzitet zatamnjenja u postocima (0–100) */
+  --modal_overlay_bg: rgba(0, 0, 0, 0.5);                          /* Boja overlay-a (kad je dim uključen; intensity može mijenjati opacity) */
+
+  /* Fade in / out */
+  --modal_fade_in_enabled: 1;                                        /* 1 = uključeno, 0 = isključeno */
+  --modal_fade_out_enabled: 1;                                       /* 1 = uključeno, 0 = isključeno */
+  --modal_fade_duration: 200ms;                                      /* Trajanje fade in i fade out */
+
+  /* Dialog (panel) – okvir; ako postoji boja podloge slike, okvir ima istu boju */
+  --modal_border_w: 3px;                                             /* Debljina okvira modala */
+  --modal_border: var(--panel_border);                               /* Default boja okvira (kopija tokena panela) */
+
+  /* Modal – zaglavlje, tijelo, podnožje (mogu se razlikovati od ostalih panela) */
+  --modal_header_bg: var(--c-gray-100);                         /* Pozadina zaglavlja modala */
+  --modal_header_text: var(--panel_header_text);                     /* Boja teksta zaglavlja (porijeklo) */
+  --modal_header_font_family: var(--panel_header_font_family);       /* Font zaglavlja modala */
+  --modal_header_font_size: var(--panel_header_font_size);           /* Veličina fonta zaglavlja */
+  --modal_header_font_weight: var(--panel_header_font_weight);       /* Debljina fonta zaglavlja */
+  --modal_header_padding_y: var(--panel_header_padding_y);           /* Okomiti padding zaglavlja */
+  --modal_header_padding_x: var(--panel_header_padding_x);           /* Vodoravni padding zaglavlja */
+  --modal_header_border_bottom: var(--panel_header_border_bottom);   /* Donji obrub ispod zaglavlja */
+
+  --modal_body_bg: var(--c-gray-50);                             /* Pozadina tijela modala */
+  --modal_body_padding_y: var(--panel_body_padding_y);               /* Okomiti padding tijela */
+  --modal_body_padding_x: var(--panel_body_padding_x);               /* Vodoravni padding tijela */
+
+  --modal_footer_bg: var(--c-gray-100);                         /* Pozadina podnožja modala */
+  --modal_footer_text: var(--panel_footer_text);                     /* Boja teksta u podnožju (tipke) */
+  --modal_footer_padding_y: var(--panel_footer_padding_y);           /* Okomiti padding podnožja */
+  --modal_footer_padding_x: var(--panel_footer_padding_x);           /* Vodoravni padding podnožja */
+  --modal_footer_border_top: var(--panel_footer_border_top);         /* Gornji obrub iznad podnožja */
+
+  /* Dio za sliku (lijevo) – podloga po stanju */
+  --modal_image_padding: 1rem;                                       /* Padding unutar bloka slike modala */
+  --modal_image_bg_ok: var(--c-green-500);                           /* Podloga slike za stanje ok */
+  --modal_image_bg_error: var(--c-red-500);                          /* Podloga slike za stanje error */
+  --modal_image_bg_forbidden: var(--c-gray-700);                     /* Podloga slike za stanje forbidden */
+  --modal_image_bg_information: var(--c-blue-500);                   /* Podloga slike za stanje information */
+  --modal_image_bg_warning: var(--c-yellow-500);                     /* Podloga slike za stanje warning */
+
+  /* Slika po stanju – putanja relativna na css/ (../slike/ = korijenski slike/) */
+  --modal_image_ok: url("../slike/check.png");                      /* Ikona za stanje ok */
+  --modal_image_error: url("../slike/error.png");                   /* Ikona za stanje error */
+  --modal_image_forbidden: url("../slike/forbidden.png");           /* Ikona za stanje forbidden */
+  --modal_image_information: url("../slike/information.png");       /* Ikona za stanje information */
+  --modal_image_warning: url("../slike/warning.png");               /* Ikona za stanje warning */
+
+  --modal_images_path: "slike/";                                     /* Base putanja za slike modala (iz HTML-a) */
+  --modal_auto_close_ms: 2000;                                       /* Automatsko zatvaranje u ms kad nema tipki */
+  --modal_button_caption_default: var(--c-red-500);                        /* Boja captiona default tipke u modalu */
+
+  /* =========================================================
+     GRUPA: MODAL TABLICA (modal s tablicom, drag, resize kut, resize traka u tijelu)
+     Izgled i boja u skladu s modal kontrolom.
+     ========================================================= */
+  --modal_tablica_overlay_bg: var(--modal_overlay_bg);
+  --modal_tablica_border_w: var(--modal_border_w);
+  --modal_tablica_border: var(--modal_border);
+  --modal_tablica_border_radius: var(--panel_radius);
+  --modal_tablica_sjena: var(--panel_sjena);
+  --modal_tablica_header_bg: var(--modal_header_bg);
+  --modal_tablica_header_text: var(--modal_header_text);
+  --modal_tablica_header_font_family: var(--modal_header_font_family);
+  --modal_tablica_header_font_size: var(--modal_header_font_size);
+  --modal_tablica_header_font_weight: var(--modal_header_font_weight);
+  --modal_tablica_header_padding_y: var(--modal_header_padding_y);
+  --modal_tablica_header_padding_x: var(--modal_header_padding_x);
+  --modal_tablica_header_border_bottom: var(--modal_header_border_bottom);
+  --modal_tablica_header_cursor: move;
+  --modal_tablica_body_bg: var(--modal_body_bg);
+  --modal_tablica_body_padding_y: var(--modal_body_padding_y);
+  --modal_tablica_body_padding_x: var(--modal_body_padding_x);
+  --modal_tablica_footer_bg: var(--modal_footer_bg);
+  --modal_tablica_footer_text: var(--modal_footer_text);
+  --modal_tablica_footer_padding_y: var(--modal_footer_padding_y);
+  --modal_tablica_footer_padding_x: var(--modal_footer_padding_x);
+  --modal_tablica_footer_border_top: var(--modal_footer_border_top);
+  --modal_tablica_resize_corner_size: 20px;
+  --modal_tablica_resize_corner_cursor: nwse-resize;
+  --modal_tablica_resize_bar_bg: var(--c-transparent);                    /* Pozadina resize trake u tijelu (transparent da sjena tablice ostane vidljiva) */
+  --modal_tablica_resize_bar_border_top: 1px solid var(--c-transparent); /* Gornji obrub resize trake */
+  --modal_tablica_tablica_sjena: var(--tablica_sjena);                   /* Sjena oko tablice u modalu (ista kao panel tablica) */
+  --modal_tablica_table_wrap_padding_y: 0;                                /* Samo tijelo ima padding; ovdje 0 da razmak = panel tablica */
+  --modal_tablica_table_wrap_padding_x: 0;
+  --modal_tablica_vidljivih_redova: 3;                                   /* Minimalni broj vidljivih redova (kao --tablica_vidljivih_redova u panel tablici) */
+
+  /* =========================================================
+     GRUPA: KONTROLA EDIT (jednolinijski tekst)
+     ========================================================= */
+  /* BOJE – enabled */
+  --edit_bg: var(--c-white);                                         /* Pozadina edit kontrole */
+  --edit_text: var(--c-gray-900);                                    /* Boja teksta u edit kontroli */
+  --edit_placeholder: var(--c-gray-300);                             /* Boja placeholder teksta u edit kontroli */
+  --edit_border: var(--c-gray-300);                                  /* Boja okvira edit kontrole */
+  --edit_border_focus: var(--c-blue-600);                            /* Boja okvira edit kontrole u focus stanju */
+
+  /* BOJE – disabled */
+  --edit_bg_disabled: var(--c-gray-100);                             /* Pozadina edit kontrole kada je disabled */
+  --edit_text_disabled: var(--edit_delete_text_disabled);             /* Boja teksta edit kontrole kada je disabled (ista kao edit-delete) */
+  --edit_border_disabled: var(--c-gray-200);                         /* Boja okvira edit kontrole kada je disabled */
+
+  /* ISCRTAVANJE */
+  --edit_height: 36px;                                               /* Visina edit kontrole */
+  --edit_padding_y: 6px;                                             /* Okomiti padding unutar edit kontrole */
+  --edit_padding_x: 10px;                                            /* Vodoravni padding unutar edit kontrole */
+  --edit_radius: 8px;                                                /* Radius kutova edit kontrole */
+
+  /* PONAŠANJE – enabled */
+  --edit_cursor: text;                                               /* Kursor miša iznad aktivne edit kontrole */
+  --edit_focus_shadow: var(--kontrole_sjena_slaba_1);                /* Minimalna sjena edit kontrole u selektiranom stanju */
+
+  /* PONAŠANJE – disabled */
+  --edit_cursor_disabled: default;                                   /* Kursor miša kada je edit kontrola disabled */
+  --edit_focus_shadow_disabled: none;                                /* Sjena edit kontrole kada je disabled */
+
+  /* =========================================================
+     GRUPA: KONTROLA SLIKA (prikaz slike)
+     Okvir i podloga za prikaz slike. Ponašanje: auto = okvir prilagođen slici, fix = fiksne dimenzije okvira.
+     ========================================================= */
+  --slika_border_w: 1px;                                             /* Debljina okvira slike */
+  --slika_border: var(--c-gray-300);                                 /* Boja okvira slike */
+  --slika_bg: var(--c-gray-100);                                     /* Boja podloge slike */
+  --slika_bg_opacity: 1;                                             /* Transparentnost boje podloge (0–1) */
+  --slika_width: 120px;                                              /* Širina okvira slike (koristi se u fix načinu) */
+  --slika_height: 120px;                                             /* Visina okvira slike (koristi se u fix načinu) */
+  --slika_radius: 8px;                                              /* Radijus kutova slike */
+  --slika_okvir_ponasanje: auto;                                     /* auto = okvir uz sliku; fix = fiksna širina/visina */
+  --slika_okvir_sjena: var(--kontrole_sjena_tablica);                /* Sjena okvira slike (kao ostale kontrole) */
+  --slika_okvir_sjena_disabled: none;                                /* Sjena okvira slike kada je kontrola disabled */
+  --slika_okvir_focus_boja: var(--edit_border_focus);                 /* Boja okvira pri fokusu – ista kao edit (samo mijenja boju obruba) */
+
+  /* =========================================================
+     GRUPA: KONTROLA OBRADA SLIKE (alatna traka modala – podloga, ikone; veličina slike)
+     ========================================================= */
+  --slika_obrada_toolbar_bg: var(--modal_footer_bg);                 /* Boja podloge alatne trake za obradu slike */
+  --slika_obrada_ikona_border_w: 1px;                                /* Debljina okvira tipke ikone */
+  --slika_obrada_ikona_border: var(--edit_border);                   /* Boja okvira tipke ikone */
+  --slika_obrada_ikona_radius: var(--edit_radius);                   /* Radijus kutova tipke ikone */
+  --slika_obrada_ikona_bg: var(--panel_body_bg);                     /* Boja podloge tipke ikone */
+  --slika_obrada_ikona_fg: var(--text);                              /* Boja ikone (foreground) */
+  --slika_obrada_ikona_fg_disabled: var(--c-gray-200);               /* Boja ikone kad je tipka disabled */
+  --slika_obrada_duzina_boja: var(--c-red-500);                     /* Boja prikaza veličine kad je preko max (dužina slike) */
+  --slika_obrada_max_kb: 200;                                       /* Maks. veličina slike u KB; preko nje veličina crveno + upis (Spremi) disabled */
+  --slika_obrada_selekt_boja: var(--edit_border_focus, #666);       /* Boja linije okvira selekcije (crop) */
+  --slika_obrada_selekt_debljina: 2px;                              /* Debljina linije okvira selekcije */
+  --slika_obrada_selekt_blur: 0px;                                  /* Blur unutar područja selekcije (backdrop-filter) */
+  --slika_obrada_compress_max_px: 1024;                             /* Duža stranica max (px) pri kompresiji */
+  --slika_obrada_compress_quality: 0.75;                            /* Kvaliteta 0–1 pri kompresiji (WebP) */
+
+  /* =========================================================
+     GRUPA: KONTROLA SELECT (padajuća lista)
+     ========================================================= */
+  /* BOJE – polje (enabled) */
+  --select_bg: var(--edit_bg);                                       /* Pozadina select kontrole */
+  --select_text: var(--edit_text);                                   /* Boja teksta u select kontroli */
+  --select_border: var(--edit_border);                               /* Boja okvira select kontrole */
+  --select_border_focus: var(--edit_border_focus);                   /* Boja okvira select kontrole u focus stanju */
+
+  /* BOJE – polje (disabled) */
+  --select_bg_disabled: var(--edit_bg_disabled);                     /* Pozadina select kontrole kada je disabled */
+  --select_text_disabled: var(--c-gray-300);                         /* Boja teksta select kontrole kada je disabled */
+  --select_text_disabled_auto_select: var(--select_text);            /* Boja teksta kada je select auto-zaključan (samo 1 opcija) – čitljiv kao enabled */
+  --select_border_disabled: var(--edit_border_disabled);             /* Boja okvira select kontrole kada je disabled */
+
+  /* BOJE – opcije (vežemo na tablicu za početak) */
+  --select_option_bg: var(--tablica_row_bg);                         /* Pozadina stavki liste u otvorenom selectu */
+  --select_option_text: var(--tablica_row_fg);                       /* Boja teksta stavki liste u otvorenom selectu */
+  --select_option_bg_hover: var(--tablica_row_hover_bg);             /* Pozadina stavke liste na hover (ista kao hover reda u tablici) */
+  --select_option_bg_selected: var(--tablica_row_selected_bg);       /* Pozadina odabrane stavke liste */
+
+  /* ISCRTAVANJE */
+  --select_height: var(--edit_height);                               /* Visina select kontrole */
+  --select_padding_x: var(--edit_padding_x);                         /* Vodoravni padding teksta select kontrole */
+  --select_radius: var(--edit_radius);                               /* Radius kutova select kontrole */
+
+  /* PODLOGA ZA IKONU (caret zona desno) */
+  --select_caret_bg_1: var(--tablica_head_bg_1);                     /* Gornja boja gradijenta podloge ikone u selectu */
+  --select_caret_bg_2: var(--tablica_head_bg_2);                     /* Donja boja gradijenta podloge ikone u selectu */
+  --select_caret_width: 42px;                                        /* Širina desne podloge za ikonu u selectu */
+  --select_caret_gap_x: 14px;                                       /* Vodoravni razmak između teksta i početka caret gradient zone (veći od osnovnog paddinga radi jasnog razdvajanja od gradienta) */
+  --select_caret_color: var(--tablica_head_text_boja);               /* Boja ikone (strelice) u selectu */
+
+  /* PODLOGA ZA IKONU – DISABLE STANJE */
+  --select_caret_bg_1_disabled: var(--c-gray-100);                   /* Gornja boja gradijenta podloge ikone u selectu (disable) */
+  --select_caret_bg_2_disabled: var(--c-gray-300);                   /* Donja boja gradijenta podloge ikone u selectu (disable) */
+  --select_caret_color_disabled: var(--c-gray-300);                  /* Boja ikone (strelice) u selectu (disable) */
+
+  /* PONAŠANJE – enabled */
+  --select_cursor: pointer;                                          /* Kursor miša iznad aktivne select kontrole */
+  --select_focus_shadow: var(--kontrole_sjena_slaba_1);              /* Minimalna sjena select kontrole u selektiranom stanju */
+
+  /* PONAŠANJE – disabled */
+  --select_cursor_disabled: default;                                 /* Kursor miša kada je select kontrola disabled */
+  --select_focus_shadow_disabled: none;                              /* Sjena select kontrole kada je disabled */
+
+  /* Placeholder tekst (npr. „Nije izabrano“) prije prvog izbora */
+  --select_placeholder: var(--edit_placeholder);                     /* Boja placeholder teksta u select kontroli */
+
+  /* PONAŠANJE – lista opcija */
+  --select_max_rows: 10;                                             /* Maksimalan broj vidljivih redova u otvorenoj listi prije pojave vertikalnog scrollbara */
+  --select_rows: 5;                                                  /* Broj redaka koji se prikazuje kad lista ide preko granica panela (ako lista ima manje, prikazuje se koliko ima) */
+
+  /* =========================================================
+     GRUPA: KONTROLA TIPKA (3D osnovna)
+     ========================================================= */
+  /* DIMENZIJE */
+  --button_height: 36px;                                             /* Visina tipke (usklađeno s edit/select kontrolama) */
+  --button_radius: 100em;                                            /* Pil radius tipke (3D stil) */
+  --button_padding_y: 0.5rem;                                        /* Okomiti padding unutar tipke */
+  --button_padding_x: 1.25rem;                                       /* Vodoravni padding unutar tipke */
+
+  /* BOJE – 3D slojevi (osnovna / master varijanta tipke, default u svim formama) */
+  --button_outer_bg: var(--c-gray-100);                              /* Okvir oko tipke (default kao master) */
+  --button_bg: var(--c-gray-100);                                    /* Glavna boja podloge tipke (default) */
+  --button_bg_disabled: var(--c-gray-200);                           /* Boja podloge tipke kada je disabled */
+  --button_inner_bg_1: var(--button_bg);                             /* Gornja boja unutarnjeg gradijenta */
+  --button_inner_bg_2: var(--button_bg);                             /* Donja boja unutarnjeg gradijenta */
+  --button_text_grad_1: var(--c-gray-900);                           /* Gornja boja gradijenta teksta (tamno) */
+  --button_text_grad_2: var(--c-gray-700);                           /* Donja boja gradijenta teksta */
+  --button_reflection_angle: -135deg;                                /* Kut refleksijskog gradijenta iznad tipke */
+  --button_reflection_color: var(--c-near-black-50);                  /* Boja refleksije iznad tipke */
+
+  /* SJENE – 3D efekt (blaga sjena oko tipke, konzistentna s ostalim kontrolama) */
+  --button_outer_shadow: var(--kontrole_sjena_slaba_2);
+
+  /* ANIMACIJE / INTERAKCIJA */
+  --button_transition_fast: 250ms ease;                              /* Brzi transition za hover/press efekte */
+  --button_transition_medium: 300ms ease;                            /* Srednji transition za sjene */
+  --button_scale_hover: 0.96;                                        /* Scale faktor na hover (blago potonuće) */
+  --button_scale_pressed: 0.88;                                      /* Scale faktor kod pritiska tipke (jače potonuće) */
+
+  /* TIPOGRAFIJA – natpis (caption) na tipki */
+  --button_font_family: var(--font_family);                          /* Font tipke (default isti kao ostale kontrole) */
+  --button_font_size: var(--font_size);                              /* Veličina fonta tipke */
+  --button_font_weight: 500;                                         /* Težina fonta tipke */
+  --button_caption_color: var(--label_text);                         /* Boja natpisa (normalno stanje) */
+  --button_caption_color_click: var(--button_caption_color);         /* Boja natpisa na klik (za sada ista kao normalno) */
+  --button_caption_color_disabled: var(--label_text_disabled);       /* Boja natpisa kada je tipka disabled */
+
+  /* =========================================================
+     GRUPA: 3D_Tipka_CRUD_set (posebna kontrola, vuče od osnovne tipke)
+     Upiši / Izbriši / Povratak – vlastiti tokeni po tipki
+     ========================================================= */
+  /* Upiši (upisi_izmjeni) */
+  --crud_upisi_bg: var(--c-blue-300);                                /* CRUD tipka upiši pozadina */
+  --crud_upisi_caption: var(--c-gray-900);                           /* CRUD tipka upiši/izmjeni boja captiona */
+  --crud_upisi_caption_click: var(--c-gray-50);                      /* CRUD tipka upiši/izmjeni boja captiona na klik */
+  /* Izbriši */
+  --crud_izbrisi_bg: var(--c-red-500);                               /* CRUD tipka izbrisi pozadina */
+  --crud_izbrisi_caption: var(--c-gray-900);                         /* CRUD tipka izbrisi boja captiona */
+  --crud_izbrisi_caption_click: var(--c-gray-50);                    /* CRUD tipka izbrisi boja captiona na klik */
+  /* Povratak */
+  --crud_povratak_bg: var(--c-yellow-500);                           /* CRUD tipka povratak pozadina */
+  --crud_povratak_caption: var(--c-gray-700);                        /* CRUD tipka povratak boja captiona */
+  --crud_povratak_caption_click: var(--c-gray-50);                   /* CRUD tipka povratak boja captiona na klik */
+  /* Izmjeni (kad je selektiran red u tabeli) */
+  --crud_izmjeni_bg: var(--c-green-500);                             /* CRUD tipka zamjeni pozadina */
+  --crud_izmjeni_caption: var(--c-gray-900);                         /* CRUD tipka zamjeni boja captiona */
+  --crud_izmjeni_caption_click: var(--c-gray-50);                    /* CRUD tipka zamjeni boja captiona na klik */
+
+  /* =========================================================
+     GRUPA: KONTROLA CHECKBOX
+     ========================================================= */
+  /* BOJE – enabled */
+  --checkbox_bg: var(--c-white);                                     /* Pozadina neoznačenog checkboxa */
+  --checkbox_border: var(--c-gray-300);                              /* Boja okvira checkboxa */
+  --checkbox_check: var(--c-white);                                  /* Boja oznake (check) unutar checkboxa */
+  --checkbox_checked_bg: var(--c-blue-600);                          /* Pozadina označenog checkboxa */
+  --checkbox_checked_border: var(--c-blue-600);                      /* Boja okvira označenog checkboxa */
+
+  /* BOJE – disabled */
+  --checkbox_bg_disabled: var(--c-gray-100);                         /* Pozadina checkboxa kada je disabled */
+  --checkbox_border_disabled: var(--c-gray-200);                     /* Boja okvira checkboxa kada je disabled */
+
+  /* ISCRTAVANJE */
+  --checkbox_size: 16px;                                             /* Vanjska dimenzija (širina/visina) checkboxa */
+  --checkbox_radius: 3px;                                            /* Radius kutova checkboxa */
+
+  /* PONAŠANJE – enabled */
+  --checkbox_cursor: pointer;                                        /* Kursor miša iznad aktivnog checkboxa */
+  --checkbox_focus_shadow: var(--kontrole_sjena_slaba_1);            /* Minimalna sjena checkboxa u selektiranom stanju */
+
+  /* PONAŠANJE – disabled */
+  --checkbox_cursor_disabled: default;                               /* Kursor miša kada je checkbox disabled */
+  --checkbox_focus_shadow_disabled: none;                            /* Sjena checkboxa kada je disabled */
+
+  /* =========================================================
+     GRUPA: KONTROLA NAPOMENA (textarea / info box)
+     ========================================================= */
+  /* BOJE – enabled */
+  --napomena_bg: var(--c-white);                                     /* Pozadina kontrole za napomenu */
+  --napomena_text: var(--text);                                      /* Boja teksta u kontroli za napomenu */
+  --napomena_border: var(--c-gray-300);                              /* Boja okvira kontrole za napomenu */
+  --napomena_placeholder: var(--c-gray-300);                         /* Boja placeholder teksta u kontroli za napomenu */
+
+  /* BOJE – disabled */
+  --napomena_bg_disabled: var(--c-gray-100);                         /* Pozadina kontrole za napomenu kada je disabled */
+  --napomena_text_disabled: var(--c-gray-700);                       /* Boja teksta kontrole za napomenu kada je disabled */
+  --napomena_border_disabled: var(--c-gray-200);                     /* Boja okvira kontrole za napomenu kada je disabled */
+
+  /* ISCRTAVANJE */
+  --napomena_radius: 8px;                                            /* Radius kutova kontrole za napomenu */
+  --napomena_padding_y: 8px;                                         /* Okomiti padding unutar kontrole za napomenu */
+  --napomena_padding_x: 10px;                                        /* Vodoravni padding unutar kontrole za napomenu */
+  --napomena_min_rows: 2;                                            /* Minimalni broj redaka teksta u kontroli za napomenu */
+
+  /* PONAŠANJE – enabled */
+  --napomena_cursor: text;                                           /* Kursor miša iznad aktivne kontrole za napomenu */
+  --napomena_focus_shadow: var(--kontrole_sjena_slaba_1);            /* Minimalna sjena kontrole za napomenu u selektiranom stanju */
+
+  /* PONAŠANJE – disabled */
+  --napomena_cursor_disabled: default;                               /* Kursor miša kada je kontrola za napomenu disabled */
+  --napomena_focus_shadow_disabled: none;                            /* Sjena kontrole za napomenu kada je disabled */
+
+  /* =========================================================
+     GRUPA: KONTROLA LABELA
+     ========================================================= */
+  /* BOJE */
+  --label_text: var(--text);                                         /* Osnovna boja teksta labele */
+  --label_text_muted: var(--c-gray-700);                             /* Prigušena boja teksta labele (sekundarne informacije) */
+  --label_text_disabled: var(--c-gray-300);                          /* Boja teksta labele kada je povezana kontrola disabled (i tekst uz checkbox) */
+
+  /* ISCRTAVANJE */
+  --label_font_size: 0.9rem;                                         /* Veličina fonta labele */
+  --label_font_weight: 700;                                          /* Težina fonta labele */
+  --label_letter_spacing: 0.02em;                                    /* Razmak između slova labele */
+
+  /* PONAŠANJE – sjena */
+  --label_focus_shadow: var(--kontrole_sjena_slaba_1);               /* Minimalna sjena oko labele u selektiranom/aktivnom stanju (ako se koristi) */
+  --label_focus_shadow_disabled: none;                               /* Sjena labele kada je disabled (ako se koristi) */
+
+  /* =========================================================
+     GRUPA: KONTROLA EDIT-DELETE (edit s X, unutar okvira)
+     ========================================================= */
+  /* BOJE – enabled (vezane na EDIT i SELECT) */
+  --edit_delete_bg: var(--edit_bg);                                  /* Pozadina edit-delete kontrole */
+  --edit_delete_text: var(--edit_text);                              /* Boja teksta u edit-delete kontroli */
+  --edit_delete_border: var(--edit_border);                          /* Boja okvira edit-delete kontrole */
+
+  /* BOJE – disabled */
+  --edit_delete_bg_disabled: var(--edit_bg_disabled);                /* Pozadina edit-delete kontrole kada je disabled */
+  --edit_delete_text_disabled: var(--c-gray-300);                    /* Boja teksta edit-delete kontrole kada je disabled */
+  --edit_delete_border_disabled: var(--edit_border_disabled);        /* Boja okvira edit-delete kontrole kada je disabled */
+
+  /* PODLOGA ZA X – inicijalno isti gradient i dimenzije kao SELECT caret zona */
+  --edit_delete_caret_bg_1: var(--select_caret_bg_1);                /* Gornja boja gradijenta podloge za X ikonu */
+  --edit_delete_caret_bg_2: var(--select_caret_bg_2);                /* Donja boja gradijenta podloge za X ikonu */
+  --edit_delete_caret_width: var(--select_caret_width);              /* Širina desne podloge za X ikonu */
+  --edit_delete_caret_gap_x: var(--edit_padding_x);                  /* Vodoravni razmak između teksta i početka X gradient zone */
+  --edit_delete_caret_color: var(--select_caret_color);              /* Boja X ikone unutar edit-delete kontrole */
+
+  /* PODLOGA ZA X – DISABLE STANJE */
+  --edit_delete_caret_bg_1_disabled: var(--c-gray-100);              /* Gornja boja gradijenta podloge za X ikonu (disable) */
+  --edit_delete_caret_bg_2_disabled: var(--c-gray-300);              /* Donja boja gradijenta podloge za X ikonu (disable) */
+  --edit_delete_caret_color_disabled: var(--c-gray-300);             /* Boja X ikone u disable stanju */
+
+  /* PONAŠANJE – sjena */
+  --edit_delete_focus_shadow: var(--kontrole_sjena_slaba_1);         /* Minimalna sjena edit-delete kontrole u selektiranom stanju */
+  --edit_delete_focus_shadow_disabled: none;                         /* Sjena edit-delete kontrole kada je disabled */
+
+}
+
+/* =========================================================
+   LAYOUT STRANICE – container, razmaci, body (responsive)
+   Zamjena za Bootstrap; iste klase na svim stranicama.
+   ========================================================= */
+
+/* Body – osnovni layout; pozadina (gradient) ostaje u 0-Kontrole ako je tamo definirana */
+body {
+  box-sizing: border-box;
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Glavni kontejner stranice – centriran, max-width, horizontalni padding (responsive) */
+.page-container {
+  width: 100%;
+  max-width: var(--page_container_max_width);
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: var(--page_container_margin_top);
+  padding-left: var(--page_container_padding_x);
+  padding-right: var(--page_container_padding_x);
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .page-container {
+    padding-left: var(--page_container_padding_x_wide);
+    padding-right: var(--page_container_padding_x_wide);
+  }
+}
+
+/* Razmaci – utility klase (mb-0, mb-3, mb-4, mt-4) */
+.mb-0 { margin-bottom: var(--page_spacing_mb_0) !important; }
+.mb-3 { margin-bottom: var(--page_spacing_mb_3) !important; }
+.mb-4 { margin-bottom: var(--page_spacing_mb_4) !important; }
+.mt-4 { margin-top: var(--page_container_margin_top) !important; }
+
+/* =========================================================
+   NASLOV FORME – wrapper za ikone (mail + logout), desno poravnat.
+   Na desktopu apsolutno pozicioniran; na mobilnom flex row (vidi @media ispod).
+   ========================================================= */
+.naslov-forme__ikone {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 2;
+}
+
+/* =========================================================
+   NASLOV FORME – odjava (ikona udesno; 0-Common učitava i Meni/Lista bez 0-Kontrole)
+   ========================================================= */
+.naslov-forme__odjava {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 8px;
+  color: var(--naslov_forme_text);
+  opacity: 0.92;
+  text-decoration: none;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+  z-index: 2;
+  box-sizing: border-box;
+}
+.naslov-forme__odjava:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+.naslov-forme__odjava:focus-visible {
+  outline: 2px solid var(--naslov_forme_text);
+  outline-offset: 2px;
+}
+
+/* Heroicons outline – arrow-right-on-rectangle (odjava) */
+.kontrola-icon--arrow-right-on-rectangle {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15.75%209V5.25A2.25%202.25%200%200%200%2013.5%203h-6a2.25%202.25%200%200%200-2.25%202.25v13.5A2.25%202.25%200%200%200%207.5%2021h6a2.25%202.25%200%200%200%202.25-2.25V15M12%209l-3%203m0%200%203%203m-3-3h12.75'/%3E%3C/svg%3E");
+  mask-size: 22px 22px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15.75%209V5.25A2.25%202.25%200%200%200%2013.5%203h-6a2.25%202.25%200%200%200-2.25%202.25v13.5A2.25%202.25%200%200%200%207.5%2021h6a2.25%202.25%200%200%200%202.25-2.25V15M12%209l-3%203m0%200%203%203m-3-3h12.75'/%3E%3C/svg%3E");
+  -webkit-mask-size: 22px 22px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* =========================================================
+   NASLOV FORME – badge verzije (premješteno iz 0-Kontrole / Lista / Meni
+   u 0-Common jer ga učitavaju sve forme; desktop: absolute lijevo u traci)
+   ========================================================= */
+.vnlh-verzija-badge {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7em;
+  color: var(--naslov_forme_text);
+  opacity: 0.9;
+  font-family: var(--naslov_forme_font);
+  font-weight: normal;
+  letter-spacing: 0.3px;
+  user-select: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  line-height: inherit;
+  text-align: left;
+}
+
+/* =========================================================
+   MOBILNI PRIKAZ – naslov forme u 3 centrirana reda:
+   1. verzija badge  2. h2 naslov  3. ikone (mail + logout)
+   Breakpoint: --page_breakpoint_narrow (640px).
+   ========================================================= */
+@media (max-width: 640px) {
+  .naslov-forme {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 0;
+  }
+  /* Verzija ide u prvi red */
+  .vnlh-verzija-badge {
+    position: static;
+    transform: none;
+    order: -1;
+    text-align: center;
+    margin-bottom: 0.15rem;
+  }
+  /* Naslov ostaje u sredini (order: 0 default) */
+  .naslov-forme h2 {
+    order: 0;
+    width: 100%;
+    margin-bottom: 0;
+  }
+  /* Wrapper za ikone (mail + logout) – treći red, horizontalno poravnate */
+  .naslov-forme__ikone {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    order: 1;
+    margin-top: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+  /* Unutar wrappera ikone gube absolute poziciju */
+  .naslov-forme__ikone .naslov-forme__odjava {
+    position: static;
+    transform: none;
+    order: 0;
+    margin-top: 0;
+  }
+}

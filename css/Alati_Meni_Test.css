@@ -1,0 +1,710 @@
+/* =========================================================
+   Alati_Meni_Test.css
+   Stilovi za formu Test menija – panel uvjeti.
+   Poravnanje: ljevi rub edita i selekata na x osi.
+   Horizontalni meni (traka, drawer, .alati-meni-test__*) dijeli se s Meni.html — isti tokeni i ID #traka_h_menija.
+   Učitavaj samo na Meni / Alati_Meni_Test; ne uključivati na ostalim formama (npr. Članovi_CRUD) da nema miješanja izgleda.
+   ========================================================= */
+
+/* --- Test: samo prva razina – ukloni klasu za sve razine --- */
+.alati-meni-test__samo-prva-razina .alati-meni-test__meni-podmeni-tijelo {
+  display: none !important;
+}
+
+/* --- Traka ispod panela – cijela širina, gradient iz tokena, kontejner za meni --- */
+#traka_h_menija.alati-meni-test__traka {
+  min-height: var(--meni_traka_min_height);
+  box-shadow: var(--meni_traka_sjena);
+  border-top: var(--meni_traka_linija_debljina) solid var(--meni_traka_linija_boja);
+  border-bottom: var(--meni_traka_linija_debljina) solid var(--meni_traka_linija_boja);
+  width: var(--meni_traka_width);
+  max-width: var(--meni_traka_max_width);
+  margin-left: auto;
+  margin-right: auto;
+  padding: var(--meni_traka_padding);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+/* Glavni meni: zadano široki način (sve širine > 640px bez jaza u @media). Uski samo u @media max-width 640px ispod. */
+#traka_h_menija.alati-meni-test__traka > .alati-meni-test__hamburger {
+  display: none !important;
+}
+#traka_h_menija.alati-meni-test__traka .alati-meni-test__meni-horizontal {
+  display: flex !important;
+}
+
+/* JS (Meni.js / Alati_Meni_Test.js) postavlja data-meni-rezolucija – pojačava isključivost ako @media zakaže */
+#traka_h_menija[data-meni-rezolucija="ushko"].alati-meni-test__traka .alati-meni-test__meni-horizontal {
+  display: none !important;
+}
+#traka_h_menija[data-meni-rezolucija="ushko"].alati-meni-test__traka > .alati-meni-test__hamburger {
+  display: inline-flex !important;
+}
+#traka_h_menija[data-meni-rezolucija="siroko"].alati-meni-test__traka .alati-meni-test__meni-horizontal {
+  display: flex !important;
+}
+#traka_h_menija[data-meni-rezolucija="siroko"].alati-meni-test__traka > .alati-meni-test__hamburger {
+  display: none !important;
+}
+
+.alati-meni-test__meni-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  min-height: 36px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Hamburger – skriven na širokom prikazu --- */
+.alati-meni-test__hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--meni_traka_hover_radius);
+  color: var(--meni_traka_text);
+  font-family: var(--meni_traka_font);
+  font-size: var(--meni_traka_font_size);
+  font-weight: var(--meni_traka_font_weight);
+  line-height: 1;
+  cursor: pointer;
+}
+.alati-meni-test__hamburger:hover {
+  background: var(--meni_traka_hover_bg);
+}
+
+/* --- Overlay i drawer za uski prikaz --- */
+.alati-meni-test__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: none;
+  z-index: 9000;
+}
+.alati-meni-test__overlay.open {
+  display: block;
+}
+
+.alati-meni-test__drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100dvh;
+  width: min(88vw, calc(var(--meni_dropdown_min_width) * var(--meni_dropdown_width_multiplier)));
+  background: var(--meni_dropdown_bg);
+  border-left: var(--meni_dropdown_border_w) solid var(--meni_dropdown_border);
+  box-shadow: var(--meni_dropdown_sjena);
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  z-index: 9001;
+  display: flex;
+  flex-direction: column;
+}
+.alati-meni-test__drawer.open {
+  transform: translateX(0);
+}
+
+.alati-meni-test__drawer-head {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--meni_dropdown_padding) var(--meni_dropdown_padding_x);
+  background: var(--meni_traka_bg_1);
+  border-bottom: var(--meni_dropdown_border_w) solid var(--meni_dropdown_border);
+  flex-shrink: 0;
+}
+.alati-meni-test__drawer-title {
+  font-family: var(--panel_header_font_family);
+  font-size: var(--panel_header_font_size);
+  font-weight: var(--panel_header_font_weight);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--meni_traka_text);
+}
+.alati-meni-test__drawer-btn {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--meni_dropdown_border_w) solid var(--meni_dropdown_border);
+  border-radius: var(--meni_dropdown_radius);
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--meni_traka_text);
+  font-family: var(--button_font_family);
+  font-size: var(--button_font_size);
+  font-weight: var(--button_font_weight);
+}
+.alati-meni-test__drawer-btn:hover {
+  background: var(--meni_traka_hover_bg);
+}
+.alati-meni-test__drawer-icon {
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+}
+.alati-meni-test__drawer-icon--back {
+  width: 1.5em;
+  height: 1.5em;
+}
+/* Meni desno: strelica lijevo ‹ (kao u podmenijima) – SVG gleda dolje, rotacija -90° = lijevo */
+.alati-meni-test__drawer:not(.alati-meni-test__drawer--from-left) .alati-meni-test__drawer-icon--back {
+  transform: rotate(-90deg);
+}
+/* Meni lijevo: strelica desno › (kao u podmenijima) */
+.alati-meni-test__drawer.alati-meni-test__drawer--from-left .alati-meni-test__drawer-icon--back {
+  transform: rotate(90deg);
+}
+.alati-meni-test__drawer-body {
+  padding: var(--meni_dropdown_padding) var(--meni_dropdown_padding_x);
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Stavke u draweru (zaglavlja podmenija – isti tokeni kao main traka) */
+.alati-meni-test__drawer-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: calc(var(--meni_dropdown_radius) - 4px);
+  background: var(--meni_traka_bg_1);
+  color: var(--meni_traka_text);
+  font-family: var(--meni_traka_font);
+  font-size: var(--meni_dropdown_font_size);
+  font-weight: var(--meni_traka_font_weight);
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+.alati-meni-test__drawer-item:hover {
+  background: linear-gradient(var(--meni_traka_hover_bg), var(--meni_traka_hover_bg)), var(--meni_traka_bg_1);
+}
+.alati-meni-test__drawer-item.alati-meni-test__drawer-item--izvrsni {
+  background: transparent;
+  color: var(--meni_izvrsni_text);
+  text-decoration: none;
+}
+.alati-meni-test__drawer-item.alati-meni-test__drawer-item--izvrsni:hover {
+  background: var(--meni_izvrsni_hover_bg);
+}
+.alati-meni-test__drawer-chev {
+  opacity: 0.8;
+  font-size: var(--label_font_size);
+}
+/* Meni desno (R/C): strelica lijevo, tekst desno */
+.alati-meni-test__drawer:not(.alati-meni-test__drawer--from-left) .alati-meni-test__drawer-item {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+/* Meni lijevo (L): strelica desno, tekst lijevo */
+.alati-meni-test__drawer.alati-meni-test__drawer--from-left .alati-meni-test__drawer-item {
+  flex-direction: row;
+  text-align: left;
+}
+
+.alati-meni-test__drawer-empty {
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  color: var(--c-gray-700);
+  padding: 1rem;
+  margin: 0;
+}
+
+/* --- Horizontalna traka menija (main stavke) --- */
+.alati-meni-test__meni-horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.5rem;
+}
+
+/* padding-bottom: most između gumba i dropdowna ostaje unutar hit-testa (izbjegava mouseleave u praznini od bivšeg margin-top na dropdownu). */
+.alati-meni-test__meni-main-item {
+  position: relative;
+  padding-bottom: 2px;
+}
+
+.alati-meni-test__meni-main-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--meni_traka_stavka_padding_y) var(--meni_traka_stavka_padding_x);
+  background: transparent;
+  border: none;
+  color: var(--meni_traka_text);
+  font-family: var(--meni_traka_font);
+  font-size: var(--meni_traka_font_size);
+  font-weight: var(--meni_traka_font_weight);
+  text-shadow:
+    calc(-1 * var(--meni_traka_outline_debljina)) calc(-1 * var(--meni_traka_outline_debljina)) 0 var(--meni_traka_outline_boja),
+    var(--meni_traka_outline_debljina) calc(-1 * var(--meni_traka_outline_debljina)) 0 var(--meni_traka_outline_boja),
+    var(--meni_traka_outline_debljina) var(--meni_traka_outline_debljina) 0 var(--meni_traka_outline_boja),
+    calc(-1 * var(--meni_traka_outline_debljina)) var(--meni_traka_outline_debljina) 0 var(--meni_traka_outline_boja),
+    var(--meni_traka_text_sjena);
+  cursor: pointer;
+  border-radius: var(--meni_traka_hover_radius);
+}
+
+.alati-meni-test__meni-main-btn:hover {
+  background: var(--meni_traka_hover_bg);
+}
+
+/* --- Zajednički izgled panel (prvi child + svi ostali child) – okvir/sjena kao tablica --- */
+.alati-meni-test__meni-dropdown,
+.alati-meni-test__meni-dropdown > .alati-meni-test__meni-podmeni-wrap > .alati-meni-test__meni-podmeni-tijelo,
+.alati-meni-test__meni-podmeni-tijelo > .alati-meni-test__meni-podmeni-wrap > .alati-meni-test__meni-podmeni-tijelo {
+  width: max-content;
+  min-width: max-content;
+  padding: var(--meni_dropdown_padding) var(--meni_dropdown_padding_x);
+  background: var(--meni_dropdown_bg);
+  border: var(--meni_dropdown_border_w) solid var(--meni_dropdown_border);
+  border-radius: var(--meni_dropdown_radius);
+  box-shadow: var(--meni_dropdown_sjena);
+  box-sizing: content-box;
+  text-align: left;
+}
+
+/* --- Dropdown (child 1) – pozicija ispod main (vertikalni razmak = padding-bottom na .meni-main-item) --- */
+.alati-meni-test__meni-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: auto;
+  margin-top: 0;
+  z-index: 100;
+  display: none;
+  overflow: visible;
+}
+
+/* Prvi dropdown – otvaranje lijevo kad bi izašao desno van ekrana */
+.alati-meni-test__meni-dropdown.alati-meni-test__meni-dropdown--open-left {
+  left: auto;
+  right: 0;
+}
+
+/* Kad otvara lijevo – obrnuti sadržaj: tekst desno, strelica lijevo; strelica–rub = tekst–rub (samo padding-right, strelica koristi margin-left) */
+.alati-meni-test__meni-dropdown.alati-meni-test__meni-dropdown--open-left .alati-meni-test__meni-podmeni,
+.alati-meni-test__meni-podmeni-tijelo.alati-meni-test__meni-podmeni-tijelo--open-left .alati-meni-test__meni-podmeni {
+  flex-direction: row-reverse;
+  text-align: right;
+  padding-left: 0;
+  padding-right: var(--meni_podmeni_text_indent);
+}
+.alati-meni-test__meni-dropdown.alati-meni-test__meni-dropdown--open-left .alati-meni-test__meni-podmeni-arrow,
+.alati-meni-test__meni-podmeni-tijelo.alati-meni-test__meni-podmeni-tijelo--open-left .alati-meni-test__meni-podmeni-arrow {
+  margin-left: var(--meni_podmeni_text_indent);
+  margin-right: auto;
+}
+.alati-meni-test__meni-dropdown.alati-meni-test__meni-dropdown--open-left .alati-meni-test__meni-izvrsni,
+.alati-meni-test__meni-podmeni-tijelo.alati-meni-test__meni-podmeni-tijelo--open-left .alati-meni-test__meni-izvrsni {
+  flex-direction: row-reverse;
+  text-align: right;
+  padding-left: 0;
+  padding-right: var(--meni_podmeni_text_indent);
+}
+.alati-meni-test__meni-dropdown.alati-meni-test__meni-dropdown--open-left .alati-meni-test__meni-izvrsni-html,
+.alati-meni-test__meni-podmeni-tijelo.alati-meni-test__meni-podmeni-tijelo--open-left .alati-meni-test__meni-izvrsni-html {
+  margin-left: 0;
+  margin-right: var(--meni_podmeni_text_indent);
+}
+
+/* Stavke: razmak tekst–rub i strelica–rub (--meni_podmeni_text_indent); horizontalni padding panela (--meni_dropdown_padding_x) odvojen */
+.alati-meni-test__meni-dropdown .alati-meni-test__meni-podmeni,
+.alati-meni-test__meni-dropdown .alati-meni-test__meni-izvrsni {
+  padding-left: var(--meni_podmeni_text_indent);
+  padding-right: 0;
+}
+
+/* Razmak samo između dva negativa (podmeni) tik jedan ispod drugog */
+.alati-meni-test__meni-dropdown > .alati-meni-test__meni-podmeni-wrap + .alati-meni-test__meni-podmeni-wrap,
+.alati-meni-test__meni-podmeni-tijelo > .alati-meni-test__meni-podmeni-wrap + .alati-meni-test__meni-podmeni-wrap {
+  margin-top: 4px;
+}
+
+.alati-meni-test__meni-dropdown--open {
+  display: block;
+}
+
+/* --- Podmeni stavka (isti tokeni kao main traka) – lijevo poravnanje u prozoru --- */
+.alati-meni-test__meni-podmeni {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: max-content;
+  padding: 8px 16px;
+  white-space: nowrap;
+  background: var(--meni_traka_bg_1);
+  color: var(--meni_traka_text);
+  font-family: var(--meni_traka_font);
+  font-size: var(--meni_dropdown_font_size);
+  font-weight: var(--meni_traka_font_weight);
+  cursor: pointer;
+  border: none;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.alati-meni-test__meni-podmeni:hover {
+  background: linear-gradient(var(--meni_traka_hover_bg), var(--meni_traka_hover_bg)), var(--meni_traka_bg_1);
+}
+
+/* Negativ (podmeni) – zaobljeni kutovi na vrhu/dnu prozora ili kad je jedini */
+.alati-meni-test__meni-dropdown > .alati-meni-test__meni-podmeni-wrap:first-child > .alati-meni-test__meni-podmeni,
+.alati-meni-test__meni-podmeni-tijelo > .alati-meni-test__meni-podmeni-wrap:first-child > .alati-meni-test__meni-podmeni {
+  border-top-left-radius: calc(var(--meni_dropdown_radius) - 4px);
+  border-top-right-radius: calc(var(--meni_dropdown_radius) - 4px);
+}
+.alati-meni-test__meni-dropdown > .alati-meni-test__meni-podmeni-wrap:last-child > .alati-meni-test__meni-podmeni,
+.alati-meni-test__meni-podmeni-tijelo > .alati-meni-test__meni-podmeni-wrap:last-child > .alati-meni-test__meni-podmeni {
+  border-bottom-left-radius: calc(var(--meni_dropdown_radius) - 4px);
+  border-bottom-right-radius: calc(var(--meni_dropdown_radius) - 4px);
+}
+
+/* Strelica u širokom prikazu: dolje prije otvaranja, gore kad je podmeni otvoren. Samo za široki prikaz.
+   Literal 641px: mora odgovarati --page_breakpoint_narrow (640px) u 0-Common.css; var() u @media nije pouzdan u svim preglednicima. */
+@media (min-width: 641px) {
+  .alati-meni-test__meni-podmeni-arrow {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
+    margin-right: var(--meni_podmeni_text_indent);
+    background-color: currentColor;
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+    mask-size: 16px 16px;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+    -webkit-mask-size: 16px 16px;
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    transition: transform 0.2s;
+    transform: rotate(0deg);
+  }
+  .alati-meni-test__meni-podmeni-wrap.alati-meni-test__meni-podmeni--expanded > .alati-meni-test__meni-podmeni .alati-meni-test__meni-podmeni-arrow {
+    transform: rotate(180deg);
+  }
+}
+
+.alati-meni-test__meni-podmeni-wrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.alati-meni-test__meni-podmeni-tijelo {
+  display: none;
+  background: var(--meni_dropdown_bg);
+  min-width: 0;
+}
+
+/* Tijelo koje sadrži podmeni – overflow: visible da cascade ne bude odsječen */
+.alati-meni-test__meni-podmeni-tijelo:has(> .alati-meni-test__meni-podmeni-wrap) {
+  overflow: visible;
+}
+
+.alati-meni-test__meni-podmeni-wrap.alati-meni-test__meni-podmeni--expanded > .alati-meni-test__meni-podmeni-tijelo {
+  display: block;
+}
+
+/* Referentni uzorak: ul.subMenu ul.subMenu { top:0; left:100% } – svi child paneli desno */
+
+/* Podmeni-wrap – position: relative za pozicioniranje tijela (dropdown + tijelo) */
+.alati-meni-test__meni-dropdown > .alati-meni-test__meni-podmeni-wrap,
+.alati-meni-test__meni-podmeni-tijelo > .alati-meni-test__meni-podmeni-wrap {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Svi child paneli (2., 3., ...) – otvaraju se desno, preklop pola širine parenta */
+.alati-meni-test__meni-dropdown > .alati-meni-test__meni-podmeni-wrap > .alati-meni-test__meni-podmeni-tijelo,
+.alati-meni-test__meni-podmeni-tijelo > .alati-meni-test__meni-podmeni-wrap > .alati-meni-test__meni-podmeni-tijelo {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  right: auto;
+  z-index: 102;
+  overflow: visible;
+}
+
+/* Otvaranje lijevo kad bi prozor izašao desno van ekrana (isti selektor kao default da pobijedi) */
+.alati-meni-test__meni-dropdown > .alati-meni-test__meni-podmeni-wrap > .alati-meni-test__meni-podmeni-tijelo.alati-meni-test__meni-podmeni-tijelo--open-left,
+.alati-meni-test__meni-podmeni-tijelo > .alati-meni-test__meni-podmeni-wrap > .alati-meni-test__meni-podmeni-tijelo.alati-meni-test__meni-podmeni-tijelo--open-left {
+  left: auto;
+  right: 50%;
+}
+
+/* Kad je prvi otvorio lijevo – svi podmeniji ispod idu lijevo (čisto CSS) */
+.alati-meni-test__meni-dropdown.alati-meni-test__meni-dropdown--open-left .alati-meni-test__meni-podmeni-tijelo {
+  left: auto;
+  right: 50%;
+}
+
+/* --- Izvršni stavka (naziv + (html_fajl)) --- */
+.alati-meni-test__meni-izvrsni {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: max-content;
+  padding: 8px 16px;
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  color: var(--meni_izvrsni_text);
+  font-family: var(--meni_traka_font);
+  font-size: var(--meni_dropdown_font_size);
+  font-weight: var(--meni_traka_font_weight);
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.alati-meni-test__meni-izvrsni:hover {
+  background: var(--meni_izvrsni_hover_bg);
+}
+
+/* Izvršni – zaobljeni kutovi na vrhu/dnu prozora ili kad je jedini (i hover bg) */
+.alati-meni-test__meni-dropdown > .alati-meni-test__meni-izvrsni:first-child,
+.alati-meni-test__meni-podmeni-tijelo > .alati-meni-test__meni-izvrsni:first-child {
+  border-top-left-radius: calc(var(--meni_dropdown_radius) - 4px);
+  border-top-right-radius: calc(var(--meni_dropdown_radius) - 4px);
+}
+.alati-meni-test__meni-dropdown > .alati-meni-test__meni-izvrsni:last-child,
+.alati-meni-test__meni-podmeni-tijelo > .alati-meni-test__meni-izvrsni:last-child {
+  border-bottom-left-radius: calc(var(--meni_dropdown_radius) - 4px);
+  border-bottom-right-radius: calc(var(--meni_dropdown_radius) - 4px);
+}
+
+.alati-meni-test__meni-izvrsni-html {
+  color: var(--c-gray-500);
+  font-family: var(--font_family);
+  font-size: var(--label_font_size);
+  margin-left: 4px;
+}
+
+/* --- Cascade prozor (child 2+) – okvir/sjena kao tablica --- */
+.alati-meni-test__meni-prozor {
+  position: fixed;
+  min-width: var(--meni_dropdown_min_width);
+  background: var(--meni_dropdown_bg);
+  border: var(--meni_dropdown_border_w) solid var(--meni_dropdown_border);
+  border-radius: var(--meni_dropdown_radius);
+  box-shadow: var(--meni_dropdown_sjena);
+  z-index: 101;
+  padding: 0.25rem 0;
+  display: none;
+}
+
+.alati-meni-test__meni-prozor--open {
+  display: block;
+}
+
+/* --- Footer panela: lijevo Upiši, sredina Osvježi, desno Povratak --- */
+.alati-meni-test__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.alati-meni-test__footer-left {
+  flex: 0 0 auto;
+}
+
+.alati-meni-test__footer-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.alati-meni-test__footer-right {
+  flex: 0 0 auto;
+}
+
+/* --- Red panela: uvjeti gore, napomena ispod – jedan iznad drugog --- */
+.alati-meni-test__panels-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.alati-meni-test__panel-uvjeti {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+/* --- Ne korišteni moduli (edit) – labela iznad, textarea ispod --- */
+.alati-meni-test__napomena {
+  flex: 1 1 auto;
+  min-height: calc(var(--napomena_min_rows) * var(--tablica_row_h));
+  resize: vertical;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* --- Blok: Tijelo panela – dvije kolone; lijeva: horizontalni + izvršni, desna: podmeniji --- */
+.alati-meni-test__panel-uvjeti .kontrola-panel__body {
+  overflow: visible;
+}
+
+.alati-meni-test__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+/* Izbor dužnosnika u desnoj koloni – select puna širina --- */
+.alati-meni-test__select-duznosnik {
+  width: 100%;
+}
+
+.alati-meni-test__body-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.alati-meni-test__body-col--left,
+.alati-meni-test__body-col--right {
+  grid-column: 1 / 2;
+  grid-row: 1;
+}
+
+.alati-meni-test__body-col--right {
+  grid-column: 2 / 3;
+}
+
+/* Grupa: labela iznad, kontrole ispod --- */
+.alati-meni-test__grupa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alati-meni-test__grupa-kontrole {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 0 1rem;
+  align-items: center;
+}
+
+.alati-meni-test__grupa--full {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.alati-meni-test__grupa--full .alati-meni-test__napomena {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.alati-meni-test__body-spacer {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  min-height: 0;
+}
+
+/* Edit ID – širina 70px, nije editabilan (readonly), tekst centriran --- */
+.alati-meni-test__edit-id {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+/* --- Responsive – na uskom ekranu kolone u stupac (640px = --page_breakpoint_narrow u 0-Common.css) --- */
+@media (max-width: 640px) {
+  .alati-meni-test__body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+  .alati-meni-test__body-col--left {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .alati-meni-test__body-col--right {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .alati-meni-test__grupa--full {
+    grid-row: 3;
+  }
+  .alati-meni-test__body-spacer {
+    grid-row: 4;
+  }
+}
+
+/* Uski prikaz trake (#traka_h_menija): samo hamburger; horizontalni sakriven (640px = --page_breakpoint_narrow) */
+@media (max-width: 640px) {
+  #traka_h_menija.alati-meni-test__traka .alati-meni-test__meni-horizontal {
+    display: none !important;
+  }
+  #traka_h_menija.alati-meni-test__traka > .alati-meni-test__hamburger {
+    display: inline-flex !important;
+  }
+  #traka_h_menija.alati-meni-test__traka.alati-meni-test__traka--align-l .alati-meni-test__meni-container {
+    order: 2;
+  }
+  #traka_h_menija.alati-meni-test__traka.alati-meni-test__traka--align-l > .alati-meni-test__hamburger {
+    order: 1;
+  }
+  #traka_h_menija.alati-meni-test__traka:not(.alati-meni-test__traka--align-l) .alati-meni-test__meni-container {
+    order: 1;
+  }
+  #traka_h_menija.alati-meni-test__traka:not(.alati-meni-test__traka--align-l) > .alati-meni-test__hamburger {
+    order: 2;
+  }
+}
+
+/* Široki prikaz (641px+): drawer/overlay ne smiju ostati vidljivi uz horizontalni meni */
+@media (min-width: 641px) {
+  .alati-meni-test__overlay.open {
+    display: none !important;
+  }
+  .alati-meni-test__drawer.open {
+    transform: translateX(100%) !important;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .alati-meni-test__drawer.alati-meni-test__drawer--from-left.open {
+    transform: translateX(-100%) !important;
+  }
+}
+
+/* Drawer: otvara se s lijeve strane kad je align L */
+.alati-meni-test__drawer.alati-meni-test__drawer--from-left {
+  left: 0;
+  right: auto;
+  border-left: none;
+  border-right: var(--meni_dropdown_border_w) solid var(--meni_dropdown_border);
+  transform: translateX(-100%);
+}
+.alati-meni-test__drawer.alati-meni-test__drawer--from-left.open {
+  transform: translateX(0);
+}
+

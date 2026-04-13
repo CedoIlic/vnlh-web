@@ -1,0 +1,323 @@
+/* Alati_LogPass_Ini_CRUD – login | lozinka | [Status + Log faill desno]; usko: login, lozinka, zatim Status+Log faill u istom redu */
+
+.alati-logpass-ini-crud__tablica-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alati-logpass-ini-crud__header-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.alati-logpass-ini-crud__header-row .kontrola-labela {
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 7ch;
+  min-width: 7ch;
+  max-width: 7ch;
+  box-sizing: border-box;
+}
+
+.alati-logpass-ini-crud__header-row .kontrola-edit-delete {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.alati-logpass-ini-crud__panel-tablica.kontrola-panel-tablica--has-header:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--panel_header_min_height)) !important;
+}
+
+/* Ime namjerno NE sadrži "crud__edit-body" – inače [class*="crud__edit-body"] u 0-Kontrole duplira padding tijela panela. */
+/* Ne postavljati padding-top ovdje: isti element ima .kontrola-panel__body s paddingom (--panel_body_padding_y); dodatni padding-top bi samo smanjio gornji razmak u odnosu na donji. */
+.alati-logpass-ini-crud__credentials-body {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  container-type: inline-size;
+  container-name: alati-logpass-edit;
+}
+
+/* Grid: kol. 1–2 = login i lozinka dijele slobodan prostor (1fr 1fr); kol. 3 = auto (Log faill + Status). */
+/* Ime klase namjerno NE sadrži "crud__edit-row" – inače 0-Kontrole [class*="crud__edit-row"] forsira flex i širi status. */
+.alati-logpass-ini-crud__credentials-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.alati-logpass-ini-crud__field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.alati-logpass-ini-crud__field--login,
+.alati-logpass-ini-crud__field--pass {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Prva dva edita u retku: puna širina stupca (1fr + 1fr dijele slobodan prostor). */
+.alati-logpass-ini-crud__field--login > .kontrola-edit-delete {
+  width: 100%;
+  min-width: 0;
+}
+
+.alati-logpass-ini-crud__field--pass > .alati-logpass-ini-crud__pass-row {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Log faill + Status u trećem stupcu; obje podgrupe s labelom i editom desno orijentirane; cijeli blok uz desni rub. */
+.alati-logpass-ini-crud__status-logfail-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  /* Razmak između Log faill i Status (samo ovaj par, ne grid gap stupaca) */
+  gap: 12px;
+  column-gap: 12px;
+  grid-column: 3;
+  justify-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Polja samo širine sadržaja; min-width:0 poništava 4.5rem/5.5rem iz općih pravila — inače prazan prostor lijevo od edita izgleda kao veliki razmak. */
+.alati-logpass-ini-crud__status-logfail-group > .alati-logpass-ini-crud__field--log-fail,
+.alati-logpass-ini-crud__status-logfail-group > .alati-logpass-ini-crud__field--status {
+  flex: 0 0 auto;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  min-width: 0;
+  align-items: flex-end;
+}
+
+.alati-logpass-ini-crud__field--status {
+  flex: 0 0 auto;
+  min-width: 5.5rem;
+}
+
+.alati-logpass-ini-crud__field--log-fail {
+  flex: 0 0 auto;
+  min-width: 4.5rem;
+}
+
+.alati-logpass-ini-crud__pass-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.alati-logpass-ini-crud__pass-edit {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Ikona 🔑: isti radijus i sjena kao kontrola-edit-delete (0-Common / 0-Kontrole tokeni) */
+.alati-logpass-ini-crud__gen-pass {
+  flex: 0 0 auto;
+  align-self: stretch;
+  box-sizing: border-box;
+  width: var(--edit_height);
+  min-width: var(--edit_height);
+  height: var(--edit_height);
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--edit_delete_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_delete_bg);
+  box-shadow: var(--tablica_sjena);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (hover: hover) {
+  .alati-logpass-ini-crud__gen-pass:hover:not(:disabled) {
+    border-color: var(--edit_border_focus);
+  }
+}
+
+.alati-logpass-ini-crud__gen-pass:focus {
+  outline: none;
+}
+
+.alati-logpass-ini-crud__gen-pass:focus-visible {
+  box-shadow: var(--edit_delete_focus_shadow);
+}
+
+.alati-logpass-ini-crud__gen-pass:disabled {
+  cursor: var(--edit_cursor_disabled);
+  border-color: var(--edit_delete_border_disabled);
+  background: var(--edit_delete_bg_disabled);
+  box-shadow: var(--edit_delete_focus_shadow_disabled);
+  color: var(--label_text_disabled);
+}
+
+/* Uski prikaz (container): login; pass + ikona; Log faill + Status i dalje u jednom redu */
+@container alati-logpass-edit (max-width: 520px) {
+  .alati-logpass-ini-crud__credentials-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .alati-logpass-ini-crud__field--login,
+  .alati-logpass-ini-crud__field--pass {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .alati-logpass-ini-crud__status-logfail-group {
+    grid-column: auto;
+    justify-self: stretch;
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 12px;
+    column-gap: 12px;
+  }
+
+  .alati-logpass-ini-crud__status-logfail-group .alati-logpass-ini-crud__field--status,
+  .alati-logpass-ini-crud__status-logfail-group .alati-logpass-ini-crud__field--log-fail {
+    flex: 0 0 auto;
+    width: max-content;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .alati-logpass-ini-crud__pass-row {
+    width: 100%;
+  }
+}
+
+/* Fallback bez @container (uža stranica) */
+@media (max-width: 540px) {
+  .alati-logpass-ini-crud__credentials-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .alati-logpass-ini-crud__field--login,
+  .alati-logpass-ini-crud__field--pass {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .alati-logpass-ini-crud__status-logfail-group {
+    grid-column: auto;
+    justify-self: stretch;
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 12px;
+    column-gap: 12px;
+  }
+
+  .alati-logpass-ini-crud__status-logfail-group .alati-logpass-ini-crud__field--status,
+  .alati-logpass-ini-crud__status-logfail-group .alati-logpass-ini-crud__field--log-fail {
+    flex: 0 0 auto;
+    width: max-content;
+    max-width: 100%;
+    margin: 0;
+    min-width: 0;
+    align-items: flex-end;
+  }
+
+  .alati-logpass-ini-crud__pass-row {
+    width: 100%;
+  }
+}
+
+/* Običan kontrola-edit (bez edit-delete / ×) – usko polje jedne znamenke; labela i edit desno u stupcu */
+.alati-logpass-ini-crud__field--status .alati-logpass-ini-crud__status-edit {
+  width: 3rem;
+  min-width: 2.75rem;
+  max-width: 4rem;
+  flex-shrink: 0;
+  align-self: flex-end;
+  text-align: center;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.alati-logpass-ini-crud__field--status .kontrola-labela {
+  align-self: flex-end;
+  text-align: right;
+  width: 100%;
+}
+
+/* Unutar zajedničke grupe: labela ne širi stupac na 100% — Log faill ostaje uz Status. */
+.alati-logpass-ini-crud__status-logfail-group .alati-logpass-ini-crud__field--log-fail .kontrola-labela,
+.alati-logpass-ini-crud__status-logfail-group .alati-logpass-ini-crud__field--status .kontrola-labela {
+  width: auto;
+  max-width: 100%;
+}
+
+.alati-logpass-ini-crud__field--log-fail .alati-logpass-ini-crud__log-fail-edit {
+  width: 3.75rem;
+  min-width: 3rem;
+  max-width: 5rem;
+  flex-shrink: 0;
+  align-self: flex-end;
+  text-align: center;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.alati-logpass-ini-crud__field--log-fail .kontrola-labela {
+  align-self: flex-end;
+  text-align: right;
+  width: 100%;
+}
+
+/* Disable stanje: labele (token iz 0-Common); login/pass edit-delete --disabled iz JS; status = kontrola-edit :disabled */
+#edit_panel.kontrola-panel--edit-locked .kontrola-labela {
+  color: var(--label_text_disabled);
+}
+
+.alati-logpass-ini-crud__edit-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.alati-logpass-ini-crud__footer-left,
+.alati-logpass-ini-crud__footer-right {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}

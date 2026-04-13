@@ -1,0 +1,108 @@
+<!-- Alati_LogPass_Ini_CRUD – Login-pass administracija (sustav_korisnici) -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Login-pass administracija</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+    <link rel="stylesheet" href="../css/Alati_LogPass_Ini_CRUD.css?v=10.15.04">
+</head>
+
+<body>
+
+<div class="naslov-forme">
+    <h2>Login-pass administracija</h2>
+</div>
+
+<div class="page-container">
+    <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel kontrola-panel--resize-y mb-3 alati-logpass-ini-crud__panel-tablica">
+        <div class="kontrola-panel__header alati-logpass-ini-crud__tablica-header">
+            <div class="alati-logpass-ini-crud__header-row">
+                <label class="kontrola-labela mb-0" for="edit_trazi">Traži</label>
+                <div class="kontrola-edit-delete">
+                    <input id="edit_trazi" type="text" class="kontrola-edit-delete__input" placeholder="Pretraga…" autocomplete="off">
+                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body alati-logpass-ini-crud__credentials-body">
+            <div class="alati-logpass-ini-crud__credentials-row">
+                <div class="alati-logpass-ini-crud__field alati-logpass-ini-crud__field--login">
+                    <label class="kontrola-labela mb-0" for="edit_login">Korisničko ime</label>
+                    <div class="kontrola-edit-delete">
+                        <input id="edit_login" type="text" class="kontrola-edit-delete__input" placeholder="Login" maxlength="100" autocomplete="username">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    </div>
+                </div>
+                <div class="alati-logpass-ini-crud__field alati-logpass-ini-crud__field--pass">
+                    <label class="kontrola-labela mb-0" for="edit_pass">Lozinka</label>
+                    <div class="alati-logpass-ini-crud__pass-row">
+                        <div class="kontrola-edit-delete alati-logpass-ini-crud__pass-edit">
+                            <input id="edit_pass" type="text" class="kontrola-edit-delete__input" placeholder="Iz baze ili nova lozinka" autocomplete="off">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
+                        <button type="button" id="btn_gen_pass" class="alati-logpass-ini-crud__gen-pass" disabled title="Generiraj početnu lozinku (12 znakova)" aria-label="Generiraj početnu lozinku (12 znakova)">🔑</button>
+                    </div>
+                </div>
+                <div class="alati-logpass-ini-crud__status-logfail-group">
+                    <div class="alati-logpass-ini-crud__field alati-logpass-ini-crud__field--log-fail">
+                        <label class="kontrola-labela mb-0" for="edit_log_fail">Log faill</label>
+                        <input id="edit_log_fail" type="text" class="kontrola-edit alati-logpass-ini-crud__log-fail-edit" inputmode="numeric" maxlength="3" title="Broj neuspjelih prijava (0–255)" autocomplete="off">
+                    </div>
+                    <div class="alati-logpass-ini-crud__field alati-logpass-ini-crud__field--status">
+                        <label class="kontrola-labela mb-0" for="edit_pass_status">Status</label>
+                        <input id="edit_pass_status" type="text" class="kontrola-edit alati-logpass-ini-crud__status-edit" inputmode="numeric" title="Jedna znamenka 0–9 ili prazno (zamjena tipkom)" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer alati-logpass-ini-crud__edit-footer">
+            <div class="alati-logpass-ini-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi" disabled>
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label">Upis</span>
+                        </span>
+                    </span>
+                </button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi" disabled>
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label">Izbriši</span>
+                        </span>
+                    </span>
+                </button>
+            </div>
+            <div class="alati-logpass-ini-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak">
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label">Povratak</span>
+                        </span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/Alati_LogPass_Ini_CRUD.js?v=10.15.04"></script>
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!-- Login.html – prijava (popup prozor); API: ../php/Login.php, ../php/Login_pass_promjena.php -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Prijava VNLH</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+
+    <link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/Login.css?v=10.15.04">
+</head>
+<body class="login-win">
+
+<div class="login-win__shell">
+    <div class="kontrola-panel login-win__panel">
+        <div class="kontrola-panel__header login-win__header">
+            <span class="login-win__title" id="login_panel_title">Prijava VNLH</span>
+        </div>
+        <div class="kontrola-panel__body login-win__body">
+            <div class="login-win__field">
+                <label class="kontrola-labela mb-0" for="login_user">Korisničko ime</label>
+                <input id="login_user" name="login" type="text" class="kontrola-edit" autocomplete="username" maxlength="100">
+            </div>
+            <div class="login-win__field" id="login_new_user_row" hidden>
+                <label class="kontrola-labela mb-0" for="login_new_user">Novo korisničko ime</label>
+                <input id="login_new_user" name="login_new" type="text" class="kontrola-edit" autocomplete="off" maxlength="100">
+            </div>
+            <div class="login-win__field">
+                <label class="kontrola-labela mb-0" for="login_pass">Lozinka</label>
+                <div class="login-win__pass-row">
+                    <input id="login_pass" name="pass" type="password" class="kontrola-edit login-win__pass-input" autocomplete="current-password">
+                    <button type="button" id="login_toggle_pass" class="login-win__toggle-pass" aria-label="Prikaži lozinku" aria-pressed="false" title="Prikaži / sakrij lozinku">👁️</button>
+                </div>
+            </div>
+            <div class="login-win__field login-win__field--pass-confirm" id="login_pass_confirm_row" hidden>
+                <label class="kontrola-labela mb-0" for="login_pass_confirm">Provjera lozinke</label>
+                <div class="login-win__pass-row">
+                    <input id="login_pass_confirm" type="password" class="kontrola-edit login-win__pass-input" autocomplete="new-password">
+                    <button type="button" id="login_toggle_pass_confirm" class="login-win__toggle-pass" aria-label="Prikaži provjeru lozinke" aria-pressed="false" title="Prikaži / sakrij lozinku">👁️</button>
+                </div>
+            </div>
+            <div id="login_pass_hints" class="login-win__hints" hidden>
+                <div class="login-win__hints-inner" id="login_pass_hint_text" role="note"></div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer login-win__footer">
+            <div class="login-win__footer-btns">
+                <button type="button" id="btn_login_odustani" class="kontrola-btn">
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label">Odustani</span>
+                        </span>
+                    </span>
+                </button>
+                <button type="button" id="btn_login_submit" class="kontrola-btn">
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label" id="btn_login_submit_label">Prijava</span>
+                        </span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/Login.js?v=10.15.04"></script>
+</body>
+</html>

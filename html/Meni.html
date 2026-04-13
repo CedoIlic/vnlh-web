@@ -1,0 +1,53 @@
+<!-- =========================================================
+     Meni.html
+     Glavni izbornik – logo u pozadini body-ja (tokeni --vnlh_logo_meni_*), traka menija.
+     U distribuciji: fallback uvijek na Meni.html, nema tipke Povratak.
+     Skripte: 0-Common.js, Meni.js
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Glavni Izbornik</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+
+    <link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+    <link rel="stylesheet" href="../css/Meni.css?v=10.15.53">
+</head>
+<body class="meni-glavni">
+
+<div class="naslov-forme">
+    <h2>Glavni Izbornik</h2>
+</div>
+
+<!-- Traka menija – cijela širina (iste klase kao Alati_Meni_Test) -->
+<div id="traka_h_menija" class="alati-meni-test__traka">
+    <button type="button" id="meni_hamburger" class="alati-meni-test__hamburger" aria-label="Meni" aria-expanded="false" aria-haspopup="dialog">☰</button>
+    <div id="meni_container" class="alati-meni-test__meni-container"></div>
+</div>
+<!-- Overlay i drawer za uski prikaz -->
+<div id="meni_overlay" class="alati-meni-test__overlay" aria-hidden="true"></div>
+<aside id="meni_drawer" class="alati-meni-test__drawer" role="dialog" aria-modal="true" aria-label="Meni (mobilni)">
+    <div class="alati-meni-test__drawer-head">
+        <button type="button" id="meni_drawer_back" class="alati-meni-test__drawer-btn alati-meni-test__drawer-btn--back" aria-label="Nazad" style="visibility:hidden;">
+            <svg class="alati-meni-test__drawer-icon alati-meni-test__drawer-icon--back" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+        </button>
+        <div class="alati-meni-test__drawer-title" id="meni_drawer_title">Glavni izbornik</div>
+        <button type="button" id="meni_drawer_close" class="alati-meni-test__drawer-btn" aria-label="Početna">
+            <svg class="alati-meni-test__drawer-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+        </button>
+    </div>
+    <div class="alati-meni-test__drawer-body">
+        <div id="meni_drawer_list"></div>
+    </div>
+</aside>
+
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/Meni.js?v=10.15.04"></script>
+
+</body>
+</html>

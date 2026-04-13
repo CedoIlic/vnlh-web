@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dužnosnici</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+</head>
+<body>
+<div class="naslov-forme"><h2>Dužnosnici</h2></div>
+<div class="page-container">
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body duznosnici-crud__edit-body" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="duznosnici-crud__edit-row" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                <label class="kontrola-labela mb-0" for="edit_naziv" style="text-align: left;">Naziv dužnosnika</label>
+                <div class="kontrola-edit-delete">
+                    <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv dužnosnika...">
+                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                </div>
+            </div>
+            <div class="duznosnici-crud__edit-row" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                <label class="kontrola-labela mb-0" for="select_odgovornost" style="text-align: left;">Odgovornost</label>
+                <div class="kontrola-select">
+                    <select id="select_odgovornost" aria-label="Odgovornost">
+                        <option value="0">Ne odgovara nikome</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer duznosnici-crud__edit-footer">
+            <div class="duznosnici-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="duznosnici-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/Duznosnici_CRUD.js?v=10.15.04"></script>
+</body>
+</html>

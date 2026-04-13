@@ -1,0 +1,249 @@
+/* =========================================================
+   Duznosnici_Osobe_CRUD.css
+   Dva panela s Traži + tablicom; donji edit (Dužnost, Nosioc) i CRUD tipke.
+   ========================================================= */
+
+/* --- Blok: Dva panela jedan pored drugog --- */
+.duznosnici-osobe-crud__panels-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0;
+}
+
+.duznosnici-osobe-crud__panels-row .duznosnici-osobe-crud__panel-tablica {
+  flex: 1 1 280px;
+  min-width: 0;
+  container-type: inline-size;
+  container-name: duznosnici-osobe-panel;
+}
+
+/* --- Blok: Jednaka min-visina panela (kao Napredovanja) --- */
+.duznosnici-osobe-crud__panels-row .duznosnici-osobe-crud__panel-min-equal {
+  min-height: calc(var(--panel_body_padding_y) + var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra) + var(--panel_body_padding_y) + var(--panel_header_min_height));
+}
+
+/*
+ * Sažimanje panela (prag 480px = isto kao @container duznosnici-osobe-panel): Traži u dva reda.
+ * min-height mora uključiti resize traku + token za dva reda zaglavlja.
+ * !important: nadjačava 0-Kontrole (:has resize-bar).
+ * Klasa .duznosnici-osobe-crud__panel--stacked-min postavlja ResizeObserver u JS (CQ ne može pouzdano ciljati sam panel).
+ */
+.duznosnici-osobe-crud__panel-tablica.duznosnici-osobe-crud__panel--stacked-min.kontrola-panel-tablica--has-header:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--panel_header_min_height_two_rows)) !important;
+}
+
+.duznosnici-osobe-crud__panel-tablica .kontrola-panel__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.duznosnici-osobe-crud__panel-tablica .kontrola-panel__body > .kontrola-tablica {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+}
+
+.duznosnici-osobe-crud__panel-tablica .kontrola-tablica__scroll-wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+}
+
+/* --- Blok: Zaglavlje panela (Traži) --- */
+.duznosnici-osobe-crud__tablica-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Široko: labela lijevo, Traži (edit-delete) desno */
+.duznosnici-osobe-crud__header-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.duznosnici-osobe-crud__header-row .kontrola-labela {
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 7ch;
+  min-width: 7ch;
+  max-width: 7ch;
+  box-sizing: border-box;
+}
+
+.duznosnici-osobe-crud__header-row .kontrola-edit-delete {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Usko (sažimanje panela): labela iznad edit-delete – literal 480px zbog WebKit-a (ne var() u @container) */
+@container duznosnici-osobe-panel (max-width: 480px) {
+  .duznosnici-osobe-crud__header-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .duznosnici-osobe-crud__header-row .kontrola-labela {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    align-self: flex-start;
+  }
+
+  .duznosnici-osobe-crud__header-row .kontrola-edit-delete {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Uski cijeli prozor – isto ponašanje ako container query ne pokrije */
+@media (max-width: 640px) {
+  .duznosnici-osobe-crud__header-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .duznosnici-osobe-crud__header-row .kontrola-labela {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    align-self: flex-start;
+  }
+
+  .duznosnici-osobe-crud__header-row .kontrola-edit-delete {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Fallback bez JS: cijeli viewport usko → zaglavlje presloženo */
+  .page-container.duznosnici-osobe-crud .duznosnici-osobe-crud__panel-tablica.kontrola-panel-tablica--has-header.duznosnici-osobe-crud__panel-min-equal:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+    min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--panel_header_min_height_two_rows)) !important;
+  }
+}
+
+/* --- Blok: Zaglavlje tablice (TH) – jedan red, bez lomljenja naslova „iznad“ ćelije pri uskom panelu --- */
+.duznosnici-osobe-crud .kontrola-tablica__header .kontrola-tablica__th-title {
+  white-space: nowrap;
+}
+
+/* --- Blok: Edit panel – zaglavlje, ellipsis desno --- */
+.duznosnici-osobe-crud__edit-panel-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.duznosnici-osobe-crud__edit-panel-ellipsis-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .duznosnici-osobe-crud__edit-panel-ellipsis-btn:hover:not(:disabled) {
+    background: var(--edit_bg_hover, var(--c-gray-100));
+    box-shadow: var(--kontrole_sjena_slaba_1);
+  }
+}
+
+.duznosnici-osobe-crud__edit-panel-ellipsis-btn:active:not(:disabled) {
+  box-shadow: inset 0 2px 4px var(--c-shadow-30);
+}
+
+.duznosnici-osobe-crud__edit-panel-ellipsis-btn:disabled {
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  color: var(--label_text_disabled);
+  cursor: var(--edit_cursor_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled);
+}
+
+.duznosnici-osobe-crud__edit-panel-ellipsis-btn .kontrola-icon--ellipsis-horizontal {
+  width: 1.25rem;
+  height: 1.25rem;
+  mask-size: 1.25rem 1.25rem;
+  -webkit-mask-size: 1.25rem 1.25rem;
+}
+
+/* --- Blok: Edit panel – tijelo (ime klase bez „crud__edit-*“ da 0-Kontrole ne primjenjuje zajednička pravila) --- */
+.duznosnici-osobe-crud__unos-tijelo {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/*
+ * Usko: labela iznad polja (svaki red vlastita mreža).
+ * Široko: jedna mreža na .unos-tijelo + display:contents na redovima → isti lijevi rub svih polja (stupac labela = max širine svih labela).
+ */
+.duznosnici-osobe-crud__unos-red {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: auto;
+  align-items: stretch;
+  row-gap: 0.35rem;
+  column-gap: 0;
+  min-width: 0;
+}
+
+@media (min-width: 641px) {
+  .page-container.duznosnici-osobe-crud .duznosnici-osobe-crud__unos-tijelo {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 0.75rem;
+    row-gap: 1rem;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .page-container.duznosnici-osobe-crud .duznosnici-osobe-crud__unos-red {
+    display: contents;
+  }
+
+  .page-container.duznosnici-osobe-crud .duznosnici-osobe-crud__unos-red .kontrola-labela {
+    white-space: nowrap;
+  }
+}
+
+.duznosnici-osobe-crud__unos-par {
+  display: contents;
+}
+
+.duznosnici-osobe-crud__unos-red .kontrola-labela {
+  margin-bottom: 0;
+}
+
+.duznosnici-osobe-crud__unos-polje {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* --- Blok: Edit panel disabled --- */
+#edit_panel.duznosnici-osobe-crud__edit-panel--disabled .duznosnici-osobe-crud__unos-tijelo .kontrola-labela {
+  color: var(--label_text_disabled);
+}

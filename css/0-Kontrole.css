@@ -1,0 +1,2731 @@
+/* =========================================================
+   0-Kontrole.css
+   Izgled i ponašanje kontrola u formama (naslov, tablica,
+   polja, tipke itd.). Učitati nakon Bootstrapa i 0-Common.css.
+   ========================================================= */
+
+/* =========================================================
+   NASLOV FORME
+   Zaštita od Bootstrapa: sva svojstva eksplicitno postavljena,
+   margin/padding resetirani da Bootstrap h2 ne pregazi izgled.
+   ========================================================= */
+
+/* --- Blok: Naslov forme – kontejner (gradient, sjena, padding) --- */
+.naslov-forme {
+  position: relative;
+  background: linear-gradient(to right, var(--naslov_forme_grad_start), var(--naslov_forme_grad_end));
+  color: var(--naslov_forme_text);
+  padding: var(--naslov_forme_padding_y) var(--naslov_forme_padding_x);
+  text-align: center;
+  box-shadow: var(--naslov_forme_box_shadow);
+}
+
+/* Badge verzije (.vnlh-verzija-badge) premješten u 0-Common.css — jedino mjesto za sve forme */
+
+/* --- Modal promjene verzije (Razvoj=1, klik na badge) --- */
+.vnlh-verzija-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10004;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: var(--modal_overlay_bg, rgba(0, 0, 0, 0.5));
+}
+.vnlh-verzija-modal-dialog {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border: var(--modal_border_w, 1px) solid var(--modal_border, #ccc);
+  border-radius: var(--panel_radius, 12px);
+  box-shadow: var(--panel_sjena, 0 6px 16px rgba(0, 0, 0, 0.35));
+  background: var(--modal_body_bg, #fff);
+  overflow: hidden;
+}
+.vnlh-verzija-modal-header {
+  flex: 0 0 auto;
+  padding: 0.75rem 1rem;
+  background: var(--modal_header_bg, #f5f5f5);
+  color: var(--modal_header_text, #333);
+  font-family: var(--font_family);
+  font-size: 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--edit_border, #ccc);
+}
+.vnlh-verzija-modal-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.vnlh-verzija-modal-body .kontrola-labela {
+  display: block;
+}
+.vnlh-verzija-modal-body .kontrola-edit {
+  width: 100%;
+  box-sizing: border-box;
+}
+.vnlh-verzija-modal-footer {
+  flex: 0 0 auto;
+  padding: 0.75rem 1rem;
+  background: var(--modal_footer_bg, #f5f5f5);
+  border-top: 1px solid var(--edit_border, #ccc);
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* --- Blok: Naslov forme – h2 / .h2 (tipografija, reset) --- */
+.naslov-forme h2,
+.naslov-forme .h2 {
+  margin: 0;
+  padding: 0;
+  font-family: var(--naslov_forme_font);
+  font-weight: var(--naslov_forme_weight);
+  font-size: var(--naslov_forme_font_size);
+  line-height: 1.2;
+  letter-spacing: var(--naslov_forme_letter_spacing);
+  color: inherit;
+  text-shadow:
+    var(--naslov_forme_text_shadow),
+    -1px -1px 0 var(--naslov_forme_text_outline),
+    1px -1px 0 var(--naslov_forme_text_outline),
+    -1px 1px 0 var(--naslov_forme_text_outline),
+    1px 1px 0 var(--naslov_forme_text_outline);
+}
+
+/* =========================================================
+   GRADIENT POZADINE STRANICE
+   Ponavljajuće horizontalne trake po cijeloj visini body-ja.
+   ========================================================= */
+
+body {
+  /* Fallback pozadina ako gradient nije podržan */
+  background-color: var(--pozadina_grad_light);
+
+  /* Jedna traka: tamnije stabilno oko sredine (blaži pad),
+     oštriji prijelazi prema rubovima trake. */
+  background-image: linear-gradient(
+    to bottom,
+    var(--pozadina_grad_light) 0%,
+    var(--pozadina_grad_light) 15%,
+    var(--pozadina_grad_dark) 35%,
+    var(--pozadina_grad_dark) 65%,
+    var(--pozadina_grad_light) 85%,
+    var(--pozadina_grad_light) 100%
+  );
+
+  /* Visina trake i ponavljanje po Y osi */
+  background-repeat: repeat-y;
+  background-size: 100% var(--pozadina_grad_band_h);
+}
+
+/* =========================================================
+   KONTROLA TABLICA
+   Zaštita od Bootstrapa: sva svojstva eksplicitno postavljena,
+   tablica potpuno neovisna o Bootstrapu.
+   ========================================================= */
+
+/* --- Blok: Tablica – vanjski kontejner (.kontrola-tablica) --- */
+.kontrola-tablica {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  height: calc(var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra));
+  min-height: calc(var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra));
+  max-height: 100%;
+  width: 100%;
+  border: var(--tablica_border_w) solid var(--tablica_border);
+  border-radius: var(--tablica_radius);
+  box-shadow: var(--tablica_sjena);
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  background: var(--tablica_bg);
+}
+
+/* Kad tablica ima selektirani red – ista sjena kao na kontrolama (uskladeno s panelom). */
+.kontrola-tablica.kontrola-tablica--has-selected {
+  box-shadow: var(--tablica_sjena);
+}
+
+/* Kad je tablica disabled – sjena i pozadine iz disable tokena */
+.kontrola-tablica.kontrola-tablica--disabled {
+  box-shadow: var(--tablica_sjena_disabled);
+  background: var(--tablica_bg_disabled);
+}
+.kontrola-tablica.kontrola-tablica--disabled .kontrola-tablica__scroll {
+  background: var(--tablica_bg_disabled);
+}
+
+/* --- Blok: Tablica – inner wrapper (overflow, border-radius) --- */
+.kontrola-tablica__inner {
+  overflow: hidden;
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* --- Blok: Tablica – override visine (--visina-iz-tokena) --- */
+.kontrola-tablica.kontrola-tablica--visina-iz-tokena {
+  height: calc(var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra)) !important;
+  min-height: calc(var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra)) !important;
+}
+
+/* --- Blok: Tablica – zaglavlje (__header, padding kad je skrol vidljiv) --- */
+.kontrola-tablica__header {
+  flex: none;
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 0;
+  background: var(--tablica_head_bg);
+  overflow: hidden;
+}
+
+/* Kad je skrol vidljiv, rezerviraj prostor desno da sadržaj (tablica) ne ulazi ispod scrollbara. */
+.kontrola-tablica__header--skrol-vidljiv {
+  padding-right: var(--tablica_sirina_scrol_bara);
+}
+
+/* --- Blok: Tablica – scroll wrap i scroll područje (overflow, vertikalna linija) --- */
+.kontrola-tablica__scroll-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  height: calc(var(--tablica_row_h) * var(--tablica_vidljivih_redova));
+}
+
+/* Područje s vertikalnim skrolom; visina točno --tablica_vidljivih_redova redova. Prostor za skrol nije rezerviran – redovi se šire kad skrol nestane. */
+.kontrola-tablica__scroll {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--tablica_bg);
+}
+
+/* Na mobu: omogući horizontalno pomicanje prstom kad se cijeli red ne vidi (kao kod edita). Breakpoint iz --page_breakpoint_narrow (0-Common.css). */
+@media (max-width: var(--page_breakpoint_narrow, 640px)) {
+  /* Kolone s mobitel_prikaz: 0 – skrivene na uskom ekranu (data-mob-hide postavlja JS). */
+  .kontrola-tablica col[data-mob-hide="1"],
+  .kontrola-tablica th[data-mob-hide="1"],
+  .kontrola-tablica td[data-mob-hide="1"] {
+    display: none !important;
+  }
+  .kontrola-tablica__scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Tablica min-width da prelazi uski ekran i omogući pomicanje prstom. */
+  .kontrola-tablica__scroll table {
+    min-width: 480px;
+  }
+  /* Kad su neke kolone skrivene (mobitel_prikaz), tablica ispuni prostor – vidljive kolone se prošire. */
+  .kontrola-tablica.tablica--mob-reduced .kontrola-tablica__scroll {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  .kontrola-tablica.tablica--mob-reduced .kontrola-tablica__scroll table {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: fixed;
+  }
+  .kontrola-tablica.tablica--mob-reduced .kontrola-tablica__header table {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: fixed;
+  }
+}
+
+/* --- Blok: Tablica – scrollbar (Firefox: scrollbar-color; WebKit: sljedeći blok) --- */
+@supports not selector(::-webkit-scrollbar) {
+  .kontrola-tablica__scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+
+/* --- Blok: Tablica – vertikalna linija pored scrollbara --- */
+.kontrola-tablica__scroll-linija {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: var(--tablica_grid_v_line_debljina);
+  margin: 0;
+  padding: 0;
+  border: none;
+  box-sizing: border-box;
+  background: var(--tablica_v_line);
+  pointer-events: none;
+  z-index: 1;
+  backface-visibility: hidden;
+}
+
+/* --- Blok: Tablica – WebKit scrollbar (traka, klizac, hover) --- */
+.kontrola-tablica__scroll::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara);
+  height: var(--tablica_sirina_scrol_bara);
+  background: var(--tablica_scroll_bg);
+}
+
+/* Klizac (thumb) skrol bara. */
+.kontrola-tablica__scroll::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac);
+  border-radius: 6px;
+}
+
+/* Mali razmak između klizača i strelica – ograniči track na sredinu. */
+.kontrola-tablica__scroll::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+
+.kontrola-tablica__scroll::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+
+/* Klizac skrol bara na hover – boja se ubrizgava iz JS (0-Kontrole.js) iz tokena --tablica_scroll_klizac_hover. */
+.kontrola-tablica__scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover);
+}
+
+/* Strelice (gore/dolje) na scroll baru tablice – koristimo iste boje kao traka. */
+.kontrola-tablica__scroll::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara);
+  background: transparent;
+}
+
+.kontrola-tablica__scroll::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac) transparent;
+}
+
+.kontrola-tablica__scroll::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac) transparent transparent transparent;
+}
+
+/* --- Blok: Tablica – table (zaglavlje + podaci, width, border-collapse) --- */
+.kontrola-tablica__header table,
+.kontrola-tablica__scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 0;
+  padding: 0;
+  table-layout: fixed;
+  box-sizing: border-box;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+}
+
+/* --- Blok: Tablica – thead (visina, reset) --- */
+.kontrola-tablica thead {
+  height: var(--tablica_head_h);
+}
+
+.kontrola-tablica__header thead {
+  position: static;
+}
+
+/* Red u zaglavlju – reset. */
+.kontrola-tablica thead tr {
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Blok: Tablica – th (gradient, tipografija, border, vertikalne linije) --- */
+.kontrola-tablica th {
+  margin: 0;
+  padding: 0 8px;
+  height: var(--tablica_head_h);
+  box-sizing: border-box;
+  background: var(--tablica_head_bg);
+  color: var(--tablica_head_text_boja);
+  font-family: var(--tablica_zaglavlje_font_family);
+  font-size: var(--tablica_zaglavlje_font_size);
+  font-weight: var(--tablica_zaglavlje_font_weight);
+  text-align: left;
+  border-bottom: var(--tablica_zaglavlje_line_debljina) solid var(--tablica_zaglavlje_line);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* th s ikonom sortiranja (sortable_icon = 1): flex unutra, align L/C → ikona desno, R → ikona lijevo */
+.kontrola-tablica th .kontrola-tablica__th-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  gap: 4px;
+}
+.kontrola-tablica th .kontrola-tablica__th-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kontrola-tablica th .kontrola-tablica__th-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
+/* U zaglavlju tablice: ikona arrows-up-down 30 % manja (17px) */
+.kontrola-tablica__header .kontrola-icon--arrows-up-down {
+  width: 17px;
+  height: 17px;
+  mask-size: 17px 17px;
+  -webkit-mask-size: 17px 17px;
+}
+
+/* Ćelija s ikonom sortiranja – ne odsijecaj sadržaj (overflow: visible) */
+.kontrola-tablica th.kontrola-tablica__th--align-L,
+.kontrola-tablica th.kontrola-tablica__th--align-C,
+.kontrola-tablica th.kontrola-tablica__th--align-R {
+  overflow: visible;
+}
+.kontrola-tablica th.kontrola-tablica__th--align-L .kontrola-tablica__th-inner {
+  justify-content: flex-start;
+}
+.kontrola-tablica th.kontrola-tablica__th--align-L .kontrola-tablica__th-icon {
+  margin-left: auto;
+}
+.kontrola-tablica th.kontrola-tablica__th--align-C .kontrola-tablica__th-inner {
+  justify-content: center;
+}
+.kontrola-tablica th.kontrola-tablica__th--align-C .kontrola-tablica__th-icon {
+  margin-left: auto;
+}
+.kontrola-tablica th.kontrola-tablica__th--align-R .kontrola-tablica__th-inner {
+  justify-content: flex-end;
+  flex-direction: row-reverse;
+}
+.kontrola-tablica th.kontrola-tablica__th--align-R .kontrola-tablica__th-icon {
+  margin-right: auto;
+}
+
+/* Hover zaglavlja tablice – invertiraj gradient (osim kad je tablica disabled) */
+.kontrola-tablica:not(.kontrola-tablica--disabled) th:hover {
+  background: linear-gradient(
+    to bottom,
+    var(--tablica_head_bg_2),
+    var(--tablica_head_bg_1)
+  );
+}
+
+/* sortable: 0 – bez hovera i bez pointer kursora, ne reagira na klik (sort se blokira u JS) */
+.kontrola-tablica th.kontrola-tablica__th--no-sort {
+  cursor: default;
+}
+.kontrola-tablica th.kontrola-tablica__th--no-sort:hover {
+  background: var(--tablica_head_bg);
+}
+
+/* Vertikalne linije između kolona zaglavlja kad je --tablica_zaglavlje_v_linije: true. */
+.kontrola-tablica.tablica--zaglavlje-v-linije th {
+  border-right: var(--tablica_zaglavlje_line_debljina) solid var(--tablica_zaglavlje_v_line);
+}
+
+/* Zadnja kolona zaglavlja – bez desnog bordera. */
+.kontrola-tablica.tablica--zaglavlje-v-linije th:last-child {
+  border-right: none;
+}
+
+/* Kad vertikalne linije zaglavlja isključene – border u boji gradienta (nevidljiv). */
+.kontrola-tablica:not(.tablica--zaglavlje-v-linije) th {
+  border-right: var(--tablica_zaglavlje_line_debljina) solid transparent;
+}
+
+.kontrola-tablica:not(.tablica--zaglavlje-v-linije) th:last-child {
+  border-right: none;
+}
+
+/* --- Blok: Tablica – tbody tr (pozadina, striped, hover, selected) --- */
+.kontrola-tablica tbody tr {
+  margin: 0;
+  padding: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  background: var(--tablica_row_bg);
+}
+
+/* Zebra (parni redovi) kad je --tablica_podaci_striped: true. */
+.kontrola-tablica tbody tr:nth-child(even).tablica-row-striped {
+  background: var(--tablica_row_striped_bg);
+}
+
+/* Hover reda s podacima. Na touch (hover: none) ne mijenjaj izgled da tap ne izgleda kao hover. */
+@media (hover: hover) {
+  .kontrola-tablica tbody tr:hover {
+    background: var(--tablica_row_hover_bg);
+  }
+}
+@media (hover: none) {
+  .kontrola-tablica tbody tr:hover {
+    background: var(--tablica_row_bg);
+  }
+  .kontrola-tablica tbody tr:nth-child(even).tablica-row-striped:hover {
+    background: var(--tablica_row_striped_bg);
+  }
+}
+
+/* Tablica disabled – isključi hover na redovima (zadrži disable pozadine) */
+.kontrola-tablica.kontrola-tablica--disabled tbody tr:hover {
+  background: var(--tablica_row_bg_disabled);
+}
+.kontrola-tablica.kontrola-tablica--disabled tbody tr:nth-child(even).tablica-row-striped:hover {
+  background: var(--tablica_row_bg_disabled);
+}
+.kontrola-tablica.kontrola-tablica--disabled tbody tr.tablica-row-selected:hover {
+  background: var(--tablica_row_selected_bg_disabled);
+}
+
+/* Selektirani red. */
+.kontrola-tablica tbody tr.tablica-row-selected {
+  background: var(--tablica_row_selected_bg);
+}
+
+/* Selektirani parni red (striped) – prioritet nad zebrom. */
+.kontrola-tablica tbody tr.tablica-row-selected:nth-child(even).tablica-row-striped {
+  background: var(--tablica_row_selected_bg);
+}
+
+/* --- Blok: Tablica – td (visina, tipografija, ellipsis) --- */
+.kontrola-tablica td {
+  margin: 0;
+  padding: 0 8px;
+  height: var(--tablica_row_h);
+  box-sizing: border-box;
+  color: var(--tablica_row_fg);
+  font-family: var(--tablica_podaci_font_family);
+  font-size: var(--tablica_podaci_font_size);
+  font-weight: var(--tablica_podaci_font_weight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Wrapper unutar td za hover-skrol do kraja sadržaja (kao na kontrolama); samo tekst ćelije, ne checkbox. */
+.kontrola-tablica__cell-inner {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+/* Hover-scroll: tijekom skrolanja bez "..." da se vidi tekst; overflow-x: scroll da skrol radi; skrolbar skriven */
+.kontrola-tablica__cell-inner.kontrola-hover-scroll-active {
+  overflow-x: scroll !important;
+  overflow-y: hidden !important;
+  text-overflow: clip !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+.kontrola-tablica__cell-inner.kontrola-hover-scroll-active::-webkit-scrollbar {
+  display: none; /* WebKit (Chrome, Safari, Edge) */
+}
+
+/* td ne smije clipati kad je child aktivan – ellipsis i skriveni tekst */
+.kontrola-tablica td:has(.kontrola-tablica__cell-inner.kontrola-hover-scroll-active) {
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* Tablica – disable stanje: koristi disable gradient i boje teksta */
+.kontrola-tablica.kontrola-tablica--disabled th {
+  background: linear-gradient(
+    to bottom,
+    var(--tablica_head_bg_1_disabled),
+    var(--tablica_head_bg_2_disabled)
+  );
+  color: var(--tablica_head_text_boja_disabled);
+}
+
+.kontrola-tablica.kontrola-tablica--disabled tbody tr {
+  background: var(--tablica_row_bg_disabled);
+}
+.kontrola-tablica.kontrola-tablica--disabled tbody tr:nth-child(even).tablica-row-striped {
+  background: var(--tablica_row_bg_disabled);
+}
+.kontrola-tablica.kontrola-tablica--disabled tbody tr.tablica-row-selected {
+  background: var(--tablica_row_selected_bg_disabled);
+}
+.kontrola-tablica.kontrola-tablica--disabled td {
+  color: var(--tablica_row_fg_disabled);
+}
+
+/* --- Blok: Tablica – horizontalne linije (--podaci-h-linije) --- */
+.kontrola-tablica.tablica--podaci-h-linije td {
+  border-bottom: var(--tablica_grid_h_line_debljina) solid var(--tablica_h_line);
+}
+
+/* Kad h-linije isključene – linija u boji pozadine reda (nevidljiva). */
+.kontrola-tablica:not(.tablica--podaci-h-linije) td {
+  border-bottom: var(--tablica_grid_h_line_debljina) solid var(--tablica_row_bg);
+}
+
+/* --- Blok: Tablica – vertikalne linije (--podaci-v-linije) --- */
+.kontrola-tablica.tablica--podaci-v-linije td {
+  border-right: var(--tablica_grid_v_line_debljina) solid var(--tablica_v_line);
+}
+
+.kontrola-tablica.tablica--podaci-v-linije td:last-child {
+  border-right: none;
+}
+
+/* Kad v-linije isključene – vertikalni border u boji pozadine reda (nevidljiv). */
+.kontrola-tablica:not(.tablica--podaci-v-linije) td {
+  border-right: var(--tablica_grid_v_line_debljina) solid var(--tablica_row_bg);
+}
+
+.kontrola-tablica:not(.tablica--podaci-v-linije) td {
+  border-right-color: var(--tablica_row_bg);
+}
+
+/* Parni red (striped) – boja vertikalnog bordera = striped pozadina. */
+.kontrola-tablica:not(.tablica--podaci-v-linije) tbody tr:nth-child(even).tablica-row-striped td {
+  border-right-color: var(--tablica_row_striped_bg);
+}
+
+/* Zadnja ćelija u redu – bez desnog bordera. */
+.kontrola-tablica:not(.tablica--podaci-v-linije) td:last-child {
+  border-right: none;
+}
+
+/* =========================================================
+   KONTROLA PANEL
+   Okvir, zaglavlje, tijelo, podnožje; resize samo Y, samo X ili oba.
+   Resize po Y: traka u tijelu panela (touch/mouse). Sva svojstva iz tokena (0-Common).
+   ========================================================= */
+
+/* --- Blok: Panel – kontejner i modifikatori resize (y / x / both) --- */
+.kontrola-panel {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: var(--panel_border_w) solid var(--panel_border);
+  border-radius: var(--panel_radius);
+  box-shadow: var(--panel_sjena);
+  background: var(--panel_bg);
+  overflow: auto;
+  outline: none; /* Bez pregledničkog crnog okvira pri resize (klik/povlačenje na traku) */
+}
+/* Prvo i zadnje dijete panela dobivaju zaobljene kutove da njihova pozadina
+   ne viri kao oštri kut iza roditeljskog border-radius (vidljivo kad overflow: visible). */
+.kontrola-panel > :first-child {
+  border-top-left-radius: calc(var(--panel_radius) - var(--panel_border_w));
+  border-top-right-radius: calc(var(--panel_radius) - var(--panel_border_w));
+}
+.kontrola-panel > :last-child {
+  border-bottom-left-radius: calc(var(--panel_radius) - var(--panel_border_w));
+  border-bottom-right-radius: calc(var(--panel_radius) - var(--panel_border_w));
+}
+/* Kad je u panelu otvoren select, panel ide iznad susjeda i lista može preko granice panela */
+.kontrola-panel:has(.kontrola-select--open) {
+  z-index: 10;
+  overflow: visible;
+}
+.kontrola-panel:has(.kontrola-select--open) .kontrola-panel__body {
+  overflow: visible;
+}
+
+/* Resize: zadano traka u tijelu (kontrola-panel__resize-bar); native resize u kutu isključen. */
+.kontrola-panel--resize-y,
+.kontrola-panel--resize-x,
+.kontrola-panel--resize-both {
+  resize: none;
+}
+
+/* Na desktopu (≥769px): nativni resize ugla preglednika kao .obrada-slika__dialog; traka u tijelu skrivena.
+   Na mobitelu ostaje traka + resize:none na panelu (touch). */
+@media (min-width: 769px) {
+  .kontrola-panel.kontrola-panel--resize-y {
+    resize: vertical;
+  }
+  .kontrola-panel.kontrola-panel--resize-x {
+    resize: horizontal;
+  }
+  .kontrola-panel.kontrola-panel--resize-both {
+    resize: both;
+  }
+  .kontrola-panel--resize-y .kontrola-panel__resize-bar,
+  .kontrola-panel--resize-x .kontrola-panel__resize-bar,
+  .kontrola-panel--resize-both .kontrola-panel__resize-bar {
+    display: none !important;
+    pointer-events: none !important;
+  }
+}
+
+/* --- Blok: Panel – zaglavlje (__header) --- */
+.kontrola-panel__header {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--panel_header_padding_y) var(--panel_header_padding_x);
+  background: var(--panel_header_bg);
+  color: var(--panel_header_text);
+  font-family: var(--panel_header_font_family);
+  font-size: var(--panel_header_font_size);
+  font-weight: var(--panel_header_font_weight);
+  border-bottom: var(--panel_header_border_bottom);
+}
+
+/* --- Blok: Panel – tijelo (__body) --- */
+.kontrola-panel__body {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: var(--panel_body_padding_y) var(--panel_body_padding_x);
+  background: var(--panel_body_bg);
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+  z-index: 1; /* iznad footera da padajuća lista selekta može preko footera */
+}
+
+/* Panel s kontrolama (bez tablice): tijelo ne obrezuje sadržaj da lista selekta može preko footera */
+.kontrola-panel:not(.kontrola-panel-tablica) .kontrola-panel__body {
+  overflow: visible;
+}
+
+/* --- Blok: Panel – podnožje (__footer) --- */
+.kontrola-panel__footer {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--panel_footer_padding_y) var(--panel_footer_padding_x);
+  background: var(--panel_footer_bg);
+  color: var(--panel_footer_text);
+  border-top: var(--panel_footer_border_top);
+  position: relative;
+  z-index: 0;
+}
+
+/* Traka za povlačenje visine panela (touch/mouse) – u tijelu panela, iznad footera; z-index ispod liste selekta da lista može preko granice */
+.kontrola-panel__resize-bar {
+  flex: 0 0 auto;
+  height: var(--panel_resize_bar_height);
+  min-height: var(--panel_resize_bar_height);
+  cursor: default;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel_resize_bar_bg);
+  border-top: var(--panel_resize_bar_border_top);
+  color: var(--panel_resize_bar_color);
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+  z-index: 0;
+  outline: none; /* Bez pregledničkog focus okvira pri povlačenju */
+}
+.kontrola-panel__resize-bar::before {
+  content: '';
+  width: var(--panel_resize_bar_icon_width);
+  height: var(--panel_resize_bar_icon_height);
+  border-top: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  border-radius: 1px;
+}
+/* Hover na resize traci isključen: na hover ostaje ista boja kao i inače */
+.kontrola-panel__resize-bar:hover {
+  color: var(--panel_resize_bar_color);
+}
+
+/* =========================================================
+   KONTROLA MODAL WINDOW
+   Overlay + dialog (panel). Header = porijeklo (lijevo). Tijelo: lijevo slika+podloga (po stanju), desno poruka.
+   Footer: tipke ili prazan (auto-close). Sva svojstva iz tokena (0-Common, grupa MODAL WINDOW).
+   ========================================================= */
+.kontrola-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+#kontrola-modal-poruke.kontrola-modal {
+  z-index: 10003; /* iznad ellipsis modala (10002) da se prikaže potvrda brisanja itd. */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+.kontrola-modal[aria-hidden="true"] {
+  display: none;
+}
+
+.kontrola-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--modal_overlay_bg);
+  opacity: 0;
+  transition: opacity var(--modal_fade_duration);
+}
+.kontrola-modal--dim .kontrola-modal__overlay {
+  opacity: calc(var(--modal_overlay_dim_intensity, 50) / 100);
+}
+.kontrola-modal--fade-in .kontrola-modal__overlay,
+.kontrola-modal--fade-out .kontrola-modal__overlay {
+  transition: opacity var(--modal_fade_duration);
+}
+
+.kontrola-modal__dialog {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 28rem;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border: var(--modal_border_w) solid var(--modal_border);
+  border-radius: var(--panel_radius, 12px);
+  box-shadow: var(--panel_sjena);
+  background: var(--modal_body_bg);
+  opacity: 0;
+  transition: opacity var(--modal_fade_duration);
+  overflow: hidden; /* da tijelo/zaglavlje/podnožje prate zaobljene kutove panela */
+  resize: none; /* zadano; modal obrade slike i poruke koriste vlastite klase na dijalogu; modal-tablica također. */
+}
+.kontrola-modal--open .kontrola-modal__dialog {
+  opacity: 1;
+}
+/* Boja okvira modala = boja podloge slike po stanju */
+.kontrola-modal--ok .kontrola-modal__dialog { border-color: var(--modal_image_bg_ok); }
+.kontrola-modal--error .kontrola-modal__dialog { border-color: var(--modal_image_bg_error); }
+.kontrola-modal--forbidden .kontrola-modal__dialog { border-color: var(--modal_image_bg_forbidden); }
+.kontrola-modal--information .kontrola-modal__dialog { border-color: var(--modal_image_bg_information); }
+.kontrola-modal--warning .kontrola-modal__dialog { border-color: var(--modal_image_bg_warning); }
+.kontrola-modal--fade-in .kontrola-modal__dialog,
+.kontrola-modal--fade-out .kontrola-modal__dialog {
+  transition: opacity var(--modal_fade_duration);
+}
+
+.kontrola-modal__header {
+  flex: 0 0 auto;
+  padding: var(--modal_header_padding_y) var(--modal_header_padding_x);
+  background: var(--modal_header_bg);
+  color: var(--modal_header_text);
+  font-family: var(--modal_header_font_family);
+  font-size: var(--modal_header_font_size);
+  font-weight: var(--modal_header_font_weight);
+  border-bottom: var(--modal_header_border_bottom);
+  text-align: left;
+}
+
+.kontrola-modal__body {
+  flex: 1 1 auto;
+  min-height: var(--modal_body_min_height, 5rem);
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  background: var(--modal_body_bg);
+}
+.kontrola-modal__body--text-only {
+  display: block;
+}
+/* Podloga: puna visina tijela (vrh–dno). Ikona: fiksne veličine, centrirana po visini tijela. */
+.kontrola-modal__image {
+  flex: 0 0 5rem;
+  width: 5rem;
+  min-width: 5rem;
+  padding: var(--modal_image_padding);
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-white);
+}
+.kontrola-modal__image::before {
+  content: '';
+  position: absolute;
+  width: 3.75rem;
+  height: 3.75rem;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.kontrola-modal__image--ok { background-color: var(--modal_image_bg_ok); }
+.kontrola-modal__image--ok::before { background-image: var(--modal_image_ok); }
+.kontrola-modal__image--error { background-color: var(--modal_image_bg_error); }
+.kontrola-modal__image--error::before { background-image: var(--modal_image_error); }
+.kontrola-modal__image--forbidden { background-color: var(--modal_image_bg_forbidden); }
+.kontrola-modal__image--forbidden::before { background-image: var(--modal_image_forbidden); }
+.kontrola-modal__image--information { background-color: var(--modal_image_bg_information); }
+.kontrola-modal__image--information::before { background-image: var(--modal_image_information); }
+.kontrola-modal__image--warning { background-color: var(--modal_image_bg_warning); }
+.kontrola-modal__image--warning::before { background-image: var(--modal_image_warning); }
+
+.kontrola-modal__content {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--modal_body_padding_y) var(--modal_body_padding_x);
+  overflow: auto;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  color: var(--text);
+}
+
+.kontrola-modal__footer {
+  flex: 0 0 auto;
+  padding: var(--modal_footer_padding_y) var(--modal_footer_padding_x);
+  background: var(--modal_footer_bg);
+  color: var(--modal_footer_text);
+  border-top: var(--modal_footer_border_top);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+.kontrola-modal__footer .kontrola-btn--primary,
+.kontrola-modal__footer .kontrola-btn--primary .kontrola-btn__label {
+  color: var(--modal_button_caption_default);
+}
+
+/* =========================================================
+   MODAL TABLICA
+   Modal s tablicom: zaglavlje (drag), tijelo (tablica + resize traka), podnožje (tipke).
+   Resize modala: donji desni kut. Zatvara se tipkama u podnožju. Pozicija i veličina u localStorage.
+   ========================================================= */
+.modal-tablica {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.modal-tablica.modal-tablica--open {
+  display: flex;
+}
+.modal-tablica__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--modal_tablica_overlay_bg);
+  pointer-events: none;
+}
+/* Na desktopu: native resize (kao modal obrada slike); na mobu: resize: none, custom handle. */
+.modal-tablica__dialog {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 320px;
+  min-height: 240px;
+  max-width: 95vw;
+  max-height: 95vh;
+  border: var(--modal_tablica_border_w) solid var(--modal_tablica_border);
+  border-radius: var(--modal_tablica_border_radius);
+  box-shadow: var(--modal_tablica_sjena);
+  background: var(--modal_tablica_body_bg);
+  overflow: auto;
+  resize: both;
+}
+.modal-tablica__header {
+  flex: 0 0 auto;
+  padding: var(--modal_tablica_header_padding_y) var(--modal_tablica_header_padding_x);
+  background: var(--modal_tablica_header_bg);
+  color: var(--modal_tablica_header_text);
+  font-family: var(--modal_tablica_header_font_family);
+  font-size: var(--modal_tablica_header_font_size);
+  font-weight: var(--modal_tablica_header_font_weight);
+  border-bottom: var(--modal_tablica_header_border_bottom);
+  cursor: var(--modal_tablica_header_cursor);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+.modal-tablica__header-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-tablica__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--modal_tablica_body_bg);
+  padding: var(--modal_tablica_body_padding_y) var(--modal_tablica_body_padding_x);
+  overflow: visible;                                                     /* Da sjena tablice ne bude odrezana */
+}
+.modal-tablica__body-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;                                                     /* Da sjena tablice ne bude odrezana */
+  padding: var(--modal_tablica_table_wrap_padding_y) var(--modal_tablica_table_wrap_padding_x);
+  box-sizing: border-box;
+  background: transparent;
+}
+.modal-tablica__body-table-wrap .kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: 0;
+  --tablica_vidljivih_redova: var(--modal_tablica_vidljivih_redova);
+  min-height: calc(var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra));
+  box-shadow: var(--modal_tablica_tablica_sjena);
+}
+/* U modalu: inner i scroll-wrap rastu s tijelom da se prikaže onoliko redova koliko stane. */
+.modal-tablica__body-table-wrap .kontrola-tablica .kontrola-tablica__inner,
+.modal-tablica__body-table-wrap .kontrola-tablica .kontrola-tablica__scroll-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.modal-tablica__body-table-wrap .kontrola-tablica .kontrola-tablica__scroll-wrap {
+  min-height: calc(var(--tablica_row_h) * var(--tablica_vidljivih_redova));
+  height: auto;
+}
+.modal-tablica__body-table-wrap .kontrola-tablica .kontrola-tablica__scroll {
+  min-height: 100%;
+  height: 100%;
+}
+/* Bez crnog focus okvira na tablici u modalu (scroll div je focusable; Shift/Ctrl+klik ne smije ostaviti okvir na redovima) */
+.modal-tablica__body-table-wrap .kontrola-tablica,
+.modal-tablica__body-table-wrap .kontrola-tablica__inner,
+.modal-tablica__body-table-wrap .kontrola-tablica__scroll-wrap,
+.modal-tablica__body-table-wrap .kontrola-tablica__scroll,
+.modal-tablica__body-table-wrap .kontrola-tablica tbody tr,
+.modal-tablica__body-table-wrap .kontrola-tablica td {
+  outline: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.modal-tablica__body-table-wrap .kontrola-tablica:focus,
+.modal-tablica__body-table-wrap .kontrola-tablica__scroll:focus,
+.modal-tablica__body-table-wrap .kontrola-tablica:focus-visible,
+.modal-tablica__body-table-wrap .kontrola-tablica__scroll:focus-visible,
+.modal-tablica__body-table-wrap .kontrola-tablica tbody tr:focus,
+.modal-tablica__body-table-wrap .kontrola-tablica td:focus,
+.modal-tablica__body-table-wrap .kontrola-tablica tbody tr:focus-visible,
+.modal-tablica__body-table-wrap .kontrola-tablica td:focus-visible {
+  outline: none;
+}
+.modal-tablica__body .kontrola-panel__resize-bar {
+  flex: 0 0 auto;
+  background: transparent !important;
+  border-top: var(--modal_tablica_resize_bar_border_top) !important;
+}
+.modal-tablica__footer {
+  flex: 0 0 auto;
+  padding: var(--modal_tablica_footer_padding_y) var(--modal_tablica_footer_padding_x);
+  background: var(--modal_tablica_footer_bg);
+  color: var(--modal_tablica_footer_text);
+  border-top: var(--modal_tablica_footer_border_top);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--button_font_family);
+  font-size: var(--button_font_size);
+  font-weight: var(--button_font_weight);
+}
+.modal-tablica__footer .kontrola-btn .kontrola-btn__label {
+  font-family: var(--button_font_family);
+  font-size: var(--button_font_size);
+  font-weight: var(--button_font_weight);
+}
+/* Na desktopu: skriven (koristi se native resize preglednika, kao modal obrada slike). Na mobu: puni handle kao obrada-slika__resize-handle. */
+.modal-tablica__resize-corner {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  z-index: 2;
+}
+.modal-tablica__resize-corner::after {
+  content: none;
+}
+.modal-tablica__resize-corner-icon {
+  display: none;
+}
+@media (max-width: 768px) {
+  .modal-tablica__dialog {
+    resize: none;
+    overflow: hidden;
+  }
+  .modal-tablica__resize-corner {
+    display: flex;
+    width: 26px;
+    height: 26px;
+    align-items: center;
+    justify-content: center;
+    cursor: se-resize;
+    color: var(--text, #333);
+    background: var(--modal_body_bg, #fff);
+    border: 2px solid var(--panel_border, #999);
+    border-right: none;
+    border-bottom: none;
+    border-top-left-radius: 8px;
+    box-shadow: -2px -2px 6px rgba(0, 0, 0, 0.1);
+  }
+  .modal-tablica__resize-corner::after {
+    display: none;
+  }
+  .modal-tablica__resize-corner-icon {
+    display: block;
+    width: 14px;
+    height: 14px;
+    position: relative;
+    right: -3px;
+    bottom: -3px;
+    stroke-width: 2;
+  }
+}
+
+/* =========================================================
+   KONTROLA PANEL TABLICA
+   Panel u kojem je jedina kontrola tablica. Resize po Y.
+   Tipke i ostale kontrole stavljaju se van panela.
+   ========================================================= */
+
+/* --- Blok: Panel tablica – tijelo; box-sizing: border-box; min-height = body-h; pri širenju panela raste (flex 1 1 0%), donji padding ostaje isti. --- */
+.kontrola-panel-tablica .kontrola-panel__body {
+  box-sizing: border-box;
+  padding: var(--panel_body_padding_y) var(--panel_body_padding_x);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: var(--kontrola-panel-tablica-body-h);
+  overflow: visible;
+  outline: none; /* Bez pregledničkog okvira pri resize */
+}
+
+/* Bez crnog focus okvira na tablici i scroll području (scroll div je focusable za tipkovnicu) */
+.kontrola-panel-tablica .kontrola-tablica,
+.kontrola-panel-tablica .kontrola-tablica__inner,
+.kontrola-panel-tablica .kontrola-tablica__scroll-wrap,
+.kontrola-panel-tablica .kontrola-tablica__scroll {
+  outline: none;
+}
+.kontrola-panel-tablica .kontrola-tablica:focus,
+.kontrola-panel-tablica .kontrola-tablica__scroll:focus,
+.kontrola-panel-tablica .kontrola-tablica:focus-visible,
+.kontrola-panel-tablica .kontrola-tablica__scroll:focus-visible {
+  outline: none;
+}
+/* Kad u tijelu ima resize traka (dodaje JS), tijelo mora imati prostor i za nju; tijelo = flex kolona da traka ostane vidljiva pri smanjenju (skrola samo tablica). */
+.kontrola-panel-tablica .kontrola-panel__body:has(.kontrola-panel__resize-bar) {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height));
+}
+.kontrola-panel-tablica .kontrola-panel__body:has(.kontrola-panel__resize-bar) > .kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+/* Kad u tijelu ima kontrole iznad tablice (npr. toolbar), min-height tijela uključuje i njihovu visinu. */
+.kontrola-panel-tablica:has(.kontrola-panel__body .alati-teme__tablica-toolbar) {
+  --kontrola-panel-tablica-toolbar-h: calc(var(--edit_height) + 8px);
+}
+.kontrola-panel-tablica .kontrola-panel__body:has(.alati-teme__tablica-toolbar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--kontrola-panel-tablica-toolbar-h));
+}
+.kontrola-panel-tablica .kontrola-panel__body:has(.kontrola-panel__resize-bar):has(.alati-teme__tablica-toolbar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--kontrola-panel-tablica-toolbar-h));
+}
+
+/* Footer panela tablice: uvijek visina samo po broju redova kontrola, ne raste pri širenju panela. */
+.kontrola-panel-tablica .kontrola-panel__footer {
+  flex: 0 0 auto;
+  height: fit-content;
+  min-height: 0;
+}
+
+/* --- Blok: Panel tablica – tablica; min-height = head + vidljivih redova + extra; pri širenju tijela raste (flex 1 1 auto), padding ispod tablice ostaje isti. --- */
+.kontrola-panel-tablica .kontrola-panel__body .kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: calc(var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra));
+  max-height: none;
+  margin: 0;
+}
+
+/* U panelu: scroll područje raste s tablicom (flex 1 1 auto); min = --tablica_vidljivih_redova redova. */
+.kontrola-panel-tablica .kontrola-tablica__scroll-wrap {
+  flex: 1 1 auto;
+  min-height: calc(var(--tablica_row_h) * var(--tablica_vidljivih_redova));
+}
+
+/* Visina tijela = gornji padding + visina tablice (header + 5 redova + extra) + donji padding. Ispravan izračun bez prilagodbi. */
+.kontrola-panel-tablica {
+  --kontrola-panel-tablica-body-h: calc(var(--panel_body_padding_y) + var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra) + var(--panel_body_padding_y));
+  min-height: var(--kontrola-panel-tablica-body-h);
+  overflow: hidden;
+}
+/* Kad u tijelu ima resize traka (bez footera), min-height panela mora uključivati i njen prostor, da se traka ne prekriva. */
+.kontrola-panel-tablica:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height));
+}
+
+/* Kad panel ima footer – visina footera ovisi o broju redova: 1 red po defaultu; klasa --footer-two-rows za 2 reda (postavlja JS kad kontrole prelome). */
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer {
+  --kontrola-panel-tablica-footer-h: calc(2 * var(--panel_footer_padding_y) + var(--edit_height) + 2px);
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--kontrola-panel-tablica-footer-h));
+}
+/* Kad u tijelu ima resize traka, min-height panela mora uključivati i njen prostor, da footer ne bude „pojedan“. */
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--kontrola-panel-tablica-footer-h));
+}
+/* Kad u tijelu ima kontrole iznad tablice, min-height panela uključuje i njihovu visinu. */
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer:has(.kontrola-panel__body .alati-teme__tablica-toolbar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--kontrola-panel-tablica-toolbar-h) + var(--kontrola-panel-tablica-footer-h));
+}
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer:has(.kontrola-panel__body .kontrola-panel__resize-bar):has(.kontrola-panel__body .alati-teme__tablica-toolbar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--kontrola-panel-tablica-toolbar-h) + var(--kontrola-panel-tablica-footer-h));
+}
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer.kontrola-panel-tablica--footer-two-rows {
+  --kontrola-panel-tablica-footer-h: calc(2 * var(--panel_footer_padding_y) + 2 * var(--edit_height) + 8px + 2px);
+}
+
+/* Kad panel ima header – min-height uključuje zaglavlje (visina iz tokena --panel_header_min_height) */
+.kontrola-panel-tablica.kontrola-panel-tablica--has-header {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_header_min_height));
+}
+/* Kad ima zaglavlje i resize traka (bez footera), min-height panela mora uključivati i resize traku da se ne prekriva. */
+.kontrola-panel-tablica.kontrola-panel-tablica--has-header:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--panel_header_min_height));
+}
+
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer.kontrola-panel-tablica--has-header {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--kontrola-panel-tablica-footer-h) + var(--panel_header_min_height));
+}
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer.kontrola-panel-tablica--has-header:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--kontrola-panel-tablica-footer-h) + var(--panel_header_min_height));
+}
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer.kontrola-panel-tablica--has-header:has(.kontrola-panel__body .alati-teme__tablica-toolbar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--kontrola-panel-tablica-toolbar-h) + var(--kontrola-panel-tablica-footer-h) + var(--panel_header_min_height));
+}
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer.kontrola-panel-tablica--has-header:has(.kontrola-panel__body .kontrola-panel__resize-bar):has(.kontrola-panel__body .alati-teme__tablica-toolbar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--kontrola-panel-tablica-toolbar-h) + var(--kontrola-panel-tablica-footer-h) + var(--panel_header_min_height));
+}
+
+/* Kad panel ima zaglavlje s dva reda kontrola – min-height koristi --panel_header_min_height_two_rows (Regije = jedan red, Loze = dva reda). */
+.kontrola-panel-tablica.kontrola-panel-tablica--has-header-two-rows {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_header_min_height_two_rows));
+}
+.kontrola-panel-tablica.kontrola-panel-tablica--has-header-two-rows:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--panel_header_min_height_two_rows));
+}
+
+/* Kad panel ima zaglavlje s tri reda kontrola – min-height koristi --panel_header_min_height_three_rows (npr. Država + Regija + Loža). */
+.kontrola-panel-tablica.kontrola-panel-tablica--has-header-three-rows {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_header_min_height_three_rows));
+}
+.kontrola-panel-tablica.kontrola-panel-tablica--has-header-three-rows:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--panel_header_min_height_three_rows));
+}
+
+/* Kad panel ima zaglavlje s četiri reda kontrola – min-height koristi --panel_header_min_height_four_rows (npr. Transfer Excel – 3 reda + putanja). */
+.kontrola-panel-tablica.kontrola-panel-tablica--has-header-four-rows {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_header_min_height_four_rows));
+}
+.kontrola-panel-tablica.kontrola-panel-tablica--has-header-four-rows:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--panel_header_min_height_four_rows));
+}
+/* S podnožjem – da panel ne "pojede" footer. */
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer.kontrola-panel-tablica--has-header-four-rows {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--kontrola-panel-tablica-footer-h) + var(--panel_header_min_height_four_rows));
+}
+.kontrola-panel-tablica.kontrola-panel-tablica--has-footer.kontrola-panel-tablica--has-header-four-rows:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--kontrola-panel-tablica-footer-h) + var(--panel_header_min_height_four_rows));
+}
+
+/* =========================================================
+   KONTROLA EDIT – jednolinijski tekst (bez Bootstrapa)
+   ========================================================= */
+
+/* --- Blok: Edit – osnovno polje --- */
+.kontrola-edit {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--edit_height);
+  padding: var(--edit_padding_y) var(--edit_padding_x);
+  margin: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  box-shadow: var(--tablica_sjena);
+  color: var(--edit_text);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: 1.2;
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kontrola-edit::placeholder {
+  color: var(--edit_placeholder);
+}
+
+/* --- Blok: Edit – fokus / hover / disabled --- */
+.kontrola-edit:focus {
+  border-color: var(--edit_border_focus);
+  box-shadow: var(--edit_focus_shadow);
+}
+
+@media (hover: hover) {
+  .kontrola-edit:hover:not(:disabled) {
+    border-color: var(--edit_border_focus);
+  }
+}
+
+/* Hover-scroll: dok skrolamo, ellipsis ne smije biti vidljiv */
+.kontrola-edit.kontrola-hover-scroll-active {
+  text-overflow: clip;
+}
+
+.kontrola-edit:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--edit_text_disabled);
+  border-color: var(--edit_border_disabled);
+  cursor: var(--edit_cursor_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled);
+}
+
+/* =========================================================
+   KONTROLA SLIKA – prikaz slike (okvir, podloga, dimenzije)
+   Sva svojstva iz tokena 0-Common (GRUPA: KONTROLA SLIKA).
+   ========================================================= */
+
+/* --- Blok: Slika – kontejner okvira (border, podloga, radius) --- */
+.kontrola-slika {
+  box-sizing: border-box;
+  position: relative;
+  border: var(--slika_border_w) solid var(--slika_border);
+  border-radius: var(--slika_radius);
+  box-shadow: var(--slika_okvir_sjena);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kontrola-slika:focus-within {
+  border-color: var(--slika_okvir_focus_boja);
+  box-shadow: var(--edit_focus_shadow);
+}
+
+/* Kad je kontrola slike disabled – bez sjene (kao ostale kontrole) */
+.kontrola-slika.kontrola-slika--disabled,
+.obrada-slika__preview-wrap.kontrola-slika--disabled {
+  box-shadow: var(--slika_okvir_sjena_disabled);
+}
+
+/* Podloga s transparentnošću (--slika_bg_opacity) iza sadržaja */
+.kontrola-slika::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--slika_bg);
+  opacity: var(--slika_bg_opacity, 1);
+  z-index: 0;
+  border-radius: inherit;
+}
+
+.kontrola-slika > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Blok: Slika – ponašanje okvira (auto = uz sliku, fix = fiksne dimenzije) --- */
+.kontrola-slika--auto {
+  width: fit-content;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+}
+
+.kontrola-slika--fix {
+  width: var(--slika_width);
+  height: var(--slika_height);
+  min-width: var(--slika_width);
+  min-height: var(--slika_height);
+}
+
+/* --- Blok: Slika – slika unutar okvira (objekt-fit) --- */
+.kontrola-slika__img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.kontrola-slika--fix .kontrola-slika__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* =========================================================
+   KONTROLA SELECT – custom select + caret podloga
+   ========================================================= */
+
+/* --- Blok: Select – wrapper (okvir kontrole) --- */
+.kontrola-select {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  /* Jasan razmak između teksta i caret gradienta */
+  column-gap: var(--select_caret_gap_x); /* razmak teksta do caret zone */
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--select_height);
+  margin: 0;
+  padding: 0 0 0 1px; /* mali gap samo lijevo; gore/dolje/desno gradient ide do okvira */
+  border: 1px solid var(--select_border);
+  border-radius: var(--select_radius);
+  background: var(--select_bg);
+  box-shadow: var(--tablica_sjena);
+}
+
+.kontrola-select:focus {
+  outline: none; /* makni crni browser outline, fokus rješava :focus-within */
+}
+
+.kontrola-select:focus-within {
+  border-color: var(--select_border_focus);
+  box-shadow: var(--select_focus_shadow);
+}
+
+@media (hover: hover) {
+  .kontrola-select:hover:not(:has(select:disabled)) {
+    border-color: var(--select_border_focus);
+  }
+  .kontrola-select:hover:not(:has(select:disabled)) .kontrola-select__caret {
+    background: linear-gradient(
+      to bottom,
+      var(--select_caret_bg_2),
+      var(--select_caret_bg_1)
+    );
+  }
+}
+
+/* --- Blok: Select – nativni <select> unutar wrappera --- */
+.kontrola-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  padding-left: var(--select_padding_x);   /* lijevi padding teksta */
+  padding-right: var(--select_caret_gap_x); /* desni razmak do caret zone */
+  background: transparent;
+  color: var(--select_text);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: 1.2;
+  height: calc(var(--select_height) - 2px);
+  width: 100%;
+  box-sizing: border-box;
+  outline: none; /* makni crni browser outline, fokus rješava wrapper (.kontrola-select:focus-within) */
+
+  /* Faza 1 custom selecta: nativni <select> držimo u DOM-u, ali ga vizualno skrivamo
+     (koristimo ga kao „model“ vrijednosti). */
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.kontrola-select select:disabled {
+  background: transparent;
+  color: var(--select_text_disabled);
+  cursor: var(--select_cursor_disabled);
+}
+
+/* Kad je select disabled – makni sjenu i koristi disabled boje wrappera. */
+.kontrola-select:has(select:disabled) {
+  background: var(--select_bg_disabled);
+  border-color: var(--select_border_disabled);
+  box-shadow: none;
+}
+
+/* --- Blok: Select – caret podloga i strelica (poseban flex element) --- */
+.kontrola-select__caret {
+  flex: 0 0 var(--select_caret_width);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    to bottom,
+    var(--select_caret_bg_1),
+    var(--select_caret_bg_2)
+  );
+  color: var(--select_caret_color);
+  border-top-right-radius: var(--select_radius);
+  border-bottom-right-radius: var(--select_radius);
+  border-left: 1px solid var(--select_border);
+  pointer-events: none;
+}
+
+.kontrola-select__caret .kontrola-icon--chevron-down {
+  width: 20px;
+  height: 20px;
+  mask-size: 20px 20px;
+  -webkit-mask-size: 20px 20px;
+}
+
+.kontrola-select:has(select:disabled) .kontrola-select__caret {
+  background: linear-gradient(
+    to bottom,
+    var(--select_caret_bg_1_disabled),
+    var(--select_caret_bg_2_disabled)
+  );
+  color: var(--select_caret_color_disabled);
+}
+
+/* --- Blok: Select – custom display + lista opcija --- */
+
+.kontrola-select__display {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding-left: var(--select_padding_x); /* lijevi padding; izvan scroll kontejnera – nikad se ne skrola */
+  padding-right: 0;
+  color: var(--select_text);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: 1.2;
+}
+
+/* Scroll kontejner (bez paddinga) – na njemu se postavlja scrollLeft */
+.kontrola-select__display-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.kontrola-select__display.kontrola-hover-scroll-active .kontrola-select__display-scroll {
+  text-overflow: clip; /* tijekom skrolanja bez "..." */
+}
+
+.kontrola-select__display-inner {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hover-scroll: inner smije biti širi od displaya da scrollLeft na displayu radi */
+.kontrola-select__display.kontrola-hover-scroll-active .kontrola-select__display-inner {
+  max-width: none;
+  display: inline-block;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Placeholder stanje – kad nije odabrana nijedna vrijednost (value === \"\") */
+.kontrola-select.kontrola-select--placeholder .kontrola-select__display {
+  color: var(--select_placeholder);
+}
+
+/* Disable stanje – tekst u selektu koristi disable token boje */
+.kontrola-select:has(select:disabled) .kontrola-select__display {
+  color: var(--select_text_disabled);
+}
+
+/* Auto-locked: select disabled ali tekst čitljiv kao enabled (samo 1 opcija, korisnik ne može birati). */
+.kontrola-select--auto-locked:has(select:disabled) .kontrola-select__display {
+  color: var(--select_text_disabled_auto_select);
+}
+.kontrola-select--auto-locked select:disabled {
+  color: var(--select_text_disabled_auto_select);
+}
+
+.kontrola-select__list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  box-sizing: border-box;
+  border: 1px solid var(--select_border);
+  border-radius: var(--select_radius);
+  background: var(--select_bg);
+  box-shadow: var(--tablica_sjena);
+  min-height: 0; /* visina prema broju stavki; max-height ograničava kad ih je puno */
+  max-height: calc(var(--tablica_row_h, 40px) * var(--select_max_rows, 10));
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 1000; /* iznad footera i ostalog sadržaja panela */
+  display: none;
+}
+
+/* WebKit scrollbar za listu selekta – desni kutovi zaobljeni radijusom iz tokena. */
+.kontrola-select__list::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara);
+  background: var(--tablica_scroll_bg);
+  border-top-right-radius: var(--select_radius);
+  border-bottom-right-radius: var(--select_radius);
+}
+
+.kontrola-select__list::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac);
+  border-radius: 6px;
+}
+
+/* Mali razmak između klizača i strelica u listi selekta. */
+.kontrola-select__list::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+
+.kontrola-select__list::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+
+/* Strelice (gore/dolje) na scroll baru liste selekta. */
+.kontrola-select__list::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara);
+  background: transparent;
+}
+
+.kontrola-select__list::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac) transparent;
+}
+
+.kontrola-select__list::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac) transparent transparent transparent;
+}
+
+.kontrola-select--open .kontrola-select__list {
+  display: block;
+}
+
+.kontrola-select__option {
+  box-sizing: border-box;
+  padding: 4px var(--select_padding_x); /* vodoravni padding stavki liste */
+  cursor: var(--select_cursor);
+  background: var(--select_option_bg);
+  color: var(--select_option_text);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kontrola-select__option:hover {
+  background: var(--select_option_bg_hover);
+}
+
+.kontrola-select__option--selected,
+.kontrola-select__option--selected:hover {
+  background: var(--select_option_bg_selected);
+}
+
+/* Tipkovnica: highlight pri navigaciji strelicama */
+.kontrola-select__option--highlighted {
+  background: var(--select_option_bg_hover);
+}
+.kontrola-select__option--highlighted.kontrola-select__option--selected {
+  background: var(--select_option_bg_selected);
+}
+
+/* Select disabled – isključi hover na caret podlozi */
+.kontrola-select:has(select:disabled):hover::after {
+  filter: none;
+}
+
+/* =========================================================
+   KONTROLA CHECKBOX – custom kvadratić
+   ========================================================= */
+
+/* --- Blok: Checkbox – osnovni izgled --- */
+input.kontrola-checkbox[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: var(--checkbox_size);
+  height: var(--checkbox_size);
+  box-sizing: border-box;
+  margin: 0;
+  border-radius: var(--checkbox_radius);
+  border: 1px solid var(--checkbox_border);
+  background-color: var(--checkbox_bg);
+  cursor: var(--checkbox_cursor);
+  position: relative;
+  outline: none;
+  box-shadow: var(--tablica_sjena); /* normalno stanje – jača sjena kao kod ostalih kontrole */
+}
+
+input.kontrola-checkbox[type="checkbox"]:focus {
+  box-shadow: var(--checkbox_focus_shadow);
+}
+
+/* --- Blok: Checkbox – checked / disabled --- */
+input.kontrola-checkbox[type="checkbox"]:checked {
+  background-color: var(--checkbox_checked_bg);
+  border-color: var(--checkbox_checked_border);
+  box-shadow: var(--checkbox_focus_shadow); /* selektirano (checked) – minimalna sjena */
+}
+
+input.kontrola-checkbox[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--checkbox_check);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+input.kontrola-checkbox[type="checkbox"]:disabled {
+  background-color: var(--checkbox_bg_disabled);
+  border-color: var(--checkbox_border_disabled);
+  cursor: var(--checkbox_cursor_disabled);
+  box-shadow: var(--checkbox_focus_shadow_disabled); /* disabled – bez sjene */
+}
+
+/* =========================================================
+   KONTROLA NAPOMENA – textarea / multi-line
+   ========================================================= */
+
+/* --- Blok: Napomena – osnovno polje --- */
+.kontrola-napomena {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: calc(var(--napomena_min_rows) * var(--tablica_row_h));
+  padding: var(--napomena_padding_y) var(--napomena_padding_x);
+  margin: 0;
+  border: 1px solid var(--napomena_border);
+  border-radius: var(--napomena_radius);
+  background: var(--napomena_bg);
+  color: var(--napomena_text);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: 1.4;
+  resize: vertical;
+  outline: none;
+  box-shadow: var(--tablica_sjena);
+}
+
+.kontrola-napomena::placeholder {
+  color: var(--napomena_placeholder);
+}
+
+/* --- Blok: Napomena – fokus / disabled --- */
+.kontrola-napomena:focus {
+  border-color: var(--edit_border_focus);
+  box-shadow: var(--napomena_focus_shadow);
+}
+
+@media (hover: hover) {
+  .kontrola-napomena:hover:not(:disabled) {
+    border-color: var(--edit_border_focus);
+  }
+}
+
+.kontrola-napomena:disabled {
+  background: var(--napomena_bg_disabled);
+  color: var(--napomena_text_disabled);
+  border-color: var(--napomena_border_disabled);
+  cursor: var(--napomena_cursor_disabled);
+  box-shadow: var(--napomena_focus_shadow_disabled);
+  resize: none;
+}
+
+/* =========================================================
+   KONTROLA LABELA – osnovne labele za kontrole
+   ========================================================= */
+
+/* --- Blok: Labela – osnovni stil --- */
+.kontrola-labela {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-family: var(--font_family);
+  font-size: var(--label_font_size);
+  font-weight: var(--label_font_weight);
+  letter-spacing: var(--label_letter_spacing);
+  color: var(--label_text);
+}
+
+.kontrola-labela--muted {
+  color: var(--label_text_muted);
+}
+
+/* Labela u disabled stanju (npr. kad je povezana kontrola disabled) */
+.kontrola-labela--disabled {
+  color: var(--label_text_disabled);
+}
+
+/* Panel s kontrolama – footer za tipke dolje desno */
+.kontrole-panel__footer--controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* =========================================================
+   KONTROLA TIPKA – 3D gumb (bez Bootstrapa)
+   ========================================================= */
+
+.kontrola-btn {
+  all: unset;
+  cursor: pointer;
+  -webkit-tap-highlight-color: var(--c-transparent);
+  position: relative;
+  display: inline-block;
+  border-radius: var(--button_radius);
+  background-color: var(--button_outer_bg);
+  box-shadow: var(--button_outer_shadow);
+  min-height: var(--button_height); /* ciljna visina, ali dopušta veću ako treba */
+}
+
+/* Eksplicitni display na .kontrola-btn nadjačava HTML [hidden] atribut;
+   ovaj selektor vraća display:none kad je tipka skrivena putem Bloka 2 (PRAVA CRUD). */
+.kontrola-btn[hidden] {
+  display: none !important;
+}
+
+.kontrola-btn::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  width: calc(100% + 0.3em);
+  height: calc(100% + 0.3em);
+  top: -0.15em;
+  left: -0.15em;
+  border-radius: inherit;
+  background: linear-gradient(
+    var(--button_reflection_angle),
+    var(--button_reflection_color),
+    transparent 20%,
+    transparent 100%
+  );
+  filter: blur(0.0125em);
+  opacity: 0.25;
+  mix-blend-mode: multiply;
+}
+
+.kontrola-btn__outer {
+  position: relative;
+  z-index: 1;
+  border-radius: inherit;
+  transition: box-shadow var(--button_transition_medium);
+  will-change: box-shadow;
+  box-shadow:
+    0 0.05em 0.05em -0.01em var(--c-near-black),
+    0 0.01em 0.01em -0.01em var(--c-near-black-50),
+    0.15em 0.3em 0.1em -0.01em var(--c-near-black-25);
+}
+
+@media (hover: hover) {
+  .kontrola-btn:not([disabled]):hover .kontrola-btn__outer {
+    box-shadow:
+      0 0 0 0 var(--c-near-black),
+      0 0 0 0 var(--c-near-black-50),
+      0 0 0 0 var(--c-near-black-25);
+  }
+  .kontrola-btn:not([disabled]):hover .kontrola-btn__inner {
+    clip-path: inset(
+      clamp(1px, 0.0625em, 2px) clamp(1px, 0.0625em, 2px)
+        clamp(1px, 0.0625em, 2px) clamp(1px, 0.0625em, 2px) round var(--button_radius)
+    );
+    box-shadow:
+      0.1em 0.15em 0.05em 0 inset var(--c-near-black-75),
+      -0.025em -0.03em 0.05em 0.025em inset var(--c-near-black-50),
+      0.25em 0.25em 0.2em 0 inset var(--c-near-black-50),
+      0 0 0.05em 0.5em inset var(--c-white-15),
+      0 0 0 0 inset var(--c-white),
+      0.12em 0.12em 0.12em inset var(--c-white-25),
+      -0.075em -0.12em 0.2em 0.1em inset var(--c-near-black-25);
+  }
+  .kontrola-btn:not([disabled]):hover .kontrola-btn__label {
+    transform: scale(0.975);
+  }
+}
+
+.kontrola-btn__inner {
+  position: relative;
+  z-index: 1;
+  border-radius: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--button_padding_y) var(--button_padding_x);
+  background-image: linear-gradient(
+    135deg,
+    var(--button_inner_bg_1),
+    var(--button_inner_bg_2)
+  );
+  transition:
+    box-shadow var(--button_transition_medium),
+    clip-path var(--button_transition_fast),
+    background-image var(--button_transition_fast),
+    transform var(--button_transition_fast);
+  will-change: box-shadow, clip-path, background-image, transform;
+  overflow: clip;
+  clip-path: inset(0 0 0 0 round var(--button_radius));
+  box-shadow:
+    0 0 0 0 inset var(--c-near-black-10),
+    -0.05em -0.05em 0.05em 0 inset var(--c-near-black-25),
+    0 0 0 0 inset var(--c-near-black-10),
+    0 0 0.05em 0.2em inset var(--c-white-25),
+    0.025em 0.05em 0.1em 0 inset var(--c-white),
+    0.12em 0.12em 0.12em inset var(--c-white-25),
+    -0.075em -0.25em 0.25em 0.1em inset var(--c-near-black-25);
+}
+
+.kontrola-btn__label {
+  position: relative;
+  z-index: 4;
+  font-family: var(--button_font_family);
+  font-size: var(--button_font_size);
+  letter-spacing: -0.05em;
+  font-weight: var(--button_font_weight);
+  color: var(--c-transparent);
+  background-image: linear-gradient(
+    135deg,
+    var(--button_text_grad_1),
+    var(--button_text_grad_2)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition: transform var(--button_transition_fast);
+  display: block;
+  white-space: nowrap;
+  will-change: transform;
+  text-shadow: var(--c-shadow-10) 0 0 0.1em;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.kontrola-btn:not([disabled]):active .kontrola-btn__inner {
+  transform: scale(0.96);
+  filter: brightness(0.92);
+}
+.kontrola-btn:not([disabled]):active .kontrola-btn__outer {
+  box-shadow:
+    0 0 0 0 var(--c-near-black),
+    0 0 0 0 var(--c-near-black-50),
+    0 0 0 0 var(--c-near-black-25);
+}
+
+/* Na tač uređajima: animacija pri tapu (JS dodaje .kontrola-btn--touch-active); :active na mobu često ne reaguje */
+@media (pointer: coarse) {
+  .kontrola-btn:not([disabled]).kontrola-btn--touch-active .kontrola-btn__inner {
+    transform: scale(0.96);
+    filter: brightness(0.92);
+  }
+  .kontrola-btn:not([disabled]).kontrola-btn--touch-active .kontrola-btn__outer {
+    box-shadow:
+      0 0 0 0 var(--c-near-black),
+      0 0 0 0 var(--c-near-black-50),
+      0 0 0 0 var(--c-near-black-25);
+  }
+}
+
+.kontrola-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 0.15rem var(--focus-ring),
+    0 6px 16px var(--c-shadow-35);
+}
+
+.kontrola-btn[disabled] {
+  cursor: default;
+  background-color: var(--button_bg_disabled);
+  box-shadow: none;
+}
+
+.kontrola-btn[disabled] .kontrola-btn__inner {
+  background-image: linear-gradient(
+    135deg,
+    var(--button_bg_disabled),
+    var(--button_bg_disabled)
+  );
+  box-shadow: none;
+}
+
+.kontrola-btn[disabled] .kontrola-btn__label {
+  background-image: none;
+  color: var(--button_caption_color_disabled);
+}
+
+.kontrola-btn[disabled]::after {
+  background: none;
+  opacity: 0;
+}
+
+/* =========================================================
+   KONTROLA 3D_Tipka_CRUD_set – Upiši / Izbriši / Povratak
+   (default tokeni u 0-Common.css, ovdje samo primjena)
+   ========================================================= */
+
+.kontrola-crud-set {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.kontrola-btn--crud-upisi {
+  --button_bg: var(--crud_upisi_bg);
+  --button_outer_bg: var(--crud_upisi_bg);
+  --button_inner_bg_1: var(--crud_upisi_bg);
+  --button_inner_bg_2: var(--crud_upisi_bg);
+}
+.kontrola-btn--crud-upisi .kontrola-btn__label {
+  background-image: none;
+  color: var(--crud_upisi_caption);
+}
+.kontrola-btn--crud-upisi:not([disabled]):active .kontrola-btn__label {
+  color: var(--crud_upisi_caption_click);
+}
+
+.kontrola-btn--crud-izbrisi {
+  --button_bg: var(--crud_izbrisi_bg);
+  --button_outer_bg: var(--crud_izbrisi_bg);
+  --button_inner_bg_1: var(--crud_izbrisi_bg);
+  --button_inner_bg_2: var(--crud_izbrisi_bg);
+}
+.kontrola-btn--crud-izbrisi .kontrola-btn__label {
+  background-image: none;
+  color: var(--crud_izbrisi_caption);
+}
+.kontrola-btn--crud-izbrisi:not([disabled]):active .kontrola-btn__label {
+  color: var(--crud_izbrisi_caption_click);
+}
+
+.kontrola-btn--crud-povratak {
+  --button_bg: var(--crud_povratak_bg);
+  --button_outer_bg: var(--crud_povratak_bg);
+  --button_inner_bg_1: var(--crud_povratak_bg);
+  --button_inner_bg_2: var(--crud_povratak_bg);
+}
+.kontrola-btn--crud-povratak .kontrola-btn__label {
+  background-image: none;
+  color: var(--crud_povratak_caption);
+}
+.kontrola-btn--crud-povratak:not([disabled]):active .kontrola-btn__label {
+  color: var(--crud_povratak_caption_click);
+}
+
+.kontrola-btn--crud-izmjeni {
+  --button_bg: var(--crud_izmjeni_bg);
+  --button_outer_bg: var(--crud_izmjeni_bg);
+  --button_inner_bg_1: var(--crud_izmjeni_bg);
+  --button_inner_bg_2: var(--crud_izmjeni_bg);
+}
+.kontrola-btn--crud-izmjeni .kontrola-btn__label {
+  background-image: none;
+  color: var(--crud_izmjeni_caption);
+}
+.kontrola-btn--crud-izmjeni:not([disabled]):active .kontrola-btn__label {
+  color: var(--crud_izmjeni_caption_click);
+}
+
+/* Upiši tipka u modu Izmjeni (kad je red selektiran) – nadjačaj kad su obje klase */
+.kontrola-btn--crud-upisi.kontrola-btn--crud-izmjeni {
+  --button_bg: var(--crud_izmjeni_bg);
+  --button_outer_bg: var(--crud_izmjeni_bg);
+  --button_inner_bg_1: var(--crud_izmjeni_bg);
+  --button_inner_bg_2: var(--crud_izmjeni_bg);
+}
+.kontrola-btn--crud-upisi.kontrola-btn--crud-izmjeni .kontrola-btn__label {
+  color: var(--crud_izmjeni_caption);
+}
+.kontrola-btn--crud-upisi.kontrola-btn--crud-izmjeni:not([disabled]):active .kontrola-btn__label {
+  color: var(--crud_izmjeni_caption_click);
+}
+
+/* Override: kad je tipka disabled, caption je uvijek u disabled boji,
+   čak i za CRUD varijante (Upiši/Izbriši/Povratak/Izmjeni). */
+.kontrola-btn[disabled] .kontrola-btn__label {
+  background-image: none;
+  color: var(--button_caption_color_disabled);
+}
+
+/* =========================================================
+   KONTROLA EDIT-DELETE – edit s X unutar okvira
+   ========================================================= */
+
+/* --- Blok: Edit-delete – wrapper (okvir kontrole) --- */
+.kontrola-edit-delete {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--edit_height);
+  margin: 0;
+  padding: 1px;
+  border: 1px solid var(--edit_delete_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_delete_bg);
+  box-shadow: var(--tablica_sjena);
+}
+
+.kontrola-edit-delete--disabled {
+  border-color: var(--edit_delete_border_disabled);
+  background: var(--edit_delete_bg_disabled);
+  box-shadow: var(--edit_delete_focus_shadow_disabled);
+}
+
+/* --- Blok: Edit-delete – fokus (selektirano stanje) --- */
+.kontrola-edit-delete:focus-within {
+  box-shadow: var(--edit_delete_focus_shadow);
+}
+
+@media (hover: hover) {
+  .kontrola-edit-delete:hover:not(.kontrola-edit-delete--disabled) {
+    border-color: var(--edit_border_focus);
+  }
+  .kontrola-edit-delete__clear:hover:not(:disabled) {
+    background: linear-gradient(
+      to bottom,
+      var(--edit_delete_caret_bg_2),
+      var(--edit_delete_caret_bg_1)
+    );
+  }
+}
+
+/* --- Blok: Edit-delete – input dio; lijevo od gradienta padding kao lijevo od kontrole --- */
+.kontrola-edit-delete__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  padding: 0 var(--edit_padding_x);
+  padding-right: calc(var(--edit_delete_caret_width) + var(--edit_delete_caret_gap_x));
+  background: transparent;
+  color: var(--edit_delete_text);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: 1.2;
+  height: calc(var(--edit_height) - 2px);
+  box-sizing: border-box;
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kontrola-edit-delete__input::placeholder {
+  color: var(--edit_placeholder);
+}
+
+.kontrola-edit-delete__input:disabled {
+  color: var(--edit_delete_text_disabled);
+  cursor: var(--edit_cursor_disabled);
+}
+
+/* Hover-scroll: dok skrolamo, ellipsis ne smije biti vidljiv */
+.kontrola-edit-delete__input.kontrola-hover-scroll-active {
+  text-overflow: clip;
+}
+
+/* --- Blok: Edit-delete – X zona s gradient podlogom --- */
+.kontrola-edit-delete__clear {
+  position: absolute;
+  top: 0; /* korigirano: pozadina X podignuta ukupno ~1px iznad početne pozicije */
+  right: 0;
+  width: var(--edit_delete_caret_width);
+  height: calc(var(--edit_height) - 2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font-size: 0; /* skrivamo izvorni znak, koristimo ::before za precizno pozicioniranje X ikone */
+  background: linear-gradient(
+    to bottom,
+    var(--edit_delete_caret_bg_1),
+    var(--edit_delete_caret_bg_2)
+  );
+  color: var(--edit_delete_caret_color);
+  border-top-right-radius: var(--edit_radius);
+  border-bottom-right-radius: var(--edit_radius);
+  border-left: 1px solid var(--edit_delete_border);
+  cursor: pointer;
+}
+
+.kontrola-edit-delete__clear:focus,
+.kontrola-edit-delete__clear:focus-visible {
+  outline: none;
+}
+
+/* Ikona X (kontrola-icon--x-mark) ubacuje se iz JS; veličina prilagođena zoni caret */
+.kontrola-edit-delete__clear .kontrola-icon--x-mark {
+  width: 18px;
+  height: 18px;
+  mask-size: 18px 18px;
+  -webkit-mask-size: 18px 18px;
+}
+
+.kontrola-edit-delete__clear:disabled {
+  cursor: default;
+  /* Disable stanje: koristi zasebne disable tokene za gradient i boju X ikone */
+  background: linear-gradient(
+    to bottom,
+    var(--edit_delete_caret_bg_1_disabled),
+    var(--edit_delete_caret_bg_2_disabled)
+  );
+  color: var(--edit_delete_caret_color_disabled);
+}
+.kontrola-edit-delete__clear:active:not(:disabled) {
+  background: linear-gradient(
+    to bottom,
+    var(--edit_delete_caret_bg_2),
+    var(--edit_delete_caret_bg_1)
+  );
+  filter: brightness(0.9);
+}
+
+/* =========================================================
+   ALATI TEME – jedan red: Edit-delete, Edit, Select
+   Kod sažimanja (uzi panel / manji ekran) – jedna ispod druge.
+   ========================================================= */
+.alati-teme__controls-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.alati-teme__control-cell {
+  flex: 1;
+  min-width: 120px;
+}
+.alati-teme__control-cell .kontrola-labela {
+  display: block;
+  margin-bottom: 4px;
+}
+
+@media (max-width: var(--page_breakpoint_narrow, 640px)) {
+  .alati-teme__controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .alati-teme__control-cell {
+    flex: none;
+    min-width: 0;
+  }
+}
+
+/* =========================================================
+   ALATI TEME – red Napomena (label lijevo, textarea desno;
+   ispod labele checkbox poravnat na donji rub textarea kontrole, s tekstom)
+   ========================================================= */
+.alati-teme__napomena-row {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+}
+.alati-teme__napomena-left {
+  display: flex;
+  flex-direction: column;
+}
+.alati-teme__napomena-left > .kontrola-labela {
+  margin-bottom: 4px;
+}
+.alati-teme__checkbox-wrap {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.alati-teme__napomena-right {
+  flex: 1;
+  min-width: 0;
+}
+
+/* TEST: sakrivanje footera panela tablice (footer ostaje u DOM-u, tablica i paleta rade) */
+.alati-teme__footer-hidden .kontrola-panel__footer {
+  display: none !important;
+}
+
+/* Toolbar iznad tablice: Kolona (1–20) + input + Obnovi (premješteno iz footera da preglednik ne ubacuje vlastiti tekst) */
+.alati-teme__tablica-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.alati-teme__tablica-toolbar .kontrola-labela {
+  white-space: nowrap;
+}
+.alati-teme__edit-kolona {
+  width: 80px;
+  box-sizing: border-box;
+}
+/* Footer panela tablice: samo tipke Dodaj red, Obriši red */
+.alati-teme__tablica-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: fit-content;
+}
+.alati-teme__tablica-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Panel kontrole – tijelo: jedan stupac; prazan red, zatim red s 3D (sredina) i CRUD (desno) */
+.alati-teme__kontrole-body {
+  display: flex;
+  flex-direction: column;
+}
+.alati-teme__kontrole-spacer {
+  min-height: 1rem; /* prazan red između checkboxa i tipki */
+}
+/* Red s Kod / Osvježi / Test */
+.alati-teme__kontrole-buttons-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.alati-teme__kontrole-buttons-left {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+}
+.alati-teme__modal-test-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.alati-teme__modal-test-wrap .kontrola-select {
+  min-width: 5rem;
+}
+/* Lista padajućeg izbora ne smije ostavljati vidljivu liniju ispod selekta kad je zatvorena */
+.alati-teme__modal-test-wrap .kontrola-select__list {
+  margin-top: 0;
+}
+/* Prvi dodani red: grid dvije kolone – lijevo Test Modal Tablica, desno 3D tipka */
+.alati-teme__kontrole-grid-row {
+  display: grid;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.alati-teme__kontrole-grid-row:last-child {
+  margin-bottom: 0;
+}
+.alati-teme__kontrole-grid-row--two-cols {
+  grid-template-columns: 1fr 1fr;
+}
+.alati-teme__kontrole-grid-left {
+  justify-self: start;
+}
+.alati-teme__kontrole-grid-right {
+  justify-self: end;
+}
+/* Zadnji red: jedna kolona, CRUD grupa desno */
+.alati-teme__kontrole-grid-row--crud {
+  grid-template-columns: 1fr;
+}
+.alati-teme__kontrole-grid-row--crud .alati-teme__kontrole-grid-right {
+  justify-self: end;
+}
+
+/* Panel kontrole – footer: tipka Aktivno-Neaktivno desno */
+.alati-teme__kontrole-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Panel paleta boja – CORE, 6 u redu */
+.alati-teme__paleta-naslov {
+  margin: 0 0 1rem 0;
+  font-family: var(--font_family);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.alati-teme__paleta-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+.alati-teme__paleta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.alati-teme__paleta-swatch {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+.alati-teme__paleta-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 8px;
+  font-family: var(--font_family);
+  font-size: 12px;
+  border: 1px solid var(--c-gray-300);
+  border-radius: 6px;
+  background: var(--c-white);
+  color: var(--text);
+}
+
+@media (max-width: 768px) {
+  .alati-teme__paleta-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ---------- CRUD edit panel (zajednički za Obredi, Jezici, Adrese_tip, Telefoni_tip, Email_tip) ---------- */
+/* Jedno unosno polje: labela lijevo, unosno polje desno. Footer: jedan red, tipka Povratak krajnje desno. */
+[class*="crud__edit-body"] {
+  padding: var(--panel_body_padding_y) var(--panel_body_padding_x);
+}
+[class*="crud__edit-row"] {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+[class*="crud__edit-row"] .kontrola-labela {
+  flex-shrink: 0;
+}
+[class*="crud__edit-row"] .kontrola-edit-delete {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+[class*="crud__edit-footer"] {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+[class*="crud__footer-left"] {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+[class*="crud__footer-right"] {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   IKONE – Heroicons Outline (https://heroicons.com/outline, MIT)
+   Svi 24×24, 1.5px stroke. Boja: currentColor (mask).
+   ========================================================= */
+
+/* arrow-path – reload / osvježi (korišteno: reload tipka u panelu tablice) */
+.kontrola-icon--arrow-path {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* check – kvačica (korišteno: Transfer Excel CRUD – test kontrola podataka) */
+.kontrola-icon--check {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4.5 12.75l6 6 9-13.5'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4.5 12.75l6 6 9-13.5'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* folder-open – odabir foldera (korišteno: Transfer Excel CRUD – folder picker) */
+.kontrola-icon--folder-open {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* chevron-down – strelica prema dolje (korišteno: kontrola select – caret) */
+.kontrola-icon--chevron-down {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* x-mark – zatvori / obriši (korišteno: kontrola edit-delete – clear) */
+.kontrola-icon--x-mark {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 18 18 6M6 6l12 12'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 18 18 6M6 6l12 12'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* arrows-up-down – sortiranje (korišteno: zaglavlje tablice kad je sortable_icon = 1); path iz Heroicons optimized/24/outline */
+.kontrola-icon--arrows-up-down {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* arrow-up-tray – učitaj / upload (korišteno: modal obrada slike – učitaj sliku) */
+.kontrola-icon--arrow-up-tray {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* trash – brisanje (korišteno: modal obrada slike – obriši sliku iz okvira) */
+.kontrola-icon--trash {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* viewfinder-circle – selekcija područja (Heroicons outline 24, modal obrada slike) */
+.kontrola-icon--viewfinder-circle {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7.5 3.75H6A2.25 2.25 0 0 0 3.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0 1 20.25 6v1.5m0 9V18A2.25 2.25 0 0 1 18 20.25h-1.5m-9 0H6A2.25 2.25 0 0 1 3.75 18v-1.5M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7.5 3.75H6A2.25 2.25 0 0 0 3.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0 1 20.25 6v1.5m0 9V18A2.25 2.25 0 0 1 18 20.25h-1.5m-9 0H6A2.25 2.25 0 0 1 3.75 18v-1.5M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* ellipsis-horizontal – tri točke vodoravno (korišteno: Clanovi CRUD – Telefon, E-mail, Adresa) */
+.kontrola-icon--ellipsis-horizontal {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* scissors – izrezivanje (modal obrada slike); Heroicons outline, viewBox s marginom da se ne reže */
+.kontrola-icon--scissors {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='-1 -1 26 26' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7.848 2.25l.75.75-.75.75.75.75.75-.75-.75-.75.75-.75-.75.75M7.848 5.25l.75.75-.75.75.75.75.75-.75-.75-.75.75-.75-.75.75m0 0l-1.5 1.5m1.5 1.5l1.5 1.5m-1.5-1.5l.75-.75m.75.75l.75.75M20.25 7.5l-5.25 5.25-5.25-5.25 1.5-1.5 3.75 3.75 3.75-3.75 1.5 1.5zM4.098 19.5a2.25 2.25 0 01-2.244-2.077L2.25 4.5 20.25 4.5l.404 12.923a2.25 2.25 0 01-2.244 2.077H4.098z'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='-1 -1 26 26' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7.848 2.25l.75.75-.75.75.75.75.75-.75-.75-.75.75-.75-.75.75M7.848 5.25l.75.75-.75.75.75.75.75-.75-.75-.75.75-.75-.75.75m0 0l-1.5 1.5m1.5 1.5l1.5 1.5m-1.5-1.5l.75-.75m.75.75l.75.75M20.25 7.5l-5.25 5.25-5.25-5.25 1.5-1.5 3.75 3.75 3.75-3.75 1.5 1.5zM4.098 19.5a2.25 2.25 0 01-2.244-2.077L2.25 4.5 20.25 4.5l.404 12.923a2.25 2.25 0 01-2.244 2.077H4.098z'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* Header panela tablice s reload ikonom (kad je Reload_Ikona = 1) */
+.obredi-crud__tablica-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 0;
+}
+.obredi-crud__reload-wrap {
+  display: flex;
+  align-items: center;
+}
+.obredi-crud__reload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--edit_height, 32px);
+  height: var(--edit_height, 32px);
+  padding: 0;
+  border: 1px solid var(--edit_border, #ccc);
+  border-radius: var(--edit_radius, 4px);
+  background: var(--panel_body_bg, #fff);
+  color: var(--text, #333);
+  font-size: 0;
+  cursor: pointer;
+}
+.obredi-crud__reload-btn .kontrola-icon--arrow-path {
+  flex-shrink: 0;
+}
+@media (hover: hover) {
+  .obredi-crud__reload-btn:hover {
+    border-color: var(--edit_border_focus, #666);
+    background: var(--edit_bg_hover, #f5f5f5);
+  }
+}
+.obredi-crud__reload-btn:active {
+  filter: brightness(0.9);
+}
+
+/* Zajednički izgled reload tipke u panelu tablice (svi CRUD s Reload_Ikona: 1) – zaobljeni kutevi i sjene iz tokena */
+.kontrola-panel-tablica__reload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--edit_height);
+  height: var(--edit_height);
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--panel_body_bg);
+  color: var(--text);
+  font-size: 0;
+  cursor: pointer;
+  box-shadow: var(--button_outer_shadow);
+}
+.kontrola-panel-tablica__reload-btn .kontrola-icon--arrow-path {
+  flex-shrink: 0;
+}
+@media (hover: hover) {
+  .kontrola-panel-tablica__reload-btn:hover:not(:disabled) {
+    border-color: var(--edit_border_focus);
+    background: var(--edit_bg_hover, var(--c-gray-100));
+    box-shadow: var(--edit_focus_shadow);
+  }
+}
+.kontrola-panel-tablica__reload-btn:active:not(:disabled) {
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}

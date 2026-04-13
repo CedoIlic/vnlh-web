@@ -1,0 +1,132 @@
+<!-- =========================================================
+     Meni_CRUD.html
+     Stranica CRUD za stavke menija: tablica + edit panel.
+     Tablica se gradi u JS (tablicaContainer).      Edit panel: Naziv (edit-delete) + Opis; HTML fajl, Putanja, Referenca; Slijed, Tip menija, Roditelj; Napomena; Aktivno, Test.
+     Skripte: 0-Kontrole.js, 0-Common.js, 0-Poruke_Tekstovi.js, Meni_CRUD.js
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <!-- Meta i naslov -->
+    <meta charset="UTF-8">
+    <title>Meni</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+<!-- Stilovi: zajednički + kontrole + Meni_CRUD specifični -->
+    <link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+    <link rel="stylesheet" href="../css/Meni_CRUD.css?v=10.15.04">
+</head>
+<body>
+<div class="naslov-forme"><h2>Meni</h2></div>
+<div class="page-container">
+    <!-- Blok: Panel tablice (podatke puni Meni_CRUD.js iz Meni_CRUD_sve.php) -->
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+    <!-- Blok: Edit panel – sve kontrole za upis/izmjenu jedne stavke menija -->
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body meni-crud__edit-body">
+            <!-- 1. RED: Naziv (edit-delete) 30%, Opis 70% -->
+            <div class="meni-crud__edit-row meni-crud__edit-row--naziv-opis">
+                <div class="meni-crud__edit-cell meni-crud__edit-cell--naziv">
+                    <label class="kontrola-labela mb-0" for="edit_naziv">Naziv</label>
+                    <div class="kontrola-edit-delete">
+                        <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv...">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    </div>
+                </div>
+                <div class="meni-crud__edit-cell meni-crud__edit-cell--opis">
+                    <label class="kontrola-labela mb-0" for="edit_opis">Opis</label>
+                    <input id="edit_opis" type="text" class="kontrola-edit" placeholder="Opis...">
+                </div>
+                <div class="meni-crud__edit-cell meni-crud__edit-cell--device">
+                    <label class="kontrola-labela mb-0" for="edit_device">Prikaz na</label>
+                    <div class="kontrola-select">
+                        <select id="edit_device">
+                            <option value="0" selected>Sve jedinice</option>
+                            <option value="1">Samo desktop</option>
+                            <option value="2">Samo mobitel</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!-- 2. RED: Stranica (.html / .php), Putanja, Referenca -->
+            <div class="meni-crud__edit-row">
+                <div class="meni-crud__edit-cell">
+                    <label class="kontrola-labela mb-0" for="edit_html_fajl">Stranica (.html / .php)</label>
+                    <input id="edit_html_fajl" type="text" class="kontrola-edit" placeholder="npr. Clanovi_CRUD.html ili index.php">
+                </div>
+                <div class="meni-crud__edit-cell">
+                    <label class="kontrola-labela mb-0" for="edit_putanja">Putanja</label>
+                    <input id="edit_putanja" type="text" class="kontrola-edit" placeholder="Putanja...">
+                </div>
+                <div class="meni-crud__edit-cell">
+                    <label class="kontrola-labela mb-0" for="edit_ref">Referenca</label>
+                    <input id="edit_ref" type="text" class="kontrola-edit" placeholder="Referenca...">
+                </div>
+            </div>
+            <!-- 3. RED: Slijed (1-100), Tip menija, Roditelj -->
+            <div class="meni-crud__edit-row">
+                <div class="meni-crud__edit-cell meni-crud__edit-cell--narrow">
+                    <label class="kontrola-labela mb-0" for="edit_redoslijed">Slijed</label>
+                    <input id="edit_redoslijed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="1-100">
+                </div>
+                <div class="meni-crud__edit-cell">
+                    <label class="kontrola-labela mb-0" for="edit_meni_tip_id">Tip menija</label>
+                    <div class="kontrola-select">
+                        <select id="edit_meni_tip_id">
+                            <option value="0">Nije izabran</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="meni-crud__edit-cell">
+                    <label class="kontrola-labela mb-0" for="edit_roditelj">Roditelj</label>
+                    <div class="kontrola-select">
+                        <select id="edit_roditelj">
+                            <option value="0">Nije izabran</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!-- 4. RED: Napomena (textarea) -->
+            <div class="meni-crud__edit-row meni-crud__edit-row--full">
+                <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                <textarea id="edit_napomena" class="kontrola-napomena" rows="3" placeholder="Napomena..."></textarea>
+            </div>
+            <!-- CHECKBOXI: Aktivno, Test -->
+            <div class="meni-crud__edit-row meni-crud__edit-row--checkboxes">
+                <div>
+                    <input id="edit_aktivno" type="checkbox" class="kontrola-checkbox">
+                    <label class="kontrola-labela mb-0" for="edit_aktivno">Aktivno</label>
+                </div>
+                <div>
+                    <input id="edit_test" type="checkbox" class="kontrola-checkbox">
+                    <label class="kontrola-labela mb-0" for="edit_test">Test</label>
+                </div>
+            </div>
+        </div>
+        <!-- Footer: Upis/Izmjeni, Izbriši, Povratak -->
+        <div class="kontrola-panel__footer meni-crud__edit-footer">
+            <div class="meni-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="meni-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Skripte: kontrole, CommonCRUD, poruke modala, Meni_CRUD logika -->
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/Meni_CRUD.js?v=10.15.04"></script>
+</body>
+</html>

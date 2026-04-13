@@ -1,0 +1,36 @@
+# Backup i arhive (radne kopije, ne trebaju povijest)
+0-Arhiva/
+0-Backup_SQL/
+
+# SQL dumpovi i backupi (ali ne i sql/ mapa - ona ima skripte aplikacije)
+*.bak
+*.dump
+*.sqlite
+
+# Editor/IDE postavke (osobne, ne dijele se)
+.vscode/
+.cursor/
+.idea/
+
+# OS smeće
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logovi i privremene datoteke
+*.log
+*.tmp
+*.temp
+*~
+
+# VAŽNO: Konfiguracije s lozinkama
+php/vnlh_db_connect.php
+php/config.php
+config.php
+.env
+.env.local
+
+# Node (ako koristiš npm/build tools)
+node_modules/
+dist/
+build/

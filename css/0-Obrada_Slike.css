@@ -1,0 +1,352 @@
+/* =========================================================
+   0-Obrada_Slike.css
+   Stilovi modala za obradu slike (crop, compress, undo, ratio).
+   Uključiti samo u formama koje koriste obradu slike.
+   Tokeni: 0-Common.css (--slika_obrada_*).
+   ========================================================= */
+
+.obrada-slika__dialog {
+  position: relative;
+  max-width: 90vw;
+  width: 420px;
+  min-width: 380px;
+  min-height: 480px;
+  resize: both;
+  overflow: auto;
+}
+
+/* Ikona za širenje modala – samo na mobu (donji desni kut), na compu skrivena */
+.obrada-slika__resize-handle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .obrada-slika__resize-handle {
+    display: flex;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 26px;
+    height: 26px;
+    align-items: center;
+    justify-content: center;
+    cursor: se-resize;
+    color: var(--text, #333);
+    background: var(--modal_body_bg, #fff);
+    border: 2px solid var(--panel_border, #999);
+    border-right: none;
+    border-bottom: none;
+    border-top-left-radius: 8px;
+    z-index: 2;
+    touch-action: none;
+    box-shadow: -2px -2px 6px rgba(0,0,0,0.1);
+  }
+
+  .obrada-slika__resize-handle-icon {
+    width: 14px;
+    height: 14px;
+    position: relative;
+    right: -3px;
+    bottom: -3px;
+    stroke-width: 2;
+  }
+}
+
+.obrada-slika__header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: move;
+}
+
+.obrada-slika__header-title {
+  font-weight: inherit;
+}
+
+.obrada-slika__header-fileinfo {
+  font-size: 0.875em;
+  font-weight: normal;
+  opacity: 0.9;
+  white-space: pre-line;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+
+.obrada-slika__header-fileinfo:empty {
+  display: none;
+}
+
+/* Tip i Veličina u zaglavlju, jedan red: lijevo / desno; vidljivo samo kad je slika učitana */
+.obrada-slika__header-meta[aria-hidden="true"] {
+  display: none;
+}
+
+.obrada-slika__header-meta[aria-hidden="false"] {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-top: 4px;
+  font-size: 0.875em;
+  font-weight: normal;
+  opacity: 0.9;
+}
+
+.obrada-slika__header-meta-left {
+  text-align: left;
+}
+
+.obrada-slika__header-meta-right {
+  text-align: right;
+}
+
+.obrada-slika__body {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.obrada-slika__content {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+}
+
+.obrada-slika__toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--modal_body_padding_y, 1rem) var(--modal_body_padding_x, 1rem);
+  border-left: 1px solid var(--panel_border, #ddd);
+  background: var(--slika_obrada_toolbar_bg);
+}
+
+.obrada-slika__toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: var(--slika_obrada_ikona_border_w) solid var(--slika_obrada_ikona_border);
+  border-radius: var(--slika_obrada_ikona_radius);
+  background: var(--slika_obrada_ikona_bg);
+  color: var(--slika_obrada_ikona_fg);
+  cursor: pointer;
+  font-size: 0;
+}
+
+.obrada-slika__toolbar-btn:hover {
+  border-color: var(--edit_border_focus, #666);
+  background: var(--edit_bg_hover, #f5f5f5);
+  color: var(--slika_obrada_ikona_fg);
+}
+
+.obrada-slika__toolbar-btn:active {
+  filter: brightness(0.95);
+}
+
+.obrada-slika__toolbar-btn:disabled {
+  color: var(--slika_obrada_ikona_fg_disabled, var(--c-gray-200));
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.obrada-slika__toolbar-btn--obrisi {
+  margin-top: auto;
+}
+
+.obrada-slika__toolbar .kontrola-icon--arrow-up-tray,
+.obrada-slika__toolbar .kontrola-icon--viewfinder-circle,
+.obrada-slika__toolbar .kontrola-icon--scissors,
+.obrada-slika__toolbar .kontrola-icon--trash {
+  width: 22px;
+  height: 22px;
+  mask-size: 22px 22px;
+  -webkit-mask-size: 22px 22px;
+}
+
+.obrada-slika__toolbar-svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.obrada-slika__file {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.obrada-slika__sadrzaj {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Red omjera: labela + oba edita u jednom redu, odmah iznad podnožja (mob) */
+.obrada-slika__ratio-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem var(--modal_body_padding_x, 1rem);
+  border-top: 1px solid var(--panel_border, #ddd);
+  background: var(--modal_body_bg, #fff);
+  flex-shrink: 0;
+}
+
+.obrada-slika__ratio-row .obrada-slika__ratio-label {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.obrada-slika__ratio-row .obrada-slika__ratio-edit {
+  width: 3rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.obrada-slika__ratio-col {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.obrada-slika__ratio-inputs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.obrada-slika__ratio-edit {
+  width: 3rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.obrada-slika__ratio-sep {
+  font-weight: var(--modal_header_font_weight);
+}
+
+.obrada-slika__meta-label {
+  margin-top: 8px;
+}
+
+.obrada-slika__meta-label:first-of-type {
+  margin-top: 16px;
+}
+
+.obrada-slika__meta-value {
+  font-size: 0.9em;
+  min-height: 1.2em;
+}
+
+.obrada-slika__velicina--preko {
+  color: var(--slika_obrada_duzina_boja, var(--c-red-500));
+}
+
+.obrada-slika__preview-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  min-height: 80px;
+  background: var(--slika_bg, #eee);
+  border: 1px solid var(--slika_border, #ccc);
+  border-radius: var(--slika_radius, 8px);
+  box-shadow: var(--slika_okvir_sjena);
+  position: relative;
+  overflow: hidden;
+}
+
+.obrada-slika__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.obrada-slika__img:not([src]),
+.obrada-slika__img[src=""] {
+  display: none;
+}
+
+.obrada-slika__selection-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.obrada-slika__selection-overlay[aria-hidden="false"] {
+  display: flex;
+  pointer-events: auto;
+}
+
+/* Zatamnjenje izvan odabira – četiri trake (top, left, right, bottom); unutra je slika čitava */
+.obrada-slika__selection-dim {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.obrada-slika__selection-box {
+  position: absolute;
+  border: var(--slika_obrada_selekt_debljina, 2px) dashed var(--slika_obrada_selekt_boja, #666);
+  background: transparent;
+  box-sizing: border-box;
+  cursor: move;
+  pointer-events: auto;
+}
+
+.obrada-slika__selection-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  color: var(--slika_obrada_selekt_boja, #666);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  box-sizing: border-box;
+}
+
+.obrada-slika__selection-resize::before {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: -5px 0 0 currentColor, 0 -5px 0 currentColor;
+}

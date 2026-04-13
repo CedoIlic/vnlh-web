@@ -1,0 +1,159 @@
+/* Alati_Aktivne_Sesije – interval u zaglavlju tablice, detaljni panel, povratak */
+
+.alati-aktivne-sesije__tablica-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alati-aktivne-sesije__header-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.alati-aktivne-sesije__header-row .kontrola-labela {
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 7ch;
+  min-width: 7ch;
+  max-width: 7ch;
+  box-sizing: border-box;
+}
+
+/* Uski broj (1–20 s); širina usklađena s dvoznamenkastim prikazom. */
+.alati-aktivne-sesije__interval-edit {
+  width: 50px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Tekst jedinice iza polja intervala (vizualno u paru s editom). */
+.alati-aktivne-sesije__interval-unit {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-family: var(--font_family, system-ui, sans-serif);
+  font-size: var(--font_size_base, 0.9375rem);
+  color: var(--text, #1a1a1a);
+  line-height: var(--edit_height, 2.25rem);
+}
+
+/* Kružni odbroj do sljedećeg GET osvježavanja (ne mijenja zadnja_aktivnost u bazi). */
+.alati-aktivne-sesije__countdown-wrap {
+  position: relative;
+  width: var(--edit_height, 2.25rem);
+  height: var(--edit_height, 2.25rem);
+  flex-shrink: 0;
+}
+
+.alati-aktivne-sesije__countdown-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.alati-aktivne-sesije__countdown-track {
+  stroke: var(--c-gray-200, #e9ecef);
+  stroke-width: 3;
+}
+
+.alati-aktivne-sesije__countdown-ring {
+  stroke: var(--c-gray-600, #6c757d);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 94.248; /* 2 * pi * 15 */
+  stroke-dashoffset: 94.248;
+  transition: stroke-dashoffset 0.05s linear;
+}
+
+.alati-aktivne-sesije__countdown-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font_family, system-ui, sans-serif);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text, #1a1a1a);
+  pointer-events: none;
+  line-height: 1;
+}
+
+.alati-aktivne-sesije__panel-tablica.kontrola-panel-tablica--has-header:has(.kontrola-panel__body .kontrola-panel__resize-bar) {
+  min-height: calc(var(--kontrola-panel-tablica-body-h) + var(--panel_resize_bar_height) + var(--panel_header_min_height)) !important;
+}
+
+.alati-aktivne-sesije__detail-body {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.alati-aktivne-sesije__detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem 1rem;
+  align-items: start;
+}
+
+.alati-aktivne-sesije__detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.alati-aktivne-sesije__detail-field--wide {
+  grid-column: 1 / -1;
+}
+
+/* Drugi red detalja: lijevo Korisnički agent, desno ID sesije. */
+.alati-aktivne-sesije__detail-row-2 {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  align-items: start;
+}
+
+@media (max-width: 40rem) {
+  .alati-aktivne-sesije__detail-row-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.alati-aktivne-sesije__detail-napomena {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Datumi isključivo na uskom ekranu. Ne koristiti var() u @media – u nekim preglednicima pravilo se zanemari i blok ostane skriven. */
+.alati-aktivne-sesije__detail-mob-datumi {
+  display: none;
+  grid-column: 1 / -1;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .alati-aktivne-sesije__detail-mob-datumi {
+    display: flex;
+  }
+}
+
+.alati-aktivne-sesije__footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Retci sesije koji nisu aktivni (status ≠ aktivna): boja teksta kao --tablica_row_fg_disabled / siva paleta. */
+#tablicaContainer.kontrola-tablica tbody tr.alati-aktivne-sesije__row--neaktivan td {
+  color: var(--c-gray-300);
+}

@@ -1,0 +1,138 @@
+<!-- =========================================================
+     Alati_Meni_Test.html
+     Test menija – panel uvjeti s ID horizontalnog menija, podmenija, izvršnog menija.
+     Horizontalna traka (#traka_h_menija, klase alati-meni-test__*) namjerno je ista komponenta kao u
+     Meni.html — dijele se Alati_Meni_Test.css, te Meni.js / Alati_Meni_Test.js (isti ID-jevi u dokumentu).
+     Ova stranica nije CRUD članova; ne miješati s html/Clanovi_CRUD.html (koji ne učitava ovaj CSS/JS).
+     Skripte: 0-Kontrole.js, 0-Common.js, Alati_Meni_Test.js
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test menija</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+    <link rel="stylesheet" href="../css/Alati_Meni_Test.css?v=10.15.04">
+</head>
+<body>
+
+<div class="naslov-forme">
+    <h2>Test menija</h2>
+</div>
+
+<div class="page-container">
+    <div class="alati-meni-test__panels-row">
+    <!-- Panel uvjeti (lijevo, pola širine) -->
+    <div class="kontrola-panel mb-3 alati-meni-test__panel-uvjeti" id="panel_uvjeti">
+        <div class="kontrola-panel__body alati-meni-test__body">
+            <!-- Lijeva kolona: ID horizontalnog menija + ID izvršnog menija -->
+            <div class="alati-meni-test__body-col alati-meni-test__body-col--left">
+                <div class="alati-meni-test__grupa alati-meni-test__grupa--sustav-meni-tip">
+                    <label class="kontrola-labela mb-0" for="edit_glavni_id">ID horizontalnog menija</label>
+                    <div class="alati-meni-test__grupa-kontrole">
+                        <input id="edit_glavni_id" type="text" class="kontrola-edit alati-meni-test__edit-id" readonly>
+                        <div class="kontrola-select">
+                            <select id="select_meni_tip">
+                                <option value="0">Nije izabran</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="alati-meni-test__grupa alati-meni-test__grupa--sustav-meni-tip">
+                    <label class="kontrola-labela mb-0" for="edit_izvrsni_meni">ID izvršnog menija</label>
+                    <div class="alati-meni-test__grupa-kontrole">
+                        <input id="edit_izvrsni_meni" type="text" class="kontrola-edit alati-meni-test__edit-id" readonly>
+                        <div class="kontrola-select">
+                            <select id="select_izvrsni_meni">
+                                <option value="0">Nije izabran</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Desna kolona: ID podmenija + Izbor dužnosnika -->
+            <div class="alati-meni-test__body-col alati-meni-test__body-col--right">
+                <div class="alati-meni-test__grupa alati-meni-test__grupa--sustav-meni-tip">
+                    <label class="kontrola-labela mb-0" for="edit_podmeniji">ID podmenija</label>
+                    <div class="alati-meni-test__grupa-kontrole">
+                        <input id="edit_podmeniji" type="text" class="kontrola-edit alati-meni-test__edit-id" readonly>
+                        <div class="kontrola-select">
+                            <select id="select_podmeniji">
+                                <option value="0">Nije izabran</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="alati-meni-test__grupa">
+                    <label class="kontrola-labela mb-0" for="select_duznosnik">Izbor dužnosnika</label>
+                    <div class="kontrola-select alati-meni-test__select-duznosnik">
+                        <select id="select_duznosnik">
+                            <option value="0">Nije izabran</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!-- Ne korišteni moduli – ispod obje kolone -->
+            <div class="alati-meni-test__grupa alati-meni-test__grupa--full">
+                <label class="kontrola-labela mb-0" for="edit_napomena">Ne korišteni moduli</label>
+                <div id="edit_napomena" class="kontrola-napomena alati-meni-test__napomena" role="textbox" aria-readonly="true"></div>
+            </div>
+            <!-- Spacer: raste s panelom, kontrole ostaju na mjestu -->
+            <div class="alati-meni-test__body-spacer" aria-hidden="true"></div>
+        </div>
+        <div class="kontrola-panel__footer alati-meni-test__footer">
+            <div class="alati-meni-test__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi">
+                    <span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upiši</span></span></span>
+                </button>
+            </div>
+            <div class="alati-meni-test__footer-center">
+                <button type="button" id="btnOsvjezi" class="kontrola-btn">
+                    <span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Osvježi meni</span></span></span>
+                </button>
+            </div>
+            <div class="alati-meni-test__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak" aria-label="Povratak na pozivnu formu">
+                    <span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+<!-- Traka ispod panela – cijela širina forme, --c-blue-500, kontejner za meni -->
+<div id="traka_h_menija" class="alati-meni-test__traka">
+    <button type="button" id="meni_hamburger" class="alati-meni-test__hamburger" aria-label="Meni" aria-expanded="false" aria-haspopup="dialog">☰</button>
+    <div id="meni_container" class="alati-meni-test__meni-container"></div>
+</div>
+<!-- Overlay i drawer za uski prikaz -->
+<div id="meni_overlay" class="alati-meni-test__overlay" aria-hidden="true"></div>
+<aside id="meni_drawer" class="alati-meni-test__drawer" role="dialog" aria-modal="true" aria-label="Meni (mobilni)">
+    <div class="alati-meni-test__drawer-head">
+        <button type="button" id="meni_drawer_back" class="alati-meni-test__drawer-btn alati-meni-test__drawer-btn--back" aria-label="Nazad" style="visibility:hidden;">
+            <svg class="alati-meni-test__drawer-icon alati-meni-test__drawer-icon--back" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+        </button>
+        <div class="alati-meni-test__drawer-title" id="meni_drawer_title">Meni</div>
+        <button type="button" id="meni_drawer_close" class="alati-meni-test__drawer-btn" aria-label="Početna">
+            <svg class="alati-meni-test__drawer-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+        </button>
+    </div>
+    <div class="alati-meni-test__drawer-body">
+        <div id="meni_drawer_list"></div>
+    </div>
+</aside>
+
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/Alati_Meni_Test.js?v=10.15.04"></script>
+
+</body>
+</html>

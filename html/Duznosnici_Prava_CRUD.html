@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!--
+  Duznosnici_Prava_CRUD.html – forma za prava dužnosnika.
+  Zaglavlje panela: labela Dužnosnik, select dužnosnici, ikona reload (Reload_Ikona: 1 u JS).
+  Tablica: A. (checkbox 1/0), Naziv (20%), Opis.
+  Footer: CRUD tipke, Povratak na pozivnu formu (ref/referrer).
+-->
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Prava dužnosnika</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=10.15.04" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=10.15.04">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=10.15.60">
+    <link rel="stylesheet" href="../css/Duznosnici_Prava_CRUD.css?v=10.15.04">
+</head>
+<body>
+<div class="naslov-forme"><h2>Prava dužnosnika</h2></div>
+<div class="page-container">
+    <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-footer kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__header duznosnici-prava-crud__tablica-header" style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+            <label class="kontrola-labela mb-0" for="select_duznosnik" style="white-space: nowrap; flex-shrink: 0;">Dužnosnik</label>
+            <div class="kontrola-select" style="flex: 1 1 auto; min-width: 0;">
+                <select id="select_duznosnik" aria-label="Odaberi dužnosnika">
+                    <option value="">— Odaberi dužnosnika —</option>
+                </select>
+            </div>
+        </div>
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+        <div class="kontrola-panel__footer duznosnici-prava-crud__tablica-footer">
+            <div class="duznosnici-prava-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="duznosnici-prava-crud__footer-center">
+                <button type="button" id="btnSvePrava" class="kontrola-btn duznosnici-prava-crud__btn-sve" hidden><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Sve</span></span></span></button>
+            </div>
+            <div class="duznosnici-prava-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=10.15.61"></script>
+<script src="../js/0-Kontrole.js?v=10.15.04"></script>
+<script src="../js/0-Common.js?v=10.15.53"></script>
+<script src="../js/0-Poruke.js?v=10.15.61"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=10.15.04"></script>
+<script src="../js/Duznosnici_Prava_CRUD.js?v=10.15.04"></script>
+</body>
+</html>

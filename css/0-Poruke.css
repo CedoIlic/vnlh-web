@@ -1,0 +1,1274 @@
+/* =========================================================
+   0-Poruke.css
+   Stilovi modala za sustav poruka (tablica pošiljatelja, toggle,
+   napomena s porukama, input odgovor, mail ikona u naslov-forme).
+   Tokeni: 0-Common.css (--modal_*, --panel_*, --text, --font_*).
+   z-index: 10005 – iznad svih postojećih modala.
+   ========================================================= */
+
+/* --- Blok: Modal poruka – bazni stilovi (samodostatni, ne ovisi o 0-Kontrole.css) ---
+   Stranice poput Meni.html ne uključuju 0-Kontrole.css pa modal nema bazne
+   .kontrola-modal stilove. Ovdje ih definiramo pod .poruke-modal selektorom
+   da modal poruka radi na SVIM stranicama neovisno. --- */
+.poruke-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10005;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.poruke-modal[aria-hidden="true"] {
+  display: none;
+}
+
+/* --- Overlay (zatamnjenje pozadine) --- */
+.poruke-modal > .kontrola-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--modal_overlay_bg, rgba(0, 0, 0, 0.5));
+  opacity: 0;
+  transition: opacity var(--modal_fade_duration, 0.2s);
+}
+.poruke-modal.kontrola-modal--dim > .kontrola-modal__overlay {
+  opacity: calc(var(--modal_overlay_dim_intensity, 50) / 100);
+}
+
+/* Onemogući selekciju teksta na cijelom modalu osim textarea za odgovor */
+.poruke-modal {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.poruke-modal .poruke__input-napomena {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* --- Blok: Dialog – veličina, min/max, pozadina ---
+   Zadano: resize:none + overflow:hidden (mobitel). Na širokom ekranu: nativni resize:both kao
+   .obrada-slika__dialog (grip u kutu crta preglednik). Za resize dovoljno je overflow ≠ visible
+   (npr. hidden); overflow:auto na cijelom dijalogu činio bi ga scroll kontejnerom – tijelo bi
+   moglo „curiti” ispod podnožja pri prvom potezu resizea. */
+.poruke__dialog {
+  position: relative;
+  z-index: 1;
+  max-width: 90vw;
+  width: 680px;
+  min-width: 680px;
+  height: 400px;
+  min-height: 400px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border: var(--modal_border_w, 1px) solid var(--modal_border, #ccc);
+  border-radius: var(--panel_radius, 12px);
+  box-shadow: var(--panel_sjena, 0 6px 16px rgba(0,0,0,0.35));
+  background: var(--modal_body_bg, #fff);
+  opacity: 0;
+  transition: opacity var(--modal_fade_duration, 0.2s);
+  overflow: hidden;
+  resize: none;
+}
+.poruke-modal.kontrola-modal--open .poruke__dialog {
+  opacity: 1;
+}
+
+/* --- Bazni stilovi zaglavlja, tijela, podnožja (samodostatni) --- */
+.poruke-modal .kontrola-modal__header {
+  flex: 0 0 auto;
+  padding: var(--modal_header_padding_y, 0.75rem) var(--modal_header_padding_x, 1rem);
+  background: var(--modal_header_bg, #f5f5f5);
+  color: var(--modal_header_text, #333);
+  font-family: var(--modal_header_font_family, var(--font_family, sans-serif));
+  font-size: var(--modal_header_font_size, 1rem);
+  font-weight: var(--modal_header_font_weight, 600);
+  border-bottom: var(--modal_header_border_bottom, 1px solid #ccc);
+  text-align: left;
+}
+.poruke-modal .kontrola-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  background: var(--modal_body_bg, #fff);
+}
+.poruke-modal .kontrola-modal__footer {
+  flex: 0 0 auto;
+  padding: var(--modal_footer_padding_y, 0.75rem) var(--modal_footer_padding_x, 1rem);
+  background: var(--modal_footer_bg, #f5f5f5);
+  color: var(--modal_footer_text, #333);
+  border-top: var(--modal_footer_border_top, 1px solid #ccc);
+  font-family: var(--font_family, sans-serif);
+  font-size: var(--font_size, 0.9rem);
+  font-weight: var(--font_weight, 400);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* --- Blok: 3D tipka Povratak (poruke-btn) – kopija lista-btn iz Lista.css ---
+   Samodostatna – ne ovisi o 0-Kontrole.css ni Lista.css.
+   Ista struktura: poruke-btn > __outer > __inner > __label. */
+.poruke-btn {
+  all: unset;
+  cursor: pointer;
+  -webkit-tap-highlight-color: var(--c-transparent, transparent);
+  position: relative;
+  display: inline-block;
+  border-radius: var(--button_radius, 6px);
+  background-color: var(--button_outer_bg, var(--crud_povratak_bg, #6c757d));
+  box-shadow: var(--button_outer_shadow, var(--kontrole_sjena_slaba_2, 0 6px 16px rgba(0,0,0,0.35)));
+  min-height: var(--button_height, 2rem);
+}
+.poruke-btn::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  width: calc(100% + 0.3em);
+  height: calc(100% + 0.3em);
+  top: -0.15em;
+  left: -0.15em;
+  border-radius: inherit;
+  background: linear-gradient(
+    var(--button_reflection_angle, 135deg),
+    var(--button_reflection_color, rgba(5,5,5,0.25)),
+    transparent 20%,
+    transparent 100%
+  );
+  filter: blur(0.0125em);
+  opacity: 0.25;
+  mix-blend-mode: multiply;
+}
+.poruke-btn__outer {
+  position: relative;
+  z-index: 1;
+  border-radius: inherit;
+  display: inline-flex;
+  transition: box-shadow 0.18s ease;
+  box-shadow:
+    0 0.05em 0.05em -0.01em var(--c-near-black, rgba(5,5,5,1)),
+    0 0.01em 0.01em -0.01em var(--c-near-black-50, rgba(5,5,5,0.5)),
+    0.15em 0.3em 0.1em -0.01em var(--c-near-black-25, rgba(5,5,5,0.25));
+}
+@media (hover: hover) {
+  .poruke-btn:not([disabled]):hover .poruke-btn__outer {
+    box-shadow:
+      0 0 0 0 var(--c-near-black, rgba(5,5,5,1)),
+      0 0 0 0 var(--c-near-black-50, rgba(5,5,5,0.5)),
+      0 0 0 0 var(--c-near-black-25, rgba(5,5,5,0.25));
+  }
+  .poruke-btn:not([disabled]):hover .poruke-btn__inner {
+    clip-path: inset(
+      clamp(1px, 0.0625em, 2px) clamp(1px, 0.0625em, 2px)
+        clamp(1px, 0.0625em, 2px) clamp(1px, 0.0625em, 2px) round var(--button_radius, 6px)
+    );
+    box-shadow:
+      0.1em 0.15em 0.05em 0 inset var(--c-near-black-75, rgba(5,5,5,0.75)),
+      -0.025em -0.03em 0.05em 0.025em inset var(--c-near-black-50, rgba(5,5,5,0.5)),
+      0.25em 0.25em 0.2em 0 inset var(--c-near-black-50, rgba(5,5,5,0.5)),
+      0 0 0.05em 0.5em inset var(--c-white-15, rgba(255,255,255,0.15)),
+      0 0 0 0 inset var(--c-white, #fff),
+      0.12em 0.12em 0.12em inset var(--c-white-25, rgba(255,255,255,0.25)),
+      -0.075em -0.12em 0.2em 0.1em inset var(--c-near-black-25, rgba(5,5,5,0.25));
+  }
+  .poruke-btn:not([disabled]):hover .poruke-btn__label {
+    transform: scale(0.975);
+  }
+}
+.poruke-btn__inner {
+  position: relative;
+  z-index: 1;
+  border-radius: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--button_padding_y, 0.35em) var(--button_padding_x, 1.2em);
+  background-image: linear-gradient(135deg, var(--button_inner_bg_1, var(--crud_povratak_bg, #6c757d)), var(--button_inner_bg_2, var(--crud_povratak_bg, #6c757d)));
+  transition: box-shadow 0.18s ease, clip-path 0.1s ease, transform 0.1s ease;
+  overflow: clip;
+  clip-path: inset(0 0 0 0 round var(--button_radius, 6px));
+  box-shadow:
+    0 0 0 0 inset var(--c-near-black-10, rgba(5,5,5,0.1)),
+    -0.05em -0.05em 0.05em 0 inset var(--c-near-black-25, rgba(5,5,5,0.25)),
+    0 0 0 0 inset var(--c-near-black-10, rgba(5,5,5,0.1)),
+    0 0 0.05em 0.2em inset var(--c-white-25, rgba(255,255,255,0.25)),
+    0.025em 0.05em 0.1em 0 inset var(--c-white, #fff),
+    0.12em 0.12em 0.12em inset var(--c-white-25, rgba(255,255,255,0.25)),
+    -0.075em -0.25em 0.25em 0.1em inset var(--c-near-black-25, rgba(5,5,5,0.25));
+}
+.poruke-btn__label {
+  position: relative;
+  z-index: 4;
+  font-family: var(--button_font_family, var(--font_family, sans-serif));
+  font-size: var(--button_font_size, 0.85rem);
+  letter-spacing: -0.05em;
+  font-weight: var(--button_font_weight, 600);
+  color: var(--c-transparent, transparent);
+  background-image: linear-gradient(135deg, var(--button_text_grad_1, #fff), var(--button_text_grad_2, #ddd));
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition: transform 0.1s ease;
+  display: block;
+  white-space: nowrap;
+  text-shadow: var(--c-shadow-10, rgba(0,0,0,0.1)) 0 0 0.1em;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.poruke-btn:not([disabled]):active .poruke-btn__inner {
+  transform: scale(0.96);
+  filter: brightness(0.92);
+}
+.poruke-btn:not([disabled]):active .poruke-btn__outer {
+  box-shadow:
+    0 0 0 0 var(--c-near-black, rgba(5,5,5,1)),
+    0 0 0 0 var(--c-near-black-50, rgba(5,5,5,0.5)),
+    0 0 0 0 var(--c-near-black-25, rgba(5,5,5,0.25));
+}
+.poruke-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 0.15rem var(--focus-ring, #4a90d9),
+    0 6px 16px var(--c-shadow-35, rgba(0,0,0,0.35));
+}
+/* Povratak varijanta – jednobojna pozadina */
+.poruke-btn--povratak {
+  --button_bg: var(--crud_povratak_bg, #6c757d);
+  --button_outer_bg: var(--crud_povratak_bg, #6c757d);
+  --button_inner_bg_1: var(--crud_povratak_bg, #6c757d);
+  --button_inner_bg_2: var(--crud_povratak_bg, #6c757d);
+}
+.poruke-btn--povratak .poruke-btn__label {
+  background-image: none;
+  color: var(--crud_povratak_caption, #fff);
+}
+.poruke-btn--povratak:not([disabled]):active .poruke-btn__label {
+  color: var(--crud_povratak_caption_click, #ccc);
+}
+
+/* Fallback za textarea kontrola-napomena (ako 0-Kontrole.css nije učitan) */
+.poruke-modal .kontrola-napomena {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--napomena_padding_y, 8px) var(--napomena_padding_x, 10px);
+  margin: 0;
+  border: 1px solid var(--napomena_border, #ccc);
+  border-radius: var(--napomena_radius, 4px);
+  background: var(--napomena_bg, #fff);
+  color: var(--napomena_text, var(--text, #333));
+  font-family: var(--font_family, sans-serif);
+  font-size: var(--font_size, 0.9rem);
+  font-weight: var(--font_weight, 400);
+  line-height: 1.4;
+  resize: none;
+  outline: none;
+  box-shadow: var(--tablica_sjena, 0 2px 6px rgba(0,0,0,0.15));
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+@media (hover: hover) {
+  .poruke-modal .kontrola-napomena:hover:not(:disabled) {
+    border-color: var(--edit_border_focus, #4a90d9);
+  }
+}
+.poruke-modal .kontrola-napomena:focus {
+  border-color: var(--edit_border_focus, #4a90d9);
+  box-shadow: var(--napomena_focus_shadow, var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0,0,0,0.30)));
+}
+.poruke-modal .kontrola-napomena:disabled {
+  background: var(--napomena_bg_disabled, #f0f0f0);
+  color: var(--napomena_text_disabled, #999);
+  border-color: var(--napomena_border_disabled, #ddd);
+  cursor: not-allowed;
+  resize: none;
+  box-shadow: var(--napomena_focus_shadow_disabled, none);
+}
+
+/* --- Blok: Zaglavlje – naslov + refresh ikona --- */
+.poruke__header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  cursor: move;
+}
+
+.poruke__header-title {
+  font-weight: inherit;
+  flex: 1 1 auto;
+}
+
+/* --- Blok: Refresh tipka u zaglavlju ---
+   Sjena i veličina kopirani iz lista-reload-btn (Lista.css):
+   default = button_outer_shadow, hover = edit_focus_shadow,
+   active/nova = edit_focus_shadow_disabled (none). */
+.poruke__refresh-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--modal_header_bg, #f5f5f5);
+  color: var(--modal_header_text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--button_outer_shadow, var(--kontrole_sjena_slaba_2, 0 6px 16px rgba(0,0,0,0.35)));
+  transition: color 0.2s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+@media (hover: hover) {
+  .poruke__refresh-btn:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    box-shadow: var(--edit_focus_shadow, var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0,0,0,0.30)));
+  }
+}
+.poruke__refresh-btn:active {
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+/* Refresh ikona crvena kad su stigle nove poruke (JS dodaje klasu) */
+.poruke__refresh-btn--nova {
+  color: var(--c-red-900);
+}
+
+.poruke__refresh-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* --- Blok: Tijelo modala – flex lijevo/desno --- */
+.poruke__body {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* --- Blok: Lijeva strana – toggle + tablica pošiljatelja --- */
+.poruke__left {
+  flex: 0 0 240px;
+  min-width: 200px;
+  max-width: 300px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--panel_border, #ddd);
+  overflow: hidden;
+}
+
+/* --- Blok: Toggle switch (slide) – Sve poruke / Samo nepročitane --- */
+.poruke__toggle-row {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--panel_border, #ddd);
+  background: var(--modal_body_bg, #fff);
+  flex-shrink: 0;
+}
+
+.poruke__toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: var(--font_family);
+  font-size: 0.85em;
+  font-weight: var(--font_weight);
+  color: var(--text);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Skriveni native checkbox */
+.poruke__toggle-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Slider – track (sjena kao ostale kontrole; disabled = none) */
+.poruke__toggle-slider {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  background: var(--c-gray-300, #ccc);
+  border-radius: 10px;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+  box-shadow: var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0,0,0,0.30));
+}
+/* Slider – krug (knob) */
+.poruke__toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--c-white, #fff);
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+/* Uključen (checked) – pomak knoba desno + promjena boje track-a */
+.poruke__toggle-input:checked + .poruke__toggle-slider {
+  background: var(--c-blue-600, #2563eb);
+}
+.poruke__toggle-input:checked + .poruke__toggle-slider::after {
+  transform: translateX(16px);
+}
+/* Focus ring za pristupačnost */
+.poruke__toggle-input:focus-visible + .poruke__toggle-slider {
+  outline: 2px solid var(--edit_border_focus, #666);
+  outline-offset: 2px;
+}
+
+.poruke__toggle-text {
+  white-space: nowrap;
+}
+
+/* Toggle disabled – kad nema nijednog razgovora, vizualno ugašen, sjena none */
+.poruke__toggle-label--disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.poruke__toggle-label--disabled .poruke__toggle-slider {
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* --- Blok: Tablica pošiljatelja – scrollable wrap --- */
+.poruke__tablica-wrap {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+/* --- Blok: Scrollbar na tablici pošiljatelja – kopija iz 0-Kontrole.css --- */
+@supports not selector(::-webkit-scrollbar) {
+  .poruke__tablica-wrap {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.poruke__tablica-wrap::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara, 10px);
+  background: var(--tablica_scroll_bg, #f0f0f0);
+}
+.poruke__tablica-wrap::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac, #aaa);
+  border-radius: 6px;
+}
+.poruke__tablica-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, #888);
+}
+.poruke__tablica-wrap::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.poruke__tablica-wrap::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.poruke__tablica-wrap::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara, 10px);
+  background: transparent;
+}
+.poruke__tablica-wrap::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac, #aaa) transparent;
+}
+.poruke__tablica-wrap::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac, #aaa) transparent transparent transparent;
+}
+
+.poruke__tablica {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+/* Redovi tablice */
+.poruke__tablica tr {
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+.poruke__tablica tr:hover {
+  background-color: var(--tablica_hover_bg, rgba(0, 0, 0, 0.04));
+}
+/* Selektirani red */
+.poruke__tablica tr.poruke__row--selected {
+  background-color: var(--tablica_selected_bg, rgba(0, 100, 200, 0.12));
+}
+
+/* Ćelije */
+.poruke__tablica td {
+  padding: 6px 6px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--panel_border, #eee);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  color: var(--text);
+}
+
+/* --- Blok: Kolona 1 – avatar slika pošiljatelja --- */
+.poruke__cell--img {
+  width: 42px;
+  text-align: center;
+}
+.poruke__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  box-shadow: var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0,0,0,0.30));
+}
+/* Fallback avatar za nepostojeće korisnike: sivi krug s "?" */
+.poruke__avatar-fallback {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--c-gray-300, #d1d5db);
+  color: var(--c-white, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+  box-shadow: var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0,0,0,0.30));
+}
+
+/* --- Blok: Kolona 2 – prezime/ime u dva reda --- */
+.poruke__cell--ime {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.poruke__ime-line {
+  display: block;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.poruke__ime-line--bold {
+  font-weight: 600;
+}
+/* Prigušeno ime kad razgovor nema nepročitanih poruka */
+.poruke__ime-line--muted {
+  color: var(--c-gray-300, #d1d5db);
+}
+
+/* --- Blok: Kolona 3 – badge nepročitanih poruka (krug) ---
+   Krug istog promjera kao avatar (36px). Dvocifreni broj stane;
+   3+ cifre prikazuju se kao "..." (JS logika). */
+.poruke__cell--count {
+  width: 42px;
+  text-align: center;
+  vertical-align: middle;
+}
+.poruke__count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--c-red-500, #ef4444);
+  color: var(--c-white, #fff);
+  font-weight: 700;
+  font-size: 0.8em;
+  line-height: 1;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* --- Blok: Desna strana – poruke + input ---
+   Padding lijevo jednak padding desno (8px) – odmak od pregradne linije tablice. --- */
+.poruke__right {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  /* Donji padding ostavlja prostor unutar overflow klipa za box-shadow okvira povijesti
+     (.poruke__napomena-div); bez toga sjena je vidljiva lijevo/desno, a donji dio rezan. */
+  padding: 8px 8px 14px 8px;
+}
+
+/* --- Blok: Široki ekran (≥769px) – vanjski .poruke__dialog: nativni resize (kao .obrada-slika__dialog).
+   Custom kutni gumbe (.poruke__resize-corner) ostaju skriveni; unutarnji raspored osvježava 0-Poruke.js
+   (ResizeObserver + izracunajVisinuNapomene). Povijest (#_napomena) i textarea nove poruke imaju nativni
+   vertikalni grip (vizualna usklađenost s npr. #edit_napomena u Clanovi_CRUD); detaljno ponašanje kasnije. */
+@media (min-width: 769px) {
+  .poruke-modal .poruke__dialog {
+    /* hidden: flex kolona (header / body / footer) ostaje u okviru visine; scroll samo unutar povijesti. */
+    overflow: hidden;
+    resize: both;
+    min-width: 320px;
+    min-height: 320px;
+  }
+  .poruke__resize-corner {
+    display: none !important;
+    pointer-events: none !important;
+  }
+  /* Nativni grip: div s overflow-y:auto podržava resize:vertical (Chrome/Edge/Firefox). */
+  .poruke-modal .poruke__napomena-scroll {
+    resize: vertical;
+  }
+  /* Isti obrazac kao .kontrola-napomena / #edit_napomena na CRUD formama – vertikalno povlačenje ruba. */
+  .poruke-modal .poruke__input-napomena {
+    resize: vertical;
+  }
+}
+@media (max-width: 768px) {
+  .poruke-modal .poruke__dialog {
+    resize: none !important;
+  }
+  .poruke__resize-corner {
+    display: none !important;
+    pointer-events: none !important;
+  }
+}
+
+/* --- Blok: Povijest razgovora – dvoslojno: okvir + scroll ---
+   Vanjski .poruke__napomena-div: border, border-radius, box-shadow; overflow:visible da sjena
+   nije odrezana. Unutarnji .poruke__napomena-scroll: overflow-y:auto; visinu na širokom ekranu
+   podešava izracunajVisinuNapomene u 0-Poruke.js (snimljeni min. visine povijesti). */
+.poruke__napomena-div {
+  flex: 0 0 auto;
+  min-height: 3em;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  border: 1px solid var(--napomena_border, #ccc);
+  border-radius: var(--napomena_radius, 4px);
+  box-shadow: var(--tablica_sjena);
+  background: var(--napomena_bg, #fff);
+}
+.poruke__napomena-scroll {
+  /* flex: 0 0 auto – visinu postavlja JS na desktopu; na mobu @media pregazi s flex:1 1 auto. */
+  flex: 0 0 auto;
+  align-self: stretch;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  resize: none;
+  /* Isti radius kao vanjski okvir – sadržaj poruka ne „izlazi” iz zaobljenih kutova. */
+  border-radius: var(--napomena_radius, 4px);
+  padding: var(--napomena_padding_y, 8px) var(--napomena_padding_x, 10px);
+  background: var(--napomena_bg, #fff);
+  color: var(--text);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: 1.5;
+}
+/* --- Blok: Scrollbar za .poruke__napomena-scroll – kopija iz 0-Kontrole.css --- */
+@supports not selector(::-webkit-scrollbar) {
+  .poruke__napomena-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.poruke__napomena-scroll::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara, 10px);
+  background: var(--tablica_scroll_bg, #f0f0f0);
+  border-top-right-radius: var(--napomena_radius, 4px);
+  border-bottom-right-radius: var(--napomena_radius, 4px);
+}
+.poruke__napomena-scroll::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac, #aaa);
+  border-radius: 6px;
+}
+.poruke__napomena-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, #888);
+}
+.poruke__napomena-scroll::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.poruke__napomena-scroll::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.poruke__napomena-scroll::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara, 10px);
+  background: transparent;
+}
+.poruke__napomena-scroll::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac, #aaa) transparent;
+}
+.poruke__napomena-scroll::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac, #aaa) transparent transparent transparent;
+}
+.poruke__napomena-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* --- Blok: Datum separator u porukama --- */
+.poruke__datum-separator {
+  text-align: center;
+  font-size: 0.8em;
+  color: var(--c-gray-500, #888);
+  padding: 8px 0 4px;
+  font-weight: 600;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.poruke__datum-separator::before,
+.poruke__datum-separator::after {
+  content: '—';
+  margin: 0 6px;
+  opacity: 0.5;
+}
+
+/* --- Blok: Pojedinačna poruka u napomeni --- */
+.poruke__msg {
+  padding: 3px 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+/* Primljena poruka – nepročitana (normalna boja) */
+.poruke__msg--primljena {
+  color: var(--text);
+}
+/* Primljena poruka – pročitana */
+.poruke__msg--primljena-procitana {
+  color: var(--c-shadow-30, #b0b0b0);
+}
+/* Odgovor (vlastita poruka) – nepročitan od primatelja */
+.poruke__msg--odgovor {
+  color: var(--c-blue-600, #2563eb);
+}
+/* Odgovor – pročitan */
+.poruke__msg--odgovor-procitan {
+  color: var(--c-blue-300, #93c5fd);
+}
+
+/* Ime pošiljatelja ispred poruke (bold) */
+.poruke__msg-autor {
+  font-weight: 600;
+  margin-right: 4px;
+}
+/* Timestamp poruke */
+.poruke__msg-vrijeme {
+  font-size: 0.75em;
+  opacity: 0.6;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+/* Dvostruka kvačica za pročitane poruke */
+.poruke__msg-procitano {
+  color: var(--c-blue-500, #3b82f6);
+  font-weight: 700;
+  letter-spacing: -2px;
+  margin-left: 2px;
+}
+
+/* --- Blok: Textarea za odgovor + tipka Pošalji --- */
+.poruke__input-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 6px;
+  position: relative;
+  /* Gore razmak od povijesti; dolje 10px zrak ispod edita nove poruke prije ruba .poruke__right / podnožja. */
+  padding: 6px 0 10px 0;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  /* Omogući sužavanje textarea u redu (PC); inače width:auto može gurnuti .poruke__posalji-btn van panela. */
+  min-width: 0;
+}
+
+/* Textarea – višeredni odgovor; zadano resize:none (mob + baza). Na širokom ekranu @media (min-width:769px)
+   .poruke-modal .poruke__input-napomena dobiva resize:vertical (nativni grip kao napomena u edit panelu).
+   flex: 1 1 0; width: 0; min-width: 0 – dijeli red s .poruke__posalji-btn (flex-shrink: 0);
+   na PC-u textarea ne smije „pojesti” sav prostor. Na mobu isto pravilo jače u @media (0-Poruke.css). */
+.poruke__input-napomena {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  box-sizing: border-box;
+  height: calc(2 * 1.4em + 2 * var(--napomena_padding_y, 8px) + 2px);
+  min-height: calc(2 * 1.4em + 2 * var(--napomena_padding_y, 8px) + 2px);
+  resize: none;
+}
+.poruke__input-napomena::placeholder {
+  color: var(--c-gray-300, #ccc);
+}
+/* --- Blok: Scrollbar za textarea odgovora – kopija iz 0-Kontrole.css ---*/
+@supports not selector(::-webkit-scrollbar) {
+  .poruke__input-napomena {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.poruke__input-napomena::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara, 10px);
+  background: var(--tablica_scroll_bg, #f0f0f0);
+  border-top-right-radius: var(--napomena_radius, 4px);
+  border-bottom-right-radius: var(--napomena_radius, 4px);
+}
+.poruke__input-napomena::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac, #aaa);
+  border-radius: 6px;
+}
+.poruke__input-napomena::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, #888);
+}
+.poruke__input-napomena::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.poruke__input-napomena::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.poruke__input-napomena::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara, 10px);
+  background: transparent;
+}
+.poruke__input-napomena::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac, #aaa) transparent;
+}
+.poruke__input-napomena::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac, #aaa) transparent transparent transparent;
+}
+.poruke__input-napomena::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* --- Blok: Tipka Pošalji – sjena i veličina kao lista-reload-btn (Lista.css) ---
+   Tri stanja: default = button_outer_shadow, hover = edit_focus_shadow,
+   disabled = edit_focus_shadow_disabled (none). */
+.poruke__posalji-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--button_outer_shadow, var(--kontrole_sjena_slaba_2, 0 6px 16px rgba(0,0,0,0.35)));
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+@media (hover: hover) {
+  .poruke__posalji-btn:hover:not(:disabled) {
+    background: var(--c-gray-100, #eee);
+    box-shadow: var(--edit_focus_shadow, var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0,0,0,0.30)));
+  }
+}
+.poruke__posalji-btn:active:not(:disabled) {
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+.poruke__posalji-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+.poruke__posalji-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* --- Blok: Podnožje – lijevo ikone, desno Povratak ---
+   Pojačan selektor da pregazi base .kontrola-modal__footer justify-content: center.
+   position: relative – anchor za eventualne apsolutno pozicionirane elemente u podnožju. */
+.poruke-modal .poruke__footer {
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+.poruke__footer-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.poruke__footer-right {
+  display: flex;
+  align-items: center;
+}
+
+/* --- Blok: Zajedničke icon-tipke u podnožju (nova poruka, brisanje) ---
+   Veličina, border, sjena i tri stanja kopirani iz lista-reload-btn (Lista.css). */
+.poruke__icon-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  color: var(--text, #333);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--button_outer_shadow, var(--kontrole_sjena_slaba_2, 0 6px 16px rgba(0,0,0,0.35)));
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+@media (hover: hover) {
+  .poruke__icon-btn:hover:not(:disabled) {
+    background: var(--c-gray-100, #eee);
+    box-shadow: var(--edit_focus_shadow, var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0,0,0,0.30)));
+  }
+}
+.poruke__icon-btn:active:not(:disabled) {
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+.poruke__icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+/* Trash ikona – CSS mask (Heroicons outline, kopija iz 0-Kontrole.css kontrola-icon--trash) */
+.poruke-icon--trash {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0'/%3E%3C/svg%3E");
+  mask-size: 20px 20px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0'/%3E%3C/svg%3E");
+  -webkit-mask-size: 20px 20px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* --- Blok: Popup za odabir korisnika (nova poruka) ---
+   Pozicioniran apsolutno unutar dialoga, iznad podnožja lijevo.
+   Filter input na vrhu, scrollable lista ispod. */
+.poruke__popup {
+  position: absolute;
+  bottom: 3.5rem;
+  left: 0.75rem;
+  width: 280px;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  background: var(--panel_body_bg, #fff);
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  box-shadow: var(--kontrole_sjena_slaba_2, 0 6px 16px rgba(0,0,0,0.35));
+  overflow: hidden;
+}
+
+/* Filter input na vrhu popupa */
+.poruke__popup-filter {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 10px;
+  margin: 0;
+  border: none;
+  border-bottom: 1px solid var(--panel_border, #ddd);
+  border-radius: 0;
+  background: var(--napomena_bg, #fff);
+  color: var(--text, #333);
+  font-family: var(--font_family, sans-serif);
+  font-size: var(--font_size, 0.9rem);
+  outline: none;
+  flex-shrink: 0;
+}
+.poruke__popup-filter:focus {
+  border-bottom-color: var(--edit_border_focus, #4a90d9);
+}
+/* Dopusti selekciju teksta u filter inputu */
+.poruke__popup-filter {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Scrollable lista korisnika */
+.poruke__popup-lista {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+/* Scrollbar na popup listi – kopija iz 0-Kontrole */
+@supports not selector(::-webkit-scrollbar) {
+  .poruke__popup-lista {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.poruke__popup-lista::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara, 10px);
+  background: var(--tablica_scroll_bg, #f0f0f0);
+}
+.poruke__popup-lista::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac, #aaa);
+  border-radius: 6px;
+}
+.poruke__popup-lista::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, #888);
+}
+.poruke__popup-lista::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.poruke__popup-lista::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.poruke__popup-lista::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara, 10px);
+  background: transparent;
+}
+.poruke__popup-lista::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac, #aaa) transparent;
+}
+.poruke__popup-lista::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac, #aaa) transparent transparent transparent;
+}
+
+/* Pojedini red u popup listi */
+.poruke__popup-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-family: var(--font_family, sans-serif);
+  font-size: var(--font_size, 0.9rem);
+  color: var(--text, #333);
+  border-bottom: 1px solid var(--panel_border, #eee);
+  transition: background-color 0.1s ease;
+}
+.poruke__popup-item:last-child {
+  border-bottom: none;
+}
+@media (hover: hover) {
+  .poruke__popup-item:hover {
+    background-color: var(--tablica_hover_bg, rgba(0, 0, 0, 0.04));
+  }
+}
+/* Prazan rezultat pretrage */
+.poruke__popup-empty {
+  padding: 10px;
+  text-align: center;
+  color: var(--c-gray-500, #888);
+  font-size: var(--font_size, 0.9rem);
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  /* ==========================================================
+     MOBILNI LAYOUT MODALA ZA PORUKE
+     Selektori prefiksirani s .poruke-modal da specifičnost (0,2,0)
+     pregazi bazne stilove (.poruke-modal .kontrola-modal__body itd.)
+     koje imaju istu specifičnost na liniji ~87.
+     Struktura (odozgo prema dolje):
+       1. Zaglavlje (header)
+       2. Tablica pošiljatelja – puna širina, fiksna visina (5 redova), scroll
+       3. Input nova poruka + ikona slanja
+       4. Povijest razgovora – popunjava ostatak prostora
+       5. Podnožje (footer)
+     ========================================================== */
+
+  /* Vanjski omotač: donji „umetak” ostaje transparentan (ne prekriva sjenu),
+     veći padding-bottom ostavlja prostor da box-shadow dijaloga nije odrezan
+     rubom viewporta. Overlay je zaseban child (absolute), ne ovaj sloj. */
+  .poruke-modal {
+    padding: 1rem 1rem 2rem 1rem;
+    background: transparent;
+  }
+
+  /* Dialog – centriran po X; overflow kao u bazi (hidden) radi zaobljenih kutova modala. */
+  .poruke-modal .poruke__dialog {
+    min-width: 300px;
+    width: 95vw;
+    height: calc(75vh + 40px);
+    min-height: calc(75vh + 40px);
+    max-height: 90vh;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: hidden;
+  }
+
+  /* Body – kolona: tablica gore, editi dolje.
+     Bazni stil (.poruke-modal .kontrola-modal__body, linija ~87) postavlja
+     flex-direction: row i background. Ovaj selektor (0,2,0) ga pregazi. */
+  /* margin-bottom: razmak između tijela modala i podnožja (povijest ne „liježi” na footer). */
+  .poruke-modal .poruke__body {
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  /* Lijeva strana (tablica) – puna širina, fiksna visina za 5 redova (~200px) */
+  .poruke-modal .poruke__left {
+    flex: 0 0 auto;
+    max-width: none;
+    min-width: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--panel_border, #ddd);
+  }
+
+  /* Desna strana (editi) – popunjava ostatak */
+  .poruke-modal .poruke__right {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 16px;
+  }
+
+  /* Input-row (nova poruka + ikona slanja) IDE IZNAD povijesti razgovora.
+     U DOM-u je input-row iza napomene; order:-1 ga vizualno premješta iznad. */
+  .poruke-modal .poruke__input-row {
+    flex: 0 0 auto;
+    order: -1;
+  }
+
+  /* Textarea za novu poruku – flex da ne gura ikonu van ekrana. */
+  .poruke-modal .poruke__input-napomena {
+    flex: 1 1 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+  }
+
+  /* Povijest razgovora – popunjava sav preostali prostor.
+     !important jer izracunajVisinuNapomene() postavlja inline height na desktopu;
+     na mobilnom ta funkcija vraća return ali čuvamo za sigurnost. */
+  .poruke-modal .poruke__napomena-div {
+    flex: 1 1 auto !important;
+    min-height: 60px !important;
+    height: auto !important;
+  }
+  .poruke-modal .poruke__napomena-scroll {
+    /* Nadjačaj desktop 0 0 auto – unutar .poruke__napomena-div (flex:1) i dalje ispunjava visinu. */
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    resize: none !important;
+  }
+
+  /* Tablica: smanjeni avatar i padding za uštedu prostora na malom ekranu */
+  .poruke-modal .poruke__avatar,
+  .poruke-modal .poruke__avatar-fallback {
+    width: 30px;
+    height: 30px;
+  }
+  .poruke-modal .poruke__cell--img {
+    width: 36px;
+  }
+  .poruke-modal .poruke__tablica td {
+    padding: 4px 4px;
+  }
+  .poruke-modal .poruke__cell--count {
+    width: 36px;
+  }
+  .poruke-modal .poruke__count-badge {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8em;
+  }
+}
+
+/* --- Blok: Mail ikona u naslov-forme (lijevo od odjave) ---
+   Nalazi se unutar wrappera .naslov-forme__ikone (kreira 0-Common.js),
+   pozicija je relativna unutar flex kontejnera.
+   Lucide mail SVG kao CSS mask-image (isti pristup kao kontrola-icon--arrow-right-on-rectangle). */
+.naslov-forme__poruke {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 8px;
+  color: var(--naslov_forme_text);
+  opacity: 0.92;
+  text-decoration: none;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.2s ease;
+  box-sizing: border-box;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+.naslov-forme__poruke:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+.naslov-forme__poruke:focus-visible {
+  outline: 2px solid var(--naslov_forme_text);
+  outline-offset: 2px;
+}
+
+/* Mail ikona crvena kad postoje nepročitane poruke */
+.naslov-forme__poruke--neprocitane {
+  color: var(--c-red-900);
+  opacity: 1;
+}
+
+/* Lucide mail ikona – CSS mask (stroke-only SVG).
+   Sjena prati naslov_forme_text_shadow (3px 3px 6px) jer je ikona
+   u istom kontekstu kao tekst naslova forme. */
+.poruke-icon--mail {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background-color: currentColor;
+  filter: drop-shadow(3px 3px 6px var(--c-text-shadow-75, rgba(0,0,0,0.75)));
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='16' x='2' y='4' rx='2'/%3E%3Cpath d='m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'/%3E%3C/svg%3E");
+  mask-size: 22px 22px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='16' x='2' y='4' rx='2'/%3E%3Cpath d='m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'/%3E%3C/svg%3E");
+  -webkit-mask-size: 22px 22px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+/* --- Blok: Responsive – naslov-forme na mobilnom ---
+   Breakpoint usklađen s 0-Common.css (640px).
+   Učitava se nakon 0-Kontrole.css / Lista.css / Meni.css pa
+   sigurno pregazi njihov padding shorthand na .naslov-forme. */
+@media (max-width: 640px) {
+  .naslov-forme {
+    padding-bottom: 0;
+  }
+  .naslov-forme__ikone .naslov-forme__poruke {
+    position: static;
+    transform: none;
+    margin-top: 0;
+  }
+}

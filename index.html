@@ -1,0 +1,90 @@
+<!--
+    =====================================================
+    index.html
+    Početna forma VNLH WEB aplikacije
+    URL: http://localhost/vnlh/index.html
+    =====================================================
+
+    DINAMIČKI MENI
+    -----------------------------------------------------
+    Tipke se generiraju "u letu" iz SQL tablice meni preko:
+        php/meni_list_index.php
+
+    Pravila:
+    - caption tipke = naziv
+    - odredište = putanja + html_fajl
+    - pri kliku se dodaje ?ref=: postojeći ref ove stranice ili pathname (vidi vnlhRefZaLinkSljedecaStranica)
+-->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>VNLH Web - Početna</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="slike/VNLH_Favicon.png?v=10.15.01" type="image/png" sizes="32x32">
+
+    <!-- Stilovi: zajednički + kontrole -->
+    <link rel="stylesheet" href="css/0-Common.css?v=10.15.53">
+    <link rel="stylesheet" href="css/0-Kontrole.css?v=10.15.01">
+    <link rel="stylesheet" href="css/0-Poruke.css?v=10.15.60">
+</head>
+
+<body style="min-height:100vh; display:flex; flex-direction:column;">
+<main style="flex:1 0 auto;">
+
+<!-- =====================================================
+     NASLOV (isti stil kao CRUD forme)
+     ===================================================== -->
+<div class="naslov-forme">
+<h2>VNLH </h2>
+</div>
+
+<div class="page-container mt-4" style="text-align:center;">
+
+    <!-- =================================================
+         KONTEJNER ZA TIPKE (dinamički iz baze)
+         ================================================= -->
+    <div id="meniButtons" style="display:flex; flex-wrap:wrap; justify-content:center; gap:0.75rem;"></div>
+
+    <!-- status / greške -->
+    <div id="meniStatus" class="mt-3" style="color:var(--c-gray-700, #4a5568);"></div>
+
+</div>
+
+<script src="js/00-Version.js?v=10.15.61"></script>
+<script src="js/0-Common.js?v=10.15.53"></script>
+<script src="js/0-Poruke.js?v=10.15.61"></script>
+<script src="index.js?v=10.15.01"></script>
+
+</main>
+
+<!-- Povratak – dolje desno, vraća na glavni meni -->
+<div style="margin-top:auto; padding:1rem; display:flex; justify-content:flex-end;">
+  <a href="php/Meni.php" class="kontrola-btn kontrola-btn--crud-povratak" title="Povratak na glavni meni">
+    <span class="kontrola-btn__outer">
+      <span class="kontrola-btn__inner">
+        <span class="kontrola-btn__label">Povratak</span>
+      </span>
+    </span>
+  </a>
+</div>
+
+<footer style="flex-shrink:0; text-align:center; padding:8px 0;">
+  <span id="vnlhFooterVer" style="font-size:18px;">Verzija: 10.12.38</span>
+</footer>
+
+
+
+<script>
+(function () {
+  try {
+    const v = (window.VNLH_VERZIJA || "").toString().trim();
+    const el = document.getElementById("vnlhFooterVer");
+    if (el && v) el.textContent = "Verzija: " + v;
+  } catch (e) {}
+})();
+</script>
+
+</body>
+</html>
+<!-- #komentar "==================== KRAJ FAJLA =========================" -->

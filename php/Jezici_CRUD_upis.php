@@ -1,0 +1,63 @@
+<?php
+require_once __DIR__ . '/require_login_api.php';
+// =====================================================
+// Jezici_CRUD_upis.php
+// Dodavanje jezika (case-insensitive duplikati nisu dopušteni)
+// =====================================================
+//
+// Ulaz (POST): naziv (obavezno)
+// Izlaz (TEXT): OK | 100 | 105 | 002 | 200,<errno>
+// Koristi: 00_db.php ($mysqli)
+// =====================================================
+
+$db_ret = require_once __DIR__ . '/00_db.php';
+if ($db_ret !== -1) {
+    echo $db_ret;
+    exit;
+}
+
+if (!isset($_POST['naziv'])) {
+    echo '105';
+    exit;
+}
+
+$naziv = trim($_POST['naziv']);
+if ($naziv === '') {
+    echo '105';
+    exit;
+}
+
+try {
+    $stmt = $mysqli->prepare(
+        "SELECT id FROM jezici WHERE LOWER(naziv) = LOWER(?)"
+    );
+    if (!$stmt) {
+        echo '200,' . $mysqli->errno;
+        exit;
+    }
+    $stmt->bind_param("s", $naziv);
+    $stmt->execute();
+    $stmt->store_result();
+    if ($stmt->num_rows > 0) {
+        echo '002';
+        exit;
+    }
+    $stmt->close();
+
+    $stmt = $mysqli->prepare(
+        "INSERT INTO jezici (naziv) VALUES (?)"
+    );
+    if (!$stmt) {
+        echo '200,' . $mysqli->errno;
+        exit;
+    }
+    $stmt->bind_param("s", $naziv);
+    $stmt->execute();
+    echo 'OK';
+    $stmt->close();
+} catch (mysqli_sql_exception $e) {
+    echo '200,' . $e->getCode();
+}
+
+$mysqli->close();
+?>

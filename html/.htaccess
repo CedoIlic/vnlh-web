@@ -1,0 +1,6 @@
+# Zabrana direktnog .html osim Login.html (Apache 2.4).
+<IfModule mod_authz_core.c>
+    <FilesMatch "^(?!Login\.html$).+\.html$">
+        Require all denied
+    </FilesMatch>
+</IfModule>

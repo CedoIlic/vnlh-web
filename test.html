@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <title>Testna forma</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="slike/VNLH_Favicon.png?v=10.15.01" type="image/png" sizes="32x32">
+
+  <!-- Stilovi: zajednički + kontrole -->
+  <link rel="stylesheet" href="css/0-Common.css?v=10.15.53">
+  <link rel="stylesheet" href="css/0-Kontrole.css?v=10.15.01">
+  <link rel="stylesheet" href="css/0-Poruke.css?v=10.15.60">
+
+
+
+
+  <!-- ====================== POČETAK: APP MENU (RESPONSIVE + 4 RAZINE) ====================== -->
+  <link rel="stylesheet" href="test.css?v=10.15.01">
+  <script src="js/00-Version.js?v=10.15.61"></script>
+  <script src="js/0-Common.js?v=10.15.53"></script>
+  <script src="js/0-Poruke.js?v=10.15.61"></script>
+  <script src="test.js?v=10.15.01" defer></script>
+  <!-- ====================== KRAJ: APP MENU (RESPONSIVE + 4 RAZINE) ====================== -->
+
+</head>
+<body style="min-height:100vh; display:flex; flex-direction:column;">
+
+  <!-- Naslov forme (stil iz tokena: 0-Common.css – naslov_forme_*) -->
+  <div class="naslov-forme">
+    <h2>Testna forma</h2>
+  </div>
+
+
+
+
+  <!-- ====================== POČETAK: APP MENU (RESPONSIVE + 4 RAZINE) ====================== -->
+  <div class="app-menu" aria-label="Glavni meni">
+    <div class="app-topbar">
+      <div class="app-brand">Meni</div>
+      <div class="app-spacer"></div>
+
+      <nav class="app-desktop" aria-label="Glavni meni (desktop)">
+        <ul class="app-bar" id="appDesktopBar"></ul>
+      </nav>
+
+      <button class="app-hamburger" id="appHamburger" type="button" aria-haspopup="dialog" aria-expanded="false">☰</button>
+    </div>
+  </div>
+
+  <div class="app-overlay" id="appOverlay"></div>
+
+  <aside class="app-drawer" id="appDrawer" role="dialog" aria-modal="true" aria-label="Glavni meni (mobile)">
+    <div class="app-dhead">
+      <button id="appBack" type="button" style="visibility:hidden;" aria-label="Nazad">←</button>
+      <div class="app-dtitle" id="appTitle">Meni</div>
+      <button id="appClose" type="button" aria-label="Zatvori">✕</button>
+    </div>
+    <div class="app-dbody">
+      <div id="appList"></div>
+    </div>
+  </aside>
+  <!-- ====================== KRAJ: APP MENU (RESPONSIVE + 4 RAZINE) ====================== -->
+
+
+
+
+  <!-- Povratak – dolje desno, vraća na glavni meni -->
+  <div style="margin-top:auto; padding:1rem; display:flex; justify-content:flex-end;">
+    <a href="php/Meni.php" class="kontrola-btn kontrola-btn--crud-povratak" title="Povratak na glavni meni">
+      <span class="kontrola-btn__outer">
+        <span class="kontrola-btn__inner">
+          <span class="kontrola-btn__label">Povratak</span>
+        </span>
+      </span>
+    </a>
+  </div>
+
+</body>
+</html>

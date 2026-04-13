@@ -1,0 +1,37 @@
+/* Duznosnici_Prava_CRUD.css – stilovi za formu Prava dužnosnika.
+   Zaglavlje panela: labela Dužnosnik, select, ikona reload (dodaje CommonCRUD kad Reload_Ikona: 1).
+   Footer panela: CRUD tipke lijevo, Povratak desno. */
+
+.duznosnici-prava-crud__tablica-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.duznosnici-prava-crud__footer-left {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-start;
+}
+
+.duznosnici-prava-crud__footer-center {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.duznosnici-prava-crud__footer-right {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.duznosnici-prava-crud__btn-sve[hidden] {
+  display: none !important;
+}

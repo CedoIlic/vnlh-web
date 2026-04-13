@@ -1,0 +1,290 @@
+/* =========================================================
+   Napredovanja_CRUD.css
+   Panel tablice s Država + reload, red Pronađi + edit. Panel panel_stupnjevi s tablicom i CRUD tipkama u podnožju.
+   ========================================================= */
+
+/* Dva panela s tablicama jedan pored drugog */
+.napredovanja-crud__panels-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0;
+}
+
+.napredovanja-crud__panels-row .napredovanja-crud__panel-tablica,
+.napredovanja-crud__panels-row .napredovanja-crud__panel-stupnjevi {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+/* Jedna min-height za oba panela (identična vrijednost – lijevi i desni).
+   Za desni panel koji ima resize traku dodajemo visinu trake da se ne može smanjiti ispod visine lijevog. */
+.napredovanja-crud__panels-row .napredovanja-crud__panel-min-equal {
+  min-height: calc(var(--panel_body_padding_y) + var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra) + var(--panel_body_padding_y) + var(--panel_header_min_height_two_rows));
+}
+
+.napredovanja-crud__panels-row .napredovanja-crud__panel-stupnjevi.napredovanja-crud__panel-min-equal {
+  min-height: calc(var(--panel_body_padding_y) + var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra) + var(--panel_body_padding_y) + var(--panel_header_min_height_two_rows) + var(--panel_resize_bar_height));
+}
+
+/* Panel stupnjevi: tablica raste po visini i popunjava slobodan prostor (samo ova forma) */
+.napredovanja-crud__panel-stupnjevi .kontrola-panel__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.napredovanja-crud__panel-stupnjevi .kontrola-panel__body > .kontrola-tablica {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+}
+
+.napredovanja-crud__panel-stupnjevi .kontrola-tablica__scroll-wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  height: auto;
+}
+
+.napredovanja-crud__tablica-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Edit panel – prvi red (ikona, St., Izbor stupnja, Tip napredovanja) */
+.napredovanja-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  --napredovanja-edit-prvi-w: calc(2.25rem + 1rem + 120px);
+}
+
+.napredovanja-crud__edit-prvi-blok {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  width: var(--napredovanja-edit-prvi-w);
+  flex-shrink: 0;
+}
+
+.napredovanja-crud__edit-row--prvi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+}
+
+.napredovanja-crud__bolt-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  color: var(--edit_text);
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  box-shadow: var(--button_outer_shadow);
+}
+
+.napredovanja-crud__bolt-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+@media (hover: hover) {
+  .napredovanja-crud__bolt-icon:hover {
+    background: var(--c-gray-100, #eee);
+    box-shadow: var(--edit_focus_shadow);
+  }
+}
+
+.napredovanja-crud__bolt-icon:active {
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+.napredovanja-crud__edit-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.napredovanja-crud__edit-cell--st {
+  flex: 0 0 auto;
+}
+
+.napredovanja-crud__edit-st {
+  width: 120px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.napredovanja-crud__edit-cell--select {
+  flex: 1 1 0;
+  min-width: 160px;
+}
+
+.napredovanja-crud__edit-cell--select .kontrola-select {
+  width: 100%;
+}
+
+/* Edit panel – drugi red (Datum st., Loža napredovanja, Ime lože) */
+.napredovanja-crud__edit-row--drugi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+}
+
+.napredovanja-crud__edit-cell--datum-st {
+  flex: 0 0 auto;
+  width: var(--napredovanja-edit-prvi-w);
+}
+
+.napredovanja-crud__edit-datum-st {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: right;
+}
+
+.napredovanja-crud__edit-cell--ime-loze {
+  flex: 1 1 0;
+  min-width: 160px;
+}
+
+.napredovanja-crud__edit-cell--ime-loze .kontrola-edit {
+  width: 100%;
+}
+
+/* Uski mod: prvi red ikona lijevo / edit St. desno; zatim puna širina: Izbor stupnja, Tip napredovanja, Loža (selekt), Loža (edit), Datum st. */
+@media (max-width: 899px) {
+  .napredovanja-crud__edit-row--prvi {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .napredovanja-crud__edit-prvi-blok {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .napredovanja-crud__edit-row--prvi .napredovanja-crud__edit-cell--select {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .napredovanja-crud__edit-row--prvi .napredovanja-crud__edit-cell--select .kontrola-select {
+    width: 100%;
+  }
+
+  .napredovanja-crud__edit-row--drugi {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .napredovanja-crud__edit-row--drugi .napredovanja-crud__edit-cell--datum-st,
+  .napredovanja-crud__edit-row--drugi .napredovanja-crud__edit-cell--select,
+  .napredovanja-crud__edit-row--drugi .napredovanja-crud__edit-cell--ime-loze {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .napredovanja-crud__edit-row--drugi .napredovanja-crud__edit-cell--select .kontrola-select,
+  .napredovanja-crud__edit-row--drugi .napredovanja-crud__edit-cell--ime-loze .kontrola-edit {
+    width: 100%;
+  }
+
+  .napredovanja-crud__edit-row--drugi .napredovanja-crud__edit-cell--datum-st {
+    order: 3;
+  }
+
+  .napredovanja-crud__edit-row--drugi .napredovanja-crud__edit-cell--select {
+    order: 1;
+  }
+
+  .napredovanja-crud__edit-row--drugi .napredovanja-crud__edit-cell--ime-loze {
+    order: 2;
+  }
+}
+
+.napredovanja-crud__header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.napredovanja-crud__header-row .kontrola-labela {
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 7ch;
+  min-width: 7ch;
+  max-width: 7ch;
+  box-sizing: border-box;
+}
+
+.napredovanja-crud__header-row .kontrola-select,
+.napredovanja-crud__header-row .kontrola-edit-delete {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.napredovanja-crud__header-row--pronadi .kontrola-edit-delete {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.napredovanja-crud__reload-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--button_outer_shadow);
+}
+
+.napredovanja-crud__reload-btn:disabled {
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+@media (hover: hover) {
+  .napredovanja-crud__reload-btn:hover:not(:disabled) {
+    background: var(--c-gray-100, #eee);
+    box-shadow: var(--edit_focus_shadow);
+  }
+}
+
+.napredovanja-crud__reload-btn:active:not(:disabled) {
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+/* Datum st.: boja placeholdera kao u ostalim kontrolama */
+#edit_datum_st.date-empty {
+  color: var(--edit_placeholder);
+}
+#edit_datum_st.date-empty::-webkit-datetime-edit {
+  color: var(--edit_placeholder);
+}
+
+/* Edit panel disabled: labele i ikona u edit tijelu koriste disabled token */
+#edit_panel.napredovanja-crud__edit-panel--disabled .napredovanja-crud__edit-body .kontrola-labela {
+  color: var(--label_text_disabled);
+}
+#edit_panel.napredovanja-crud__edit-panel--disabled .napredovanja-crud__edit-body .napredovanja-crud__bolt-icon {
+  color: var(--label_text_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
