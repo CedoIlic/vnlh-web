@@ -1,3 +1,3 @@
 <?php
 require_once __DIR__ . '/require_login.php';
-readfile(__DIR__ . '/../html/Regije_CRUD.html');
+vnlh_emit_html_file('Regije_CRUD.html');

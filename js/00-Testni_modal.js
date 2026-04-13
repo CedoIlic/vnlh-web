@@ -4,8 +4,8 @@
    zatvaranje tipkom Povratak ili Escape.
    Ovisnosti: 0-Poruke.css (tablica, toggle, gumb Povratak, overlay), 0-Common po želji.
    Geometrija dijaloga (px) pamti se pri izlasku na desktopu i obnavlja pri sljedećem otvaranju.
-   Lijevo: lista pošiljatelja (GET 0-Poruke_lista.php) – ista logika prikaza kao u 0-Poruke.js, bez učitavanja
-   poruka u desni dio (klik na red samo označava red).
+   Lijevo: lista pošiljatelja (GET 0-Poruke_lista.php) – ista logika kao u 0-Poruke.js.
+   Klik na red: GET 0-Poruke_poruke.php (isti kao fetchPoruke u 0-Poruke.js) – tekstualni prikaz povijesti u #…_edit_povijest (readonly).
    Desno: #vnlh_testni_modal_edit_povijest (gornji), #vnlh_testni_modal_edit_poruka + tipka #vnlh_testni_modal_posalji (donji red).
    Pošalji: klase .poruke__posalji-btn (0-Poruke.css – sjene, disabled bez sjene). Omogućeno kad je odabran red u tablici i tekst nije prazan.
    Opcionalni callback: window.vnlhTestniModalPosalji(id_posiljatelj, tekst).
@@ -74,8 +74,13 @@
 
   /** Keš liste s 0-Poruke_lista.php (isti JSON kao modal Poruke). */
   var testniListaPosiljatelja = [];
-  /** id_posiljatelj označenog reda (vizualno); ne otvara se povijest poruka u ovom modalu. */
+  /** id_posiljatelj označenog retka; povijest se puni preko testniFetchPoruke. */
   var testniOdabraniPosiljatelj = null;
+  /**
+   * Rastući broj za svaki GET povijesti: ako korisnik brzo promijeni red, zanemari odgovor starijeg zahtjeva
+   * (ne prepisuje #_edit_povijest pogrešnim razgovorom).
+   */
+  var testniPovijestZahtjevId = 0;
 
   var modalLoaded = false;
   var modalOpen = false;
@@ -84,6 +89,104 @@
 
   function id(suffix) {
     return document.getElementById(ID_PREFIX + suffix);
+  }
+
+  /* --- Pomoćne funkcije za povijest (isti semantički model kao 0-Poruke.js: extractDate, extractTime, formatDateHR) --- */
+
+  function testniExtractDate(dt) {
+    if (!dt) return '';
+    return String(dt).substring(0, 10);
+  }
+
+  function testniExtractTime(dt) {
+    if (!dt) return '';
+    var s = String(dt);
+    var sp = s.indexOf(' ');
+    if (sp >= 0 && s.length >= sp + 6) return s.substring(sp + 1, sp + 6);
+    var tIdx = s.indexOf('T');
+    if (tIdx >= 0 && s.length >= tIdx + 6) return s.substring(tIdx + 1, tIdx + 6);
+    return '';
+  }
+
+  function testniFormatDateHR(dateStr) {
+    if (!dateStr || dateStr.length < 10) return dateStr || '';
+    var parts = dateStr.split('-');
+    if (parts.length < 3) return dateStr;
+    return parts[2] + '.' + parts[1] + '.' + parts[0] + '.';
+  }
+
+  /** Ime pošiljatelja iz testniListaPosiljatelja (kao nadjiImePosiljatelja u 0-Poruke.js). */
+  function testniNadjiImePosiljatelja(idPos) {
+    for (var i = 0; i < testniListaPosiljatelja.length; i++) {
+      if (testniListaPosiljatelja[i].id_posiljatelj === idPos) {
+        var item = testniListaPosiljatelja[i];
+        var p = item.prezime || '';
+        var im = item.ime || '';
+        if (!p && !im) return 'Nepoznati Korisnik';
+        return (p + ' ' + im).replace(/^\s+|\s+$/g, '');
+      }
+    }
+    return 'Nepoznati Korisnik';
+  }
+
+  /**
+   * Gradi jedan string za textarea povijesti iz istog JSON-a kao renderPoruke u 0-Poruke.js.
+   * @param {Array} poruke niz objekata s poljima smjer, poruka, vrijeme_slanja, procitano
+   * @param {string} idPosiljatelj trenutni sugovornik (za prefiks „Ti:” / ime)
+   */
+  function testniPorukeUPovijestTekst(poruke, idPosiljatelj) {
+    if (!poruke || poruke.length === 0) return 'Nema poruka.';
+    var lines = [];
+    var lastDate = '';
+    for (var i = 0; i < poruke.length; i++) {
+      var p = poruke[i];
+      var datum = testniExtractDate(p.vrijeme_slanja);
+      if (datum !== lastDate) {
+        lines.push('--- ' + testniFormatDateHR(datum) + ' ---');
+        lastDate = datum;
+      }
+      var autor = p.smjer === 'odgovor' ? 'Ti:' : testniNadjiImePosiljatelja(idPosiljatelj) + ':';
+      var proc = p.procitano ? ' \u2713\u2713' : '';
+      lines.push(autor + ' ' + (p.poruka || '') + '  [' + testniExtractTime(p.vrijeme_slanja) + ']' + proc);
+    }
+    return lines.join('\n');
+  }
+
+  /**
+   * GET 0-Poruke_poruke.php – isti endpoint i JSON kao fetchPoruke u 0-Poruke.js.
+   * Puni #…_edit_povijest; nakon uspjeha osvježava listu (nepročitane) kao glavni modal.
+   */
+  function testniFetchPoruke(idPosiljatelj) {
+    var pov = id('_edit_povijest');
+    var zahtjev = ++testniPovijestZahtjevId;
+    if (pov) {
+      pov.value = 'Učitavanje…';
+      pov.placeholder = '';
+    }
+    var url = API_BASE + '0-Poruke_poruke.php?id_posiljatelj=' + encodeURIComponent(idPosiljatelj);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (zahtjev !== testniPovijestZahtjevId) return;
+      if (!modalOpen || testniOdabraniPosiljatelj !== idPosiljatelj) return;
+      var t = trim(xhr.responseText);
+      var el = id('_edit_povijest');
+      if (!el) return;
+      if (!t || t.charAt(0) !== '[') {
+        el.value = 'Podaci nisu dostupni.';
+        return;
+      }
+      try {
+        var poruke = JSON.parse(t);
+        el.value = testniPorukeUPovijestTekst(poruke, idPosiljatelj);
+        el.scrollTop = el.scrollHeight;
+        fetchTestniLista();
+      } catch (eP) {
+        el.value = 'Greška pri čitanju odgovora.';
+      }
+    };
+    xhr.send();
   }
 
   /** Prazni oznaku retka u tablici testnog modala (bez API poziva). */
@@ -105,11 +208,16 @@
   function testniSyncPorukaPanel(imaSelekciju) {
     var inp = id('_edit_poruka');
     var btn = id('_posalji');
+    var pov = id('_edit_povijest');
     if (inp) {
       inp.disabled = !imaSelekciju;
       inp.value = '';
     }
     if (btn) btn.disabled = true;
+    if (pov && !imaSelekciju) {
+      pov.value = '';
+      pov.placeholder = 'Odaberite pošiljatelja u tablici…';
+    }
     if (imaSelekciju) testniOsvjeziPosaljiDisabled();
   }
 
@@ -224,6 +332,7 @@
             else all[r].classList.remove('poruke__row--selected');
           }
           testniSyncPorukaPanel(true);
+          testniFetchPoruke(idPos);
         });
       })(item.id_posiljatelj);
       tbody.appendChild(tr);
@@ -453,6 +562,10 @@
             window.vnlhTestniModalPosalji(testniOdabraniPosiljatelj, tekst);
           } catch (ePos) {}
         }
+        /* Nakon slanja: isprazni polje i ponovno učitaj povijest (isti API kao glavni modal). */
+        editPoruka.value = '';
+        testniOsvjeziPosaljiDisabled();
+        testniFetchPoruke(testniOdabraniPosiljatelj);
       });
     }
   }

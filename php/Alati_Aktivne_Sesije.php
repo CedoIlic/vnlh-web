@@ -14,6 +14,7 @@ if ($db) {
 }
 
 $html = file_get_contents(__DIR__ . '/../html/Alati_Aktivne_Sesije.html');
+$html = vnlh_apply_asset_token_to_html($html);
 // Jedinstveni placeholder u statičkom HTML-u (vrijednost već ograničena u PHP funkciji).
 $html = str_replace('{{VNLH_DEFAULT_INTERVAL_OSVJEZI}}', (string) $defaultSec, $html);
 $appBaseJs = vnlh_app_base_path_for_js();

@@ -1,3 +1,3 @@
 <?php
 require_once __DIR__ . '/require_login.php';
-readfile(__DIR__ . '/../html/Drzave_Adrese_CRUD.html');
+vnlh_emit_html_file('Drzave_Adrese_CRUD.html');

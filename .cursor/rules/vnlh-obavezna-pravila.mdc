@@ -24,7 +24,7 @@ Agent **mora** slijediti sve točke u ovom dokumentu. Nova obavezna pravila **do
   - **Major i minor** mijenja **isključivo korisnik** — agent ih **nikad ne smije** sam mijenjati.
   - **Revizija** (treća grupa) — agent smije povećati reviziju pri bumpu verzije.
 - Parametri `?v=` na `<script>` / `<link>` služe samo za **keš** – nisu zasebna „verzija aplikacije".
-- **Agent ne pita** korisnika treba li bumpati verziju niti „gdje staviti `?v=`” — **bez pitanja automatski** primijeni pravila u odjeljcima **2.1–2.3** i **2.5**; u odgovoru **ne navodi** pitanja tipa „želiš li bump” osim ako korisnik eksplicitno zapita o verziji.
+- **Agent ne pita** korisnika treba li bumpati verziju niti „gdje staviti `?v=`” — **bez pitanja automatski** primijeni pravila u odjeljcima **2.1–2.5**; u odgovoru **ne navodi** pitanja tipa „želiš li bump” osim ako korisnik eksplicitno zapita o verziji. Za šablone s **`__VNLH_ASSET_V__`** bump je **samo** `00-Version.js` (**2.4**).
 
 ### 2.1. Što mijenjati kad se digne samo **revizija** (rad na određenim modulima)
 
@@ -35,23 +35,23 @@ Agent **mora** slijediti sve točke u ovom dokumentu. Nova obavezna pravila **do
 
 ### 2.2. Zajednički (rijetko mijenjani) fajlovi
 
-- Ako se mijenja **zajednički** resurs od kojeg ovise gotovo sve stranice (npr. `0-Common.js`, `0-Poruke.js`, `0-Kontrole.css`, …) — tada **treba** uskladiti `?v=` na **svim** stranicama koje taj resurs učitavaju (to se događa rijetko).
+- Ako se mijenja **zajednički** resurs od kojeg ovise gotovo sve stranice (npr. `0-Common.js`, `0-Poruke.js`, `0-Kontrole.css`, …): kad šabloni koriste **`__VNLH_ASSET_V__`** (**2.4**), dovoljan je **bump revizije u `00-Version.js`** — PHP automatski ažurira `?v=` u svim stranicama koje prolaze kroz `vnlh_emit_*`. Ako neki ulaz **nije** na tom sustavu, ručno uskladi `?v=` samo za taj ulaz / resurs.
 
 ### 2.3. **Minor** ili **major** (mijenja korisnik)
 
 - Kad korisnik promijeni **minor** ili **major**, tada je u redu (i očekivano) **globalno** uskladiti `?v=` na svim relevantnim HTML / ulaznim predlošcima — „veliki” bump, puni cache-bust.
 
-### 2.4. Planirano: centralni `?v=` preko PHP (opcija 2)
+### 2.4. Centralni `?v=` preko PHP (**uvedeno**)
 
-- **Status:** dogovoreno s korisnikom, **još nije** uvedeno u kod — primijeniti kad tim nađe vremena.
-- **Cilj:** smanjiti **masovno** ručno mijenjanje `?v=` u desecima `.html` datoteka: **jedan zajednički PHP include** (npr. `php/asset_versions.php` ili postojeći zajednički ulaz) koji izvozi jednu konstantu / varijablu (npr. `$VNLH_ASSET_V` ili čita reviziju iz jednog mjesta), a CRUD / meni predlošci u `<link>` / `<script>` koriste `?v=<?= … ?>`.
-- **Napomena za implementaciju:** `window.VNLH_VERZIJA` u `js/00-Version.js` i dalje je izvor za **badge** aplikacije; usklađivanje s centralnim `?v=` (isti string ili odvojeno) — odluka pri radu. Do uvođenja **2.4** vrijede odjeljci **2.1–2.3** i **2.5**.
+- **Šabloni** `html/*.html`, `index.html`, `test.html`: u `<link>` / `<script>` (i favicon) koristi **`?v=__VNLH_ASSET_V__`** (literalni placeholder), **ne** ručni broj revizije.
+- **PHP:** `php/vnlh_paths.php` — funkcije `vnlh_asset_cache_token()`, `vnlh_apply_asset_token_to_html()`, `vnlh_emit_html_file()`, `vnlh_emit_html_absolute()`. Token se čita iz **`js/00-Version.js`** (`window.VNLH_VERZIJA`). CRUD ulazi zamjenjuju `readfile(html/…)` s `vnlh_emit_html_file('…')`; `index.php` / `test.php` koriste `vnlh_emit_html_absolute`; `Meni.php`, `Alati_Aktivne_Sesije.php`, `Alati_Meni_Test.php`, `login_stranica_get.php` primjenjuju token na učitani HTML prije `echo`.
+- **Bump keša:** digni **samo** `window.VNLH_VERZIJA` u `00-Version.js` — **ne** traži po repou desetke zamjena `?v=` u HTML-u. Stranice moraju ići kroz **`.php`** (ne direktno `file:///…html`) da placeholder prođe.
 
-### 2.5. Moratorium: bez masovnog `?v=` na svim `.html` (do uvođenja **2.4**)
+### 2.5. Moratorium: bez masovnog ručnog `?v=` na svim `.html`
 
-- **Dok ne postoji** centralni PHP iz **2.4**, **zabranjeno** je u jednom koraku **ažurirati `?v=` na svim ili gotovo svim** `.html` datotekama repozitorija **samo** zbog nove **revizije** u `00-Version.js` / `window.VNLH_VERZIJA` ili „da sve stranice budu na istom broju” bez promjene major/minor.
-- **Dopušteno** masovno usklađivanje `?v=` na **svim** relevantnim ulazima **samo** kad korisnik promijeni **major** ili **minor** — vidi **2.3**.
-- **Ovo nije** zabranjeno (nije „bump verzije aplikacije na svim html” u smislu moratorija): ažurirati `?v=` **samo za URL konkretnog diranog** `.css` / `.js` na stranicama koje ga učitavaju (**2.1**), uključujući **sve** stranice koje uključuju **zajednički** resurs kad se on promijeni (**2.2**) — to je keš **tog** resursa, ne globalni sync cijelog predloška zbog revizije badgea.
+- **Ne** vraćati šablone na obrazac `?v=10.x.x` po desecima datoteka zbog revizije — koristi **2.4**.
+- **Dopušteno** masovno usklađivanje **stvarnih** brojeva `?v=` na **svim** ulazima **samo** kad korisnik promijeni **major** ili **minor** (**2.3**), ili ako se **namjerno** napušta placeholder (rijetko).
+- **Izuzeće (2.2):** ako zajednički `.js`/`.css` **nije** uključen preko `__VNLH_ASSET_V__` šablona (npr. izvan ovog sustava), i dalje vrijedi ručno `?v=` samo za taj resurs gdje treba.
 
 ---
 

@@ -85,12 +85,12 @@ if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'
  * Izuzeci (ne ulaze u petlju $allowed / $wantHtml):
  * - Meni.php, index.php, test.php – ulazne točke, nisu „stranica forme“.
  * - 0-Obrada_Slike.php – ne učitava cijelu stranicu nego samo HTML fragment modala obrade slike
- *   (readfile html/0-Obrada_Slike.html). Učitava ga 0-Obrada_Slike.js preko fetch(); nije u meniju
+ *   (vnlh_emit_html_file html/0-Obrada_Slike.html). Učitava ga 0-Obrada_Slike.js preko fetch(); nije u meniju
  *   kao zasebna stavka. Bez ovog izuzetka fetch bi slijedio 302 na Meni.php i modal bi se ne pokrenuo.
  *   Zaštita: ista valjana sesija i ostale provjere u ovom fajlu kao za ostale stranice.
- * - 0-Poruke.php – HTML fragment modala za sustav poruka (readfile html/0-Poruke.html).
+ * - 0-Poruke.php – HTML fragment modala za sustav poruka (vnlh_emit_html_file 0-Poruke.html).
  *   Učitava ga 0-Poruke.js preko fetch(); globalni modal, nije stavka menija.
- * - 00-Testni_modal.php – HTML fragment testnog modala (readfile html/00-Testni_modal.html).
+ * - 00-Testni_modal.php – HTML fragment testnog modala (vnlh_emit_html_file; samo vnlh_paths, bez ovog require_login).
  *   Učitava ga 00-Testni_modal.js preko fetch().
  *
  * Kad dodaješ novi sličan „fragment“ endpoint, ili ga dodaj u ovaj uvjet (uz komentar), ili

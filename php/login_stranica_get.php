@@ -5,6 +5,7 @@
  * Valjana sesija s must_change_password → Login forma (promjena lozinke).
  */
 require_once __DIR__ . '/vnlh_password_policy.php';
+require_once __DIR__ . '/vnlh_paths.php';
 
 $uid = isset($_SESSION['id_korisnik']) ? (int) $_SESSION['id_korisnik'] : 0;
 $mustChange = !empty($_SESSION['must_change_password']);
@@ -21,6 +22,7 @@ if ($mustChange && $uid > 0 && isset($_SESSION['login_display'])) {
 
 $htmlPath = __DIR__ . '/../html/Login.html';
 $html = file_exists($htmlPath) ? (string) file_get_contents($htmlPath) : '';
+$html = vnlh_apply_asset_token_to_html($html);
 
 /*
  * Apsolutne pathname putanje od web korijena (npr. /vnlh/php/Meni.php) – Login.js ih koristi za navigaciju i POST.
