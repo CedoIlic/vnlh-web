@@ -1,0 +1,187 @@
+/* =========================================================
+   00-Testni_modal.css
+   Omotač i dijalog testnog modala. Oslanja se na 0-Poruke.css za .kontrola-modal__*
+   i .poruke-btn (stranice već uključuju 0-Poruke.css prije ovog fajla).
+   Nativni resize: both na .testni-modal__dialog – preglednik crta grip u donjem desnom
+   kutu okvira dijaloga (vizualno uz podnožje).
+   ========================================================= */
+
+.testni-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10006;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.testni-modal[aria-hidden="true"] {
+  display: none;
+}
+
+/* Jedan frame pri otvaranju: cijeli sloj nevidljiv dok JS postavi left/top/width/height (nema „miganja”). */
+.testni-modal.testni-modal--pending-layout {
+  visibility: hidden;
+}
+.testni-modal.testni-modal--pending-layout > .kontrola-modal__overlay {
+  opacity: 0 !important;
+}
+
+.testni-modal > .kontrola-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--modal_overlay_bg, rgba(0, 0, 0, 0.5));
+  opacity: 0;
+  transition: opacity var(--modal_fade_duration, 0.2s);
+}
+.testni-modal.kontrola-modal--dim > .kontrola-modal__overlay {
+  opacity: calc(var(--modal_overlay_dim_intensity, 50) / 100);
+}
+
+/*
+ * Početna širina = 420px + 30% = 546px; min-width = ista kao width da nativni resize ne smanjuje širinu ispod početne.
+ * min(546px, 90vw): na uskom prozoru nema sukoba s max-width.
+ * Visina +10% od 320px → 352px.
+ */
+.testni-modal__dialog {
+  position: relative;
+  z-index: 1;
+  max-width: 90vw;
+  width: min(546px, 90vw);
+  min-width: min(546px, 90vw);
+  height: min(352px, 85vh);
+  min-height: min(352px, 85vh);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border: var(--modal_border_w, 1px) solid var(--modal_border, #ccc);
+  border-radius: var(--panel_radius, 12px);
+  box-shadow: var(--panel_sjena, 0 6px 16px rgba(0, 0, 0, 0.35));
+  background: var(--modal_body_bg, #fff);
+  opacity: 0;
+  transition: opacity var(--modal_fade_duration, 0.2s);
+  overflow: auto;
+  resize: both;
+}
+
+.testni-modal.kontrola-modal--open .testni-modal__dialog {
+  opacity: 1;
+}
+
+.testni-modal .kontrola-modal__header {
+  flex: 0 0 auto;
+  padding: var(--modal_header_padding_y, 0.75rem) var(--modal_header_padding_x, 1rem);
+  background: var(--modal_header_bg, #f5f5f5);
+  color: var(--modal_header_text, #333);
+  font-family: var(--modal_header_font_family, var(--font_family, sans-serif));
+  font-size: var(--modal_header_font_size, 1rem);
+  font-weight: var(--modal_header_font_weight, 600);
+  border-bottom: var(--modal_header_border_bottom, 1px solid #ccc);
+  user-select: none;
+}
+
+.testni-modal .kontrola-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 12px 12px 1rem;
+  font-family: var(--font_family, sans-serif);
+  font-size: var(--font_size, 0.9rem);
+  color: var(--text, #333);
+  user-select: text;
+  cursor: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/*
+ * Blok s dvije napomene (jedna ispod druge): 70% / 30% visine; uz desni rub širine ⅔.
+ * Sjena kao .poruke__refresh-btn; resize: none na poljima.
+ */
+.testni-modal__napomene {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.testni-modal__napomena-blok {
+  width: 66.666%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.testni-modal__napomena-blok:nth-child(1) {
+  flex: 7 1 0;
+}
+.testni-modal__napomena-blok:nth-child(2) {
+  flex: 3 1 0;
+}
+
+.testni-modal__napomena {
+  display: block;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 12px;
+  font: inherit;
+  line-height: 1.4;
+  color: inherit;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--modal_body_bg, #fff);
+  min-width: 0;
+  resize: none;
+  overflow: auto;
+  outline: none;
+  box-shadow: var(--button_outer_shadow, var(--kontrole_sjena_slaba_2, 0 6px 16px rgba(0, 0, 0, 0.35)));
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (hover: hover) {
+  .testni-modal__napomena:hover {
+    border-color: var(--edit_border_focus, #4a90d9);
+    box-shadow: var(--edit_focus_shadow, var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0, 0, 0, 0.3)));
+  }
+}
+
+.testni-modal__napomena:focus {
+  border-color: var(--edit_border_focus, #4a90d9);
+  box-shadow: var(--edit_focus_shadow, var(--kontrole_sjena_slaba_1, 0 3px 8px rgba(0, 0, 0, 0.3)));
+}
+
+/* Podnožje: samo Povratak desno; desni padding ostavlja zrak uz nativni resize grip. */
+.testni-modal .testni-modal__footer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  padding: var(--modal_footer_padding_y, 0.75rem) calc(var(--modal_footer_padding_x, 1rem) + 10px)
+    var(--modal_footer_padding_y, 0.75rem) var(--modal_footer_padding_x, 1rem);
+  background: var(--modal_footer_bg, #f5f5f5);
+  border-top: var(--modal_footer_border_top, 1px solid #ccc);
+}
+
+@media (max-width: 768px) {
+  .testni-modal__dialog {
+    resize: none;
+    width: 95vw;
+    max-width: 95vw;
+    min-width: 0;
+    min-height: 0;
+  }
+}

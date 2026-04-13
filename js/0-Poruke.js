@@ -115,7 +115,8 @@
   /* =========================================================
    * ▒▒ BLOK: MAIL IKONA U NASLOV-FORME ▒▒
    * Injektira mail ikonu lijevo od logout ikone.
-   * Dvostruki klik otvara modal poruka.
+   * Jedan klik (nakon kratke pauze) otvara modal poruka; dvoklik otvara testni modal ako postoji
+   * window.vnlhOpenTestniModal (00-Testni_modal.js), inače drugi put otvara Poruke.
    * Klasa .naslov-forme__poruke definirana u 0-Poruke.css.
    * ========================================================= */
   function vnlhInjectNaslovPoruke() {
@@ -134,17 +135,34 @@
         btn.type = 'button';
         btn.className = 'naslov-forme__poruke';
         btn.setAttribute('aria-label', 'Poruke');
-        btn.title = 'Poruke (dvostruki klik)';
+        btn.title = 'Poruke (klik) · testni modal (dvoklik)';
 
         var span = document.createElement('span');
         span.className = 'poruke-icon--mail';
         span.setAttribute('aria-hidden', 'true');
         btn.appendChild(span);
 
-        /* Dvostruki klik otvara modal */
+        /* Jedan klik: Poruke nakon kratke pauze (dvoklik otkida timer i otvara testni modal). */
+        var mailKlikTimer = null;
+        btn.addEventListener('click', function (e) {
+          if (e.detail !== 1) return;
+          if (mailKlikTimer) clearTimeout(mailKlikTimer);
+          mailKlikTimer = setTimeout(function () {
+            mailKlikTimer = null;
+            openModal();
+          }, 280);
+        });
         btn.addEventListener('dblclick', function (e) {
           e.preventDefault();
-          openModal();
+          if (mailKlikTimer) {
+            clearTimeout(mailKlikTimer);
+            mailKlikTimer = null;
+          }
+          if (typeof window.vnlhOpenTestniModal === 'function') {
+            window.vnlhOpenTestniModal();
+          } else {
+            openModal();
+          }
         });
 
         /* Umetni u wrapper .naslov-forme__ikone ispred logout ikone.

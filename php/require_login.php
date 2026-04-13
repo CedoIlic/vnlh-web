@@ -90,12 +90,14 @@ if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'
  *   Zaštita: ista valjana sesija i ostale provjere u ovom fajlu kao za ostale stranice.
  * - 0-Poruke.php – HTML fragment modala za sustav poruka (readfile html/0-Poruke.html).
  *   Učitava ga 0-Poruke.js preko fetch(); globalni modal, nije stavka menija.
+ * - 00-Testni_modal.php – HTML fragment testnog modala (readfile html/00-Testni_modal.html).
+ *   Učitava ga 00-Testni_modal.js preko fetch().
  *
  * Kad dodaješ novi sličan „fragment“ endpoint, ili ga dodaj u ovaj uvjet (uz komentar), ili
  * uključi šablon u glavnu HTML stranicu da ne treba zaseban PHP.
  */
 $scriptBase = basename($_SERVER['SCRIPT_NAME'] ?? '');
-if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !== 'test.php' && $scriptBase !== '0-Obrada_Slike.php' && $scriptBase !== '0-Poruke.php') {
+if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !== 'test.php' && $scriptBase !== '0-Obrada_Slike.php' && $scriptBase !== '0-Poruke.php' && $scriptBase !== '00-Testni_modal.php') {
     $allowed = isset($_SESSION['vnlh_meni_dopustene']) && is_array($_SESSION['vnlh_meni_dopustene'])
         ? $_SESSION['vnlh_meni_dopustene'] : [];
     $wantHtml = preg_replace('/\.php$/i', '.html', $scriptBase);

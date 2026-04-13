@@ -1,0 +1,35 @@
+<!-- =========================================================
+     00-Testni_modal.html
+     Jednostavan modal za ispitivanje (zaglavlje s refreshom, tijelo, podnožje Povratak + nativni resize).
+     Učitava ga 00-Testni_modal.js preko fetch('00-Testni_modal.php'); __ID_PREFIX__ → jedinstveni id prefiks.
+     ========================================================= -->
+<div id="__ID_PREFIX__" class="testni-modal kontrola-modal--dim" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="__ID_PREFIX___header">
+    <div class="kontrola-modal__overlay"></div>
+    <div class="testni-modal__dialog">
+        <div class="kontrola-modal__header testni-modal__header poruke__header" id="__ID_PREFIX___header">
+            <div class="poruke__header-title">Testni modal</div>
+            <button type="button" id="__ID_PREFIX___refresh" class="poruke__refresh-btn" aria-label="Osvježi" title="Osvježi">
+                <svg class="poruke__refresh-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M2.985 19.644l3.181-3.182"/></svg>
+            </button>
+        </div>
+        <div class="kontrola-modal__body testni-modal__body">
+            <!--
+              Napomene: uz desni rub, širina ⅔ tijela; visina tijela 70% / 30%.
+              ID-ovi: __ID_PREFIX___edit_povijest (gornji), __ID_PREFIX___edit_poruka (donji).
+            -->
+            <div class="testni-modal__napomene">
+                <div class="testni-modal__napomena-blok">
+                    <textarea id="__ID_PREFIX___edit_povijest" class="testni-modal__napomena testni-modal__edit-povijest" spellcheck="true" aria-label="Povijest"></textarea>
+                </div>
+                <div class="testni-modal__napomena-blok">
+                    <textarea id="__ID_PREFIX___edit_poruka" class="testni-modal__napomena testni-modal__edit-poruka" spellcheck="true" aria-label="Poruka"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer testni-modal__footer">
+            <button type="button" id="__ID_PREFIX___povratak" class="poruke-btn poruke-btn--povratak" title="Zatvori">
+                <span class="poruke-btn__outer"><span class="poruke-btn__inner"><span class="poruke-btn__label">Povratak</span></span></span>
+            </button>
+        </div>
+    </div>
+</div>
