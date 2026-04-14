@@ -302,6 +302,98 @@
   flex: 1 1 auto;
 }
 
+/* Način „razvoj” (gumb ključa): naslov modala plav (--c-blue-600). */
+.testni-modal--poruke-razvoj .poruke__header-title {
+  color: var(--c-blue-600, #0d6efd);
+}
+
+/*
+ * Način razvoj: filtar (toggle) i tablica skriveni; umjesto tablice – krug promjera 50 % manje strane
+ * prostora za tablicu (container query), u sredini ista Lucide wrench ikona kao u podnožju.
+ * Boje usklađene s aktivnim stanjem gumba ključa: krug = --c-blue-300, ikona = bijela (currentColor).
+ */
+.testni-modal--poruke-razvoj .poruke__toggle-row {
+  display: none !important;
+}
+.testni-modal--poruke-razvoj .poruke__tablica-wrap {
+  display: none !important;
+}
+
+/* Zauzima isti flex prostor kao .poruke__tablica-wrap ispod toggle retka (kad je tablica skrivena). */
+.poruke__razvoj-tablica-zamjena {
+  display: none;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.testni-modal--poruke-razvoj .poruke__razvoj-tablica-zamjena {
+  display: flex;
+}
+
+.poruke__razvoj-krug {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--c-blue-300, #79adfc);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  /* Fallback bez container query jedinica: promjer ≈ 50 % širine lijevog stupca. */
+  width: 50%;
+  max-width: calc(100% - 16px);
+  max-height: calc(100% - 16px);
+  height: auto;
+  box-shadow: var(--button_outer_shadow, var(--kontrole_sjena_slaba_2, 0 6px 16px rgba(0, 0, 0, 0.25)));
+}
+
+/* Točnije: promjer = 50 % manje strane prostora za tablicu (cqmin = min(širina, visina) kontejnera). */
+@supports (container-type: size) {
+  .poruke__razvoj-tablica-zamjena {
+    container-type: size;
+    container-name: poruke-razvoj-tablica;
+  }
+  .poruke__razvoj-krug {
+    width: 50cqmin;
+    height: 50cqmin;
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
+.poruke__razvoj-krug-ikona {
+  display: block;
+  width: 46%;
+  height: auto;
+  flex-shrink: 0;
+}
+
+/* Blok polja nove poruke (textarea + Pošalji): svijetloplava podloga u načinu razvoj. */
+.testni-modal--poruke-razvoj .testni-modal__napomena-blok--poruka {
+  background: var(--c-blue-100, #d9e9ff);
+  border-radius: var(--edit_radius, 6px);
+  padding: 0.35rem 0.4rem;
+  box-sizing: border-box;
+}
+
+/*
+ * Isti ton na samom polju za poruku (textarea): inače ostaje bijela .testni-modal__napomena pozadina
+ * naspram plavog bloka; u načinu razvoj sve je --c-blue-100.
+ */
+.testni-modal--poruke-razvoj .testni-modal__napomena.testni-modal__edit-poruka {
+  background: var(--c-blue-100, #d9e9ff);
+}
+.testni-modal--poruke-razvoj .testni-modal__napomena.testni-modal__edit-poruka:disabled {
+  background: var(--c-blue-100, #d9e9ff);
+  color: var(--napomena_text_disabled, #999);
+  border-color: var(--napomena_border_disabled, #ddd);
+}
+
 /* --- Blok: Refresh tipka u zaglavlju ---
    Sjena i veliÄina kopirani iz lista-reload-btn (Lista.css):
    default = button_outer_shadow, hover = edit_focus_shadow,
@@ -371,6 +463,20 @@
   padding: 8px 10px;
   border-bottom: 1px solid var(--panel_border, #ddd);
   background: var(--modal_body_bg, #fff);
+  flex-shrink: 0;
+}
+
+/* Dva togglea u jednom retku: filtar nepročitanih lijevo, „Razvoj” desno (0-Poruke.js + GET samo_razvoj). */
+.poruke__toggle-row-inner {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.poruke__toggle-razvoj-wrap {
   flex-shrink: 0;
 }
 
@@ -905,22 +1011,53 @@
   flex-shrink: 0;
 }
 
-/* --- Blok: PodnoÅ¾je â€“ lijevo ikone, desno Povratak ---
+/* --- Blok: PodnoÅ¾je â€“ lijevo ikone, sredina (ključ u slobodnom prostoru), desno Povratak ---
    PojaÄan selektor da pregazi base .kontrola-modal__footer justify-content: center.
-   position: relative â€“ anchor za eventualne apsolutno pozicionirane elemente u podnoÅ¾ju. */
+   position: relative â€“ anchor za kutni resize (mobitel). */
 .poruke-modal .poruke__footer {
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   position: relative;
+  gap: 0.5rem;
 }
 .poruke__footer-left {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 .poruke__footer-right {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
+}
+
+/*
+ * Sredina: ispunjava sav preostali red između trash lijevo i Povratak desno; Lucide wrench centriran u tom prostoru
+ * (ne geometrijski centar cijelog podnožja).
+ */
+.poruke__footer-center {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+/* Toggle „alat”: prvi klik – plava podloga (--c-blue-300), bijela ikona; drugi klik – normalno kao .poruke__icon-btn. */
+.poruke__footer-wrench-btn.poruke__footer-wrench-btn--aktivno,
+.poruke__footer-wrench-btn.poruke__footer-wrench-btn--aktivno:hover:not(:disabled),
+.poruke__footer-wrench-btn.poruke__footer-wrench-btn--aktivno:active:not(:disabled) {
+  background: var(--c-blue-300, #79adfc);
+  color: #fff;
+  border-color: var(--c-blue-300, #79adfc);
+  box-shadow: var(--button_outer_shadow, var(--kontrole_sjena_slaba_2, 0 6px 16px rgba(0, 0, 0, 0.35)));
+}
+.poruke__footer-wrench-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 /* --- Blok: ZajedniÄke icon-tipke u podnoÅ¾ju (nova poruka, brisanje) ---
@@ -1775,15 +1912,17 @@
 }
 
 /*
- * PodnoÅ¾je: kao .poruke-modal .poruke__footer u 0-Poruke.css (space-between, lijevo +/trash, desno Povratak).
+ * PodnoÅ¾je: kao .poruke-modal .poruke__footer (flex-start + .poruke__footer-center flex:1 za sredinu između trash i Povratak).
  * Desni padding ostavlja zrak uz nativni resize grip dijaloga.
  */
 .testni-modal .kontrola-modal__footer.testni-modal__footer.poruke__footer {
   flex: 0 0 auto;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 0.5rem;
+  position: relative;
   padding: var(--modal_footer_padding_y, 0.75rem) calc(var(--modal_footer_padding_x, 1rem) + 10px)
     var(--modal_footer_padding_y, 0.75rem) var(--modal_footer_padding_x, 1rem);
   background: var(--modal_footer_bg, #f5f5f5);
@@ -1839,6 +1978,13 @@
     flex: 1 1 0;
     min-height: 0;
     overflow-y: auto;
+  }
+
+  /* Isti flex kao tablica kad je uključen način razvoj (krug umjesto liste). */
+  .testni-modal .poruke__left .poruke__razvoj-tablica-zamjena {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .testni-modal .testni-modal__desno {

@@ -1,14 +1,14 @@
 <!-- =========================================================
      0-Poruke.html
-     Modal „Poruke”: lijevo toggle + tablica pošiljatelja (GET 0-Poruke_lista.php), desno povijest (scroll) + textarea,
-     zaglavlje s refreshom, podnožje Povratak + nativni resize.
+     Modal „Poruke”: lijevo toggle(i) + tablica (u načinu razvoj krug + ključ umjesto tablice), desno povijest + textarea,
+     zaglavlje s refreshom, podnožje + / trash / alat (wrench) / Povratak + nativni resize.
      Učitava ga js/0-Poruke.js preko fetch('0-Poruke.php'); __ID_PREFIX__ → jedinstveni id prefiks (npr. vnlh_modal_poruke).
      ========================================================= -->
 <div id="__ID_PREFIX__" class="testni-modal kontrola-modal--dim" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="__ID_PREFIX___header">
     <div class="kontrola-modal__overlay"></div>
     <div class="testni-modal__dialog">
         <div class="kontrola-modal__header testni-modal__header poruke__header" id="__ID_PREFIX___header">
-            <div class="poruke__header-title">Poruke</div>
+            <div id="__ID_PREFIX___header_title" class="poruke__header-title">Poruke</div>
             <button type="button" id="__ID_PREFIX___refresh" class="poruke__refresh-btn" aria-label="Osvježi poruke" title="Osvježi poruke">
                 <svg class="poruke__refresh-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M2.985 19.644l3.181-3.182"/></svg>
             </button>
@@ -17,16 +17,32 @@
             <!-- Lijevo: tablica pošiljatelja (stilovi iz 0-Poruke.css). -->
             <div class="poruke__left">
                 <div class="poruke__toggle-row">
-                    <label class="poruke__toggle-label" id="__ID_PREFIX___toggle_label">
-                        <input type="checkbox" id="__ID_PREFIX___toggle" class="poruke__toggle-input" aria-label="Filtar poruka">
-                        <span class="poruke__toggle-slider"></span>
-                        <span class="poruke__toggle-text" id="__ID_PREFIX___toggle_text">Sve poruke</span>
-                    </label>
+                    <div class="poruke__toggle-row-inner">
+                        <label class="poruke__toggle-label" id="__ID_PREFIX___toggle_label">
+                            <input type="checkbox" id="__ID_PREFIX___toggle" class="poruke__toggle-input" aria-label="Filtar poruka">
+                            <span class="poruke__toggle-slider"></span>
+                            <span class="poruke__toggle-text" id="__ID_PREFIX___toggle_text">Sve poruke</span>
+                        </label>
+                        <!-- Vidljivost: 0-Poruke_razvoj_toggle_prikazi.php (korisnik mora biti u listi varijable id=1002). -->
+                        <div id="__ID_PREFIX___toggle_razvoj_wrap" class="poruke__toggle-razvoj-wrap" style="display:none" aria-hidden="true">
+                            <label class="poruke__toggle-label" id="__ID_PREFIX___toggle_razvoj_label">
+                                <input type="checkbox" id="__ID_PREFIX___toggle_razvoj" class="poruke__toggle-input" aria-label="Samo poruke razvoju">
+                                <span class="poruke__toggle-slider"></span>
+                                <span class="poruke__toggle-text">Razvoj</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="poruke__tablica-wrap" id="__ID_PREFIX___tablica_wrap">
                     <table class="poruke__tablica" id="__ID_PREFIX___tablica">
                         <tbody id="__ID_PREFIX___tbody"></tbody>
                     </table>
+                </div>
+                <!-- Način razvoj: umjesto toggle + tablice – krug (50 % prostora za tablicu) + Lucide wrench (0-Poruke.css). -->
+                <div class="poruke__razvoj-tablica-zamjena" aria-hidden="true">
+                    <div class="poruke__razvoj-krug">
+                        <svg class="poruke__razvoj-krug-ikona" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    </div>
                 </div>
             </div>
             <!-- Desno: poruka gore, povijest dolje (flex order na svim širinama); lijevo tablica ostaje kao na PC-u. -->
@@ -53,7 +69,7 @@
                 </div>
             </div>
         </div>
-        <!-- Podnožje: lijevo + i trash, desno Povratak (stilovi .poruke__footer* u 0-Poruke.css). -->
+        <!-- Podnožje: lijevo + i trash, sredina gumb alat (Lucide wrench), desno Povratak (.poruke__footer* u 0-Poruke.css). -->
         <div class="kontrola-modal__footer poruke__footer testni-modal__footer">
             <div class="poruke__footer-left">
                 <button type="button" id="__ID_PREFIX___nova" class="poruke__icon-btn" aria-label="Nova poruka" title="Nova poruka">
@@ -61,6 +77,12 @@
                 </button>
                 <button type="button" id="__ID_PREFIX___brisi" class="poruke__icon-btn" aria-label="Obriši razgovor" title="Obriši razgovor" disabled>
                     <span class="poruke-icon--trash" aria-hidden="true"></span>
+                </button>
+            </div>
+            <!-- Lucide wrench / clipboard-paste (https://lucide.dev/icons/wrench, https://lucide.dev/icons/clipboard-paste); stanje u 0-Poruke.js. -->
+            <div class="poruke__footer-center">
+                <button type="button" id="__ID_PREFIX___footer_wrench" class="poruke__icon-btn poruke__footer-wrench-btn" aria-pressed="false" aria-label="Alat" title="Alat">
+                    <svg class="poruke__footer-wrench-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
                 </button>
             </div>
             <div class="poruke__footer-right">

@@ -2,9 +2,11 @@
    0-Poruke.js
    Modal „Poruke”: fragment, tablica, povijest, slanje; mail + (opcionalno) chat ikona u .naslov-forme + globalni polling nepročitanih.
    Otvaranje: klik na mail, window.vnlhOpenTestniModal / VnlhPorukeOpenModal; zatvaranje Povratak ili Escape.
+   Podnožje: Lucide wrench – način „razvoj” (naslov, plava zona, slanje → 0-Poruke_posalji.php var. 1002, povijest → 0-Poruke_poruke_razvoj.php);
+   kad je uključen filtar liste „Razvoj”: samo pregled + ikona clipboard-paste (kopiraj sve razgovore u međuspremnik).
    Ovisnosti: 0-Poruke.css, 0-Common.js (postFormData, vnlhAppBasePathname, .naslov-forme__ikone).
-   API: 0-Poruke.php, 0-Poruke_lista.php, 0-Poruke_poruke.php, 0-Poruke_neprocitane.php, 0-Poruke_posalji.php,
-        0-Poruke_korisnici.php, 0-Poruke_brisi.php, common_sustav_varijable.php?id=101.
+   API: 0-Poruke.php, 0-Poruke_lista.php, 0-Poruke_poruke.php, 0-Poruke_poruke_razvoj.php, 0-Poruke_neprocitane.php, 0-Poruke_posalji.php,
+        0-Poruke_korisnici.php, 0-Poruke_brisi.php, 0-Poruke_razvoj_toggle_prikazi.php, poruke_razvoj_var_1002.php (server), common_sustav_varijable.php?id=101.
    Chat (opcionalno): dinamički 0-Chat.js + poruke_chat_*.php kad je VNLH_CHAT_DOZVOLJEN=1.
    Geometrija dijaloga (px) pamti se pri izlasku (desktop i mobitel zasebno) u localStorage i obnavlja pri sljedećem otvaranju.
    ========================================================= */
@@ -46,6 +48,26 @@
   /** Jedinstven prefiks id-jeva u umetnutom HTML-u (ne smije biti isti kao drugi moduli na stranici). */
   var ID_PREFIX = 'vnlh_modal_poruke';
 
+  /** Zadani naslov zaglavlja modala Poruke (#…_header_title). */
+  var PORUKE_NASLOV_DEFAULT = 'Poruke';
+  /** Naslov kad je uključen način „Slanje poruke razvoju” (gumb ključa u podnožju). */
+  var PORUKE_NASLOV_RAZVOJ = 'Slanje poruke razvoju';
+
+  /** Lucide wrench – isti path kao u html/0-Poruke.html (podnožje). */
+  var PORUKE_LUCIDE_WRENCH_SVG_INNER =
+    '<path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>';
+
+  /**
+   * Lucide clipboard-paste (https://lucide.dev/icons/clipboard-paste) – zamjena za wrench kad je uključen filtar liste „Razvoj”.
+   * stroke-width nasljeđuje se s roditeljskog <svg> (1.5).
+   */
+  var PORUKE_LUCIDE_CLIPBOARD_PASTE_SVG_INNER =
+    '<path stroke-linecap="round" stroke-linejoin="round" d="M11 14h10"/>' +
+    '<path stroke-linecap="round" stroke-linejoin="round" d="M16 4h2a2 2 0 0 1 2 2v1.344"/>' +
+    '<path stroke-linecap="round" stroke-linejoin="round" d="m17 18 4-4-4-4"/>' +
+    '<path stroke-linecap="round" stroke-linejoin="round" d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113"/>' +
+    '<rect x="8" y="2" width="8" height="4" rx="1" stroke-linecap="round" stroke-linejoin="round"/>';
+
   /**
    * Minimalne dimenzije dijaloga na desktopu (usklađeno s 0-Poruke.css).
    * Spremljena geometrija i nativni resize ne smiju biti manji od ovoga.
@@ -71,7 +93,7 @@
 
   /** Keš liste s 0-Poruke_lista.php (isti JSON kao modal Poruke). */
   var testniListaPosiljatelja = [];
-  /** id_posiljatelj označenog retka; povijest se puni preko testniFetchPoruke. */
+  /** id_posiljatelj označenog retka; povijest: testniFetchPoruke ili testniFetchPorukeRazvoj (način razvoj). */
   var testniOdabraniPosiljatelj = null;
   /**
    * Rastući broj za svaki GET povijesti: ako korisnik brzo promijeni red, zanemari odgovor starijeg zahtjeva
@@ -174,6 +196,281 @@
         inp.focus();
       }
     } catch (eF) {}
+  }
+
+  /** Je li uključen način „Slanje poruke razvoju” (aktivan gumb ključa u podnožju). */
+  function porukeJeRazvojMod() {
+    var w = id('_footer_wrench');
+    return !!(w && w.classList.contains('poruke__footer-wrench-btn--aktivno'));
+  }
+
+  /**
+   * Je li uključen filtar liste „Razvoj” (desni toggle u retku) – tablica i GET povijesti samo tip Poruka razvoju.
+   * Neovisno o načinu ključa u podnožju; kad je ključ aktivan, cijeli .poruke__toggle-row je skriven u CSS-u.
+   */
+  function porukeJeListaRazvojFilter() {
+    var ch = id('_toggle_razvoj');
+    return !!(ch && ch.checked);
+  }
+
+  /**
+   * Jedinstveni red za eksport u međuspremnik: „Prezime Ime” iz retka tablice (0-Poruke_lista.php).
+   */
+  function testniFormatImeZaEksport(item) {
+    if (!item) return 'Nepoznati korisnik';
+    var p = item.prezime || '';
+    var i = item.ime || '';
+    var s = (p + ' ' + i).replace(/^\s+|\s+$/g, '');
+    return s || 'Nepoznati korisnik';
+  }
+
+  /**
+   * Iz HTTP odgovora izdvaja JSON niz poruka (tolerira BOM / upozorenja ispred prvog '[').
+   * @returns {Array|null}
+   */
+  function testniIzvuciNizPorukaIzOdgovora(jsonTekst) {
+    var t = trim(String(jsonTekst || ''));
+    if (!t) return null;
+    t = t.replace(/^\uFEFF/, '');
+    var s = t.indexOf('[');
+    var e = t.lastIndexOf(']');
+    if (s < 0 || e <= s) return null;
+    try {
+      var arr = JSON.parse(t.substring(s, e + 1));
+      return Array.isArray(arr) ? arr : null;
+    } catch (eJ) {
+      return null;
+    }
+  }
+
+  /**
+   * Blok u međuspremniku za jednog sugovornika (red tablice):
+   *   1) jedan red – ime;
+   *   2) sve poruke niti (primljena + odgovor), isključivo ako nije brisano (brisano !== 1 u JSON-u);
+   *   3) kronološki po vrijeme_slanja: pri promjeni datuma red s dd.mm.yyyy., zatim (HH:MM) tekst poruke.
+   * testniExtractDate / testniExtractTime / testniFormatDateHR: deklaracije niže u istom modulu (hoist u IIFE).
+   */
+  function testniSastaviEksportBlokZaSugovornika(item, jsonTekst) {
+    var linije = [testniFormatImeZaEksport(item)];
+    var arr = testniIzvuciNizPorukaIzOdgovora(jsonTekst);
+    if (!arr || !arr.length) {
+      return linije.join('\n');
+    }
+    var aktivne = [];
+    for (var i = 0; i < arr.length; i++) {
+      var x = arr[i];
+      if (!x) {
+        continue;
+      }
+      if (Number(x.brisano) === 1) {
+        continue;
+      }
+      aktivne.push(x);
+    }
+    if (!aktivne.length) {
+      return linije.join('\n');
+    }
+    aktivne.sort(function (a, b) {
+      return String(a.vrijeme_slanja || '').localeCompare(String(b.vrijeme_slanja || ''));
+    });
+    var zadnjiDatum = null;
+    for (var j = 0; j < aktivne.length; j++) {
+      var p = aktivne[j];
+      var dKey = testniExtractDate(p.vrijeme_slanja);
+      if (dKey !== zadnjiDatum) {
+        zadnjiDatum = dKey;
+        if (dKey && dKey.length >= 10) {
+          linije.push(testniFormatDateHR(dKey));
+        } else {
+          linije.push(dKey || '—');
+        }
+      }
+      var tm = testniExtractTime(p.vrijeme_slanja);
+      if (!tm) {
+        tm = '??:??';
+      }
+      linije.push('(' + tm + ') ' + String(p.poruka != null ? p.poruka : ''));
+    }
+    return linije.join('\n');
+  }
+
+  /**
+   * Kopiranje u međuspremnik (HTTPS: Clipboard API; inače textarea + execCommand).
+   */
+  function porukeKopirajTekstUClipboard(tekst, onGotovo) {
+    var zavrsi = function (ok) {
+      if (typeof onGotovo === 'function') onGotovo(!!ok);
+    };
+    if (!tekst) {
+      zavrsi(false);
+      return;
+    }
+    if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard
+        .writeText(tekst)
+        .then(function () {
+          zavrsi(true);
+        })
+        .catch(function () {
+          porukeKopirajTekstExecCommand(tekst, zavrsi);
+        });
+      return;
+    }
+    porukeKopirajTekstExecCommand(tekst, zavrsi);
+  }
+
+  function porukeKopirajTekstExecCommand(tekst, zavrsi) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = tekst;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      zavrsi(ok);
+    } catch (eC) {
+      zavrsi(false);
+    }
+  }
+
+  /**
+   * Za svakog sugovornika iz trenutačne tablice (redoslijed kao u tablici): GET 0-Poruke_poruke.php?samo_razvoj=1,
+   * zatim sastavljanje teksta i kopiranje. Sekvencijalni XHR da ne preopteretimo server.
+   */
+  function porukeKopirajSveRazgovoreRazvojUClipboard() {
+    if (!modalOpen || !porukeJeListaRazvojFilter()) return;
+    var lista = testniListaPosiljatelja || [];
+    if (!lista.length) {
+      if (typeof window.showPorukaModal === 'function') {
+        window.showPorukaModal('101', []);
+      }
+      return;
+    }
+    var btn = id('_footer_wrench');
+    if (btn) btn.disabled = true;
+    var dijelovi = [];
+    var idx = 0;
+
+    function sljedeci() {
+      if (idx >= lista.length) {
+        var cjelina = dijelovi.join('\n\n');
+        porukeKopirajTekstUClipboard(cjelina, function (ok) {
+          if (btn) btn.disabled = false;
+          if (ok) {
+            var staro = btn ? btn.getAttribute('title') : '';
+            if (btn) {
+              btn.setAttribute('title', 'Kopirano u međuspremnik');
+              setTimeout(function () {
+                if (btn && staro != null) btn.setAttribute('title', staro);
+              }, 2000);
+            }
+          } else if (typeof window.showPorukaModal === 'function') {
+            window.showPorukaModal('101', []);
+          }
+        });
+        return;
+      }
+      var item = lista[idx];
+      var idP = item.id_posiljatelj;
+      idx += 1;
+      var url = API_BASE + '0-Poruke_poruke.php?id_posiljatelj=' + encodeURIComponent(idP) + '&samo_razvoj=1';
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (xhr._vnlhExportGotovo) return;
+        xhr._vnlhExportGotovo = true;
+        var odg = xhr.status === 200 ? trim(xhr.responseText) : '';
+        dijelovi.push(testniSastaviEksportBlokZaSugovornika(item, odg));
+        sljedeci();
+      };
+      xhr.onerror = function () {
+        dijelovi.push(testniSastaviEksportBlokZaSugovornika(item, ''));
+        sljedeci();
+      };
+      xhr.send();
+    }
+
+    sljedeci();
+  }
+
+  /**
+   * Ikonica u podnožju: wrench (način pisanja razvoju) ili clipboard-paste (samo pregled + kopiranje svih razgovora).
+   */
+  function porukeOsvjeziFooterAlatSvg() {
+    var btn = id('_footer_wrench');
+    var svg = btn ? btn.querySelector('.poruke__footer-wrench-icon') : null;
+    if (!btn || !svg) return;
+    if (porukeJeListaRazvojFilter()) {
+      svg.innerHTML = PORUKE_LUCIDE_CLIPBOARD_PASTE_SVG_INNER;
+      btn.classList.add('poruke__footer-wrench-btn--clipboard-mode');
+      btn.setAttribute('aria-label', 'Kopiraj sve razgovore u međuspremnik');
+      btn.setAttribute('title', 'Kopiraj sve razgovore (razvoj) u međuspremnik');
+      btn.setAttribute('aria-pressed', 'false');
+    } else {
+      svg.innerHTML = PORUKE_LUCIDE_WRENCH_SVG_INNER;
+      btn.classList.remove('poruke__footer-wrench-btn--clipboard-mode');
+      btn.setAttribute('aria-label', 'Alat');
+      btn.setAttribute('title', 'Alat');
+    }
+  }
+
+  /**
+   * Klik na srednji gumb podnožja: u filtru liste „Razvoj” kopiranje; inače uključivanje načina ključa (wrench).
+   */
+  function porukeFooterAlatKlik() {
+    if (porukeJeListaRazvojFilter()) {
+      porukeKopirajSveRazgovoreRazvojUClipboard();
+      return;
+    }
+    porukeToggleFooterWrenchBtn();
+  }
+
+  /**
+   * Uskladi korijen modala i tekst naslova s načinom razvoj: klasa .testni-modal--poruke-razvoj + boja u CSS-u;
+   * naslov „Slanje poruke razvoju” / zadani „Poruke”.
+   */
+  function porukePrimijeniRazvojModNaModalu() {
+    var root = id('');
+    var titleEl = id('_header_title');
+    if (!root) return;
+    if (porukeJeRazvojMod()) {
+      root.classList.add('testni-modal--poruke-razvoj');
+      if (titleEl) titleEl.textContent = PORUKE_NASLOV_RAZVOJ;
+    } else {
+      root.classList.remove('testni-modal--poruke-razvoj');
+      if (titleEl) titleEl.textContent = PORUKE_NASLOV_DEFAULT;
+    }
+  }
+
+  /**
+   * Gumb ključa: reset pri otvaranju/zatvaranju modala (bez testniSyncPorukaPanel – poziva ga testniOdznaciListu).
+   */
+  function porukeResetFooterWrenchBtn() {
+    var w = id('_footer_wrench');
+    if (!w) return;
+    w.classList.remove('poruke__footer-wrench-btn--aktivno');
+    w.setAttribute('aria-pressed', 'false');
+    porukePrimijeniRazvojModNaModalu();
+  }
+
+  /** Klik na ključ: toggle + vizual + sinkronizacija polja poruke / Pošalji. */
+  function porukeToggleFooterWrenchBtn() {
+    var w = id('_footer_wrench');
+    if (!w || w.disabled) return;
+    var on = w.classList.toggle('poruke__footer-wrench-btn--aktivno');
+    w.setAttribute('aria-pressed', on ? 'true' : 'false');
+    porukePrimijeniRazvojModNaModalu();
+    testniSyncPorukaPanel(!!testniOdabraniPosiljatelj);
+    /* Povijest: u načinu razvoj GET 0-Poruke_poruke_razvoj.php; inače razgovor s retkom (sync već učitava razvoj kad nema retka). */
+    if (porukeJeRazvojMod() && testniOdabraniPosiljatelj) {
+      testniFetchPorukeRazvoj();
+    } else if (!porukeJeRazvojMod() && testniOdabraniPosiljatelj) {
+      testniFetchPoruke(testniOdabraniPosiljatelj);
+    }
   }
 
   function porukeStopGlobalNeprocitanePolling() {
@@ -463,7 +760,11 @@
       }
     }
     testniSyncPorukaPanel(true);
-    testniFetchPoruke(idPos);
+    if (porukeJeRazvojMod()) {
+      testniFetchPorukeRazvoj();
+    } else {
+      testniFetchPoruke(idPos);
+    }
     /* Nakon što preglednik primijeni layout (npr. upravo iscrtan tbody nakon +). */
     requestAnimationFrame(function () {
       porukeScrollRedPosiljateljaUVid(idPos);
@@ -477,6 +778,9 @@
     var btnBrisi = id('_brisi');
     if (btnBrisi) btnBrisi.disabled = true;
     var params = { id_posiljatelj: idPosiljatelj };
+    if (porukeJeListaRazvojFilter()) {
+      params.kontekst_razvoj = '1';
+    }
     if (typeof window.CommonPostFormData === 'function') {
       window.CommonPostFormData(API_BASE + '0-Poruke_brisi.php', params, function (res) {
         testniOnRazgovorObrisan(res);
@@ -573,7 +877,10 @@
 
     napomena.innerHTML = '';
     if (!poruke || poruke.length === 0) {
-      testniPovijestPostaviPlaceholder(napomena, 'Nema poruka.');
+      testniPovijestPostaviPlaceholder(
+        napomena,
+        idPosiljatelj ? 'Nema poruka.' : 'Nema poruka upućenih razvoju.'
+      );
       napomena.scrollTop = 0;
       requestAnimationFrame(function () {
         testniFokusirajPoljePoruke();
@@ -634,14 +941,18 @@
   function testniFetchPoruke(idPosiljatelj) {
     var pov = id('_edit_povijest');
     var zahtjev = ++testniPovijestZahtjevId;
+    /** Snimljeno pri slanju GET-a – ako korisnik promijeni toggle prije odgovora, ne crtamo krivi tip niti. */
+    var listaRazvojZaOvajZahtjev = porukeJeListaRazvojFilter();
     if (pov) testniPovijestPostaviPlaceholder(pov, 'Učitavanje…');
     var url = API_BASE + '0-Poruke_poruke.php?id_posiljatelj=' + encodeURIComponent(idPosiljatelj);
+    if (listaRazvojZaOvajZahtjev) url += '&samo_razvoj=1';
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
       if (zahtjev !== testniPovijestZahtjevId) return;
-      if (!modalOpen || testniOdabraniPosiljatelj !== idPosiljatelj) return;
+      if (!modalOpen || porukeJeRazvojMod() || testniOdabraniPosiljatelj !== idPosiljatelj) return;
+      if (listaRazvojZaOvajZahtjev !== porukeJeListaRazvojFilter()) return;
       var t = trim(xhr.responseText);
       var el = id('_edit_povijest');
       if (!el) return;
@@ -667,21 +978,69 @@
   }
 
   /**
-   * POST na 0-Poruke_posalji.php – kopija posaljiOdgovor u 0-Poruke.js (CommonPostFormData ili XHR + FormData).
-   * id_primatelj u API-ju = sugovornik iz retka tablice (testniOdabraniPosiljatelj).
+   * GET 0-Poruke_poruke_razvoj.php – sve poruke tipa „Poruka razvoju” koje je logirani korisnik poslao.
+   * Isti JSON oblik kao 0-Poruke_poruke.php; testniPovijestZahtjevId dijeli s testniFetchPoruke (međusobno poništavanje).
    */
-  function testniPosaljiNaServer(idPrimatelj, tekst) {
+  function testniFetchPorukeRazvoj() {
+    var pov = id('_edit_povijest');
+    var zahtjev = ++testniPovijestZahtjevId;
+    if (pov) testniPovijestPostaviPlaceholder(pov, 'Učitavanje…');
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', API_BASE + '0-Poruke_poruke_razvoj.php', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (zahtjev !== testniPovijestZahtjevId) return;
+      if (!modalOpen || !porukeJeRazvojMod()) return;
+      var t = trim(xhr.responseText);
+      var el = id('_edit_povijest');
+      if (!el) return;
+      if (!t || t.charAt(0) !== '[') {
+        testniPovijestPostaviPlaceholder(el, 'Podaci nisu dostupni.');
+        requestAnimationFrame(function () {
+          testniFokusirajPoljePoruke();
+        });
+        return;
+      }
+      try {
+        var poruke = JSON.parse(t);
+        testniRenderPovijest(poruke, 0);
+      } catch (eR) {
+        testniPovijestPostaviPlaceholder(el, 'Greška pri čitanju povijesti za razvoj.');
+        requestAnimationFrame(function () {
+          testniFokusirajPoljePoruke();
+        });
+      }
+    };
+    xhr.send();
+  }
+
+  /**
+   * POST 0-Poruke_posalji.php (CommonPostFormData ili XHR + FormData).
+   * @param {number} idPrimatelj sugovornik iz tablice kad slanjeRazvoj nije true
+   * @param {string} tekst
+   * @param {boolean} [slanjeRazvoj] true → slanje_razvoj=1, primatelji iz var. 1002 (zarez), tip Poruka razvoju
+   */
+  function testniPosaljiNaServer(idPrimatelj, tekst, slanjeRazvoj) {
     var btnPosalji = id('_posalji');
     var editPoruka = id('_edit_poruka');
     if (btnPosalji) btnPosalji.disabled = true;
     var params = {
-      id_primatelj: idPrimatelj,
       poruka: tekst,
       id_razgovor: '0'
     };
+    if (slanjeRazvoj) {
+      params.slanje_razvoj = '1';
+      params.id_primatelj = '0';
+    } else {
+      params.id_primatelj = idPrimatelj;
+      /* Nastavak niti u kontekstu filtra liste „Razvoj” – server postavlja tip Poruka razvoju (ne miješati sa slanje_razvoj). */
+      if (porukeJeListaRazvojFilter()) {
+        params.kontekst_razvoj = '1';
+      }
+    }
     if (typeof window.CommonPostFormData === 'function') {
       window.CommonPostFormData(API_BASE + '0-Poruke_posalji.php', params, function (res) {
-        testniOnOdgovorPoslan(res, editPoruka, btnPosalji, idPrimatelj);
+        testniOnOdgovorPoslan(res, editPoruka, btnPosalji, idPrimatelj, !!slanjeRazvoj);
       });
     } else {
       var formData = new FormData();
@@ -692,7 +1051,7 @@
       xhr.open('POST', API_BASE + '0-Poruke_posalji.php', true);
       xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) return;
-        testniOnOdgovorPoslan(trim(xhr.responseText), editPoruka, btnPosalji, idPrimatelj);
+        testniOnOdgovorPoslan(trim(xhr.responseText), editPoruka, btnPosalji, idPrimatelj, !!slanjeRazvoj);
       };
       xhr.send(formData);
     }
@@ -701,13 +1060,18 @@
   /**
    * Nakon odgovora 0-Poruke_posalji.php – kao onOdgovorPoslan u 0-Poruke.js (uspjeh -1, inače modal greške).
    */
-  function testniOnOdgovorPoslan(res, editPoruka, btnPosalji, idPrimatelj) {
+  function testniOnOdgovorPoslan(res, editPoruka, btnPosalji, idPrimatelj, slanjeRazvoj) {
     if (res === '-1') {
       if (editPoruka) editPoruka.value = '';
       if (btnPosalji) btnPosalji.disabled = true;
       testniOsvjeziPosaljiDisabled();
-      testniFetchPoruke(idPrimatelj);
-      fetchTestniLista();
+      if (slanjeRazvoj) {
+        testniFetchPorukeRazvoj();
+        fetchTestniLista();
+      } else {
+        testniFetchPoruke(idPrimatelj);
+        fetchTestniLista();
+      }
     } else {
       if (typeof window.showPorukaModal === 'function') {
         var code = res || '101';
@@ -746,18 +1110,38 @@
     var btn = id('_posalji');
     var btnBrisi = id('_brisi');
     var pov = id('_edit_povijest');
+    var listaR = porukeJeListaRazvojFilter();
+    var razvoj = porukeJeRazvojMod();
     if (inp) {
-      inp.disabled = !imaSelekciju;
-      inp.value = '';
+      /*
+       * Filtar liste „Razvoj”: samo pregled – polje poruke i slanje uvijek isključeni (prednost nad načinom ključa).
+       */
+      if (listaR) {
+        inp.disabled = true;
+        inp.value = '';
+      } else if (razvoj) {
+        inp.disabled = false;
+        if (imaSelekciju) inp.value = '';
+      } else {
+        inp.disabled = !imaSelekciju;
+        inp.value = '';
+      }
     }
     if (btn) btn.disabled = true;
     if (btnBrisi) btnBrisi.disabled = !imaSelekciju;
     if (pov && !imaSelekciju) {
-      testniPovijestPostaviPlaceholder(pov, 'Odaberite pošiljatelja u tablici…');
+      if (listaR) {
+        testniPovijestPostaviPlaceholder(pov, 'Odaberite red u tablici (samo pregled razgovora razvoju).');
+      } else if (razvoj) {
+        testniFetchPorukeRazvoj();
+      } else {
+        testniPovijestPostaviPlaceholder(pov, 'Odaberite pošiljatelja u tablici…');
+      }
     }
-    if (imaSelekciju) testniOsvjeziPosaljiDisabled();
-    /* Fokus na poruku čim je omogućena (prije nego što GET povijesti završi). */
-    if (imaSelekciju) {
+    testniOsvjeziPosaljiDisabled();
+    porukeOsvjeziFooterAlatSvg();
+    /* Fokus na poruku čim je omogućena (u filtru liste „Razvoj” polje je read-only – ne forsiraj fokus). */
+    if (!listaR && (imaSelekciju || razvoj)) {
       requestAnimationFrame(function () {
         testniFokusirajPoljePoruke();
       });
@@ -773,7 +1157,16 @@
     var inp = id('_edit_poruka');
     var btn = id('_posalji');
     if (!btn || !inp) return;
-    btn.disabled = trim(inp.value) === '' || !testniOdabraniPosiljatelj;
+    if (porukeJeListaRazvojFilter()) {
+      btn.disabled = true;
+      return;
+    }
+    var prazan = trim(inp.value) === '';
+    if (porukeJeRazvojMod()) {
+      btn.disabled = prazan;
+    } else {
+      btn.disabled = prazan || !testniOdabraniPosiljatelj;
+    }
   }
 
   /**
@@ -877,6 +1270,7 @@
       })(item.id_posiljatelj);
       tbody.appendChild(tr);
     }
+    porukeOsvjeziFooterAlatSvg();
   }
 
   /** GET 0-Poruke_lista.php – isti parametar samo_neprocitane kao modal Poruke. */
@@ -884,6 +1278,9 @@
     var toggleInput = id('_toggle');
     var samoNeprocitane = toggleInput && toggleInput.checked ? '1' : '0';
     var url = API_BASE + '0-Poruke_lista.php?samo_neprocitane=' + samoNeprocitane;
+    if (porukeJeListaRazvojFilter()) {
+      url += '&samo_razvoj=1';
+    }
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function () {
@@ -900,7 +1297,8 @@
               break;
             }
           }
-          if (!nadjen) {
+          /* U filtru „Razvoj” ne vraćamo starog sugovornika iz keša normalnog tipa – lista mora odgovarati GET-u. */
+          if (!nadjen && !porukeJeListaRazvojFilter()) {
             for (var j = 0; j < testniListaPosiljatelja.length; j++) {
               if (testniListaPosiljatelja[j].id_posiljatelj === testniOdabraniPosiljatelj) {
                 novaLista.push(testniListaPosiljatelja[j]);
@@ -910,6 +1308,18 @@
           }
         }
         testniListaPosiljatelja = novaLista;
+        if (testniOdabraniPosiljatelj) {
+          var josUVidiku = false;
+          for (var k = 0; k < novaLista.length; k++) {
+            if (novaLista[k].id_posiljatelj === testniOdabraniPosiljatelj) {
+              josUVidiku = true;
+              break;
+            }
+          }
+          if (!josUVidiku) {
+            testniOdznaciListu();
+          }
+        }
         renderTestniTablica(testniListaPosiljatelja);
       } catch (e1) {}
     };
@@ -1207,6 +1617,13 @@
       });
     }
 
+    var btnWrench = id('_footer_wrench');
+    if (btnWrench) {
+      btnWrench.addEventListener('click', function () {
+        porukeFooterAlatKlik();
+      });
+    }
+
     document.addEventListener('mousedown', function (e) {
       var popup = id('_popup_korisnici');
       if (!popup || popup.style.display === 'none') return;
@@ -1234,6 +1651,45 @@
       });
     }
 
+    var toggleRazvoj = id('_toggle_razvoj');
+    if (toggleRazvoj) {
+      toggleRazvoj.addEventListener('change', function () {
+        /*
+         * Način ključa (pisanje razvoju) i filtar liste „Razvoj” ne smiju biti aktivni istovremeno:
+         * pri uključivanju filtra resetiramo wrench pa sinkroniziramo ikonu (clipboard-paste).
+         */
+        if (porukeJeListaRazvojFilter()) {
+          porukeResetFooterWrenchBtn();
+        }
+        testniOdznaciListu();
+        fetchTestniLista();
+      });
+    }
+
+    var wrapRazvoj = id('_toggle_razvoj_wrap');
+    if (wrapRazvoj) {
+      fetch(API_BASE + '0-Poruke_razvoj_toggle_prikazi.php', { cache: 'no-store' })
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (d) {
+          if (!wrapRazvoj) return;
+          if (d && d.prikazi) {
+            wrapRazvoj.style.display = '';
+            wrapRazvoj.setAttribute('aria-hidden', 'false');
+          } else {
+            wrapRazvoj.style.display = 'none';
+            wrapRazvoj.setAttribute('aria-hidden', 'true');
+          }
+        })
+        .catch(function () {
+          if (wrapRazvoj) {
+            wrapRazvoj.style.display = 'none';
+            wrapRazvoj.setAttribute('aria-hidden', 'true');
+          }
+        });
+    }
+
     var btnPov = id('_povratak');
     if (btnPov) {
       btnPov.addEventListener('click', function () {
@@ -1246,7 +1702,7 @@
     if (editPoruka && btnPosalji) {
       /* Isti listener kao u 0-Poruke.js (input): samo sinkronizacija disabled na tipki Pošalji. */
       editPoruka.addEventListener('input', function () {
-        btnPosalji.disabled = trim(editPoruka.value) === '' || !testniOdabraniPosiljatelj;
+        testniOsvjeziPosaljiDisabled();
       });
       editPoruka.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey && !btnPosalji.disabled) {
@@ -1255,11 +1711,18 @@
         }
       });
       btnPosalji.addEventListener('click', function () {
-        if (btnPosalji.disabled || !testniOdabraniPosiljatelj) return;
+        if (btnPosalji.disabled) return;
+        if (porukeJeListaRazvojFilter()) return;
         var tekst = trim(editPoruka.value);
         if (!tekst) return;
+        var razvoj = porukeJeRazvojMod();
+        if (!razvoj && !testniOdabraniPosiljatelj) return;
         /* testniPosaljiNaServer onemogućuje tipku; očisti polje i povijest tek nakon odgovora -1 (testniOnOdgovorPoslan). */
-        testniPosaljiNaServer(testniOdabraniPosiljatelj, tekst);
+        if (razvoj && !testniOdabraniPosiljatelj) {
+          testniPosaljiNaServer(0, tekst, true);
+        } else {
+          testniPosaljiNaServer(testniOdabraniPosiljatelj, tekst, false);
+        }
       });
     }
 
@@ -1322,6 +1785,10 @@
       var tt0 = id('_toggle_text');
       if (ti0 && ti0.checked) ti0.checked = false;
       if (tt0) tt0.textContent = 'Sve poruke';
+      var trz = id('_toggle_razvoj');
+      if (trz) trz.checked = false;
+      /* Prvo isključi način razvoj (ključ) pa odznaci listu – inače sync misli da je razvoj još aktivan. */
+      porukeResetFooterWrenchBtn();
       testniOdznaciListu();
       var rbOpen = id('_refresh');
       if (rbOpen) rbOpen.classList.remove('poruke__refresh-btn--nova');
@@ -1373,6 +1840,7 @@
     modal.setAttribute('aria-hidden', 'true');
     modal.classList.remove('kontrola-modal--open', 'testni-modal--pending-layout');
     modalOpen = false;
+    porukeResetFooterWrenchBtn();
     /* Sljedeće otvaranje: textarea mora biti disabled dok korisnik ne odabere red (kao zatvaranje modala Poruke). */
     testniOdznaciListu();
     document.body.style.overflow = '';

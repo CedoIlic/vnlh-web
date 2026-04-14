@@ -1,7 +1,7 @@
 <?php
 // =====================================================
 // 0-Poruke_brisi.php
-// API: logičko brisanje niti – samo tip = 'Poruka' (modal Poruke). Chat nit: poruke_chat_brisi.php.
+// API: logičko brisanje niti – tip 'Poruka' ili (POST kontekst_razvoj=1) 'Poruka razvoju'. Chat: poruke_chat_brisi.php.
 // Postavlja sustav_sesije_poruke.brisano = 1 u oba smjera (redovi ostaju u bazi).
 //
 // Rezime kolone brisano: brisanje postavlja 1 i ne uklanja poruku iz baze. U povijesti se
@@ -9,7 +9,8 @@
 // ponašaju se kao da ne postoje.
 //
 // Ulaz (POST):
-//   id_posiljatelj  (obavezno) – ID korisnika čiji se razgovor briše
+//   id_posiljatelj   (obavezno) – ID korisnika čiji se razgovor briše
+//   kontekst_razvoj  (opcionalno) – ako je "1": briše nit tipa 'Poruka razvoju' (samo član tima iz varijable 1002)
 //
 // Izlaz:
 //   (TEXT) Uspjeh: -1
@@ -19,6 +20,7 @@
 // =====================================================
 
 require_once __DIR__ . '/require_login_api.php';
+require_once __DIR__ . '/poruke_razvoj_var_1002.php';
 
 // --- Blok: Konekcija na bazu ---
 $db_ret = require_once __DIR__ . '/00_db.php';
@@ -40,11 +42,16 @@ if ($idPosiljatelj <= 0) {
 
 $idKorisnik = (int) $_SESSION['id_korisnik'];
 
+$kontekstRazvoj = isset($_POST['kontekst_razvoj'])
+    && (string) $_POST['kontekst_razvoj'] === '1'
+    && poruke_razvoj_sesija_je_clan_tima($mysqli);
+$tipBrisanje = $kontekstRazvoj ? 'Poruka razvoju' : 'Poruka';
+
 // --- Blok: UPDATE brisano=1 za sve poruke u oba smjera (logičko brisanje) ---
 $sql = "
     UPDATE sustav_sesije_poruke
        SET brisano = 1
-    WHERE tip = 'Poruka'
+    WHERE tip = ?
       AND ((id_posiljatelj = ? AND id_primatelj = ?)
        OR (id_posiljatelj = ? AND id_primatelj = ?))
 ";
@@ -55,7 +62,7 @@ if (!$stmt) {
     exit;
 }
 
-$stmt->bind_param('iiii', $idPosiljatelj, $idKorisnik, $idKorisnik, $idPosiljatelj);
+$stmt->bind_param('siiii', $tipBrisanje, $idPosiljatelj, $idKorisnik, $idKorisnik, $idPosiljatelj);
 
 if (!$stmt->execute()) {
     echo '200,' . $stmt->errno;

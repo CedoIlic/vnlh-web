@@ -1,7 +1,7 @@
 <?php
 // =====================================================
 // 0-Poruke_poruke.php
-// API: dohvat poruka (samo tip = 'Poruka') između logiranog korisnika i odabranog pošiljatelja.
+// API: dohvat poruka (tip 'Poruka' ili GET samo_razvoj=1 → 'Poruka razvoju') između logiranog korisnika i odabranog sugovornika.
 // Chat (tip = 'Chat poruka') je odvojen – poruke_chat_povijest.php. Ne miješati tipove.
 // Dohvaća poruke u OBA smjera (primljene + poslane) – cijeli razgovor.
 // Poruke su sortirane po id_razgovor, vrijeme_slanja.
@@ -10,18 +10,21 @@
 //
 // Ulaz (GET):
 //   id_posiljatelj (obavezno) – ID korisnika čije poruke čitamo
+//   samo_razvoj    (opcionalno) – 1 = nit tipa 'Poruka razvoju' (samo član tima iz varijable 1002)
 //
 // Izlaz:
 //   (JSON) Uspjeh: niz objekata [{id, id_razgovor, poruka, vrijeme_slanja, smjer, procitano}, ...]
 //     smjer: 'primljena' = poruka koju je poslao drugi korisnik ovom,
 //            'odgovor'   = poruka koju je ovaj korisnik poslao drugom
 //     procitano: 1 = pročitana, 0 = nepročitana
+//     brisano:   0 = aktivna (u SELECT-u samo 0); polje za klijente koji filtriraju kopiranje
 //   (TEXT) Greška konekcije: 100
 //   (TEXT) Nedostaje id: 105
 //   (TEXT) SQL greška: 200
 // =====================================================
 
 require_once __DIR__ . '/require_login_api.php';
+require_once __DIR__ . '/poruke_razvoj_var_1002.php';
 
 // --- Blok: Konekcija na bazu ---
 $db_ret = require_once __DIR__ . '/00_db.php';
@@ -43,6 +46,12 @@ if ($idPosiljatelj <= 0) {
 
 $idKorisnik = (int) $_SESSION['id_korisnik'];
 
+$samoRazvoj = isset($_GET['samo_razvoj']) && $_GET['samo_razvoj'] === '1';
+if ($samoRazvoj && !poruke_razvoj_sesija_je_clan_tima($mysqli)) {
+    $samoRazvoj = false;
+}
+$tipPoruke = $samoRazvoj ? 'Poruka razvoju' : 'Poruka';
+
 // --- Blok: PRVO dohvat poruka (da vidimo originalni status PRIJE označavanja) ---
 // Smjer: primljena = id_posiljatelj->ovaj korisnik; odgovor = ovaj korisnik->id_posiljatelj.
 $sqlSelect = "
@@ -53,10 +62,11 @@ $sqlSelect = "
         p.vrijeme_slanja,
         p.id_posiljatelj,
         p.id_primatelj,
-        p.status
+        p.status,
+        p.brisano
     FROM sustav_sesije_poruke p
     WHERE p.brisano = 0
-      AND p.tip = 'Poruka'
+      AND p.tip = ?
       AND ((p.id_posiljatelj = ? AND p.id_primatelj = ?)
        OR (p.id_posiljatelj = ? AND p.id_primatelj = ?))
     ORDER BY p.id_razgovor ASC, p.vrijeme_slanja ASC
@@ -68,7 +78,7 @@ if (!$stmtSel) {
     exit;
 }
 
-$stmtSel->bind_param('iiii', $idPosiljatelj, $idKorisnik, $idKorisnik, $idPosiljatelj);
+$stmtSel->bind_param('siiii', $tipPoruke, $idPosiljatelj, $idKorisnik, $idKorisnik, $idPosiljatelj);
 
 if (!$stmtSel->execute()) {
     echo json_encode(['error' => '200', 'sql_errno' => $stmtSel->errno]);
@@ -91,7 +101,8 @@ while ($row = $result->fetch_assoc()) {
         'poruka'         => $row['poruka'] ?? '',
         'vrijeme_slanja' => $row['vrijeme_slanja'] ?? '',
         'smjer'          => $smjer,
-        'procitano'      => $procitano
+        'procitano'      => $procitano,
+        'brisano'        => (int) ($row['brisano'] ?? 0),
     ];
 }
 
@@ -103,11 +114,11 @@ $sqlUpdate = "
     UPDATE sustav_sesije_poruke
     SET status = 'Pročitano', vrijeme_procitano = NOW()
     WHERE id_primatelj = ? AND id_posiljatelj = ? AND status = 'Novo' AND brisano = 0
-      AND tip = 'Poruka'
+      AND tip = ?
 ";
 $stmtUpd = $mysqli->prepare($sqlUpdate);
 if ($stmtUpd) {
-    $stmtUpd->bind_param('ii', $idKorisnik, $idPosiljatelj);
+    $stmtUpd->bind_param('iis', $idKorisnik, $idPosiljatelj, $tipPoruke);
     $stmtUpd->execute();
     $stmtUpd->close();
 }
