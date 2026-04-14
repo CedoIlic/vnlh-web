@@ -52,6 +52,23 @@ if (!isset($_SESSION['vnlh_meni_dopustene']) && isset($_SESSION['id_duznosnik'])
     }
 }
 
+/** Stare sesije: pravo na chat (sustav_varijable id 110) – isto kao nakon uspješnog logina. */
+if (!array_key_exists('chat_dozvoljen', $_SESSION) && isset($_SESSION['id_korisnik'])) {
+    $idK = (int) $_SESSION['id_korisnik'];
+    if ($idK > 0) {
+        require_once __DIR__ . '/poruke_chat_sesija.php';
+        $dbChat = vnlh_db_connect();
+        if ($dbChat !== false) {
+            $_SESSION['chat_dozvoljen'] = poruke_chat_dozvoljen_za_korisnika($dbChat, $idK);
+            $dbChat->close();
+        } else {
+            $_SESSION['chat_dozvoljen'] = 0;
+        }
+    } else {
+        $_SESSION['chat_dozvoljen'] = 0;
+    }
+}
+
 require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
 Alati_Sesije_Aktivne_odjava_ako_red_timeout('html');
 
@@ -90,12 +107,14 @@ if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'
  *   Zaštita: ista valjana sesija i ostale provjere u ovom fajlu kao za ostale stranice.
  * - 0-Poruke.php – HTML fragment glavnog modala „Poruke” (vnlh_emit_html_file html/0-Poruke.html).
  *   Učitava ga js/0-Poruke.js preko fetch(); nije stavka menija.
+ * - 0-Chat.php – HTML fragment chata (html/0-Chat.html); učitava ga js/0-Chat.js.
+ * - test_chat_virtual_umetak.php – POST JSON za testnu stranicu test.php (umetanje chat poruka); require_login_api.php.
  *
  * Kad dodaješ novi sličan „fragment“ endpoint, ili ga dodaj u ovaj uvjet (uz komentar), ili
  * uključi šablon u glavnu HTML stranicu da ne treba zaseban PHP.
  */
 $scriptBase = basename($_SERVER['SCRIPT_NAME'] ?? '');
-if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !== 'test.php' && $scriptBase !== '0-Obrada_Slike.php' && $scriptBase !== '0-Poruke.php') {
+if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !== 'test.php' && $scriptBase !== '0-Obrada_Slike.php' && $scriptBase !== '0-Poruke.php' && $scriptBase !== '0-Chat.php' && $scriptBase !== 'test_chat_virtual_umetak.php') {
     $allowed = isset($_SESSION['vnlh_meni_dopustene']) && is_array($_SESSION['vnlh_meni_dopustene'])
         ? $_SESSION['vnlh_meni_dopustene'] : [];
     $wantHtml = preg_replace('/\.php$/i', '.html', $scriptBase);

@@ -29,16 +29,16 @@
                     </table>
                 </div>
             </div>
-            <!-- Desno: na PC-u povijest iznad poruke (70/30); na mobitelu CSS order – poruka ispod tablice, povijest dolje. -->
+            <!-- Desno: poruka gore, povijest dolje (flex order na svim širinama); lijevo tablica ostaje kao na PC-u. -->
             <div class="testni-modal__desno">
                 <!--
-                  Napomene: puna širina stupca; na širokom ekranu visina 70% / 30% (povijest / poruka).
-                  Povijest: #…_edit_povijest = .poruke__napomena-scroll (isti CSS tokeni/boje kao modal Poruke).
+                  Napomene: puna širina stupca; polje poruke fiksne prirodne visine, povijest ispunjava ostatak (scroll na #…_edit_povijest).
+                  Povijest: tabindex=-1 da ne prima tipkovnički fokus (samo scroll / touch).
                 -->
                 <div class="testni-modal__napomene">
                     <div class="testni-modal__napomena-blok testni-modal__napomena-blok--povijest">
                         <div class="poruke__napomena-div testni-modal__povijest-okvir">
-                            <div id="__ID_PREFIX___edit_povijest" class="poruke__napomena-scroll testni-modal__edit-povijest" aria-live="polite" aria-label="Povijest razgovora"></div>
+                            <div id="__ID_PREFIX___edit_povijest" class="poruke__napomena-scroll testni-modal__edit-povijest" tabindex="-1" aria-live="polite" aria-label="Povijest razgovora"></div>
                         </div>
                     </div>
                     <!-- Red: polje poruke + ikona Pošalji (stil tipke kao .poruke__posalji-btn u 0-Poruke.css). -->

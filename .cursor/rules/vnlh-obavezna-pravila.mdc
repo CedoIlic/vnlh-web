@@ -90,3 +90,14 @@ Primjenjuje se na **svaki** `*.js` koji definira ili puni **tablicu** (lista stu
 - **Inicijalno snimanje:** `min_povjest`, `min_poruka`, `min_modal_visina`, `min_modal_sirina`, `size_diference` u `js/0-Poruke.js` (`snimiInicijalneMinDimenzijeModala`) nakon layouta; `size_diference` (= `min_modal_visina` − `min_povjest` − `min_poruka`) se osvježava nakon učitavanja sadržaja (`renderPoruke` / `clearSelection`).
 - **Vanjski okvir (široki ekran):** `.poruke__dialog` ima **`resize: both`** + `overflow: hidden` (nativni grip; `auto` na cijelom dijalogu činio bi scroll pa sadržaj može „curiti” ispod podnožja); `ResizeObserver` na dijalogu ne dopušta dimenzije ispod `min_modal_sirina` / `min_modal_visina` niti ispod visine koja zadovoljava formulu; pri vertikalnom resizeu modala mijenja se samo visina bloka povijesti (poruka zadržava visinu), dok se širina povijesti vizualno prati kroz flex desnog stupca uz konstantan `size_diference`. **`primijeniVisinuModalaFormulom`** postavlja `dialog.style.height` = povijest + poruka + `size_diference` (uz donje granice `min_povjest` / `min_poruka`). Povijest se ne smije povećavati korisničkim vertikalnim resizeom. Custom `.poruke__resize-corner` u DOM-u, CSS ga skriva. **Edit paneli:** `.kontrola-panel--resize-{y,x,both}` na desktopu nativni `resize` + skrivena `.kontrola-panel__resize-bar` (`0-Kontrole.css` @media min-width 769px); na mobu traka.
 - **Donja granica povijesti:** `izracunajVisinuNapomene` + `napomenaPocetnaVisina` / `porukeMinVisinaPovijestiPx` pri dragu.
+
+---
+
+## 7. Baza podataka (MCP, samo čitanje)
+
+- Korisnik drži **MySQL read-only** u Cursoru (npr. `mcp.json` ključ `vnlh-readonly`); u agentu se MCP često pojavi kao server **`user-vnlh-readonly`** (mapiranje Cursora – vidi `mcps/user-vnlh-readonly/tools/mysql_query.json` u projektu).
+- Za **SELECT** koristi **`call_mcp_tool`**: server **`user-vnlh-readonly`**, alat **`mysql_query`**, argument **`{ "sql": "…" }`** (samo čitanje; INSERT/UPDATE/DELETE su onemogućeni na strani MCP servera).
+- **Ne** tvrdi da nema pristupa bazi prije nego što probaš MCP s **`user-vnlh-readonly`**; ako server nije učitan u sesiji, kratko reci da provjeri MCP u Cursor Settings.
+- **Ne** objavljuj vjerodajnice iz `mcp.json` u chatu niti u kodu repozitorija.
+- Za upite kad MCP nije dostupan, i dalje vrijedi lokalni `mysql` / HeidiSQL / PHP — ovisno o stroju.
+- **SQL za triggere** (flagovi `ima_neprocitanih` / `ima_chat_neprocitanih`, strogo `tip = 'Poruka'` vs `tip = 'Chat poruka'`): jedan izvor u repou — **`sql/sustav_sesije_aktivne_chat_kolone_i_triggere.sql`**. Kad treba skripta korisniku, uputi na tu datoteku ili zalijepi njen sadržaj; ne uvoditi drugu paralelnu datoteku osim ako korisnik eksplicitno traži varijantu.

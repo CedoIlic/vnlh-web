@@ -42,7 +42,7 @@ $sessionId     = session_id();
 
 // --- Blok: Ako id_razgovor=0, stvori novi razgovor (sljedeći slobodni id_razgovor) ---
 if ($idRazgovor <= 0) {
-    $sqlMaxRazg = "SELECT COALESCE(MAX(id_razgovor), 0) + 1 AS novi FROM sustav_sesije_poruke";
+    $sqlMaxRazg = "SELECT COALESCE(MAX(id_razgovor), 0) + 1 AS novi FROM sustav_sesije_poruke WHERE tip = 'Poruka'";
     $resMaxRazg = $mysqli->query($sqlMaxRazg);
     if ($resMaxRazg) {
         $rowMax = $resMaxRazg->fetch_assoc();
@@ -52,12 +52,12 @@ if ($idRazgovor <= 0) {
     }
 }
 
-// --- Blok: INSERT poruke ---
+// --- Blok: INSERT poruke (brisano=0 – aktivna poruka; logičko brisanje: 0-Poruke_brisi) ---
 $sql = "
     INSERT INTO sustav_sesije_poruke
-        (id_razgovor, id_posiljatelj, id_primatelj, session_id_posiljatelj, poruka, vrijeme_slanja, status, tip)
+        (id_razgovor, id_posiljatelj, id_primatelj, session_id_posiljatelj, poruka, vrijeme_slanja, status, tip, brisano)
     VALUES
-        (?, ?, ?, ?, ?, NOW(), 'Novo', 'Poruka')
+        (?, ?, ?, ?, ?, NOW(), 'Novo', 'Poruka', 0)
 ";
 
 $stmt = $mysqli->prepare($sql);
@@ -76,7 +76,7 @@ if (!$stmt->execute()) {
 
 $stmt->close();
 $mysqli->close();
-// Flag ima_neprocitanih u sustav_sesije_aktivne ažurira AFTER INSERT trigger automatski.
+// Flag ima_neprocitanih u sustav_sesije_aktivne ažurira trg_poruke_after_insert (status Novo, brisano=0).
 
 // Uspjeh – VNLH konvencija
 echo '-1';

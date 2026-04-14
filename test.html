@@ -26,6 +26,30 @@
     <h2>Testna forma</h2>
   </div>
 
+  <!-- Test chata: umeće nepročitane Chat poruke u bazu (primatelj = prijavljeni korisnik). -->
+  <section class="test-chat-virtual" aria-labelledby="test-chat-virtual-h" style="max-width:42rem; margin:1rem 1.5rem; padding:1rem; border:1px solid var(--panel_border, #ddd); border-radius:var(--edit_radius, 6px); background:var(--panel_body_bg, #fafafa);">
+    <h3 id="test-chat-virtual-h" style="margin-top:0;">Test chata (virtualni pošiljatelji)</h3>
+    <p style="margin:0 0 0.75rem; font-size:0.95rem; color:var(--text-muted, #555);">
+      Primatelj si <strong>ti</strong> (prijavljeni korisnik). U tablicu <code>sustav_sesije_poruke</code> umeću se poruke tipa „Chat poruka” kao da ih šalju navedeni ID-jevi (krugovi: A,B,C,A,B,C…). Koristi samo na test bazi.
+    </p>
+    <div class="kontrola-form-row" style="margin-bottom:0.5rem;">
+      <label for="testChatPosiljatelji" class="kontrola-label">ID-jevi pošiljatelja (zarezom)</label>
+      <input type="text" id="testChatPosiljatelji" class="kontrola-input" placeholder="npr. 214,291" autocomplete="off" />
+    </div>
+    <div class="kontrola-form-row" style="margin-bottom:0.75rem;">
+      <label for="testChatPorukaPo" class="kontrola-label">Poruka po pošiljatelju (1–20)</label>
+      <input type="number" id="testChatPorukaPo" class="kontrola-input" min="1" max="20" value="5" />
+    </div>
+    <div class="kontrola-form-row" style="margin-bottom:0.75rem;">
+      <label for="testChatIntervalS" class="kontrola-label">Pauza između poruka (sekunde, 0–60)</label>
+      <input type="number" id="testChatIntervalS" class="kontrola-input" min="0" max="60" value="0" title="0 = sve odjednom; inače sleep između dviju uzastopnih poruka. Ukupno čekanje max 600 s." />
+    </div>
+    <button type="button" id="testChatVirtualBtn" class="kontrola-btn kontrola-btn--crud-spremi">
+      <span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Umetni test poruke</span></span></span>
+    </button>
+    <pre id="testChatVirtualRezultat" style="margin-top:1rem; padding:0.75rem; background:#fff; border:1px solid #eee; border-radius:6px; white-space:pre-wrap; font-size:0.85rem; min-height:2.5rem;" aria-live="polite"></pre>
+  </section>
+
 
 
 

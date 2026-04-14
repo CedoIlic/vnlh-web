@@ -1,0 +1,51 @@
+<!-- 0-Chat.html – isti panel/testni-modal uzorak kao 0-Poruke.html (klase, tipke, sjene). -->
+<div id="vnlh_chat_root" class="vnlh-chat-root" hidden>
+  <div id="vnlh_chat_popup" class="vnlh-chat-popup" role="dialog" aria-label="Aktivni korisnici za chat" hidden>
+    <input type="text" id="vnlh_chat_popup_filter" class="poruke__popup-filter" aria-label="Pretraži korisnika" autocomplete="off" />
+    <div id="vnlh_chat_popup_list" class="poruke__popup-lista"></div>
+  </div>
+  <div id="vnlh_chat_modal" class="testni-modal vnlh-chat-modal kontrola-modal--dim" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="vnlh_chat_modal_title" hidden>
+    <!-- Overlay samo zatamnjuje; modal se ne gasi klikom izvan dijaloga (samo Povratak / uspješno slanje). -->
+    <div class="kontrola-modal__overlay"></div>
+    <div class="testni-modal__dialog">
+      <div class="kontrola-modal__header testni-modal__header poruke__header">
+        <div class="poruke__header-title" id="vnlh_chat_modal_title">Razgovor</div>
+      </div>
+      <div class="kontrola-modal__body testni-modal__body">
+        <div class="testni-modal__desno">
+          <div class="testni-modal__napomene">
+            <div class="testni-modal__napomena-blok testni-modal__napomena-blok--povijest">
+              <div class="poruke__napomena-div testni-modal__povijest-okvir">
+                <div id="vnlh_chat_history" class="poruke__napomena-scroll testni-modal__edit-povijest" tabindex="-1" aria-live="polite" aria-label="Povijest razgovora"></div>
+              </div>
+            </div>
+            <div class="testni-modal__napomena-blok testni-modal__napomena-blok--poruka">
+              <div class="testni-modal__poruka-row">
+                <textarea id="vnlh_chat_input" class="testni-modal__napomena testni-modal__edit-poruka" spellcheck="true" aria-label="Poruka" rows="2"></textarea>
+                <button type="button" id="vnlh_chat_btn_send" class="poruke__posalji-btn" aria-label="Pošalji" title="Pošalji">
+                  <svg class="poruke__posalji-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="kontrola-modal__footer poruke__footer testni-modal__footer">
+        <div class="poruke__footer-left">
+          <button type="button" id="vnlh_chat_btn_trash" class="poruke__icon-btn" aria-label="Obriši razgovor" title="Obriši razgovor">
+            <span class="poruke-icon--trash" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="poruke__footer-right">
+          <button type="button" id="vnlh_chat_btn_back" class="poruke-btn poruke-btn--povratak" title="Zatvori" data-vnlh-chat-close="1">
+            <span class="poruke-btn__outer"><span class="poruke-btn__inner"><span class="poruke-btn__label">Povratak</span></span></span>
+          </button>
+        </div>
+        <!-- Mobitel: isti uzorak kao 0-Poruke.html (#…_dialog_resize) – stil .testni-modal__footer-resize-* u 0-Poruke.css; povlačenje u 0-Chat.js. -->
+        <div id="vnlh_chat_dialog_resize" class="testni-modal__footer-resize-corner" aria-label="Promijeni veličinu prozora chata" title="Veličina prozora">
+          <svg class="testni-modal__footer-resize-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

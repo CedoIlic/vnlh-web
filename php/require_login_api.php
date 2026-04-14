@@ -40,6 +40,23 @@ if (!vnlh_auth_user_may_access($vnlhAuthDb, (int) $_SESSION['id_korisnik'])) {
 }
 $vnlhAuthDb->close();
 
+/** Stare XHR sesije bez punog require_login.php: pravo na chat (varijabla 110). */
+if (!array_key_exists('chat_dozvoljen', $_SESSION) && isset($_SESSION['id_korisnik'])) {
+    $idK = (int) $_SESSION['id_korisnik'];
+    if ($idK > 0) {
+        require_once __DIR__ . '/poruke_chat_sesija.php';
+        $dbChat = vnlh_db_connect();
+        if ($dbChat !== false) {
+            $_SESSION['chat_dozvoljen'] = poruke_chat_dozvoljen_za_korisnika($dbChat, $idK);
+            $dbChat->close();
+        } else {
+            $_SESSION['chat_dozvoljen'] = 0;
+        }
+    } else {
+        $_SESSION['chat_dozvoljen'] = 0;
+    }
+}
+
 require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
 Alati_Sesije_Aktivne_odjava_ako_red_timeout('api');
 

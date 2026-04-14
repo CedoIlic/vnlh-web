@@ -363,8 +363,8 @@
 
   /** Ikona odjave u desnoj strani trake naslova (.naslov-forme).
    *  Kreira wrapper .naslov-forme__ikone koji na mobilnom drži
-   *  mail i logout ikone u istom redu. 0-Poruke.js ubacuje mail
-   *  u isti wrapper. */
+   *  chat (opcionalno), mail i logout u istom redu. 0-Poruke.js ubacuje
+   *  chat i mail u isti wrapper. */
   function vnlhInjectNaslovOdjava() {
     try {
       var path = window.location.pathname || '';
@@ -375,7 +375,7 @@
         var el = list[i];
         if (el.querySelector('.naslov-forme__odjava')) continue;
 
-        /* Wrapper za ikone (mail + logout) – koristi se za mobilni flex row */
+        /* Wrapper za ikone (chat + mail + logout) – koristi se za mobilni flex row */
         var wrapper = el.querySelector('.naslov-forme__ikone');
         if (!wrapper) {
           wrapper = document.createElement('div');
@@ -388,8 +388,9 @@
         a.href = vnlhLogoutUrl();
         a.setAttribute('aria-label', 'Odjava');
         a.title = 'Odjava';
+        /* Lucide „log-out” (maska u 0-Common.css) – usklađeno s chat/mail u naslovu forme. */
         var span = document.createElement('span');
-        span.className = 'kontrola-icon--arrow-right-on-rectangle';
+        span.className = 'naslov-forme__logout-icon';
         span.setAttribute('aria-hidden', 'true');
         a.appendChild(span);
         wrapper.appendChild(a);

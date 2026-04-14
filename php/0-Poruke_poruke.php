@@ -1,10 +1,12 @@
 <?php
 // =====================================================
 // 0-Poruke_poruke.php
-// API: dohvat poruka između logiranog korisnika i odabranog pošiljatelja.
+// API: dohvat poruka (samo tip = 'Poruka') između logiranog korisnika i odabranog pošiljatelja.
+// Chat (tip = 'Chat poruka') je odvojen – poruke_chat_povijest.php. Ne miješati tipove.
 // Dohvaća poruke u OBA smjera (primljene + poslane) – cijeli razgovor.
 // Poruke su sortirane po id_razgovor, vrijeme_slanja.
 // Nepročitane primljene poruke se označavaju kao pročitane (status='Pročitano').
+// SQL isključuje brisano=1 (rezime kolone: vidi zaglavlje 0-Poruke_brisi.php).
 //
 // Ulaz (GET):
 //   id_posiljatelj (obavezno) – ID korisnika čije poruke čitamo
@@ -53,8 +55,10 @@ $sqlSelect = "
         p.id_primatelj,
         p.status
     FROM sustav_sesije_poruke p
-    WHERE (p.id_posiljatelj = ? AND p.id_primatelj = ?)
-       OR (p.id_posiljatelj = ? AND p.id_primatelj = ?)
+    WHERE p.brisano = 0
+      AND p.tip = 'Poruka'
+      AND ((p.id_posiljatelj = ? AND p.id_primatelj = ?)
+       OR (p.id_posiljatelj = ? AND p.id_primatelj = ?))
     ORDER BY p.id_razgovor ASC, p.vrijeme_slanja ASC
 ";
 
@@ -98,7 +102,8 @@ $stmtSel->close();
 $sqlUpdate = "
     UPDATE sustav_sesije_poruke
     SET status = 'Pročitano', vrijeme_procitano = NOW()
-    WHERE id_primatelj = ? AND id_posiljatelj = ? AND status = 'Novo'
+    WHERE id_primatelj = ? AND id_posiljatelj = ? AND status = 'Novo' AND brisano = 0
+      AND tip = 'Poruka'
 ";
 $stmtUpd = $mysqli->prepare($sqlUpdate);
 if ($stmtUpd) {
@@ -106,7 +111,7 @@ if ($stmtUpd) {
     $stmtUpd->execute();
     $stmtUpd->close();
 }
-// Flag ima_neprocitanih u sustav_sesije_aktivne ažurira AFTER UPDATE trigger automatski.
+// Flag ima_neprocitanih u sustav_sesije_aktivne ažurira trg_poruke_after_update automatski.
 
 $mysqli->close();
 

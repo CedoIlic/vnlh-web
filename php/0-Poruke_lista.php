@@ -1,8 +1,9 @@
 <?php
 // =====================================================
 // 0-Poruke_lista.php
-// API: lista pošiljatelja koji su slali poruke trenutno logiranom korisniku.
+// API: lista sugovornika samo za tip = 'Poruka' (modal Poruke). Chat (Chat poruka): poruke_chat_*.php.
 // Za svaku osobu vraća id, prezime, ime i broj nepročitanih poruka.
+// SQL isključuje brisano=1 (rezime: vidi zaglavlje 0-Poruke_brisi.php).
 //
 // Ulaz (GET):
 //   samo_neprocitane (opcionalno) – 1 = samo pošiljatelji s nepročitanim porukama
@@ -47,6 +48,8 @@ $sql = "
             CASE WHEN p.status = 'Novo' THEN 1 ELSE 0 END AS neprocitane_raw
         FROM sustav_sesije_poruke p
         WHERE p.id_primatelj = ?
+          AND p.brisano = 0
+          AND p.tip = 'Poruka'
         UNION ALL
         /* Poruke koje sam poslao – druga strana je primatelj */
         SELECT
@@ -54,6 +57,8 @@ $sql = "
             0 AS neprocitane_raw
         FROM sustav_sesije_poruke p
         WHERE p.id_posiljatelj = ?
+          AND p.brisano = 0
+          AND p.tip = 'Poruka'
     ) AS razgovori
     LEFT JOIN clanovi c ON c.id = razgovori.sugovornik_id
     GROUP BY sugovornik_id, c.prezime, c.ime

@@ -56,6 +56,8 @@ if ($mysqliMeniDbg !== false) {
 
 $html = file_get_contents(__DIR__ . '/../html/Meni.html');
 $html = vnlh_apply_asset_token_to_html($html);
+/* Isti flag kao vnlh_emit_html_*: u <head> prije 0-Poruke.js (ikona chata čita window.VNLH_CHAT_DOZVOLJEN). */
+$html = vnlh_inject_chat_flag_script($html);
 $appBaseJs = vnlh_app_base_path_for_js();
 $inject = '<script>window.__VNLH_MENU_DUZNOSNIK_OK__=' . ($meniDuznosnikValjan ? 'true' : 'false') . ';';
 $inject .= 'window.__VNLH_APP_BASE_PATH__=' . json_encode($appBaseJs, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';</script>' . "\n";

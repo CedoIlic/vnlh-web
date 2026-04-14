@@ -1242,10 +1242,44 @@
   }
 }
 
+/* --- Blok: Chat ikona u naslov-forme (lijevo od pošte; Lucide messages-square u SVG) --- */
+.naslov-forme__chat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 8px;
+  color: var(--naslov_forme_text);
+  opacity: 0.92;
+  text-decoration: none;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.2s ease;
+  box-sizing: border-box;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+.naslov-forme__chat:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+.naslov-forme__chat:focus-visible {
+  outline: 2px solid var(--naslov_forme_text);
+  outline-offset: 2px;
+}
+.naslov-forme__chat-icon {
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(3px 3px 6px var(--c-text-shadow-75, rgba(0, 0, 0, 0.75)));
+}
+
 /* --- Blok: Mail ikona u naslov-forme (lijevo od odjave) ---
    Nalazi se unutar wrappera .naslov-forme__ikone (kreira 0-Common.js),
    pozicija je relativna unutar flex kontejnera.
-   Lucide mail SVG kao CSS mask-image (isti pristup kao kontrola-icon--arrow-right-on-rectangle). */
+   Lucide mail SVG kao CSS mask-image (isti pristup kao odjava: .naslov-forme__logout-icon u 0-Common.css).
+   drop-shadow je na tipki (ne na span.maski): u nekim preglednicima sjena na samoj maski
+   gotovo ne vidi; filtriranje cijelog gumba daje istu siluetu kao chat SVG (.naslov-forme__chat-icon). */
 .naslov-forme__poruke {
   display: flex;
   align-items: center;
@@ -1261,6 +1295,7 @@
   cursor: pointer;
   border: none;
   background: transparent;
+  filter: drop-shadow(3px 3px 6px var(--c-text-shadow-75, rgba(0, 0, 0, 0.75)));
 }
 .naslov-forme__poruke:hover {
   opacity: 1;
@@ -1277,15 +1312,12 @@
   opacity: 1;
 }
 
-/* Lucide mail ikona â€“ CSS mask (stroke-only SVG).
-   Sjena prati naslov_forme_text_shadow (3px 3px 6px) jer je ikona
-   u istom kontekstu kao tekst naslova forme. */
+/* Lucide mail ikona â€“ CSS mask (stroke-only SVG). Sjena: vidi filter na .naslov-forme__poruke. */
 .poruke-icon--mail {
   display: inline-block;
   width: 22px;
   height: 22px;
   background-color: currentColor;
-  filter: drop-shadow(3px 3px 6px var(--c-text-shadow-75, rgba(0,0,0,0.75)));
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='20' height='16' x='2' y='4' rx='2'/%3E%3Cpath d='m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'/%3E%3C/svg%3E");
   mask-size: 22px 22px;
   mask-position: center;
@@ -1304,7 +1336,8 @@
   .naslov-forme {
     padding-bottom: 0;
   }
-  .naslov-forme__ikone .naslov-forme__poruke {
+  .naslov-forme__ikone .naslov-forme__poruke,
+  .naslov-forme__ikone .naslov-forme__chat {
     position: static;
     transform: none;
     margin-top: 0;
@@ -1589,10 +1622,10 @@
 }
 
 /*
- * Blok s dvije napomene (jedna ispod druge): 70% / 30% visine unutar desnog stupca.
- * Å irina = 100% stupca (do ruba tablice ostaje samo padding na .testni-modal__desno).
- * flex-basis 0: mora ispuniti .testni-modal__desno (ne visinu sadrÅ¾aja), inaÄe 7/3 dijele fiksnu malu kutiju
- * i donji edit ostaje iste visine pri resizeu modala.
+ * Blok s dvije napomene: polje nove poruke gore (prirodna visina), povijest ispod ispunjava ostatak stupca.
+ * U HTML-u je prvo povijest pa poruka; flex order ispod vizualno prebacuje na „poruka gore / povijest dolje”
+ * na svim širinama (isti raspored kao prijašnji mobitel-only layout).
+ * flex-basis 0 na .testni-modal__napomene: stupac mora ispuniti .testni-modal__desno da donji blok dobije scroll.
  */
 .testni-modal__napomene {
   flex: 1 1 0;
@@ -1616,15 +1649,15 @@
   box-sizing: border-box;
 }
 
-.testni-modal__napomena-blok:nth-child(1) {
-  flex: 7 1 0;
-  min-height: 0;
-}
-
 /*
- * Gornji blok: .poruke__napomena-div + .poruke__napomena-scroll kao u 0-Poruke.html â€“ isti okvir, font i
+ * Donji blok (vizualno, order:2): .poruke__napomena-div + .poruke__napomena-scroll kao u 0-Poruke.html â€“ isti okvir, font i
  * klase poruka (.poruke__msg--primljena, â€¦) pa boje/tokeni dolaze iz 0-Poruke.css bez dupliranja.
  */
+.testni-modal__napomena-blok--povijest {
+  order: 2;
+  flex: 1 1 0;
+  min-height: 0;
+}
 .testni-modal__napomena-blok--povijest .poruke__napomena-div.testni-modal__povijest-okvir {
   flex: 1 1 0;
   min-height: 0;
@@ -1632,7 +1665,7 @@
   flex-direction: column;
 }
 .testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest {
-  /* NadjaÄaj .poruke__napomena-scroll { flex: 0 0 auto } da ispunjava visinu gornjeg bloka (70%). */
+  /* NadjaÄaj .poruke__napomena-scroll { flex: 0 0 auto } da ispunjava visinu bloka povijesti (donji dio stupca). */
   flex: 1 1 0;
   min-height: 3em;
   max-height: none;
@@ -1653,9 +1686,10 @@
   padding: 12px 0;
 }
 
-/* Donji blok: poruka + tipka PoÅ¡alji u jednom redu (poravnanje dna s ikonom kao u modalu Poruke). */
+/* Gornji blok (vizualno): poruka + tipka PoÅ¡alji u jednom redu (poravnanje dna s ikonom kao u modalu Poruke). */
 .testni-modal__napomena-blok--poruka {
-  flex: 3 1 0;
+  order: 1;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -1663,12 +1697,11 @@
 
 /*
  * Red textarea | .poruke__posalji-btn: gap i Å¡irina kao .poruke__input-row (0-Poruke.css).
- * align-items: stretch (ne flex-end): uz popreÄnu os u retku textarea mora rasti s visinom donjeg bloka (udio 30%),
- * inaÄe ostaje intrinziÄna visina (rows + padding) i ne slijedi resize modala.
+ * align-items: stretch (ne flex-end): textarea raste unutar retka do min-height; blok poruke je auto-visine.
  * Tipka: align-self:flex-end da vizualno ostane uz dno kao u modalu Poruke.
  */
 .testni-modal__poruka-row {
-  flex: 1 1 0;
+  flex: 0 0 auto;
   min-height: 0;
   min-width: 0;
   display: flex;
@@ -1687,7 +1720,7 @@
   flex: 1 1 0;
   min-width: 0;
   width: 0;
-  /* Najmanje ~2 retka; uz align-items:stretch na retku visina raste s donjim blokom (udio 30%). */
+  /* Najmanje ~2 retka; uz align-items:stretch na retku visina slijedi sadržaj textarea. */
   min-height: calc(2 * 1.4em + 24px);
   align-self: stretch;
 }
@@ -1777,10 +1810,9 @@
   }
 
   /*
-   * Mobitel: (1) tablica + toggle kroz cijelu širinu tijela modala; (2) ispod red „nova poruka“
-   * (textarea lijevo, tipka Pošalji desno – isti DOM kao na PC-u); (3) na dnu povijest ispunjava ostatak
-   * visine, scroll ostaje na #…_edit_povijest. PC ostaje red (lijevo tablica | desno napomene) – sve
-   * promjene samo u ovom @media bloku.
+   * Mobitel: (1) tablica + toggle kroz cijelu širinu tijela modala; (2) red poruke (textarea | Pošalji);
+   * (3) povijest ispunjava ostatak visine, scroll na #…_edit_povijest / #vnlh_chat_history.
+   * Raspored poruka/povijesti unutar stupca je isti na PC (order u baznom CSS-u); ovdje samo mobitel-specifično.
    */
   /*
    * Lijevi stupac: u tijelu modala flex-direction je column, pa bazni .poruke__left { flex: 0 0 240px }
@@ -1838,16 +1870,32 @@
     width: 100%;
   }
 
-  /* DOM: prvo povijest, pa poruka – order prebacuje vizualno: poruka gore, povijest dolje. */
-  .testni-modal .testni-modal__napomena-blok.testni-modal__napomena-blok--poruka {
-    order: 1;
-    flex: 0 0 auto !important;
-    min-height: 0;
+  /*
+   * Mobitel: skriven nativni scrollbar na povijesti i na polju poruke (textarea); vertikalni scroll i dalje
+   * prstom (overflow ostaje auto na oba). Modal Poruke (.testni-modal) i Chat (.vnlh-chat-modal); desktop bez promjene.
+   */
+  .testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest,
+  .vnlh-chat-modal .poruke__napomena-scroll.testni-modal__edit-povijest {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
-  .testni-modal .testni-modal__napomena-blok.testni-modal__napomena-blok--povijest {
-    order: 2;
-    flex: 1 1 auto !important;
-    min-height: 0;
+  .testni-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar,
+  .vnlh-chat-modal .poruke__napomena-scroll.testni-modal__edit-povijest::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
+  .testni-modal textarea.testni-modal__edit-poruka,
+  .vnlh-chat-modal textarea.testni-modal__edit-poruka {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .testni-modal textarea.testni-modal__edit-poruka::-webkit-scrollbar,
+  .vnlh-chat-modal textarea.testni-modal__edit-poruka::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
 
   .testni-modal__poruka-row {

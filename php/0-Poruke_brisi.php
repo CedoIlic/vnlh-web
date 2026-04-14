@@ -1,8 +1,12 @@
 <?php
 // =====================================================
 // 0-Poruke_brisi.php
-// API: brisanje svih poruka između logged korisnika i odabranog pošiljatelja.
-// Briše poruke u oba smjera (korisnik→pošiljatelj i pošiljatelj→korisnik).
+// API: logičko brisanje niti – samo tip = 'Poruka' (modal Poruke). Chat nit: poruke_chat_brisi.php.
+// Postavlja sustav_sesije_poruke.brisano = 1 u oba smjera (redovi ostaju u bazi).
+//
+// Rezime kolone brisano: brisanje postavlja 1 i ne uklanja poruku iz baze. U povijesti se
+// prikazuju samo poruke koje imaju brisano=0. Poruke s brisano=1 ne pojavljuju se nigdje –
+// ponašaju se kao da ne postoje.
 //
 // Ulaz (POST):
 //   id_posiljatelj  (obavezno) – ID korisnika čiji se razgovor briše
@@ -36,11 +40,13 @@ if ($idPosiljatelj <= 0) {
 
 $idKorisnik = (int) $_SESSION['id_korisnik'];
 
-// --- Blok: DELETE svih poruka u oba smjera između ova dva korisnika ---
+// --- Blok: UPDATE brisano=1 za sve poruke u oba smjera (logičko brisanje) ---
 $sql = "
-    DELETE FROM sustav_sesije_poruke
-    WHERE (id_posiljatelj = ? AND id_primatelj = ?)
-       OR (id_posiljatelj = ? AND id_primatelj = ?)
+    UPDATE sustav_sesije_poruke
+       SET brisano = 1
+    WHERE tip = 'Poruka'
+      AND ((id_posiljatelj = ? AND id_primatelj = ?)
+       OR (id_posiljatelj = ? AND id_primatelj = ?))
 ";
 
 $stmt = $mysqli->prepare($sql);
@@ -59,7 +65,7 @@ if (!$stmt->execute()) {
 
 $stmt->close();
 $mysqli->close();
-// Flag ima_neprocitanih u sustav_sesije_aktivne ažurira AFTER DELETE trigger automatski.
+// Flag ima_neprocitanih u sustav_sesije_aktivne ažurira trg_poruke_after_update (brisano 0→1, status Novo).
 
 // Uspjeh – VNLH konvencija
 echo '-1';

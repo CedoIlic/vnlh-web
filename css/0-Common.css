@@ -735,7 +735,7 @@ body {
 .mt-4 { margin-top: var(--page_container_margin_top) !important; }
 
 /* =========================================================
-   NASLOV FORME – wrapper za ikone (mail + logout), desno poravnat.
+   NASLOV FORME – wrapper za ikone (chat + mail + logout), desno poravnat.
    Na desktopu apsolutno pozicioniran; na mobilnom flex row (vidi @media ispod).
    ========================================================= */
 .naslov-forme__ikone {
@@ -751,7 +751,9 @@ body {
 }
 
 /* =========================================================
-   NASLOV FORME – odjava (ikona udesno; 0-Common učitava i Meni/Lista bez 0-Kontrole)
+   NASLOV FORME – odjava (ikona udesno; 0-Common učitava i Meni/Lista bez 0-Kontrole).
+   drop-shadow je na <a> (ne na spanu s mask-image): u Chrome/Firefoxu sjena na maski često
+   ne iscrtava – isti razlog kao kod mail tipke .naslov-forme__poruke u 0-Poruke.css.
    ========================================================= */
 .naslov-forme__odjava {
   display: flex;
@@ -766,6 +768,7 @@ body {
   transition: opacity 0.15s ease, background-color 0.15s ease;
   z-index: 2;
   box-sizing: border-box;
+  filter: drop-shadow(3px 3px 6px var(--c-text-shadow-75, rgba(0, 0, 0, 0.75)));
 }
 .naslov-forme__odjava:hover {
   opacity: 1;
@@ -776,17 +779,17 @@ body {
   outline-offset: 2px;
 }
 
-/* Heroicons outline – arrow-right-on-rectangle (odjava) */
-.kontrola-icon--arrow-right-on-rectangle {
+/* Lucide „log-out” (https://lucide.dev/icons/log-out) – ista maska/stroke 2 kao mail u 0-Poruke.css; samo u .naslov-forme__odjava (0-Common.js). */
+.naslov-forme__logout-icon {
   display: inline-block;
   width: 22px;
   height: 22px;
   background-color: currentColor;
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15.75%209V5.25A2.25%202.25%200%200%200%2013.5%203h-6a2.25%202.25%200%200%200-2.25%202.25v13.5A2.25%202.25%200%200%200%207.5%2021h6a2.25%202.25%200%200%200%202.25-2.25V15M12%209l-3%203m0%200%203%203m-3-3h12.75'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/%3E%3Cpolyline points='16 17 21 12 16 7'/%3E%3Cline x1='21' x2='9' y1='12' y2='12'/%3E%3C/svg%3E");
   mask-size: 22px 22px;
   mask-position: center;
   mask-repeat: no-repeat;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15.75%209V5.25A2.25%202.25%200%200%200%2013.5%203h-6a2.25%202.25%200%200%200-2.25%202.25v13.5A2.25%202.25%200%200%200%207.5%2021h6a2.25%202.25%200%200%200%202.25-2.25V15M12%209l-3%203m0%200%203%203m-3-3h12.75'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/%3E%3Cpolyline points='16 17 21 12 16 7'/%3E%3Cline x1='21' x2='9' y1='12' y2='12'/%3E%3C/svg%3E");
   -webkit-mask-size: 22px 22px;
   -webkit-mask-position: center;
   -webkit-mask-repeat: no-repeat;
@@ -845,7 +848,7 @@ body {
     width: 100%;
     margin-bottom: 0;
   }
-  /* Wrapper za ikone (mail + logout) – treći red, horizontalno poravnate */
+  /* Wrapper za ikone (chat + mail + logout) – treći red, horizontalno poravnate */
   .naslov-forme__ikone {
     position: static;
     display: flex;

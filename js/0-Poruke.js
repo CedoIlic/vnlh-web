@@ -1,10 +1,11 @@
 /* =========================================================
    0-Poruke.js
-   Modal „Poruke”: fragment, tablica, povijest, slanje; mail ikona u .naslov-forme + globalni polling nepročitanih.
+   Modal „Poruke”: fragment, tablica, povijest, slanje; mail + (opcionalno) chat ikona u .naslov-forme + globalni polling nepročitanih.
    Otvaranje: klik na mail, window.vnlhOpenTestniModal / VnlhPorukeOpenModal; zatvaranje Povratak ili Escape.
    Ovisnosti: 0-Poruke.css, 0-Common.js (postFormData, vnlhAppBasePathname, .naslov-forme__ikone).
    API: 0-Poruke.php, 0-Poruke_lista.php, 0-Poruke_poruke.php, 0-Poruke_neprocitane.php, 0-Poruke_posalji.php,
         0-Poruke_korisnici.php, 0-Poruke_brisi.php, common_sustav_varijable.php?id=101.
+   Chat (opcionalno): dinamički 0-Chat.js + poruke_chat_*.php kad je VNLH_CHAT_DOZVOLJEN=1.
    Geometrija dijaloga (px) pamti se pri izlasku (desktop i mobitel zasebno) u localStorage i obnavlja pri sljedećem otvaranju.
    ========================================================= */
 (function () {
@@ -161,6 +162,20 @@
     return document.getElementById(fullId);
   }
 
+  /**
+   * Testni modal Poruke: fokus ostaje na polju nove poruke (#…_edit_poruka).
+   * Povijest (#…_edit_povijest) je namjerno izvan tab-reda (tabindex -1) i služi samo za scroll/dodir;
+   * poziv nakon rendera povijesti ili kad se textarea omogući.
+   */
+  function testniFokusirajPoljePoruke() {
+    try {
+      var inp = id('_edit_poruka');
+      if (inp && !inp.disabled && typeof inp.focus === 'function') {
+        inp.focus();
+      }
+    } catch (eF) {}
+  }
+
   function porukeStopGlobalNeprocitanePolling() {
     if (porukeNeprocitaneGlobalIntervalId) {
       clearInterval(porukeNeprocitaneGlobalIntervalId);
@@ -180,6 +195,41 @@
     }
   }
 
+  /** Boja chat ikone (nepročitane Chat poruke – ima_chat_neprocitanih u bazi). */
+  function porukeUpdateChatIconColor(chatNeprocitane) {
+    var icons = document.querySelectorAll('.naslov-forme__chat');
+    for (var ic = 0; ic < icons.length; ic++) {
+      if (chatNeprocitane > 0) {
+        icons[ic].classList.add('naslov-forme__chat--neprocitane');
+      } else {
+        icons[ic].classList.remove('naslov-forme__chat--neprocitane');
+      }
+    }
+  }
+
+  /**
+   * Učitava 0-Chat.js jednom (isti origin kao 0-Poruke.js) kad je chat dopušten.
+   * Na load poziva window.vnlhChatBoot (fragment + vezivanje ikone).
+   */
+  function porukeUcitajChatModulJednom() {
+    if (typeof window.VNLH_CHAT_DOZVOLJEN === 'undefined' || Number(window.VNLH_CHAT_DOZVOLJEN) !== 1) return;
+    if (window.__vnlhChatModulLoaded) return;
+    window.__vnlhChatModulLoaded = true;
+    try {
+      var nodes = document.querySelectorAll('script[src*="0-Poruke.js"]');
+      var el = nodes.length ? nodes[nodes.length - 1] : null;
+      if (!el || !el.src) return;
+      var chatSrc = el.src.replace(/0-Poruke\.js/i, '0-Chat.js');
+      var s = document.createElement('script');
+      s.src = chatSrc;
+      s.async = true;
+      s.onload = function () {
+        if (typeof window.vnlhChatBoot === 'function') window.vnlhChatBoot();
+      };
+      document.head.appendChild(s);
+    } catch (eChatLoad) {}
+  }
+
   /**
    * Jedan GET 0-Poruke_neprocitane.php: uvijek ažurira mail ikonu; ako je modal otvoren i broj poraste,
    * refresh tipka u zaglavlju dobije .poruke__refresh-btn--nova.
@@ -195,6 +245,9 @@
         var obj = JSON.parse(t);
         var n = typeof obj.neprocitane === 'number' ? obj.neprocitane : 0;
         porukeUpdateMailIconColor(n);
+        var nc = typeof obj.chat_neprocitane === 'number' ? obj.chat_neprocitane : 0;
+        porukeUpdateChatIconColor(nc);
+        if (typeof window.vnlhChatNeprocitanePoll === 'function') window.vnlhChatNeprocitanePoll(obj);
         if (modalOpen && testniLastKnownNeprocitane >= 0 && n > testniLastKnownNeprocitane) {
           var refreshBtn = id('_refresh');
           if (refreshBtn) refreshBtn.classList.add('poruke__refresh-btn--nova');
@@ -522,6 +575,9 @@
     if (!poruke || poruke.length === 0) {
       testniPovijestPostaviPlaceholder(napomena, 'Nema poruka.');
       napomena.scrollTop = 0;
+      requestAnimationFrame(function () {
+        testniFokusirajPoljePoruke();
+      });
       return;
     }
 
@@ -566,6 +622,9 @@
       napomena.appendChild(div);
     }
     napomena.scrollTop = napomena.scrollHeight;
+    requestAnimationFrame(function () {
+      testniFokusirajPoljePoruke();
+    });
   }
 
   /**
@@ -588,6 +647,9 @@
       if (!el) return;
       if (!t || t.charAt(0) !== '[') {
         testniPovijestPostaviPlaceholder(el, 'Podaci nisu dostupni.');
+        requestAnimationFrame(function () {
+          testniFokusirajPoljePoruke();
+        });
         return;
       }
       try {
@@ -596,6 +658,9 @@
         fetchTestniLista();
       } catch (eP) {
         testniPovijestPostaviPlaceholder(el, 'Greška pri čitanju odgovora.');
+        requestAnimationFrame(function () {
+          testniFokusirajPoljePoruke();
+        });
       }
     };
     xhr.send();
@@ -691,6 +756,12 @@
       testniPovijestPostaviPlaceholder(pov, 'Odaberite pošiljatelja u tablici…');
     }
     if (imaSelekciju) testniOsvjeziPosaljiDisabled();
+    /* Fokus na poruku čim je omogućena (prije nego što GET povijesti završi). */
+    if (imaSelekciju) {
+      requestAnimationFrame(function () {
+        testniFokusirajPoljePoruke();
+      });
+    }
   }
 
   /**
@@ -1193,6 +1264,38 @@
     }
 
     initTestniMobileDialogResizeHandle(modal);
+
+    /* Povijest ne smije zadržati fokus (scroll/touch ostaje); programski fokus na kontejner → natrag na textarea. */
+    var povHist = id('_edit_povijest');
+    if (povHist && !povHist._vnlhPorukePovijestFocusGuard) {
+      povHist._vnlhPorukePovijestFocusGuard = true;
+      povHist.addEventListener('focus', function () {
+        try {
+          povHist.blur();
+        } catch (eBl) {}
+        testniFokusirajPoljePoruke();
+      });
+    }
+    if (modal && !modal._vnlhPorukeModalFocusinGuard) {
+      modal._vnlhPorukeModalFocusinGuard = true;
+      modal.addEventListener(
+        'focusin',
+        function (e) {
+          var povF = id('_edit_povijest');
+          var inpF = id('_edit_poruka');
+          if (!povF || !inpF || !e || !e.target) return;
+          var t = e.target;
+          if (t === inpF || (typeof inpF.contains === 'function' && inpF.contains(t))) return;
+          if (t === povF || (typeof povF.contains === 'function' && povF.contains(t))) {
+            try {
+              if (typeof t.blur === 'function') t.blur();
+            } catch (eB) {}
+            testniFokusirajPoljePoruke();
+          }
+        },
+        true
+      );
+    }
   }
 
   function openTestniModal() {
@@ -1279,6 +1382,39 @@
   }
 
   /**
+   * Chat ikona (Lucide messages-square) lijevo od pošte; PHP postavlja window.VNLH_CHAT_DOZVOLJEN (1/0).
+   * Umeće se prije pošte: insertBefore(chat, odjava), zatim mail insertBefore(mail, odjava) → redoslijed chat | mail | odjava.
+   * Klik: 0-Chat.js (učitava se iz porukeUcitajChatModulJednom → vnlhChatBoot).
+   */
+  function vnlhInjectNaslovChat() {
+    try {
+      if (typeof window.VNLH_CHAT_DOZVOLJEN === 'undefined' || Number(window.VNLH_CHAT_DOZVOLJEN) !== 1) return;
+      var path = window.location.pathname || '';
+      if (/Login\.(html|php)/i.test(path)) return;
+      if (document.body && document.body.classList.contains('login-win')) return;
+
+      var list = document.querySelectorAll('.naslov-forme');
+      for (var i = 0; i < list.length; i++) {
+        var el = list[i];
+        if (el.querySelector('.naslov-forme__chat')) continue;
+        var wrapper = el.querySelector('.naslov-forme__ikone');
+        var odjava = wrapper ? wrapper.querySelector('.naslov-forme__odjava') : null;
+        if (!wrapper || !odjava) continue;
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'naslov-forme__chat';
+        btn.setAttribute('aria-label', 'Chat');
+        btn.title = 'Chat';
+        btn.innerHTML =
+          '<svg class="naslov-forme__chat-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>';
+        /* Klik obrađuje 0-Chat.js (wireChatIconClicks) – ovdje nema praznog handlera da ne „pregazi” lazy učitavanje. */
+        wrapper.insertBefore(btn, odjava);
+      }
+    } catch (eChat) {}
+  }
+
+  /**
    * Mail ikona u .naslov-forme (lijevo od odjave). Jedan klik otvara modal nakon kratke pauze;
    * dvoklik otkida timer i odmah otvara modal (isti modal kao klik).
    */
@@ -1343,7 +1479,9 @@
     if (/Login\.(html|php)/i.test(path)) return;
     if (document.body && document.body.classList.contains('login-win')) return;
 
+    vnlhInjectNaslovChat();
     vnlhInjectNaslovPoruke();
+    porukeUcitajChatModulJednom();
     porukeUcitajIntervalPollingaJednom(function () {
       porukeStartGlobalNeprocitanePolling();
     });

@@ -189,36 +189,52 @@ if ($psInt === 0) {
 require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
 Alati_Sesije_Aktivne_insert_after_login($mysqli, $idKorisnik);
 
-// --- Blok: Postavi inicijalni flag ima_neprocitanih za upravo kreiranu sesiju ---
+// --- Blok: Postavi inicijalne flagove ima_neprocitanih (mail) i ima_chat_neprocitanih (Chat poruka) ---
 // Korisnik može imati nepročitane poruke od ranije (primljene dok nije bio ulogiran).
-// Provjerimo COUNT i odmah postavimo flag da prvi polling ne mora raditi teški upit.
-$sqlCntLogin = "SELECT COUNT(*) AS cnt FROM sustav_sesije_poruke WHERE id_primatelj = ? AND status = 'Novo'";
-$stmtCntLogin = $mysqli->prepare($sqlCntLogin);
-if ($stmtCntLogin) {
-    $stmtCntLogin->bind_param('i', $idKorisnik);
-    $stmtCntLogin->execute();
-    $resCntLogin = $stmtCntLogin->get_result();
-    $rowCntLogin = $resCntLogin ? $resCntLogin->fetch_assoc() : null;
-    $imaNeprocitanih = ($rowCntLogin && (int) $rowCntLogin['cnt'] > 0) ? 1 : 0;
-    $stmtCntLogin->close();
+// Mail: strogo tip = 'Poruka'; chat: tip = 'Chat poruka'. Migracija: sql/sustav_sesije_aktivne_chat_kolone_i_triggere.sql
+/* Nepročitane: samo aktivne poruke (brisano=0); vidi rezime u 0-Poruke_brisi.php. */
+$sqlCntMail = "SELECT COUNT(*) AS cnt FROM sustav_sesije_poruke WHERE id_primatelj = ? AND status = 'Novo' AND brisano = 0 AND tip = 'Poruka'";
+$stmtCntMail = $mysqli->prepare($sqlCntMail);
+$imaNeprocitanih = 0;
+if ($stmtCntMail) {
+    $stmtCntMail->bind_param('i', $idKorisnik);
+    $stmtCntMail->execute();
+    $resCntMail = $stmtCntMail->get_result();
+    $rowCntMail = $resCntMail ? $resCntMail->fetch_assoc() : null;
+    $imaNeprocitanih = ($rowCntMail && (int) $rowCntMail['cnt'] > 0) ? 1 : 0;
+    $stmtCntMail->close();
+}
 
-    // Ažuriraj samo sesiju ovog korisnika s ovim session_id
-    $sidLogin = session_id();
-    $sqlSetFlag = "
-        UPDATE sustav_sesije_aktivne
-           SET ima_neprocitanih = ?
-         WHERE session_id = ? AND status = 'aktivna'
-    ";
-    $stmtSetFlag = $mysqli->prepare($sqlSetFlag);
-    if ($stmtSetFlag) {
-        $stmtSetFlag->bind_param('is', $imaNeprocitanih, $sidLogin);
-        $stmtSetFlag->execute();
-        $stmtSetFlag->close();
-    }
+$sqlCntChat = "SELECT COUNT(*) AS cnt FROM sustav_sesije_poruke WHERE id_primatelj = ? AND status = 'Novo' AND brisano = 0 AND tip = 'Chat poruka'";
+$stmtCntChat = $mysqli->prepare($sqlCntChat);
+$imaChatNeprocitanih = 0;
+if ($stmtCntChat) {
+    $stmtCntChat->bind_param('i', $idKorisnik);
+    $stmtCntChat->execute();
+    $resCntChat = $stmtCntChat->get_result();
+    $rowCntChat = $resCntChat ? $resCntChat->fetch_assoc() : null;
+    $imaChatNeprocitanih = ($rowCntChat && (int) $rowCntChat['cnt'] > 0) ? 1 : 0;
+    $stmtCntChat->close();
+}
+
+$sidLogin = session_id();
+$sqlSetFlag = "
+    UPDATE sustav_sesije_aktivne
+       SET ima_neprocitanih = ?, ima_chat_neprocitanih = ?
+     WHERE session_id = ? AND status = 'aktivna'
+";
+$stmtSetFlag = $mysqli->prepare($sqlSetFlag);
+if ($stmtSetFlag) {
+    $stmtSetFlag->bind_param('iis', $imaNeprocitanih, $imaChatNeprocitanih, $sidLogin);
+    $stmtSetFlag->execute();
+    $stmtSetFlag->close();
 }
 
 require_once __DIR__ . '/meni_za_sesiju.php';
 $_SESSION['vnlh_meni_dopustene'] = meni_za_sesiju_ucitaj_dopustene($mysqli, $idDuznosnik);
+
+require_once __DIR__ . '/poruke_chat_sesija.php';
+$_SESSION['chat_dozvoljen'] = poruke_chat_dozvoljen_za_korisnika($mysqli, $idKorisnik);
 
 $mysqli->close();
 header('Content-Type: text/plain; charset=utf-8');

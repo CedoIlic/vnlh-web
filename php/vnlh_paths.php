@@ -95,6 +95,34 @@ function vnlh_apply_asset_token_to_html(string $html): string {
 }
 
 /**
+ * Flag za JS: smije li korisnik vidjeti ikonu chata u zaglavlju (sesija nakon Login / require_login).
+ * Fragmenti HTML-a bez <head> ne dobiju injekt – parent stranica već nosi window.VNLH_CHAT_DOZVOLJEN.
+ * Ručni serviran HTML-a (Meni.php, Alati_*.php) također zovu ovu funkciju jer ne prolaze vnlh_emit_html_*.
+ */
+function vnlh_chat_dozvoljen_js_literal(): int
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        return 0;
+    }
+    /* Eksplicitno 1/0: izbjegava edge-case s !empty() i stringom "0" / neočekivanim tipovima iz sesije. */
+    return (int) ($_SESSION['chat_dozvoljen'] ?? 0) === 1 ? 1 : 0;
+}
+
+/**
+ * Umeće jedan inline script odmah nakon <head> ako postoji; inače vraća HTML nepromijenjen.
+ */
+function vnlh_inject_chat_flag_script(string $html): string
+{
+    $flag = vnlh_chat_dozvoljen_js_literal();
+    $snip = '<script>window.VNLH_CHAT_DOZVOLJEN=' . $flag . ';</script>';
+    if (stripos($html, '<head>') === false) {
+        return $html;
+    }
+    $out = preg_replace('/<head>/i', '<head>' . "\n" . $snip, $html, 1);
+    return is_string($out) ? $out : $html;
+}
+
+/**
  * Učitaj html/<ime>, zamijeni __VNLH_ASSET_V__ i ispiši (umjesto readfile na statičkom HTML-u).
  *
  * @param string $htmlBasename npr. "Clanovi_CRUD.html" (koristi basename radi sigurnosti)
@@ -108,7 +136,8 @@ function vnlh_emit_html_file(string $htmlBasename): void {
         return;
     }
     $raw = file_get_contents($abs);
-    echo vnlh_apply_asset_token_to_html($raw !== false ? $raw : '');
+    $html = vnlh_apply_asset_token_to_html($raw !== false ? $raw : '');
+    echo vnlh_inject_chat_flag_script($html);
 }
 
 /**
@@ -121,5 +150,6 @@ function vnlh_emit_html_absolute(string $absolutePath): void {
         return;
     }
     $raw = file_get_contents($absolutePath);
-    echo vnlh_apply_asset_token_to_html($raw !== false ? $raw : '');
+    $html = vnlh_apply_asset_token_to_html($raw !== false ? $raw : '');
+    echo vnlh_inject_chat_flag_script($html);
 }
