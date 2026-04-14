@@ -3,6 +3,7 @@
   Transfer_Excel_CRUD.html – Transfer članova iz Excel tablica.
   Panel tablica: zaglavlje (master podaci + putanja), tablica preduvjeta (Ime fajla, Naziv lože, ID lože).
   Dvoklik na red otvara modal za dodjelu lože (Transfer_Excel_CRUD_loze.php).
+  Tri panela (preduvjet, rezultat, log): nezavisni vertikalni resize; log nema kontrola-panel-tablica pa koristi klasu kontrola-panel--traka-desktop za istu traku na desktopu (0-Kontrole.css).
   Ovisnosti: 0-Common.css, 0-Kontrole.css, Transfer_Excel_CRUD.css; 0-Kontrole.js, 0-Common.js, 0-Poruke_Tekstovi.js, Transfer_Excel_CRUD.js.
 -->
 <html lang="hr">
@@ -93,8 +94,8 @@
         </div>
     </div>
 
-    <!-- Log panel: iste dimenzije kao panel tablice, samo kontrola napomena (resize po visini). -->
-    <div class="kontrola-panel kontrola-panel--resize-y transfer-excel-crud__panel-log mb-3">
+    <!-- Log panel: nezavisni resize; kontrola-panel--traka-desktop = ista JS traka na širokom ekranu kao na panel-tablica. -->
+    <div class="kontrola-panel kontrola-panel--resize-y kontrola-panel--traka-desktop transfer-excel-crud__panel-log mb-3">
         <div class="kontrola-panel__header transfer-excel-crud__log-header">
             <span class="kontrola-labela mb-0">Log</span>
         </div>

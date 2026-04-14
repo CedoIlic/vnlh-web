@@ -1,6 +1,6 @@
 /* =========================================================
    Napredovanja_CRUD.css
-   Panel tablice s Država + reload, red Pronađi + edit. Panel panel_stupnjevi s tablicom i CRUD tipkama u podnožju.
+   Panel tablice: Država, Regija, Loža, red Pronađi + reload. Panel panel_stupnjevi s tablicom i CRUD tipkama u podnožju.
    ========================================================= */
 
 /* Dva panela s tablicama jedan pored drugog */
@@ -20,11 +20,11 @@
 /* Jedna min-height za oba panela (identična vrijednost – lijevi i desni).
    Za desni panel koji ima resize traku dodajemo visinu trake da se ne može smanjiti ispod visine lijevog. */
 .napredovanja-crud__panels-row .napredovanja-crud__panel-min-equal {
-  min-height: calc(var(--panel_body_padding_y) + var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra) + var(--panel_body_padding_y) + var(--panel_header_min_height_two_rows));
+  min-height: calc(var(--panel_body_padding_y) + var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra) + var(--panel_body_padding_y) + var(--panel_header_min_height_four_rows));
 }
 
 .napredovanja-crud__panels-row .napredovanja-crud__panel-stupnjevi.napredovanja-crud__panel-min-equal {
-  min-height: calc(var(--panel_body_padding_y) + var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra) + var(--panel_body_padding_y) + var(--panel_header_min_height_two_rows) + var(--panel_resize_bar_height));
+  min-height: calc(var(--panel_body_padding_y) + var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra) + var(--panel_body_padding_y) + var(--panel_header_min_height_four_rows) + var(--panel_resize_bar_height));
 }
 
 /* Panel stupnjevi: tablica raste po visini i popunjava slobodan prostor (samo ova forma) */

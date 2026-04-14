@@ -658,7 +658,8 @@ body {
 }
 
 /* Na desktopu (≥769px): nativni resize ugla preglednika kao .obrada-slika__dialog; traka u tijelu skrivena.
-   Na mobitelu ostaje traka + resize:none na panelu (touch). */
+   Iznimke (initPanelResizeBar, bez nativnog resizea): .kontrola-panel-tablica; .kontrola-panel--traka-desktop (npr. log bez tablica-panela);
+   data-resize-sync-group (sinkron visine). Na mobitelu ostaje traka + resize:none na panelu. */
 @media (min-width: 769px) {
   .kontrola-panel.kontrola-panel--resize-y {
     resize: vertical;
@@ -674,6 +675,36 @@ body {
   .kontrola-panel--resize-both .kontrola-panel__resize-bar {
     display: none !important;
     pointer-events: none !important;
+  }
+
+  /*
+   * Jedinstven resize (traka, ne nativni kut): .kontrola-panel-tablica; .kontrola-panel--traka-desktop na običnom panelu;
+   * data-resize-sync-group: isto + sinkron visine više panela (npr. dvije tablice u retku).
+   */
+  .kontrola-panel-tablica.kontrola-panel--resize-y,
+  .kontrola-panel-tablica.kontrola-panel--resize-both,
+  .kontrola-panel.kontrola-panel--traka-desktop.kontrola-panel--resize-y,
+  .kontrola-panel.kontrola-panel--traka-desktop.kontrola-panel--resize-both,
+  .kontrola-panel[data-resize-sync-group].kontrola-panel--resize-y,
+  .kontrola-panel[data-resize-sync-group].kontrola-panel--resize-both {
+    resize: none;
+  }
+  .kontrola-panel-tablica.kontrola-panel--resize-x,
+  .kontrola-panel.kontrola-panel--traka-desktop.kontrola-panel--resize-x,
+  .kontrola-panel[data-resize-sync-group].kontrola-panel--resize-x {
+    resize: none;
+  }
+  .kontrola-panel-tablica.kontrola-panel--resize-y .kontrola-panel__resize-bar,
+  .kontrola-panel-tablica.kontrola-panel--resize-x .kontrola-panel__resize-bar,
+  .kontrola-panel-tablica.kontrola-panel--resize-both .kontrola-panel__resize-bar,
+  .kontrola-panel.kontrola-panel--traka-desktop.kontrola-panel--resize-y .kontrola-panel__resize-bar,
+  .kontrola-panel.kontrola-panel--traka-desktop.kontrola-panel--resize-x .kontrola-panel__resize-bar,
+  .kontrola-panel.kontrola-panel--traka-desktop.kontrola-panel--resize-both .kontrola-panel__resize-bar,
+  .kontrola-panel[data-resize-sync-group].kontrola-panel--resize-y .kontrola-panel__resize-bar,
+  .kontrola-panel[data-resize-sync-group].kontrola-panel--resize-x .kontrola-panel__resize-bar,
+  .kontrola-panel[data-resize-sync-group].kontrola-panel--resize-both .kontrola-panel__resize-bar {
+    display: flex !important;
+    pointer-events: auto !important;
   }
 }
 

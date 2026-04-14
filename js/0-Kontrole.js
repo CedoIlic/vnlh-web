@@ -2156,6 +2156,15 @@
       }, { passive: true });
     }
 
+    /**
+     * U svako tijelo panela s vertikalnim (ili both) resizeom dodaje .kontrola-panel__resize-bar ako već ne postoji.
+     *
+     * HTML ne smije ručno sadržavati tu traku – jedan izvor istine ovdje (0-Kontrole.js), uz 0-Kontrole.css za vidljivost.
+     * Na panelu dovoljno: klase .kontrola-panel + .kontrola-panel--resize-y ili --resize-both (i po potrebi tablica-modifikatori).
+     *
+     * Na desktopu: .kontrola-panel-tablica, .kontrola-panel--traka-desktop i data-resize-sync-group koriste traku (CSS),
+     * ne nativni resize kuta; sync-group još i usklađuje visinu više panela pri dragu.
+     */
     function initPanelResizeBar(scope) {
       var panels = (scope || document).querySelectorAll('.kontrola-panel--resize-y .kontrola-panel__body, .kontrola-panel--resize-both .kontrola-panel__body');
       panels.forEach(function (body) {
@@ -2181,6 +2190,38 @@
           }
         }
         minH = minH + barH;
+        /**
+         * Min / max visina za proizvoljni .kontrola-panel (isti proračun kao za panel u kojem je resize traka).
+         * Potrebno za data-resize-sync-group: paneli u grupi mogu imati različit CSS min-height (npr. jedan u
+         * .panel--stacked-min) pa pri smanjivanju treba zajednički pod (max svih minimuma), inače drugi panel
+         * ostane na min-u dok se prvi smanjuje.
+         */
+        function getLimitsForPanelEl(panEl) {
+          var panelMin = 120;
+          if (panEl && typeof getComputedStyle !== 'undefined' && panEl.ownerDocument) {
+            var csEl = getComputedStyle(panEl).minHeight;
+            if (csEl && csEl !== 'none' && csEl !== 'auto') {
+              var pxEl = parseFloat(csEl);
+              if (!isNaN(pxEl) && pxEl > 0) panelMin = Math.round(pxEl);
+            }
+          }
+          var vhEl = typeof window !== 'undefined' && window.innerHeight ? window.innerHeight : 800;
+          var maxHEl = Math.round(vhEl * 0.9);
+          var maxVhEl = panEl && panEl.getAttribute && panEl.getAttribute('data-resize-max-vh');
+          if (maxVhEl != null) maxVhEl = String(maxVhEl).trim();
+          if (maxVhEl === 'none' || maxVhEl === 'full') {
+            maxHEl = Infinity;
+          } else if (maxVhEl) {
+            var pctEl = parseFloat(maxVhEl, 10);
+            if (!isNaN(pctEl) && pctEl > 0) {
+              maxHEl = Math.round(vhEl * (pctEl / 100));
+            }
+          }
+          if (typeof maxHEl === 'number' && isFinite(maxHEl) && panelMin > maxHEl) {
+            maxHEl = panelMin + Math.round(vhEl);
+          }
+          return { panelMin: panelMin, maxH: maxHEl };
+        }
         function getLimitsForPanelResize() {
           var panelMin = minH;
           var cs = typeof getComputedStyle !== 'undefined' && panel.ownerDocument && getComputedStyle(panel).minHeight;
@@ -2205,14 +2246,40 @@
           }
           return { panelMin: panelMin, maxH: maxH };
         }
+        /** Za sync grupu: zajednički pod = max(panelMin), strop = min(maxH) – da oba panela mogu istu visinu. */
+        function getEffectiveLimitsForDrag() {
+          var limLocal = getLimitsForPanelResize();
+          var syncGroup = panel.getAttribute && panel.getAttribute('data-resize-sync-group');
+          if (!syncGroup) return limLocal;
+          var nodes = (panel.ownerDocument || document).querySelectorAll('.kontrola-panel[data-resize-sync-group="' + syncGroup + '"]');
+          if (!nodes || !nodes.length) return limLocal;
+          var floor = limLocal.panelMin;
+          var cap = limLocal.maxH;
+          var idx;
+          for (idx = 0; idx < nodes.length; idx++) {
+            var lj = getLimitsForPanelEl(nodes[idx]);
+            if (lj.panelMin > floor) floor = lj.panelMin;
+            if (typeof lj.maxH === 'number' && isFinite(lj.maxH) && lj.maxH < cap) cap = lj.maxH;
+          }
+          if (typeof cap === 'number' && isFinite(cap) && floor > cap) {
+            cap = floor + Math.round(typeof window !== 'undefined' && window.innerHeight ? window.innerHeight : 800);
+          }
+          return { panelMin: floor, maxH: cap };
+        }
         function applyPanelResizeHeight(newH) {
-          panel.style.height = newH + 'px';
+          var eff = getEffectiveLimitsForDrag();
+          var target =
+            typeof eff.maxH === 'number' && isFinite(eff.maxH)
+              ? Math.max(eff.panelMin, Math.min(eff.maxH, newH))
+              : Math.max(eff.panelMin, newH);
           var syncGroup = panel.getAttribute && panel.getAttribute('data-resize-sync-group');
           if (syncGroup) {
-            var others = (panel.ownerDocument || document).querySelectorAll('.kontrola-panel[data-resize-sync-group="' + syncGroup + '"]');
-            for (var i = 0; i < others.length; i++) {
-              if (others[i] !== panel) others[i].style.height = newH + 'px';
+            var allSync = (panel.ownerDocument || document).querySelectorAll('.kontrola-panel[data-resize-sync-group="' + syncGroup + '"]');
+            for (var i = 0; i < allSync.length; i++) {
+              allSync[i].style.height = target + 'px';
             }
+          } else {
+            panel.style.height = target + 'px';
           }
         }
         function clientYFromTouchLike(ev) {
@@ -2220,10 +2287,23 @@
           if (ev.changedTouches && ev.changedTouches.length) return ev.changedTouches[0].clientY;
           return ev.clientY;
         }
+        /** Za data-resize-sync-group: početna visina mora biti max(svi u grupi), inače drag s „nižeg” panela postavlja oba na njegov offsetHeight i veći panel se stišne (npr. Transfer Excel log + rezultat). */
+        function getSyncGroupStartHeightPx() {
+          var h = panel.offsetHeight;
+          var sg = panel.getAttribute && panel.getAttribute('data-resize-sync-group');
+          if (!sg) return h;
+          var peers = (panel.ownerDocument || document).querySelectorAll('.kontrola-panel[data-resize-sync-group="' + sg + '"]');
+          var i, oh;
+          for (i = 0; i < peers.length; i++) {
+            oh = peers[i].offsetHeight;
+            if (oh > h) h = oh;
+          }
+          return h;
+        }
         function startLegacyDrag(e) {
-          var lim = getLimitsForPanelResize();
+          var lim = getEffectiveLimitsForDrag();
           var startY = clientYFromTouchLike(e);
-          var startHeight = panel.offsetHeight;
+          var startHeight = getSyncGroupStartHeightPx();
           function move(ev) {
             if (ev.cancelable && ev.type === 'touchmove') ev.preventDefault();
             var y = clientYFromTouchLike(ev);
@@ -2247,10 +2327,10 @@
         }
         function startPointerDrag(e) {
           if (e.pointerType === 'mouse' && e.button !== 0) return;
-          var lim = getLimitsForPanelResize();
+          var lim = getEffectiveLimitsForDrag();
           var pid = e.pointerId;
           var startY = e.clientY;
-          var startHeight = panel.offsetHeight;
+          var startHeight = getSyncGroupStartHeightPx();
           function pmove(ev) {
             if (ev.pointerId !== pid) return;
             if (ev.cancelable) ev.preventDefault();

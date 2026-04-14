@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Napredovanja_CRUD.html – CRUD napredovanja.
-  Panel tablice s Država + reload, ispod red "Pronađi" + edit. Zatim panel panel_stupnjevi s tablicom i CRUD tipkama.
+  Panel tablice: Država, Regija, Loža (kaskada kao Clanovi_CRUD), zatim red Pronađi + reload. Panel panel_stupnjevi s tablicom i CRUD tipkama.
 -->
 <html lang="hr">
 <head>
@@ -18,13 +18,29 @@
 <div class="naslov-forme"><h2>Napredovanja - Sekretarijat</h2></div>
 <div class="page-container napredovanja-crud">
     <div class="napredovanja-crud__panels-row">
-        <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-two-rows kontrola-panel kontrola-panel--resize-y mb-3 napredovanja-crud__panel-tablica napredovanja-crud__panel-min-equal" data-resize-sync-group="napredovanja-tablice">
+        <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-four-rows kontrola-panel kontrola-panel--resize-y mb-3 napredovanja-crud__panel-tablica napredovanja-crud__panel-min-equal" data-resize-sync-group="napredovanja-tablice">
             <div class="kontrola-panel__header napredovanja-crud__tablica-header">
             <div class="napredovanja-crud__header-row">
                 <label class="kontrola-labela mb-0" for="select_drzava">Država</label>
                 <div class="kontrola-select">
                     <select id="select_drzava" aria-label="Odaberi državu">
                         <option value="">— Odaberi državu —</option>
+                    </select>
+                </div>
+            </div>
+            <div class="napredovanja-crud__header-row">
+                <label class="kontrola-labela mb-0" for="select_regija">Regija</label>
+                <div class="kontrola-select">
+                    <select id="select_regija" aria-label="Odaberi regiju" disabled>
+                        <option value="">— Odaberi regiju —</option>
+                    </select>
+                </div>
+            </div>
+            <div class="napredovanja-crud__header-row">
+                <label class="kontrola-labela mb-0" for="select_loza">Loža</label>
+                <div class="kontrola-select">
+                    <select id="select_loza" aria-label="Odaberi ložu" disabled>
+                        <option value="">— Odaberi ložu —</option>
                     </select>
                 </div>
             </div>

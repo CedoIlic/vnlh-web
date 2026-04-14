@@ -1,12 +1,12 @@
 /* =====================================================
    Loze_CRUD.js
-   Panel slika (1:1, širina = visina panela tablice), panel tablice s Drzava/Regija, panel edit, obrada slike (dvoklik).
-   Konstanta LOZE_CRUD_PANEL_SLIKA_WIDTH_PX = 0: širina panela slike inicijalno = visina panela tablice.
+   Panel slika (1:1, širina = visina panela tablice), panel tablice: Država/Regija iz geo prava (Duznosnici_Drzave_Regije_Loze_sve.php),
+   panel edit, obrada slike (dvoklik). Konstanta LOZE_CRUD_PANEL_SLIKA_WIDTH_PX = 0: širina panela slike inicijalno = visina panela tablice.
    ===================================================== */
 // @ts-nocheck
 (function () {
   'use strict';
-  if (typeof vnlhUcitajPravaCrud === 'function') vnlhUcitajPravaCrud('Loze_CRUD.html');
+  /* CRUD prava (upis/brisanje) dolaze iz odgovora Duznosnici_Drzave_Regije_Loze_sve.php u ucitajPravaGeo – bez zasebnog vnlhUcitajPravaCrud. */
 
   var LOZE_CRUD_PANEL_SLIKA_WIDTH_PX = 0;
 
@@ -226,6 +226,15 @@
     if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
     var panelTablica = selectRegija && selectRegija.closest ? selectRegija.closest('.loze-crud__panel-tablica') : null;
     if (panelTablica && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(panelTablica);
+    /* Auto-locked geo selekti: labela ostaje čitljiva (kao Clanovi_CRUD). */
+    if (_geoAutoLockedDrzava) {
+      var lblDrzava = document.querySelector('label[for="select_drzava"]');
+      if (lblDrzava) lblDrzava.classList.remove('kontrola-labela--disabled');
+    }
+    if (_geoAutoLockedRegija) {
+      var lblRegija = document.querySelector('label[for="select_regija"]');
+      if (lblRegija) lblRegija.classList.remove('kontrola-labela--disabled');
+    }
     var btnPovratak = document.getElementById('btnPovratak');
     if (btnPovratak) { btnPovratak.disabled = false; btnPovratak.removeAttribute('disabled'); }
     var imageArea = document.getElementById('loze_image_area');
@@ -270,19 +279,139 @@
 
   var API_BASE = '../php/';
 
-  function getDrzaveSveUrl() {
-    var path = (window.location.pathname || '').replace(/\/[^/]*$/, '').replace(/\/[^/]*$/, '');
-    return window.location.origin + path + '/php/Drzave_CRUD_sve.php';
+  function getApiUrl(path) {
+    var p = (window.location.pathname || '').replace(/\/[^/]*$/, '').replace(/\/[^/]*$/, '');
+    return window.location.origin + p + '/php/' + path;
+  }
+
+  /* --- Geo prava (Država → Regija, keš kao Clanovi_CRUD) --- */
+  var _geoPravaKešDrzave = [];
+  var _geoPravaKešRegije = [];
+  var _geoAutoLockedDrzava = false;
+  var _geoAutoLockedRegija = false;
+
+  function setAutoLockedClass(selectEl, locked) {
+    if (!selectEl) return;
+    var wrapper = selectEl.closest ? selectEl.closest('.kontrola-select') : null;
+    if (!wrapper) return;
+    if (locked) wrapper.classList.add('kontrola-select--auto-locked');
+    else wrapper.classList.remove('kontrola-select--auto-locked');
+  }
+
+  function popuniSelectIzKeša(sel, arr, placeholder, kontrolaId) {
+    if (!sel) return;
+    while (sel.firstChild) sel.removeChild(sel.firstChild);
+    var opt0 = document.createElement('option');
+    opt0.value = '';
+    opt0.textContent = placeholder;
+    sel.appendChild(opt0);
+    for (var gi = 0; gi < (arr || []).length; gi++) {
+      var opt = document.createElement('option');
+      opt.value = arr[gi].id != null ? String(arr[gi].id) : '';
+      opt.textContent = arr[gi].naziv != null ? arr[gi].naziv : '';
+      sel.appendChild(opt);
+    }
+    if (typeof KontroleRefreshCustomSelect === 'function' && kontrolaId) KontroleRefreshCustomSelect(kontrolaId);
+  }
+
+  /**
+   * Regije za odabranu državu iz keša. Jedna regija → auto-select + učitavanje tablice loža.
+   */
+  function popuniRegijeIzKeša(idDrzava, callback) {
+    _geoAutoLockedRegija = false;
+    setAutoLockedClass(selectRegija, false);
+    if (!selectRegija) { if (callback) callback(); return; }
+    if (!idDrzava) {
+      popuniSelectIzKeša(selectRegija, [], '— Odaberi regiju —', 'select_regija');
+      selectRegija.disabled = true;
+      data = [];
+      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], LozeCRUD.Tablica_Zaglavlje);
+      var panelTab0 = selectRegija.closest ? selectRegija.closest('.loze-crud__panel-tablica') : null;
+      if (panelTab0 && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(panelTab0);
+      if (callback) callback();
+      return;
+    }
+    var filtrirano = [];
+    for (var ri = 0; ri < _geoPravaKešRegije.length; ri++) {
+      if (String(_geoPravaKešRegije[ri].id_drzava) === String(idDrzava)) {
+        filtrirano.push(_geoPravaKešRegije[ri]);
+      }
+    }
+    popuniSelectIzKeša(selectRegija, filtrirano, '— Odaberi regiju —', 'select_regija');
+
+    if (filtrirano.length === 1) {
+      selectRegija.value = String(filtrirano[0].id);
+      selectRegija.disabled = true;
+      _geoAutoLockedRegija = true;
+      setAutoLockedClass(selectRegija, true);
+      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_regija');
+      ucitajLoze(selectRegija.value, function () {
+        if (callback) callback();
+      });
+    } else {
+      selectRegija.disabled = (filtrirano.length === 0);
+      data = [];
+      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], LozeCRUD.Tablica_Zaglavlje);
+      var panelTab1 = selectRegija.closest ? selectRegija.closest('.loze-crud__panel-tablica') : null;
+      if (panelTab1 && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(panelTab1);
+      if (callback) callback();
+    }
+  }
+
+  /**
+   * Jedan GET: dozvoljene države/regije + upis_izmjena / brisanje_sloga za Loze_CRUD.html.
+   */
+  function ucitajPravaGeo(callback) {
+    if (!selectDrzava) { if (callback) callback(); return; }
+    var url = getApiUrl('Duznosnici_Drzave_Regije_Loze_sve.php') + '?html_fajl=' + encodeURIComponent('Loze_CRUD.html');
+    try {
+      var sp = new URLSearchParams(window.location.search);
+      var idt = sp.get('id_duznosnik_test');
+      if (idt && parseInt(idt, 10) > 0) url += '&id_duznosnik_test=' + encodeURIComponent(idt);
+    } catch (eGeo) {}
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      var text = (xhr.responseText || '').trim();
+      var obj = null;
+      if (text !== '' && text.charAt(0) === '{') {
+        try { obj = JSON.parse(text); } catch (eParse) {}
+      }
+      if (!obj) obj = { drzave: [], regije: [], loze: [], upis_izmjena: 0, brisanje_sloga: 0 };
+
+      _geoPravaKešDrzave = obj.drzave || [];
+      _geoPravaKešRegije = obj.regije || [];
+
+      popuniSelectIzKeša(selectDrzava, _geoPravaKešDrzave, '— Odaberi državu —', 'select_drzava');
+
+      if (typeof vnlhPrimijeniPravaCrud === 'function') {
+        vnlhPrimijeniPravaCrud(obj.upis_izmjena, obj.brisanje_sloga);
+      }
+
+      _geoAutoLockedDrzava = false;
+      if (_geoPravaKešDrzave.length === 1 && selectDrzava) {
+        selectDrzava.value = String(_geoPravaKešDrzave[0].id);
+        selectDrzava.disabled = true;
+        _geoAutoLockedDrzava = true;
+        setAutoLockedClass(selectDrzava, true);
+        if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_drzava');
+        popuniRegijeIzKeša(selectDrzava.value, callback);
+      } else {
+        _geoAutoLockedDrzava = false;
+        setAutoLockedClass(selectDrzava, false);
+        if (selectDrzava) selectDrzava.disabled = (_geoPravaKešDrzave.length === 0);
+        popuniRegijeIzKeša('', function () {});
+        if (callback) callback();
+      }
+    };
+    xhr.send();
   }
 
   function getDrzaveAdreseSveUrl() {
     var path = (window.location.pathname || '').replace(/\/[^/]*$/, '').replace(/\/[^/]*$/, '');
     return window.location.origin + path + '/php/Drzave_Adrese_CRUD_sve.php';
-  }
-
-  function getRegijeSveUrl() {
-    var path = (window.location.pathname || '').replace(/\/[^/]*$/, '').replace(/\/[^/]*$/, '');
-    return window.location.origin + path + '/php/Regije_CRUD_sve.php';
   }
 
   function getObrediSveUrl() {
@@ -410,96 +539,6 @@
     return { code: s.slice(0, idx).trim(), replacements: [s.slice(idx + 1).trim()] };
   }
 
-  function ucitajDrzave(selectEl, callback) {
-    var sel = selectEl || selectDrzava;
-    if (!sel) { if (callback) callback(); return; }
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', getDrzaveSveUrl(), true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      var text = (xhr.responseText || '').trim();
-      if (xhr.status !== 200) {
-        while (sel.firstChild) sel.removeChild(sel.firstChild);
-        var opt0 = document.createElement('option');
-        opt0.value = ''; opt0.textContent = '— Odaberi državu —';
-        sel.appendChild(opt0);
-        if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_drzava');
-        if (callback) callback();
-        return;
-      }
-      if (text !== '' && text.charAt(0) !== '[') {
-        var parsed = parseResponseCode(text);
-        if (parsed && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[parsed.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(parsed.code, parsed.replacements);
-        while (sel.firstChild) sel.removeChild(sel.firstChild);
-        var optE = document.createElement('option');
-        optE.value = ''; optE.textContent = '— Odaberi državu —';
-        sel.appendChild(optE);
-        if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_drzava');
-        if (callback) callback();
-        return;
-      }
-      var options = [];
-      try { options = JSON.parse(text || '[]') || []; } catch (e) {}
-      while (sel.firstChild) sel.removeChild(sel.firstChild);
-      var optEmpty = document.createElement('option');
-      optEmpty.value = ''; optEmpty.textContent = '— Odaberi državu —';
-      sel.appendChild(optEmpty);
-      for (var i = 0; i < options.length; i++) {
-        var o = options[i];
-        var opt = document.createElement('option');
-        opt.value = o.id != null ? String(o.id) : '';
-        opt.textContent = o.naziv != null ? String(o.naziv) : '';
-        sel.appendChild(opt);
-      }
-      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_drzava');
-      if (callback) callback();
-    };
-    xhr.send();
-  }
-
-  function ucitajRegije(idDrzava, callback) {
-    if (!selectRegija) { if (callback) callback([]); return; }
-    if (!idDrzava) {
-      while (selectRegija.firstChild) selectRegija.removeChild(selectRegija.firstChild);
-      var o = document.createElement('option');
-      o.value = ''; o.textContent = '— Odaberi regiju —';
-      selectRegija.appendChild(o);
-      selectRegija.disabled = true;
-      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_regija');
-      var panelTablica = selectRegija.closest ? selectRegija.closest('.loze-crud__panel-tablica') : null;
-      if (panelTablica && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(panelTablica);
-      if (callback) callback([]);
-      return;
-    }
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', getRegijeSveUrl() + '?id_drzava=' + encodeURIComponent(idDrzava), true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      var text = (xhr.responseText || '').trim();
-      while (selectRegija.firstChild) selectRegija.removeChild(selectRegija.firstChild);
-      var optEmpty = document.createElement('option');
-      optEmpty.value = ''; optEmpty.textContent = '— Odaberi regiju —';
-      selectRegija.appendChild(optEmpty);
-      if (text !== '' && text.charAt(0) === '[') {
-        try {
-          var arr = JSON.parse(text);
-          for (var i = 0; i < arr.length; i++) {
-            var opt = document.createElement('option');
-            opt.value = arr[i].id != null ? String(arr[i].id) : '';
-            opt.textContent = arr[i].naziv != null ? String(arr[i].naziv) : '';
-            selectRegija.appendChild(opt);
-          }
-        } catch (e) {}
-      }
-      selectRegija.disabled = false;
-      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_regija');
-      var panelTablica = selectRegija.closest ? selectRegija.closest('.loze-crud__panel-tablica') : null;
-      if (panelTablica && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(panelTablica);
-      if (callback) callback();
-    };
-    xhr.send();
-  }
-
   function ucitajLoze(idRegija, callback) {
     if (!idRegija) { data = []; if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], LozeCRUD.Tablica_Zaglavlje); if (callback) callback(); return; }
     var xhr = new XMLHttpRequest();
@@ -534,11 +573,10 @@
   if (selectDrzava) {
     selectDrzava.addEventListener('change', function () {
       var id = trim(this.value);
-      ucitajRegije(id, function () {
+      popuniRegijeIzKeša(id, function () {
         if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
         clearControlsFromSelection();
         clearSlikaFromControl();
-        ucitajLoze('', function () {});
         updateEnabledState();
         updateCrudUpisiState();
       });
@@ -933,16 +971,14 @@
   }
 
   function initForma() {
-    ucitajDrzave(selectDrzava, function () {
+    ucitajPravaGeo(function () {
       updateEnabledState();
+      updateCrudUpisiState();
       setPanelSlikaSizeFromTablica();
     });
     ucitajDrzaveAdrese();
     ucitajObrede();
     syncTipLozeDisabledState();
-    if (selectRegija) selectRegija.disabled = true;
-    data = [];
-    if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], LozeCRUD.Tablica_Zaglavlje);
     updateEnabledState();
     updateCrudUpisiState();
 

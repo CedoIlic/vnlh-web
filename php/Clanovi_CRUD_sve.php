@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/require_login_api.php';
 // Clanovi_CRUD_sve.php – dohvat članova za ložu (bez blob kolona). GET id_loza.
+// id_obred: obred lože (isti za sve članove u retku – za Napredovanja_CRUD i sl.).
 // Vraća stupanj_show iz stupnjevi; telefon_text, email_text, adresa_* mogu se dodati JOIN-om na telefoni, e_maili, adrese.
 $db_ret = require_once __DIR__ . '/00_db.php';
 if ($db_ret !== -1) {
@@ -38,6 +39,7 @@ $sql = "SELECT
             c.upisano,
             c.slika_thumb_round_position,
             s.stupanj AS stupanj_show,
+            l.id_obred AS id_obred,
             (SELECT t2.telefon FROM telefoni t2 INNER JOIN telefoni_tip tt ON tt.id = t2.id_telefoni_tip AND tt.`Tip` = 1 WHERE t2.id_clanovi = c.id LIMIT 1) AS telefon_text,
             (SELECT e2.email FROM e_maili e2 INNER JOIN email_tip et ON et.id = e2.id_email_tip AND et.`Tip` = 1 WHERE e2.id_clanovi = c.id LIMIT 1) AS email_text,
             (SELECT a2.adresa_1 FROM adrese a2 INNER JOIN adrese_tip at2 ON at2.id = a2.id_adrese_tip AND at2.`Tip` = 1 WHERE a2.id_clanovi = c.id LIMIT 1) AS adresa_1,

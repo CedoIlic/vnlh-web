@@ -587,11 +587,15 @@
     if (!row) return;
     var panels = row.querySelectorAll('.duznosnici-osobe-crud__panel-tablica');
     if (!panels.length) return;
+    /*
+     * Samo CSS klasa stacked-min (viši min-height kad je panel uskok). NE zvati initPanelsHeightSync ovdje:
+     * initPanelsHeightSync radi max(offsetHeight) oba panela – nakon što korisnik smanji jedan, drugi je
+     * još u jednom kadru veći pa max vraća staru visinu i poništava sinkron s 0-Kontrole (data-resize-sync-group).
+     */
     duznosniciStackedMinRo = new ResizeObserver(function (entries) {
       for (var i = 0; i < entries.length; i++) {
         duznosniciApplyStackedMinClass(entries[i]);
       }
-      duznosniciSchedulePanelsHeightSync();
     });
     for (var j = 0; j < panels.length; j++) {
       duznosniciStackedMinRo.observe(panels[j]);
