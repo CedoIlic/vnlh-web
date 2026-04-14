@@ -108,13 +108,12 @@ if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'
  * - 0-Poruke.php – HTML fragment glavnog modala „Poruke” (vnlh_emit_html_file html/0-Poruke.html).
  *   Učitava ga js/0-Poruke.js preko fetch(); nije stavka menija.
  * - 0-Chat.php – HTML fragment chata (html/0-Chat.html); učitava ga js/0-Chat.js.
- * - test_chat_virtual_umetak.php – POST JSON za testnu stranicu test.php (umetanje chat poruka); require_login_api.php.
  *
  * Kad dodaješ novi sličan „fragment“ endpoint, ili ga dodaj u ovaj uvjet (uz komentar), ili
  * uključi šablon u glavnu HTML stranicu da ne treba zaseban PHP.
  */
 $scriptBase = basename($_SERVER['SCRIPT_NAME'] ?? '');
-if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !== 'test.php' && $scriptBase !== '0-Obrada_Slike.php' && $scriptBase !== '0-Poruke.php' && $scriptBase !== '0-Chat.php' && $scriptBase !== 'test_chat_virtual_umetak.php') {
+if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !== 'test.php' && $scriptBase !== '0-Obrada_Slike.php' && $scriptBase !== '0-Poruke.php' && $scriptBase !== '0-Chat.php') {
     $allowed = isset($_SESSION['vnlh_meni_dopustene']) && is_array($_SESSION['vnlh_meni_dopustene'])
         ? $_SESSION['vnlh_meni_dopustene'] : [];
     $wantHtml = preg_replace('/\.php$/i', '.html', $scriptBase);

@@ -3,7 +3,9 @@
    Modal „Poruke”: fragment, tablica, povijest, slanje; mail + (opcionalno) chat ikona u .naslov-forme + globalni polling nepročitanih.
    Otvaranje: klik na mail, window.vnlhOpenTestniModal / VnlhPorukeOpenModal; zatvaranje Povratak ili Escape.
    Podnožje: Lucide wrench – način „razvoj” (naslov, plava zona, slanje → 0-Poruke_posalji.php var. 1002, povijest → 0-Poruke_poruke_razvoj.php);
-   kad je uključen filtar liste „Razvoj”: samo pregled + ikona clipboard-paste (kopiraj sve razgovore u međuspremnik).
+   nakon uspješnog slanja u tom načinu modal se vraća u zadano stanje (wrench isključen, tablica/povijest kao obične poruke).
+   kad je uključen filtar liste „Razvoj”: samo pregled + ikona clipboard-paste (kopiraj sve razgovore u međuspremnik);
+   uz svaku poruku u povijesti – mala ikona kopiranja; u međuspremnik se dodaje sufiks „ [ ID: <id> ]”.
    Ovisnosti: 0-Poruke.css, 0-Common.js (postFormData, vnlhAppBasePathname, .naslov-forme__ikone).
    API: 0-Poruke.php, 0-Poruke_lista.php, 0-Poruke_poruke.php, 0-Poruke_poruke_razvoj.php, 0-Poruke_neprocitane.php, 0-Poruke_posalji.php,
         0-Poruke_korisnici.php, 0-Poruke_brisi.php, 0-Poruke_razvoj_toggle_prikazi.php, poruke_razvoj_var_1002.php (server), common_sustav_varijable.php?id=101.
@@ -67,6 +69,19 @@
     '<path stroke-linecap="round" stroke-linejoin="round" d="m17 18 4-4-4-4"/>' +
     '<path stroke-linecap="round" stroke-linejoin="round" d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113"/>' +
     '<rect x="8" y="2" width="8" height="4" rx="1" stroke-linecap="round" stroke-linejoin="round"/>';
+
+  /**
+   * Lucide clipboard-copy (https://lucide.dev/icons/clipboard-copy) – mala inline tipka uz poruku u filtru liste „Razvoj”.
+   * Cijeli <svg> (viewBox 24×24) radi jednostavnog innerHTML na tipku; stroke nasljeđuje currentColor s .poruke__msg-copy-btn.
+   */
+  var PORUKE_LUCIDE_CLIPBOARD_COPY_MSG_SVG =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>' +
+    '<path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>' +
+    '<path d="M16 4h2a2 2 0 0 1 2 2v4"/>' +
+    '<path d="M21 14H11"/>' +
+    '<path d="m15 10-4 4 4 4"/>' +
+    '</svg>';
 
   /**
    * Minimalne dimenzije dijaloga na desktopu (usklađeno s 0-Poruke.css).
@@ -247,7 +262,8 @@
    * Blok u međuspremniku za jednog sugovornika (red tablice):
    *   1) jedan red – ime;
    *   2) sve poruke niti (primljena + odgovor), isključivo ako nije brisano (brisano !== 1 u JSON-u);
-   *   3) kronološki po vrijeme_slanja: pri promjeni datuma red s dd.mm.yyyy., zatim (HH:MM) tekst poruke.
+   *   3) kronološki po vrijeme_slanja: pri promjeni datuma red s dd.mm.yyyy., zatim (HH:MM) tekst poruke;
+   *      na kraj retka poruke (samo ovaj izvoz, filtar liste „Razvoj”) dodaje se „ [ ID: <id> ]” ako JSON sadrži p.id.
    * testniExtractDate / testniExtractTime / testniFormatDateHR: deklaracije niže u istom modulu (hoist u IIFE).
    */
   function testniSastaviEksportBlokZaSugovornika(item, jsonTekst) {
@@ -289,7 +305,11 @@
       if (!tm) {
         tm = '??:??';
       }
-      linije.push('(' + tm + ') ' + String(p.poruka != null ? p.poruka : ''));
+      var tekstPoruke = String(p.poruka != null ? p.poruka : '');
+      /* Jedinstveni red u bazi (0-Poruke_poruke.php šalje polje id) – traženo za međuspremnik u načinu čitanja razvoju. */
+      var idPoruke = p.id != null ? Number(p.id) : NaN;
+      var sufiksId = !isNaN(idPoruke) && idPoruke > 0 ? ' [ ID: ' + String(idPoruke) + ' ]' : '';
+      linije.push('(' + tm + ') ' + tekstPoruke + sufiksId);
     }
     return linije.join('\n');
   }
@@ -1059,6 +1079,7 @@
 
   /**
    * Nakon odgovora 0-Poruke_posalji.php – kao onOdgovorPoslan u 0-Poruke.js (uspjeh -1, inače modal greške).
+   * Uspjeh slanja „razvoju”: namjerno isključuje način ključa i vraća prikaz običnih poruka (očekivano ponašanje nakon jedne poruke razvoju).
    */
   function testniOnOdgovorPoslan(res, editPoruka, btnPosalji, idPrimatelj, slanjeRazvoj) {
     if (res === '-1') {
@@ -1066,8 +1087,16 @@
       if (btnPosalji) btnPosalji.disabled = true;
       testniOsvjeziPosaljiDisabled();
       if (slanjeRazvoj) {
-        testniFetchPorukeRazvoj();
+        /*
+         * Ne zovemo testniFetchPorukeRazvoj – korisnik izlazi iz načina ključa; tablica i naslov vraćaju se odmah.
+         * Lista (brojači) + opcionalno povijest običnog razgovora ako je red još u memoriji ostao odabran.
+         */
+        porukeResetFooterWrenchBtn();
         fetchTestniLista();
+        testniSyncPorukaPanel(!!testniOdabraniPosiljatelj);
+        if (testniOdabraniPosiljatelj) {
+          testniFetchPoruke(testniOdabraniPosiljatelj);
+        }
       } else {
         testniFetchPoruke(idPrimatelj);
         fetchTestniLista();
@@ -1717,8 +1746,13 @@
         if (!tekst) return;
         var razvoj = porukeJeRazvojMod();
         if (!razvoj && !testniOdabraniPosiljatelj) return;
-        /* testniPosaljiNaServer onemogućuje tipku; očisti polje i povijest tek nakon odgovora -1 (testniOnOdgovorPoslan). */
-        if (razvoj && !testniOdabraniPosiljatelj) {
+        /*
+         * Način ključa (wrench): uvijek POST s slanje_razvoj=1 (primatelji iz var. 1002).
+         * Ne smije ovisiti o testniOdabraniPosiljatelj: tablica je u CSS-u skrivena, ali selekcija iz
+         * „normalnog” prikaza može ostati u memoriji – stara grana slala običnu poruku sugovorniku, pa je
+         * testniFetchPoruke odbacio odgovor (guard: porukeJeRazvojMod()) i korisnik je vidio „povratak” u normalno ponašanje.
+         */
+        if (razvoj) {
           testniPosaljiNaServer(0, tekst, true);
         } else {
           testniPosaljiNaServer(testniOdabraniPosiljatelj, tekst, false);
