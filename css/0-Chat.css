@@ -37,16 +37,16 @@
 }
 
 /*
- * Nepročitane primljene chat poruke (poruke_chat_aktivni_korisnici.php: ima_neprocitanih_chat = 1):
- * tamnija crvena ako je pošiljatelj još aktivan, svjetlija ako više nije (može se i dalje otvoriti razgovor za čitanje).
+ * Ime u popupu (samo kad ima nepročitanih chat poruka od tog korisnika):
+ * aktivan → crvena 900; neaktivan (samo u listi uz nepročitano, vidi poruke_chat_aktivni_korisnici korak 3) → crvena 500.
+ * Aktivan bez nepročitanih: bez ovih klasa – ostaje var(--text) iz .poruke__popup-item.
+ * Težina fonta ista kao ostali redovi (bez pojačavanja).
  */
 .vnlh-chat-popup .poruke__popup-item.vnlh-chat-popup__item--neprocitan-aktivan {
-  color: var(--c-red-900, #fd0505);
-  font-weight: 600;
+  color: var(--c-red-900, #b91c1c);
 }
 .vnlh-chat-popup .poruke__popup-item.vnlh-chat-popup__item--neprocitan-neaktivan {
-  color: var(--c-red-500, #fa8b8b);
-  font-weight: 600;
+  color: var(--c-red-500, #ef4444);
 }
 
 /* Iznad modala poruka (.testni-modal 10006). */
@@ -61,4 +61,9 @@
 .naslov-forme__chat--neprocitane {
   color: var(--c-red-900, #b91c1c);
   opacity: 1;
+}
+
+/* Podnožje chata: Povratak krajnje desno (resize kut je position:absolute, ne zauzima flex prostor). */
+.vnlh-chat-modal .poruke__footer-right {
+  margin-left: auto;
 }

@@ -202,7 +202,9 @@
       (function (row) {
         var div = document.createElement('div');
         div.className = 'poruke__popup-item';
-        /* API poruke_chat_aktivni_korisnici.php: ima_neprocitanih_chat + aktivan (stariji poslužitelj bez polja → normalna boja). */
+        /* API poruke_chat_aktivni_korisnici.php: ima_neprocitanih_chat + aktivan. Boja imena (0-Chat.css):
+           aktivan + nema nepročitanih → bez modifikatora (sistemska .poruke__popup-item);
+           aktivan + nepročitano → crvena 900; neaktivan + nepročitano → crvena 500 (neaktivni bez nepročitanih nisu u listi); ista težina fonta kao ostali redovi. */
         var imaNep =
           row.ima_neprocitanih_chat === true ||
           row.ima_neprocitanih_chat === 1 ||
@@ -431,6 +433,12 @@
         }
         chatRenderPovijestDom(data.poruke);
         chatOsvjeziKomponenteSlanjaPoAktivnosti();
+        /* Odmah osvježi mail/chat ikone (npr. crvena chat ikona) – ne čekaj sljedeći interval polla. */
+        if (typeof window.vnlhPorukeOsvjeziNeprocitaneBadge === 'function') {
+          try {
+            window.vnlhPorukeOsvjeziNeprocitaneBadge();
+          } catch (eBadge) {}
+        }
       } catch (eCh) {
         chatPovijestPostaviPlaceholder('Greška pri čitanju povijesti.');
         chatTrenutniIdRazgovor = 0;
@@ -975,6 +983,8 @@
 
   window.vnlhChatBoot = function () {
     if (typeof window.VNLH_CHAT_DOZVOLJEN === 'undefined' || Number(window.VNLH_CHAT_DOZVOLJEN) !== 1) return;
+    /* Stilovi (npr. crvena ikona kad ima nepročitanih) moraju biti učitani prije prvog otvaranja popupa – inače klasa postoji bez pravila. */
+    injectChatCssOnce();
     /* Odmah poveži ikone: prvi klik lazy-učitava DOM (chatTogglePopup → chatLoadFragment), bez utrke s XHR prefetchom. */
     wireChatIconClicks();
   };

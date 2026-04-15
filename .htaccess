@@ -29,9 +29,14 @@ php_value error_reporting 0
 
     # --- Točka 4: HTTPS redirect (produkcija) ---
     # Preskače localhost i 127.0.0.1 da lokalni razvoj i dalje radi na HTTP.
+    # X-Forwarded-Proto: https – za reverse proxy / Cloudflare Tunnel (origin vidi HTTP, klijent HTTPS).
+    # Opcijski izuzetak Host *.trycloudflare.com – odkomentiraj ako tunel i dalje daje ERR_TOO_MANY_REDIRECTS
+    # a X-Forwarded-Proto ne dolazi do Apachea; za produkciju bez tunela ostavi zakomentirano.
     RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !^https$ [NC]
     RewriteCond %{HTTP_HOST} !^localhost$ [NC]
-    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1$
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1$ [NC]
+    # RewriteCond %{HTTP_HOST} !trycloudflare\.com$ [NC]
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Stari bookmarki / linkovi na html/*.php → php/ (PHP je samo u php/; html/ je samo .html)

@@ -10,7 +10,8 @@
  *   ima_neprocitanih_chat (0|1) – ima li barem jednu nepročitanu primljenu chat poruku od tog korisnika.
  * Bez trenutno logiranog korisnika; DISTINCT po id. Sort: prezime, ime.
  *
- * Boja u UI: neaktivan + nepročitano → --c-red-500; aktivan + nepročitano → --c-red-900 (0-Chat.css).
+ * Boja imena u UI (0-Chat.css): aktivan bez nepročitanih → sistemska; aktivan + nepročitano → --c-red-900;
+ * neaktivan + nepročitano → --c-red-500 (neaktivni bez nepročitanih nisu u listi). Težina fonta ista kao ostali redovi.
  *
  * 403 CHAT_DENIED ako nema chat_dozvoljen u sesiji.
  */

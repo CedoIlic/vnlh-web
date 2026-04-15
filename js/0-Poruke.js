@@ -2011,4 +2011,9 @@
   window.vnlhCloseTestniModal = closeTestniModal;
   window.VnlhPorukeOpenModal = openTestniModal;
   window.VnlhPorukeOpenModalFromNew = openTestniModal;
+  /**
+   * Jedan GET 0-Poruke_neprocitane.php – odmah osvježava badge mail/chat nakon što chat označi poruke pročitanima
+   * (bez čekanja intervala od nekoliko sekundi).
+   */
+  window.vnlhPorukeOsvjeziNeprocitaneBadge = porukeNeprocitaneGlobalTick;
 })();

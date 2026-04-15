@@ -11,7 +11,9 @@
  *   sugovornik_aktivan: ima li sugovornik aktivnu sesiju (isto kao poruke_chat_aktivni_korisnici.php) – UI onemogućuje slanje ako 0.
  *   smjer: "primljena" | "odgovor" (isti jezik kao 0-Poruke_poruke.php)
  *
- * Nakon SELECT-a: nepročitane primljene chat poruke → status Pročitano (triggeri ažuriraju ima_chat_neprocitanih).
+ * Nakon SELECT-a: sve primljene chat poruke koje još nisu Pročitano → Pročitano (jedno otvaranje modala;
+ * stariji zapisi ili drugačiji status od „Novo” i dalje se prikažu kao nepročitani u SELECT-u dok ih ovaj UPDATE ne uskladi).
+ * Triggeri ažuriraju ima_chat_neprocitanih.
  *
  * 403 CHAT_DENIED ako nema chat_dozvoljen u sesiji.
  */
@@ -103,7 +105,7 @@ $sqlUpdate = '
        SET status = \'Pročitano\', vrijeme_procitano = NOW()
      WHERE id_primatelj = ?
        AND id_posiljatelj = ?
-       AND status = \'Novo\'
+       AND status <> \'Pročitano\'
        AND brisano = 0
        AND tip = \'Chat poruka\'
 ';
