@@ -12,7 +12,7 @@
 // 1. Lokalno (Razvoj=1): klik na "V x.x.x" u naslovu → unesi novu verziju → OK.
 // 2. Distribucija: postavi VNLH_RAZVOJ=0, ažuriraj VNLH_VERZIJA i ?v= u HTML-ima.
 // =====================================================
-window.VNLH_VERZIJA = "10.17.05";
+window.VNLH_VERZIJA = "10.17.17";
 window.VNLH_RAZVOJ = 1;
 
 (function () {
@@ -76,8 +76,10 @@ window.VNLH_RAZVOJ = 1;
           try {
             var u = new URL(location.href);
             u.searchParams.set('_', Date.now().toString());
+            if (typeof window.__vnlhAppNavInternal !== 'undefined') window.__vnlhAppNavInternal = true;
             location.replace(u.href);
           } catch (e) {
+            if (typeof window.__vnlhAppNavInternal !== 'undefined') window.__vnlhAppNavInternal = true;
             location.reload();
           }
         } else {
@@ -179,8 +181,10 @@ window.VNLH_RAZVOJ = 1;
               try {
                 var u = new URL(location.href);
                 u.searchParams.set('_', Date.now().toString());
+                if (typeof window.__vnlhAppNavInternal !== 'undefined') window.__vnlhAppNavInternal = true;
                 location.replace(u.href);
               } catch (e) {
+                if (typeof window.__vnlhAppNavInternal !== 'undefined') window.__vnlhAppNavInternal = true;
                 location.reload();
               }
             } else {

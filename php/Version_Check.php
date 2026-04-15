@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/require_login_api.php';
 // =====================================================
 // Version_Check.php
 // Vraća trenutnu verziju iz js/00-Version.js.
@@ -7,6 +6,9 @@ require_once __DIR__ . '/require_login_api.php';
 // verzija na serveru razlikuje, klijent se osvježava.
 //
 // GET – odgovor: plain text verzija (npr. 10.12.25)
+//
+// Namjerno bez require_login_api: isti endpoint poziva 00-Version.js i na Login.html
+// (korisnik još nije prijavljen); zaštita sesijom davala bi 401 i lažni signal u konzoli.
 // =====================================================
 
 header('Content-Type: text/plain; charset=utf-8');

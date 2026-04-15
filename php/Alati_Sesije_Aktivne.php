@@ -88,6 +88,39 @@ function Alati_Sesije_Aktivne_normalize_povijest_staro_u_listu(string $raw): str
 }
 
 /**
+ * Povijest sesije za prikaz u Alatima / aktivne sesije: uklanja pozadinske XHR skripte koje ne predstavljaju
+ * stvarnu navigaciju korisnika (poll nepročitanih za ikonu pošte/chata).
+ *
+ * @param string $csv vrijednost stupca povijest_sesije (stavke odvojene zarezom i razmakom ", ")
+ * @return string isti format bez izuzetih naziva (trim po stavkama)
+ */
+function Alati_Sesije_Aktivne_povijest_sesije_filtriraj_za_prikaz(string $csv): string
+{
+    $csv = trim($csv);
+    if ($csv === '') {
+        return '';
+    }
+    /** Case-insensitive usporedba nakon trim-a (kanonski zapis u bazi: 0-Poruke_neprocitane.php). */
+    static $izuzmiLower = null;
+    if ($izuzmiLower === null) {
+        $izuzmiLower = ['0-poruke_neprocitane.php', '0-poruke_neprocitane'];
+    }
+    $djelovi = [];
+    foreach (explode(',', $csv) as $komad) {
+        $komad = trim($komad);
+        if ($komad === '') {
+            continue;
+        }
+        $low = strtolower($komad);
+        if (in_array($low, $izuzmiLower, true)) {
+            continue;
+        }
+        $djelovi[] = $komad;
+    }
+    return implode(', ', $djelovi);
+}
+
+/**
  * Jedan naziv u povijesti: kanonski prikaz za otvorena_stranica / povijest_sesije.
  *
  * - Ako je $basename ime .php skripte i postoji datoteka html/<isti_stem>.html (isti stem kao php/<stem>.php),
@@ -310,6 +343,11 @@ function Alati_Sesije_Aktivne_mark_timeout_session(): void
 /**
  * Označava timeout retke koji su još aktivni u bazi, ali im je zadnja_aktivnost starija od idle praga.
  * Potrebno jer se mark_timeout poziva tek pri prvom HTTP zahtjevu nakon isteka – bez zahtjeva red ostaje krivo „aktivna”.
+ *
+ * Isključenje trenutnog session_id: poll liste (Alati_Aktivne_Sesije_sve.php) ne radi touch pa zadnja_aktivnost
+ * u bazi može zaostajati iako je PHP sesija živa (last_activity se osvježava u require_login_api). Bez ovog
+ * uvjeta reconcile bi postavio vlastiti red na timeout; sljedeći zahtjev u sesija_pracenje_aktivnosti_odjava_ako_red_ne_valja
+ * vidi status != aktivna i šalje korisnika na login.
  */
 function Alati_Sesije_Aktivne_reconcile_timeout_stale_aktivne(mysqli $mysqli): void
 {
@@ -318,9 +356,30 @@ function Alati_Sesije_Aktivne_reconcile_timeout_stale_aktivne(mysqli $mysqli): v
     if ($idle < 60) {
         $idle = 90;
     }
-    $sql = 'UPDATE sustav_sesije_aktivne SET status = \'timeout\'
-            WHERE status = \'aktivna\' AND zadnja_aktivnost < DATE_SUB(NOW(), INTERVAL ' . (int) $idle . ' SECOND)';
-    $mysqli->query($sql);
+    $intervalSql = (int) $idle;
+    $ownSid = '';
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        $tmp = session_id();
+        if (is_string($tmp) && $tmp !== '') {
+            $ownSid = $tmp;
+        }
+    }
+    if ($ownSid !== '') {
+        $stmt = $mysqli->prepare(
+            'UPDATE sustav_sesije_aktivne SET status = \'timeout\', zadnja_aktivnost = NOW()
+             WHERE status = \'aktivna\' AND zadnja_aktivnost < DATE_SUB(NOW(), INTERVAL ' . $intervalSql . ' SECOND)
+             AND session_id <> ?'
+        );
+        if ($stmt) {
+            $stmt->bind_param('s', $ownSid);
+            $stmt->execute();
+            $stmt->close();
+        }
+    } else {
+        $sql = 'UPDATE sustav_sesije_aktivne SET status = \'timeout\', zadnja_aktivnost = NOW()
+                WHERE status = \'aktivna\' AND zadnja_aktivnost < DATE_SUB(NOW(), INTERVAL ' . $intervalSql . ' SECOND)';
+        $mysqli->query($sql);
+    }
     Alati_Sesije_Aktivne_obrisi_neaktivne_redove($mysqli);
 }
 

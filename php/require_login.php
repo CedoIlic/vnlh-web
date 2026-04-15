@@ -20,6 +20,24 @@ if (!isset($_SESSION['id_korisnik']) || !is_numeric($_SESSION['id_korisnik']) ||
     exit;
 }
 
+/*
+ * Grace period za browser back button: sesija_zatvori_karticu.php postavlja
+ * tab_close_pending_at umjesto da odmah uništi sesiju (sendBeacon ne zna razliku
+ * između zatvaranja kartice i back navigacije). Ako novi request dođe unutar
+ * grace perioda, to je back navigacija — obrišemo flag i nastavimo normalno.
+ * Ako je flag stariji od grace perioda, sesija se smatra stvarno zatvorenom.
+ */
+const VNLH_TAB_CLOSE_GRACE_SEC = 8;
+if (!empty($_SESSION['tab_close_pending_at'])) {
+    if ((time() - (int) $_SESSION['tab_close_pending_at']) <= VNLH_TAB_CLOSE_GRACE_SEC) {
+        unset($_SESSION['tab_close_pending_at']);
+    } else {
+        vnlh_session_destroy_logout();
+        header('Location: ' . vnlh_login_path(null));
+        exit;
+    }
+}
+
 if (!empty($_SESSION['must_change_password'])) {
     header('Location: ' . vnlh_login_path(null));
     exit;

@@ -1,7 +1,13 @@
 <?php
 /**
  * sesija_zatvori_karticu.php
- * sendBeacon (POST): puna odjava kao Logout.php; CSRF token iz sesije.
+ * sendBeacon (POST): postavlja grace-period flag umjesto trenutne odjave.
+ *
+ * Problem: browser back button triggerira pagehide bez __vnlhAppNavInternal,
+ * pa beacon dolazi i za navigaciju unazad, ne samo za zatvaranje kartice.
+ * Rješenje: ne uništavamo sesiju odmah, već postavljamo tab_close_pending_at.
+ * require_login.php i sesija_ping.php čiste flag ako request dođe unutar grace perioda
+ * (back navigacija) ili odjavljivaju ako je flag star (stvarno zatvaranje kartice).
  */
 header('Content-Type: text/plain; charset=utf-8');
 
@@ -27,6 +33,6 @@ if (!isset($_SESSION['id_korisnik']) || (int) $_SESSION['id_korisnik'] <= 0) {
     exit;
 }
 
-vnlh_session_destroy_logout();
+$_SESSION['tab_close_pending_at'] = time();
 http_response_code(204);
 exit;

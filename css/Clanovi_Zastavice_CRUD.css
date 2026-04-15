@@ -206,7 +206,10 @@
   color: var(--edit_text);
   border-radius: var(--edit_radius, 8px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  min-width: 338px;
+  box-sizing: border-box;
+  width: min(338px, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  min-width: 0;
   font-family: var(--font_family);
   font-size: var(--font_size);
   font-weight: var(--font_weight);

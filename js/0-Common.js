@@ -16,6 +16,19 @@
 (function () {
   'use strict';
 
+  /**
+   * Označi da odlazak s dokumenta nije „zatvaranje kartice” nego unutarnja navigacija ili
+   * kontrolirani redirect (npr. Login nakon 401). Inače pagehide + sendBeacon na
+   * sesija_zatvori_karticu.php može uništiti PHP sesiju prije nego što preglednik učita sljedeću
+   * stranicu — korisnik završi na Loginu iako je navigacija bila namjerna (Povratak, Meni, …).
+   * Definirano izvan ping inita da postoji i kad __VNLH_SESIJA_PING__ nije postavljen.
+   */
+  window.vnlhMarkInternalAppNavigation = function () {
+    try {
+      window.__vnlhAppNavInternal = true;
+    } catch (eMark) {}
+  };
+
   /** Uklanja vodeće i prateće razmake iz stringa; null/undefined → prazan string. */
   function trim(s) {
     return s != null ? String(s).replace(/^\s+|\s+$/g, '') : '';
@@ -423,10 +436,12 @@
           if (/Login\.php/i.test(u)) return;
           var text = (xhr.responseText || '').trim();
           if (xhr.status === 403 && text === 'PASS_CHANGE_REQUIRED') {
+            if (typeof window.vnlhMarkInternalAppNavigation === 'function') window.vnlhMarkInternalAppNavigation();
             window.location.href = vnlhLoginPageUrl();
             return;
           }
           if (xhr.status !== 401 && text !== '401') return;
+          if (typeof window.vnlhMarkInternalAppNavigation === 'function') window.vnlhMarkInternalAppNavigation();
           window.location.href = vnlhLoginPageUrl();
         });
       }
@@ -444,10 +459,12 @@
       if (xhr.readyState !== 4) return;
       var t = xhr.responseText ? xhr.responseText.trim() : '';
       if (xhr.status === 401 || t === '401') {
+        if (typeof window.vnlhMarkInternalAppNavigation === 'function') window.vnlhMarkInternalAppNavigation();
         window.location.href = vnlhLoginPageUrl();
         return;
       }
       if (xhr.status === 403 && t === 'PASS_CHANGE_REQUIRED') {
+        if (typeof window.vnlhMarkInternalAppNavigation === 'function') window.vnlhMarkInternalAppNavigation();
         window.location.href = vnlhLoginPageUrl();
         return;
       }
@@ -1062,7 +1079,14 @@
 
   /**
    * Praćenje sesije: periodički GET sesija_ping.php (putanja iz window.__VNLH_SESIJA_PING_URL__);
-   * pagehide + sendBeacon na sesija_zatvori_karticu.php (puna odjava), uz zaštitu od unutarnje navigacije (MPA).
+   * pagehide + sendBeacon na sesija_zatvori_karticu.php (puna odjava), uz zaštitu od unutarnje navigacije (MPA):
+   * isti origin <a href>, gumb .alati-meni-test__meni-izvrsni (Meni), #btnPovratak (i stari #btnCrudPovratak na keširanom Alati_teme), submit forme, F5/Ctrl+R.
+   *
+   * Važno: pagehide se događa i pri osvježavanju. Bez zaštite bi sendBeacon slao punu odjavu kao pri zatvaranju
+   * kartice — ping i dalje vraća ok:true dok je stara stranica u memoriji, a nakon reloada korisnik završi na loginu.
+   * Zaštita: keydown (F5, Ctrl/Cmd+R) postavlja __vnlhAppNavInternal prije pagehide; pointerdown (capture)
+   * za iste gumbe kao click — neki preglednici / tipkovnički Enter mogu kasniti s clickom u odnosu na
+   * pagehide nakon location.href. Gumb „Osvježi“ u adresnoj traci ne šalje keydown u sadržaj stranice.
    */
   (function vnlhSesijaPracenjePingInit() {
     var cfg = window.__VNLH_SESIJA_PING__;
@@ -1071,15 +1095,19 @@
       return;
     }
     var loginUrl = typeof window.__VNLH_LOGIN_URL__ === 'string' ? window.__VNLH_LOGIN_URL__ : 'php/Login.php';
+    var intervalMs = Math.max(5000, cfg.ping_interval_sec * 1000);
 
     function redirectLogin() {
       try {
+        if (typeof window.vnlhMarkInternalAppNavigation === 'function') window.vnlhMarkInternalAppNavigation();
         window.location.assign(loginUrl);
       } catch (eR) {}
     }
 
     function pingOnce() {
-      if (typeof window.fetch !== 'function') return;
+      if (typeof window.fetch !== 'function') {
+        return;
+      }
       fetch(pingUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' })
         .then(function (r) {
           if (r.status === 401) {
@@ -1089,6 +1117,7 @@
           return r.json();
         })
         .then(function (j) {
+          if (j === null) return;
           if (!j) return;
           if (j.ok === true) return;
           if (j.reason === 'expired' || j.reason === 'auth') redirectLogin();
@@ -1097,27 +1126,63 @@
     }
 
     pingOnce();
-    setInterval(pingOnce, Math.max(5000, cfg.ping_interval_sec * 1000));
+    setInterval(pingOnce, intervalMs);
 
     window.__vnlhAppNavInternal = false;
-    document.addEventListener(
-      'click',
-      function (ev) {
-        var t = ev.target;
-        if (!t || typeof t.closest !== 'function') return;
-        var a = t.closest('a[href]');
-        if (!a || !a.href) return;
-        try {
-          var u = new URL(a.href, window.location.href);
-          if (u.origin === window.location.origin) window.__vnlhAppNavInternal = true;
-        } catch (eC) {}
-      },
-      true
-    );
+
+    /**
+     * Capture: postavi __vnlhAppNavInternal za unutarnju navigaciju.
+     * Meni izvršna stavka: <button class="…meni-izvrsni"> + location.href (Meni.js / Alati_Meni_Test.js).
+     * Za pointerdown ne diramo <a> (izbjegavamo lažni pozitiv kad korisnik zgrabi link pa odustane).
+     */
+    function sesijaPracenjeMarkInternalNavFromEvent(ev) {
+      var t = ev.target;
+      if (!t || typeof t.closest !== 'function') return;
+      var izvBtn = t.closest('button.alati-meni-test__meni-izvrsni');
+      if (izvBtn) {
+        window.__vnlhAppNavInternal = true;
+        return;
+      }
+      if (t.closest('#btnPovratak') || t.closest('#btnCrudPovratak')) {
+        window.__vnlhAppNavInternal = true;
+        return;
+      }
+      if (ev.type !== 'click') return;
+      var a = t.closest('a[href]');
+      if (!a || !a.href) return;
+      try {
+        var u = new URL(a.href, window.location.href);
+        if (u.origin === window.location.origin) {
+          window.__vnlhAppNavInternal = true;
+        }
+      } catch (eC) {}
+    }
+
+    document.addEventListener('click', sesijaPracenjeMarkInternalNavFromEvent, true);
+    document.addEventListener('pointerdown', sesijaPracenjeMarkInternalNavFromEvent, true);
     document.addEventListener(
       'submit',
       function () {
         window.__vnlhAppNavInternal = true;
+      },
+      true
+    );
+
+    /* Osvježavanje (ne zatvaranje kartice): inače pagehide + sendBeacon uništava cijelu sesiju. */
+    document.addEventListener(
+      'keydown',
+      function (ev) {
+        if (!ev) return;
+        var k = typeof ev.key === 'string' ? ev.key : '';
+        if (k === 'F5' || ev.keyCode === 116) {
+          window.__vnlhAppNavInternal = true;
+          return;
+        }
+        if (ev.ctrlKey || ev.metaKey) {
+          if (k === 'r' || k === 'R') {
+            window.__vnlhAppNavInternal = true;
+          }
+        }
       },
       true
     );
@@ -1127,7 +1192,12 @@
       if (window.__vnlhAppNavInternal) return;
       var u = window.__VNLH_SESIJA_TAB_CLOSE_URL__;
       var tok = window.__VNLH_SESIJA_TAB_CLOSE_TOKEN__;
-      if (!u || !tok || typeof navigator.sendBeacon !== 'function') return;
+      if (!u || !tok) {
+        return;
+      }
+      if (typeof navigator.sendBeacon !== 'function') {
+        return;
+      }
       try {
         var fd = new FormData();
         fd.append('token', tok);

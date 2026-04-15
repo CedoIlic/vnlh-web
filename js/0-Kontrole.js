@@ -1536,6 +1536,9 @@
    * input.kontrola-checkbox, .kontrola-edit-delete, .kontrola-tablica i .kontrola-panel .kontrola-btn;
    * postavlja disabled (ili klasu --disabled na tablicu/edit-delete); zatvara otvorene select liste;
    * za labele s [for] ažurira klasu kontrola-labela--disabled prema stanju povezane kontrole.
+   * Povratak (#btnPovratak / #btnCrudPovratak) se ne gasi: korisnik mora uvijek moći napustiti formu čak kad
+   * su ostale tipke u panelu onemogućene (npr. prazan naziv); inače bi nakon initEditDelete ili drugog
+   * ciklusa Povratak mogao ostati disabled ako se removeAttribute u modulu propusti.
    * Nakon toga poziva initEditDelete i initCustomSelect na scope.
    * @param {HTMLElement|Document} root - document ili element unutar kojeg se traže kontrole
    * @param {boolean} enabled - true = uključeno, false = isključeno
@@ -1584,6 +1587,7 @@
     // tipku za prekidač Aktivno-Neaktivno ne diramo da korisnik uvijek može vratiti stanje.
     scope.querySelectorAll('.kontrola-panel .kontrola-btn').forEach(function (btn) {
       if (btn.id === 'btnToggleEnable') return;
+      if (btn.id === 'btnPovratak' || btn.id === 'btnCrudPovratak') return;
       if (disable) btn.setAttribute('disabled', 'disabled');
       else btn.removeAttribute('disabled');
     });

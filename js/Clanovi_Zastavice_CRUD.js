@@ -396,20 +396,23 @@
     var btnPovratak = document.getElementById('btnPovratak');
     if (!btnPovratak) return;
     btnPovratak.addEventListener('click', function () {
+      /* Isti URL kao trenutna stranica (npr. ref= ili referrer na CRUD) → preskoči, inače „prazan“ skok. */
+      var curKey = window.location.pathname + window.location.search;
+      function idiAkoJeDrugaStranica(absHref) {
+        try {
+          var u = new URL(absHref, window.location.href);
+          if (u.origin !== window.location.origin) return false;
+          if (u.pathname + u.search === curKey) return false;
+          window.location.href = u.href;
+          return true;
+        } catch (eGo) {
+          return false;
+        }
+      }
       var params = new URLSearchParams(window.location.search);
       var ref = (params.get('ref') || '').trim();
-      if (ref) {
-        try {
-          var u = new URL(ref, window.location.href);
-          if (u.origin === window.location.origin) { window.location.href = u.href; return; }
-        } catch (e) {}
-      }
-      if (document.referrer) {
-        try {
-          var u = new URL(document.referrer);
-          if (u.origin === window.location.origin) { window.location.href = u.href; return; }
-        } catch (e) {}
-      }
+      if (ref && idiAkoJeDrugaStranica(ref)) return;
+      if (document.referrer && idiAkoJeDrugaStranica(document.referrer)) return;
       window.location.href = new URL('Meni.php', window.location.href).href;
     });
   })();
@@ -471,70 +474,12 @@
     }
   }
 
-  function ucitajPodatkeTablicaZaKonzolu(callback) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', API_BASE + 'Clanovi_Zastavice_CRUD_sve.php', true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      var text = (xhr.responseText || '').trim();
-      console.log('Clanovi_Zastavice_CRUD [reload] response length:', text.length);
-      console.log('Clanovi_Zastavice_CRUD [reload] response (first 800 chars):', text.substring(0, 800));
-      var rows = [];
-      zastaviceRawData = [];
-      try {
-        if (text === '' || text.charAt(0) !== '[') {
-          console.warn('Clanovi_Zastavice_CRUD [reload] nije JSON (nema [ na početku), raw:', text);
-          var parsed = parseResponseCode(text);
-          if (parsed && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[parsed.code] && typeof window.showPorukaModal === 'function') {
-            window.showPorukaModal(parsed.code, parsed.replacements);
-          }
-        } else {
-          var arr = JSON.parse(text);
-          if (!Array.isArray(arr)) {
-            console.warn('Clanovi_Zastavice_CRUD [reload] JSON nije niz:', typeof arr, arr);
-            arr = [];
-          }
-          console.log('Clanovi_Zastavice_CRUD [reload] broj redaka iz API-ja:', arr.length);
-          for (var i = 0; i < arr.length; i++) {
-            var r = arr[i];
-            if (!r || typeof r !== 'object') {
-              console.warn('Clanovi_Zastavice_CRUD [reload] redak ' + i + ' nije objekt:', r);
-              continue;
-            }
-            var id = safeInt(r.id, 0);
-            var naziv = r.naziv != null ? String(r.naziv) : '';
-            var opis = r.opis != null ? String(r.opis) : null;
-            var boja = r.boja != null ? String(r.boja) : '';
-            var aktivnost = r.aktivnost === 1 || r.aktivnost === true || r.aktivnost === '1' ? 1 : 0;
-            zastaviceRawData.push({ id: id, naziv: naziv, opis: opis, boja: boja, aktivnost: aktivnost });
-            rows.push([id, naziv, boja, aktivnost]);
-          }
-          console.log('Clanovi_Zastavice_CRUD [reload] parsed rows za tablicu:', rows);
-          console.log('Clanovi_Zastavice_CRUD [reload] zastaviceRawData:', zastaviceRawData);
-        }
-      } catch (e) {
-        rows = [];
-        zastaviceRawData = [];
-        console.error('Clanovi_Zastavice_CRUD [reload] parse error', e);
-      }
-      if (typeof callback === 'function') callback(rows);
-    };
-    try {
-      xhr.send();
-    } catch (e) {
-      console.error('Clanovi_Zastavice_CRUD [reload] xhr.send error', e);
-      if (typeof callback === 'function') callback([]);
-    }
-  }
-
   function osvjeziTablicu() {
-    ucitajPodatkeTablicaZaKonzolu(function (rows) {
-      console.log('Clanovi_Zastavice_CRUD [reload] callback, rows.length=', rows.length);
+    ucitajPodatkeTablica(function (rows) {
       try {
         setDataTablica(rows);
-        console.log('Clanovi_Zastavice_CRUD [reload] setDataTablica završeno');
       } catch (e) {
-        console.error('Clanovi_Zastavice_CRUD [reload] setDataTablica error', e);
+        console.error('Clanovi_Zastavice_CRUD osvjeziTablicu setDataTablica', e);
       }
     });
   }

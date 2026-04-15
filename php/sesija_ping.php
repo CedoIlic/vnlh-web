@@ -15,6 +15,11 @@ if (!isset($_SESSION['id_korisnik']) || (int) $_SESSION['id_korisnik'] <= 0) {
     exit;
 }
 
+/* Grace period: ping potvrđuje da je stranica još aktivna — obriši flag zatvaranja. */
+if (!empty($_SESSION['tab_close_pending_at'])) {
+    unset($_SESSION['tab_close_pending_at']);
+}
+
 if (!empty($_SESSION['must_change_password'])) {
     echo json_encode(['ok' => false, 'reason' => 'auth'], JSON_UNESCAPED_UNICODE);
     exit;

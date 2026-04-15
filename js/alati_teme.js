@@ -106,14 +106,38 @@
     });
   }
 
-  var btnCrudPovratak = document.getElementById('btnCrudPovratak');
-  if (btnCrudPovratak) {
-    btnCrudPovratak.addEventListener('click', function () {
-      if (typeof window.history !== 'undefined' && typeof window.history.back === 'function') {
-        window.history.back();
+  /**
+   * Povratak: ista logika kao na CRUD stranicama (ref → referrer → Meni.php).
+   * history.back() nije prikladan: pagehide + sendBeacon tretira odlazak kao zatvaranje kartice ako
+   * __vnlhAppNavInternal ostane false (0-Common.js), što uništava PHP sesiju prije učitavanja prethodne stranice.
+   */
+  (function () {
+    var btnPovratak = document.getElementById('btnPovratak');
+    if (!btnPovratak) return;
+    btnPovratak.addEventListener('click', function () {
+      var params = new URLSearchParams(window.location.search);
+      var ref = (params.get('ref') || '').trim();
+      if (ref) {
+        try {
+          var uRef = new URL(ref, window.location.href);
+          if (uRef.origin === window.location.origin) {
+            window.location.href = uRef.href;
+            return;
+          }
+        } catch (eRef) {}
       }
+      if (document.referrer) {
+        try {
+          var uRef2 = new URL(document.referrer);
+          if (uRef2.origin === window.location.origin) {
+            window.location.href = uRef2.href;
+            return;
+          }
+        } catch (eRef2) {}
+      }
+      window.location.href = new URL('Meni.php', window.location.href).href;
     });
-  }
+  })();
 
   /* Primjer obrade u JS forme – zamijeni vlastitom logikom */
   document.addEventListener(crudEventName, function (e) {

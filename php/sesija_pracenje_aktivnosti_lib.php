@@ -186,6 +186,9 @@ function sesija_pracenje_aktivnosti_inline_script_tag(): string
 /**
  * Ako red u sustav_sesije_aktivne ne postoji, nije aktivna ili je zadnja_aktivnost starija od session_timeout_sec:
  * uništava PHP sesiju i prekida zahtjev (401 ili redirect).
+ *
+ * Oporavak ako red ne postoji: valjana PHP sesija, ali INSERT na loginu nije ostao u bazi (stare sesije, greška
+ * pri INSERT-u) – jednokratni INSERT kao nakon logina; ako i dalje nema retka, odjava.
  */
 function sesija_pracenje_aktivnosti_odjava_ako_red_ne_valja(mysqli $mysqli, string $mode): void
 {
@@ -214,6 +217,23 @@ function sesija_pracenje_aktivnosti_odjava_ako_red_ne_valja(mysqli $mysqli, stri
     $res = $stmt->get_result();
     $row = $res ? $res->fetch_assoc() : null;
     $stmt->close();
+
+    if (!$row || !isset($row['status'])) {
+        require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
+        Alati_Sesije_Aktivne_insert_after_login($mysqli, $uid);
+        $stmtRec = $mysqli->prepare(
+            'SELECT id, status, zadnja_aktivnost FROM sustav_sesije_aktivne WHERE session_id = ? AND id_korisnik = ? LIMIT 1'
+        );
+        if ($stmtRec) {
+            $stmtRec->bind_param('si', $sid, $uid);
+            $stmtRec->execute();
+            $resRec = $stmtRec->get_result();
+            $row = $resRec ? $resRec->fetch_assoc() : null;
+            $stmtRec->close();
+        } else {
+            $row = null;
+        }
+    }
 
     $mustExit = false;
 
