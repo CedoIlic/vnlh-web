@@ -5,8 +5,6 @@
 require_once __DIR__ . '/auth_start.php';
 require_once __DIR__ . '/vnlh_paths.php';
 
-define('VNLH_SESSION_IDLE_SECONDS_API', 1800);
-
 if (!isset($_SESSION['id_korisnik']) || !is_numeric($_SESSION['id_korisnik']) || (int) $_SESSION['id_korisnik'] <= 0) {
     http_response_code(401);
     header('Content-Type: text/plain; charset=utf-8');
@@ -57,11 +55,20 @@ if (!array_key_exists('chat_dozvoljen', $_SESSION) && isset($_SESSION['id_korisn
     }
 }
 
-require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
-Alati_Sesije_Aktivne_odjava_ako_red_timeout('api');
+require_once __DIR__ . '/sesija_pracenje_aktivnosti_lib.php';
+$apiScript = basename($_SERVER['SCRIPT_NAME'] ?? '');
+$mysqliSesApi = vnlh_db_connect();
+$idleSecApi = 90;
+if ($mysqliSesApi !== false) {
+    if ($apiScript !== 'sesija_ping.php' && $apiScript !== 'sesija_zatvori_karticu.php') {
+        sesija_pracenje_aktivnosti_odjava_ako_red_ne_valja($mysqliSesApi, 'api');
+    }
+    $idleSecApi = sesija_pracenje_aktivnosti_session_timeout_sec($mysqliSesApi);
+    $mysqliSesApi->close();
+}
 
 $now = time();
-if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'] > VNLH_SESSION_IDLE_SECONDS_API)) {
+if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'] > $idleSecApi)) {
     require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
     Alati_Sesije_Aktivne_mark_timeout_session();
     $_SESSION = [];
@@ -86,4 +93,5 @@ if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'
 $_SESSION['last_activity'] = $now;
 vnlh_refresh_session_cookie();
 
+require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
 Alati_Sesije_Aktivne_touch_request();

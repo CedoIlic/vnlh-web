@@ -123,6 +123,20 @@ function vnlh_inject_chat_flag_script(string $html): string
 }
 
 /**
+ * Umeće ping / zatvaranje-kartice skriptu (sesija_pracenje_aktivnosti_lib) odmah nakon <head>.
+ */
+function vnlh_inject_sesija_pracenje_aktivnosti_script(string $html): string
+{
+    require_once __DIR__ . '/sesija_pracenje_aktivnosti_lib.php';
+    $snip = sesija_pracenje_aktivnosti_inline_script_tag();
+    if ($snip === '' || stripos($html, '<head>') === false) {
+        return $html;
+    }
+    $out = preg_replace('/<head>/i', '<head>' . "\n" . $snip, $html, 1);
+    return is_string($out) ? $out : $html;
+}
+
+/**
  * Učitaj html/<ime>, zamijeni __VNLH_ASSET_V__ i ispiši (umjesto readfile na statičkom HTML-u).
  *
  * @param string $htmlBasename npr. "Clanovi_CRUD.html" (koristi basename radi sigurnosti)
@@ -137,7 +151,8 @@ function vnlh_emit_html_file(string $htmlBasename): void {
     }
     $raw = file_get_contents($abs);
     $html = vnlh_apply_asset_token_to_html($raw !== false ? $raw : '');
-    echo vnlh_inject_chat_flag_script($html);
+    $html = vnlh_inject_chat_flag_script($html);
+    echo vnlh_inject_sesija_pracenje_aktivnosti_script($html);
 }
 
 /**
@@ -151,5 +166,6 @@ function vnlh_emit_html_absolute(string $absolutePath): void {
     }
     $raw = file_get_contents($absolutePath);
     $html = vnlh_apply_asset_token_to_html($raw !== false ? $raw : '');
-    echo vnlh_inject_chat_flag_script($html);
+    $html = vnlh_inject_chat_flag_script($html);
+    echo vnlh_inject_sesija_pracenje_aktivnosti_script($html);
 }

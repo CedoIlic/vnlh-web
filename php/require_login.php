@@ -1,6 +1,6 @@
 <?php
 /**
- * Zaštita HTML/PHP stranica: valjana sesija + najviše 1800 s neaktivnosti.
+ * Zaštita HTML/PHP stranica: valjana sesija + neaktivnost prema sustav_varijable id 112 (session_timeout_sec).
  *
  * Nakon osnovnih provjera (prijava, lozinka, baza, idle) slijedi provjera menija:
  * izvršna skripta mora odgovarati dopuštenoj stavci (html_fajl u $_SESSION['vnlh_meni_dopustene']),
@@ -13,8 +13,6 @@
  */
 require_once __DIR__ . '/auth_start.php';
 require_once __DIR__ . '/vnlh_paths.php';
-
-define('VNLH_SESSION_IDLE_SECONDS', 1800);
 
 if (!isset($_SESSION['id_korisnik']) || !is_numeric($_SESSION['id_korisnik']) || (int) $_SESSION['id_korisnik'] <= 0) {
     $ref = $_SERVER['REQUEST_URI'] ?? '';
@@ -69,11 +67,17 @@ if (!array_key_exists('chat_dozvoljen', $_SESSION) && isset($_SESSION['id_korisn
     }
 }
 
-require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
-Alati_Sesije_Aktivne_odjava_ako_red_timeout('html');
+require_once __DIR__ . '/sesija_pracenje_aktivnosti_lib.php';
+$mysqliSesCheck = vnlh_db_connect();
+$idleSecHtml = 90;
+if ($mysqliSesCheck !== false) {
+    sesija_pracenje_aktivnosti_odjava_ako_red_ne_valja($mysqliSesCheck, 'html');
+    $idleSecHtml = sesija_pracenje_aktivnosti_session_timeout_sec($mysqliSesCheck);
+    $mysqliSesCheck->close();
+}
 
 $now = time();
-if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'] > VNLH_SESSION_IDLE_SECONDS)) {
+if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'] > $idleSecHtml)) {
     require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
     Alati_Sesije_Aktivne_mark_timeout_session();
     $_SESSION = [];
@@ -137,4 +141,5 @@ if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !==
 $_SESSION['last_activity'] = $now;
 vnlh_refresh_session_cookie();
 
+require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
 Alati_Sesije_Aktivne_touch_request();

@@ -16,7 +16,7 @@ if (!function_exists('vnlh_client_ip')) {
     require_once __DIR__ . '/auth_start.php';
 }
 
-/** Idle sesije u sekundama – mora odgovarati VNLH_SESSION_IDLE_SECONDS i VNLH_SESSION_IDLE_SECONDS_API. */
+/** Zadani prag (s); reconciliacija koristi session_timeout_sec iz sustav_varijable (id 112) preko sesija_pracenje_aktivnosti_lib. */
 if (!defined('VNLH_SESIJA_IDLE_SEKUNDI')) {
     define('VNLH_SESIJA_IDLE_SEKUNDI', 1800);
 }
@@ -313,12 +313,13 @@ function Alati_Sesije_Aktivne_mark_timeout_session(): void
  */
 function Alati_Sesije_Aktivne_reconcile_timeout_stale_aktivne(mysqli $mysqli): void
 {
-    $idle = (int) VNLH_SESIJA_IDLE_SEKUNDI;
+    require_once __DIR__ . '/sesija_pracenje_aktivnosti_lib.php';
+    $idle = sesija_pracenje_aktivnosti_session_timeout_sec($mysqli);
     if ($idle < 60) {
-        $idle = 1800;
+        $idle = 90;
     }
     $sql = 'UPDATE sustav_sesije_aktivne SET status = \'timeout\'
-            WHERE status = \'aktivna\' AND zadnja_aktivnost < DATE_SUB(NOW(), INTERVAL ' . $idle . ' SECOND)';
+            WHERE status = \'aktivna\' AND zadnja_aktivnost < DATE_SUB(NOW(), INTERVAL ' . (int) $idle . ' SECOND)';
     $mysqli->query($sql);
     Alati_Sesije_Aktivne_obrisi_neaktivne_redove($mysqli);
 }
@@ -506,7 +507,7 @@ function Alati_Sesije_Aktivne_touch_request(): void
 
     $upd = $mysqli->prepare(
         'UPDATE sustav_sesije_aktivne
-         SET otvorena_stranica = ?, ip_adresa = ?, user_agent = ?, povijest_sesije = ?
+         SET otvorena_stranica = ?, ip_adresa = ?, user_agent = ?, povijest_sesije = ?, zadnja_aktivnost = NOW()
          WHERE id = ? AND id_korisnik = ?'
     );
     if ($upd) {

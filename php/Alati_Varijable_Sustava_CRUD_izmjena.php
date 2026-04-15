@@ -74,6 +74,10 @@ if (!$stmt) {
 $stmt->bind_param('sssi', $varijabla, $naziv, $opis, $id);
 
 if ($stmt->execute()) {
+    if ($id === 111 || $id === 112 || $id === 113) {
+        require_once __DIR__ . '/sesija_pracenje_aktivnosti_lib.php';
+        sesija_pracenje_aktivnosti_cache_invalidate();
+    }
     echo 'OK';
     $stmt->close();
     $mysqli->close();

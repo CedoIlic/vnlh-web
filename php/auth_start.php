@@ -1,13 +1,16 @@
 <?php
 /**
  * Jedinstveni session_start za VNLH.
- * gc_maxlifetime 1800 s; kolačić httponly, SameSite=Lax; sliding Max-Age kroz vnlh_refresh_session_cookie().
+ * Trajanje kolačića / gc iz sustav_varijable id 112 (sesija_pracenje_aktivnosti_*); klizno produženje kroz vnlh_refresh_session_cookie().
  */
 if (session_status() === PHP_SESSION_NONE) {
-    ini_set('session.gc_maxlifetime', '1800');
+    require_once __DIR__ . '/sesija_pracenje_aktivnosti_lib.php';
+    $cookieLife = sesija_pracenje_aktivnosti_cookie_max_age_pri_startu();
+    $gcLife = max(120, $cookieLife + 30);
+    ini_set('session.gc_maxlifetime', (string) $gcLife);
     $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     session_set_cookie_params([
-        'lifetime' => 1800,
+        'lifetime' => $cookieLife,
         'path' => '/',
         'domain' => '',
         'secure' => $secure,
@@ -50,15 +53,17 @@ function vnlh_client_ip(): string {
 }
 
 /**
- * Produžuje kolačić sesije za još 1800 s (klizno s last_activity).
+ * Produžuje kolačić sesije za još session_timeout_sec (iz baze, cache; klizno s last_activity / pingom).
  */
 function vnlh_refresh_session_cookie() {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         return;
     }
+    require_once __DIR__ . '/sesija_pracenje_aktivnosti_lib.php';
+    $life = sesija_pracenje_aktivnosti_cookie_max_age_cached();
     $p = session_get_cookie_params();
     setcookie(session_name(), session_id(), [
-        'expires' => time() + 1800,
+        'expires' => time() + $life,
         'path' => $p['path'] ?: '/',
         'domain' => $p['domain'] ?? '',
         'secure' => $p['secure'] ?? false,

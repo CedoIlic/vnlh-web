@@ -1059,4 +1059,80 @@
   window.getPageBreakpointNarrow = getPageBreakpointNarrow;
   window.vnlhPrimijeniPravaCrud = vnlhPrimijeniPravaCrud;
   window.vnlhUcitajPravaCrud = vnlhUcitajPravaCrud;
+
+  /**
+   * Praćenje sesije: periodički GET sesija_ping.php (putanja iz window.__VNLH_SESIJA_PING_URL__);
+   * pagehide + sendBeacon na sesija_zatvori_karticu.php (puna odjava), uz zaštitu od unutarnje navigacije (MPA).
+   */
+  (function vnlhSesijaPracenjePingInit() {
+    var cfg = window.__VNLH_SESIJA_PING__;
+    var pingUrl = window.__VNLH_SESIJA_PING_URL__;
+    if (!cfg || typeof cfg.ping_interval_sec !== 'number' || cfg.ping_interval_sec <= 0 || !pingUrl) {
+      return;
+    }
+    var loginUrl = typeof window.__VNLH_LOGIN_URL__ === 'string' ? window.__VNLH_LOGIN_URL__ : 'php/Login.php';
+
+    function redirectLogin() {
+      try {
+        window.location.assign(loginUrl);
+      } catch (eR) {}
+    }
+
+    function pingOnce() {
+      if (typeof window.fetch !== 'function') return;
+      fetch(pingUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' })
+        .then(function (r) {
+          if (r.status === 401) {
+            redirectLogin();
+            return null;
+          }
+          return r.json();
+        })
+        .then(function (j) {
+          if (!j) return;
+          if (j.ok === true) return;
+          if (j.reason === 'expired' || j.reason === 'auth') redirectLogin();
+        })
+        .catch(function () {});
+    }
+
+    pingOnce();
+    setInterval(pingOnce, Math.max(5000, cfg.ping_interval_sec * 1000));
+
+    window.__vnlhAppNavInternal = false;
+    document.addEventListener(
+      'click',
+      function (ev) {
+        var t = ev.target;
+        if (!t || typeof t.closest !== 'function') return;
+        var a = t.closest('a[href]');
+        if (!a || !a.href) return;
+        try {
+          var u = new URL(a.href, window.location.href);
+          if (u.origin === window.location.origin) window.__vnlhAppNavInternal = true;
+        } catch (eC) {}
+      },
+      true
+    );
+    document.addEventListener(
+      'submit',
+      function () {
+        window.__vnlhAppNavInternal = true;
+      },
+      true
+    );
+
+    window.addEventListener('pagehide', function (ev) {
+      if (ev.persisted) return;
+      if (window.__vnlhAppNavInternal) return;
+      var u = window.__VNLH_SESIJA_TAB_CLOSE_URL__;
+      var tok = window.__VNLH_SESIJA_TAB_CLOSE_TOKEN__;
+      if (!u || !tok || typeof navigator.sendBeacon !== 'function') return;
+      try {
+        var fd = new FormData();
+        fd.append('token', tok);
+        navigator.sendBeacon(u, fd);
+      } catch (eB) {}
+    });
+  })();
 })();
