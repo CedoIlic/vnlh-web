@@ -1,0 +1,106 @@
+<!-- Alati_Varijable_Sustava_CRUD – pregled i uređivanje tablice sustav_varijable -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Varijable sustava</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/Alati_Varijable_Sustava_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+
+<body>
+
+<div class="naslov-forme">
+    <h2>Varijable sustava</h2>
+</div>
+
+<div class="page-container">
+    <!-- Blok: Panel tablice (Varijabla = id, Vrijednost, Naziv, Opis) -->
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+
+    <!-- Blok: Edit panel – lijevo 30% (Varijabla, Vrijednost, Naziv; labele iznad), desno Opis iste visine kao lijevo; podnožje CRUD -->
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body alati-var-sust-crud__edit-body">
+            <div class="alati-var-sust-crud__edit-split">
+                <div class="alati-var-sust-crud__edit-split__left">
+                    <!-- Varijabla (zaglavlje tablice) = stupac id u bazi; edit-delete = uvjet enable/disable. Vrijednost = stupac varijabla. -->
+                    <div class="alati-var-sust-crud__field-block">
+                        <label class="kontrola-labela mb-0" for="edit_varijabla">Varijabla</label>
+                        <div class="kontrola-edit-delete">
+                            <input id="edit_varijabla" type="text" class="kontrola-edit-delete__input" maxlength="5" inputmode="numeric" placeholder="Upiši broj varijable" autocomplete="off" title="Brojčani id (pri odabranom retku može se prikazati dulji ključ iz baze). Bez režima Razvoj najviše 3 znamenke, 0–999.">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
+                    </div>
+                    <div class="alati-var-sust-crud__field-block">
+                        <label class="kontrola-labela mb-0" for="edit_vrijednost">Vrijednost</label>
+                        <input id="edit_vrijednost" type="text" class="kontrola-edit alati-var-sust-crud__plain-edit" maxlength="200" placeholder="Upiši vrijednost varijable" autocomplete="off" aria-label="Vrijednost">
+                    </div>
+                    <div class="alati-var-sust-crud__field-block">
+                        <label class="kontrola-labela mb-0" for="edit_naziv">Naziv</label>
+                        <input id="edit_naziv" type="text" class="kontrola-edit alati-var-sust-crud__plain-edit" maxlength="200" placeholder="Upiši naziv varijable" autocomplete="off">
+                    </div>
+                </div>
+                <div class="alati-var-sust-crud__edit-split__right">
+                    <label class="kontrola-labela mb-0" for="edit_opis">Opis</label>
+                    <textarea id="edit_opis" class="kontrola-napomena alati-var-sust-crud__opis-visina" maxlength="2048" placeholder="Opis…"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer alati-var-sust-crud__edit-footer">
+            <div class="alati-var-sust-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi">
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label">Upis</span>
+                        </span>
+                    </span>
+                </button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi">
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label">Izbriši</span>
+                        </span>
+                    </span>
+                </button>
+            </div>
+            <div class="alati-var-sust-crud__footer-center" id="wrapToggleRazvoj" hidden>
+                <!-- Isti toggle kao u modalu poruka (0-Poruke.css: .poruke__toggle-*) -->
+                <div class="alati-var-sust-crud__razvoj-toggle">
+                    <label class="poruke__toggle-label" id="toggleRazvoj_label_wrap">
+                        <input type="checkbox" id="toggleRazvoj" class="poruke__toggle-input" autocomplete="off" aria-label="Razvoj: prikaži sve varijable (id izvan 0–999)">
+                        <span class="poruke__toggle-slider" aria-hidden="true"></span>
+                        <span class="poruke__toggle-text">Razvoj</span>
+                    </label>
+                </div>
+            </div>
+            <div class="alati-var-sust-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak">
+                    <span class="kontrola-btn__outer">
+                        <span class="kontrola-btn__inner">
+                            <span class="kontrola-btn__label">Povratak</span>
+                        </span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/Alati_Varijable_Sustava_CRUD.js?v=__VNLH_ASSET_V__"></script>
+
+</body>
+</html>

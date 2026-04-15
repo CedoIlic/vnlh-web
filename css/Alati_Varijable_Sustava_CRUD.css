@@ -1,0 +1,98 @@
+/* =========================================================
+   Alati_Varijable_Sustava_CRUD.css
+   Edit panel: lijevo 30% širine – tri polja, labele iznad kontrola; desno Opis – visina kao zbroj lijevih polja.
+   ========================================================= */
+
+/* --- Blok: Dva stupca (30% / ostatak); oba stupca iste visine (stretch) --- */
+.alati-var-sust-crud__edit-split {
+  display: grid;
+  grid-template-columns: 30% minmax(0, 1fr);
+  align-items: stretch;
+  gap: 1rem 1.25rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Lijevo: vertikalni niz blokova (labela iznad edita) */
+.alati-var-sust-crud__edit-split__left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* Jedan blok = labela + kontrola ispod */
+.alati-var-sust-crud__field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.alati-var-sust-crud__field-block .kontrola-edit-delete,
+.alati-var-sust-crud__field-block > .kontrola-edit {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Obični editi: bez nasljeđenog flex iz starog .edit-row */
+.alati-var-sust-crud__plain-edit {
+  min-width: 0;
+}
+
+/* Desno: labela iznad; textarea ispunjava preostalu visinu stupca (= visina lijevog stupca) */
+.alati-var-sust-crud__edit-split__right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 100%;
+}
+
+/*
+ * Opis = ista kontrola kao napomena (.kontrola-napomena u 0-Kontrole.css ima resize: vertical).
+ * Ovdje natječemo: resize: both – nativni grip dolje desno (širina + visina). min-* da grip radi u flex/gridu.
+ */
+.alati-var-sust-crud__edit-split__right textarea.kontrola-napomena.alati-var-sust-crud__opis-visina {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 10rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+  resize: both;
+}
+
+/* Uski ekran: Opis ispod lijevih polja, puna širina */
+@media (max-width: 768px) {
+  .alati-var-sust-crud__edit-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .alati-var-sust-crud__edit-split__right textarea.kontrola-napomena.alati-var-sust-crud__opis-visina {
+    min-height: calc(6 * var(--tablica_row_h));
+  }
+}
+
+/* Podnožje: lijevo (Upis, Izbriši), sredina (toggle Razvoj za admine), desno (Povratak) */
+.alati-var-sust-crud__edit-footer {
+  flex-wrap: wrap;
+}
+
+.alati-var-sust-crud__footer-center {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 8rem;
+}
+
+.alati-var-sust-crud__razvoj-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+}
