@@ -29,7 +29,7 @@
     } catch (eMark) {}
   };
 
-  /* --- Blok: Debounce „Traži“ (ms) — sustav_varijable.id = 114; čita Napredovanja_CRUD, Duznosnici_Osobe_CRUD --- */
+  /* --- Blok: Debounce „Traži“ (ms) — sustav_varijable.id = 114; čita Napredovanja_CRUD, Duznosnici_Osobe_CRUD, Lista --- */
   var VNLH_VAR_ID_PRONADJI_STANKA_MS = 114;
   var VNLH_PRONADJI_STANKA_MS_DEFAULT = 1000;
 

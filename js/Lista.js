@@ -1,6 +1,6 @@
 /* =========================================================
    Lista.js
-   Forma "Lista članova" – tablica, select, paginacija.
+   Forma "Lista članova" – tablica, select, paginacija, Traži (debounce iz var. 114).
    Učitava se uz 0-Common.js (preusmjerenje na prijavu pri 401 s API-ja).
    ========================================================= */
 
@@ -38,6 +38,7 @@
   var selectRegija = document.getElementById('select_regija');
   var selectLoza = document.getElementById('select_loza');
   var selectBrojRedaka = document.getElementById('select_broj_redaka');
+  var editListaTrazi = document.getElementById('edit_lista_trazi');
   var btnBackward = document.getElementById('btn_backward');
   var btnPrev = document.getElementById('btn_prev');
   var btnNext = document.getElementById('btn_next');
@@ -883,6 +884,102 @@
     osvjeziTablicu();
   }
 
+  /**
+   * Jedan string za pretragu retka (kao formatClanRedakZaTablicu u Duznosnici_Osobe_CRUD —
+   * spajanje vidljivih polja; case-insensitive match u primijeniFilterTrazi).
+   */
+  function trimListaStr(s) {
+    return s != null ? String(s).replace(/^\s+|\s+$/g, '') : '';
+  }
+
+  function listaClanTekstZaTrazi(r) {
+    if (!r) return '';
+    var parts = [
+      r.line1, r.line2, r.Ime, r.Prezime, r.Stupanj,
+      r['Loža'], r.Grad, r.DrzavaLoze,
+      r.Telefon, r.Email, r.Rođendan, r.Spol,
+      r.sifra, r.datum_inicijacije, r.datum_stupnja, r.na_prijedlog
+    ];
+    var out = [];
+    for (var pi = 0; pi < parts.length; pi++) {
+      if (parts[pi] != null && String(parts[pi]) !== '') {
+        out.push(String(parts[pi]));
+      }
+    }
+    return out.join(' ');
+  }
+
+  /** Ponovi zadnje sortiranje na trenutnom filtriraniPodaci (nakon promjene teksta Traži). */
+  function ponoviSortNaFiltriranim() {
+    if (sortCol === -1) return;
+    var pk = String(sortCol).split('|');
+    var f1 = pk[0] || '';
+    var f2 = pk.length > 1 ? pk[1] : '';
+    var sortField1 = (f1 === 'Rođendan') ? 'datum_rodjenja_sort' : f1;
+    filtriraniPodaci.sort(function (a, b) {
+      var v1a, v1b, cmp;
+      if (f1 === 'Rođendan') {
+        v1a = a[sortField1] || '';
+        v1b = b[sortField1] || '';
+        cmp = v1a.localeCompare(v1b);
+      } else if (f1 === 'Stupanj') {
+        v1a = parseFloat(a[f1]) || 0;
+        v1b = parseFloat(b[f1]) || 0;
+        cmp = v1a < v1b ? -1 : (v1a > v1b ? 1 : 0);
+      } else {
+        v1a = a[f1] != null ? String(a[f1]).toLowerCase() : '';
+        v1b = b[f1] != null ? String(b[f1]).toLowerCase() : '';
+        cmp = v1a.localeCompare(v1b, 'hr');
+      }
+      if (cmp !== 0) return sortDir * cmp;
+      if (f2) {
+        var v2a = a[f2] != null ? String(a[f2]).toLowerCase() : '';
+        var v2b = b[f2] != null ? String(b[f2]).toLowerCase() : '';
+        return sortDir * v2a.localeCompare(v2b, 'hr');
+      }
+      return 0;
+    });
+  }
+
+  /**
+   * Traži: uključeno samo kad postoji barem jedan učitani red (podaci.length).
+   * Bez podataka: disabled, klasa kontrola-edit-delete--disabled, prazno polje.
+   */
+  function syncListaTraziEnabled() {
+    var wrap = editListaTrazi && editListaTrazi.closest ? editListaTrazi.closest('.kontrola-edit-delete') : null;
+    var clearBtn = wrap ? wrap.querySelector('.kontrola-edit-delete__clear') : null;
+    var ima = podaci.length > 0;
+    if (editListaTrazi) {
+      editListaTrazi.disabled = !ima;
+    }
+    if (wrap) {
+      wrap.classList.toggle('kontrola-edit-delete--disabled', !ima);
+    }
+    if (clearBtn) {
+      clearBtn.disabled = !ima;
+    }
+    if (!ima && editListaTrazi) {
+      editListaTrazi.value = '';
+    }
+  }
+
+  function primijeniFilterTrazi() {
+    var txt = trimListaStr(editListaTrazi ? editListaTrazi.value : '');
+    if (txt === '') {
+      filtriraniPodaci = podaci.slice();
+    } else {
+      var t = txt.toLowerCase();
+      filtriraniPodaci = podaci.filter(function (row) {
+        return listaClanTekstZaTrazi(row).toLowerCase().indexOf(t) !== -1;
+      });
+    }
+    ponoviSortNaFiltriranim();
+    trenutnaStranica = 1;
+    osvjeziPaginaciju();
+    osvjeziTablicu();
+    syncListaTraziEnabled();
+  }
+
   var MOB_SLIKA_ST = '65px';
   var MOB_STYLE_ID = 'lista-mob-column-widths';
 
@@ -1322,7 +1419,6 @@
 
   function ucitajClanovi(idLoza, lozaNaziv) {
     podaci = [];
-    filtriraniPodaci = [];
     var viseLoz = (idLoza === SVE_LOZE);
     var idParam = idLoza;
     if (viseLoz) {
@@ -1334,8 +1430,8 @@
       idParam = ids.join(',');
     }
     currentLogoUrl = (!viseLoz && idLoza) ? (API_BASE + 'Loze_CRUD_slika_thumb.php?id=' + encodeURIComponent(idLoza) + '&t=' + (Date.now ? Date.now() : 0)) : '';
-    osvjeziTablicu();
-    osvjeziPaginaciju();
+    /* Odmah prazna tablica (i primjena Traži na prazan skup) dok ne stigne odgovor. */
+    primijeniFilterTrazi();
     if (!idLoza) return;
     var xhr = new XMLHttpRequest();
     xhr.open('GET', API_BASE + 'Clanovi_CRUD_sve_loze.php?id_loza=' + encodeURIComponent(idParam), true);
@@ -1395,10 +1491,7 @@
               na_prijedlog: [r.na_prijedlog_prezime, r.na_prijedlog_ime].filter(Boolean).join(' ') || ''
             });
           }
-          filtriraniPodaci = podaci.slice();
-          trenutnaStranica = 1;
-          osvjeziTablicu();
-          osvjeziPaginaciju();
+          primijeniFilterTrazi();
         } catch (e) {}
       }
     };
@@ -1541,6 +1634,10 @@
   }
 
   function init() {
+    if (typeof window.vnlhLoadPronadjiStankaMsFromVar114 === 'function') {
+      window.vnlhLoadPronadjiStankaMsFromVar114(API_BASE);
+    }
+
     var defaultRedaka = (window.innerWidth && window.innerWidth < 768) ? 8 : 10;
     if (selectBrojRedaka) {
       var saved = localStorage.getItem(LISTA_BROJ_REDAKA_KEY);
@@ -1568,6 +1665,8 @@
       mq.addEventListener('change', primijeniMobitelPrikaz);
     }
     window.addEventListener('resize', primijeniMobitelPrikaz);
+
+    syncListaTraziEnabled();
 
     selectDrzava.addEventListener('change', function () {
       puniSelectRegija(selectDrzava.value);
@@ -1600,22 +1699,47 @@
       osvjeziTablicu();
     });
 
-    var btnListaReload = document.getElementById('btn_lista_reload');
-    if (btnListaReload) {
-      btnListaReload.style.display = LISTA_RELOAD_IKONA ? '' : 'none';
-      btnListaReload.addEventListener('click', function () {
-        if (!selectLoza.value) return;
-        var lozaNaziv = '';
-        var opt = selectLoza.options[selectLoza.selectedIndex];
-        if (opt) lozaNaziv = opt.textContent || '';
-        ucitajClanovi(selectLoza.value, lozaNaziv);
+    var toListaTrazi = null;
+    if (editListaTrazi) {
+      editListaTrazi.addEventListener('input', function () {
+        if (toListaTrazi) clearTimeout(toListaTrazi);
+        toListaTrazi = setTimeout(function () {
+          toListaTrazi = null;
+          primijeniFilterTrazi();
+        }, typeof window.vnlhGetPronadjiStankaMs === 'function' ? window.vnlhGetPronadjiStankaMs() : 1000);
+      });
+    }
+    var wrapListaTrazi = editListaTrazi && editListaTrazi.closest ? editListaTrazi.closest('.kontrola-edit-delete') : null;
+    var clearListaTrazi = wrapListaTrazi ? wrapListaTrazi.querySelector('.kontrola-edit-delete__clear') : null;
+    if (clearListaTrazi) {
+      clearListaTrazi.addEventListener('click', function () {
+        if (editListaTrazi) editListaTrazi.value = '';
+        primijeniFilterTrazi();
       });
     }
 
+    var btnListaReload = document.getElementById('btn_lista_reload');
+    var btnListaReloadMob = document.getElementById('btn_lista_reload_mob');
+
+    function klikListaReload() {
+      if (!selectLoza.value) return;
+      var lozaNaziv = '';
+      var opt = selectLoza.options[selectLoza.selectedIndex];
+      if (opt) lozaNaziv = opt.textContent || '';
+      ucitajClanovi(selectLoza.value, lozaNaziv);
+    }
+
+    [btnListaReload, btnListaReloadMob].forEach(function (btn) {
+      if (!btn) return;
+      btn.style.display = LISTA_RELOAD_IKONA ? '' : 'none';
+      btn.addEventListener('click', klikListaReload);
+    });
+
     function osvjeziReloadState() {
-      if (btnListaReload && LISTA_RELOAD_IKONA) {
-        btnListaReload.disabled = !selectLoza.value;
-      }
+      if (!LISTA_RELOAD_IKONA) return;
+      var dis = !selectLoza.value;
+      if (btnListaReload) btnListaReload.disabled = dis;
+      if (btnListaReloadMob) btnListaReloadMob.disabled = dis;
     }
 
     btnBackward.addEventListener('click', naPocetak);

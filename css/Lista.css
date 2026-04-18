@@ -118,6 +118,19 @@ body {
   }
 }
 
+/* Osvježavanje: jedan gumb na mobilu (uz Državu), drugi na desktopu (uz Regiju). */
+@media (max-width: 767px) {
+  .lista-reload-btn--desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .lista-reload-btn--mob-only {
+    display: none !important;
+  }
+}
+
 /* Mobilni prikaz (≤640px) – kolone Slika i St. fiksno 65px (klasa iz JS) */
 @media (max-width: 640px) {
   .lista-tablica col.lista-tablica__col--mob-65,
@@ -165,6 +178,19 @@ body {
     width: 100%;
     min-width: 0;
   }
+
+  /* Red „Redaka”: labela lijevo, select odmah desno (isti red); Traži u sljedećem retku pune širine. */
+  .lista-header__row--redaka-i-trazi .lista-select.lista-select--sirina-redaka {
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+  }
+  .lista-header__row--redaka-i-trazi .lista-trazi-kontrola.kontrola-edit-delete {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
 }
 
 .lista-header__row {
@@ -172,6 +198,59 @@ body {
   flex-direction: row;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* Red „Redaka” + Traži (kontrola-edit-delete s lupicom lijevo, kao Dužnosnici osobe + ikona). */
+.lista-header__row--redaka-i-trazi {
+  flex-wrap: wrap;
+}
+
+/* Raste u preostalom prostoru retka; min širina da ostane upotrebljivo na užem ekranu. */
+.lista-trazi-kontrola.kontrola-edit-delete {
+  flex: 1 1 180px;
+  min-width: 140px;
+  max-width: 100%;
+}
+
+/* Lupica lijevo unutar okvira (ne klikabilna); input dobiva lijevi padding. */
+.lista-trazi-kontrola__ikon {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 2.25rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--edit_delete_text, var(--text));
+  opacity: 0.75;
+}
+
+/* Heroicons Outline magnifying-glass */
+.lista-trazi-kontrola__ikon::after {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z'/%3E%3C/svg%3E");
+  mask-size: 20px 20px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z'/%3E%3C/svg%3E");
+  -webkit-mask-size: 20px 20px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
+.lista-trazi-kontrola .kontrola-edit-delete__input {
+  padding-left: calc(2.25rem + var(--edit_padding_x, 8px));
+}
+
+.kontrola-edit-delete--disabled.lista-trazi-kontrola .lista-trazi-kontrola__ikon {
+  opacity: 0.45;
 }
 
 .lista-labela {
@@ -194,17 +273,17 @@ body {
   min-width: 0;
 }
 
-.lista-header__redaka-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1 1 auto;
-  min-width: 0;
-}
+/* Gumb osvježavanja u retku „Regija” (HTML: .lista-header__row--regija), ne uz „Redaka”. */
 
-.lista-header__redaka-wrap .lista-select {
-  flex: 1 1 auto;
-  min-width: 0;
+/* Select „Redaka po stranici” – fiksna širina samo na desktopu (inače kasnije u datoteci poništava mobilni puni red). */
+@media (min-width: 768px) {
+  .lista-header__row .lista-select.lista-select--sirina-redaka {
+    flex: 0 0 120px;
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+    box-sizing: border-box;
+  }
 }
 
 .lista-reload-btn {

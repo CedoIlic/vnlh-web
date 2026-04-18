@@ -16,21 +16,25 @@
   <div class="page-container">
     <div class="lista-panel" id="listaPanel">
       <div class="lista-panel__header">
-        <div class="lista-header__row">
+        <div class="lista-header__row lista-header__row--drzava">
           <label class="lista-labela" for="select_drzava">Država</label>
           <div class="lista-select">
             <select id="select_drzava" aria-label="Odaberi državu">
               <option value="">— Odaberi državu —</option>
             </select>
           </div>
+          <!-- Na mobilnom (≤767px) osvježavanje ovdje desno od Države; na širem ekranu skriveno (vidi .lista-reload-btn--desktop-only). -->
+          <button type="button" id="btn_lista_reload_mob" class="lista-reload-btn lista-reload-btn--mob-only" aria-label="Ponovno punjenje tablice" title="Puni tablicu" style="display:none"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
         </div>
-        <div class="lista-header__row">
+        <div class="lista-header__row lista-header__row--regija">
           <label class="lista-labela" for="select_regija">Regija</label>
           <div class="lista-select">
             <select id="select_regija" aria-label="Odaberi regiju" disabled>
               <option value="">— Odaberi regiju —</option>
             </select>
           </div>
+          <!-- Na širem ekranu osvježavanje uz Regiju; na mobilnom skriveno (duplikat je uz Državu). -->
+          <button type="button" id="btn_lista_reload" class="lista-reload-btn lista-reload-btn--desktop-only" aria-label="Ponovno punjenje tablice" title="Puni tablicu" style="display:none"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
         </div>
         <div class="lista-header__row">
           <label class="lista-labela" for="select_loza">Loža</label>
@@ -40,20 +44,22 @@
             </select>
           </div>
         </div>
-        <div class="lista-header__row">
+        <div class="lista-header__row lista-header__row--redaka-i-trazi">
           <label class="lista-labela" for="select_broj_redaka">Redaka</label>
-          <div class="lista-header__redaka-wrap">
-            <div class="lista-select">
-              <select id="select_broj_redaka" aria-label="Redaka po stranici">
-                <option value="3">3</option>
-                <option value="5">5</option>
-                <option value="8">8</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </select>
-            </div>
-            <button type="button" id="btn_lista_reload" class="lista-reload-btn" aria-label="Ponovno punjenje tablice" title="Puni tablicu" style="display:none"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
+          <div class="lista-select lista-select--sirina-redaka">
+            <select id="select_broj_redaka" aria-label="Redaka po stranici">
+              <option value="3">3</option>
+              <option value="5">5</option>
+              <option value="8">8</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+          <div class="kontrola-edit-delete lista-trazi-kontrola">
+            <span class="lista-trazi-kontrola__ikon" aria-hidden="true"></span>
+            <input id="edit_lista_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" aria-label="Traži u listi članova" placeholder="Traži...">
+            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj" title="Obriši"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
           </div>
         </div>
       </div>
