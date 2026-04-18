@@ -4,9 +4,9 @@
    Donji panel: readonly Dužnost, Nosioc; CRUD – upis u sustav_korisnici (UPDATE/INSERT po id_korisnik), brisanje retka dodjele.
    Koristi CommonCRUD, 0-Kontrole, 0-Common.
    API: Duznosnici_CRUD_opcije_pod_masterom.php (lijevo: potomci logiranog Mastera, 0-Razine.js: smjer ispod, povrat 0, ukljuci_mastera 0), Clanovi_CRUD_sve_aktivni.php,
+        common_sustav_varijable.php?id=114 (stanka debounce Traži — 0-Common.js), Duznosnici_Osobe_CRUD_dodjele.php (GET master_id — početna mapa dužnost → nosioc iz sustav_korisnici),
         Duznosnici_Osobe_CRUD_upis.php, Duznosnici_Osobe_CRUD_brisanje.php,
         Sustav_korisnici_modal_pregled.php (modal ellipsis – dužnost / osoba iz sustav_korisnici).
-        (Bez Duznosnici_Osobe_CRUD_sve.php – dodjele u UI samo iz lokalnog stanja nakon upisa/brisanja u sesiji.)
    ========================================================= */
 // @ts-nocheck
 (function () {
@@ -15,6 +15,10 @@
 
   /* Relativno ../php/ – isto kao Duznosnici_CRUD.js (apsolutni URL iz pathname često daje 404 → HTML → modal 101). */
   var API_BASE = '../php/';
+
+  if (typeof window.vnlhLoadPronadjiStankaMsFromVar114 === 'function') {
+    window.vnlhLoadPronadjiStankaMsFromVar114(API_BASE);
+  }
 
   function trim(s) {
     return window.CommonTrim ? window.CommonTrim(s) : (s != null ? String(s).replace(/^\s+|\s+$/g, '') : '');
@@ -38,17 +42,6 @@
     if (p === '') return i;
     if (i === '') return p;
     return p + ', ' + i;
-  }
-
-  function getFilterPronadjiStankaMs() {
-    try {
-      var v = document.documentElement && getComputedStyle(document.documentElement).getPropertyValue('--filter_pronadji_stanka_ms');
-      if (v != null && v !== '') {
-        var n = parseInt(String(v).trim(), 10);
-        if (!isNaN(n) && n >= 0) return n;
-      }
-    } catch (e) {}
-    return 1000;
   }
 
   /* --- Blok: Tablica_Zaglavlje – dužnosti --- */
@@ -267,9 +260,11 @@
   }
 
   function ucitajSvePodatke(callback) {
+    /* Svako puno učitavanje gradi mapu dodjela s poslužitelja (inače Nosioc ostaje prazan nakon F5). */
+    assignmentClanByDuznost = {};
     var keepD = CommonCRUD.getSelectedRowId(tablicaDuznostApi);
     var keepC = CommonCRUD.getSelectedRowId(tablicaOsobaApi);
-    var pending = 2;
+    var pending = 3;
     var err = false;
     function doneOne() {
       pending--;
@@ -335,6 +330,31 @@
       doneOne();
     };
     xhrC.send();
+
+    var xhrDod = new XMLHttpRequest();
+    xhrDod.open('GET', API_BASE + 'Duznosnici_Osobe_CRUD_dodjele.php?master_id=' + encodeURIComponent(String(masterOsobeId)), true);
+    xhrDod.onreadystatechange = function () {
+      if (xhrDod.readyState !== 4) return;
+      var td = (xhrDod.responseText || '').trim();
+      if (xhrDod.status === 200 && td !== '' && td.charAt(0) === '[') {
+        try {
+          var arrDod = JSON.parse(td);
+          if (Array.isArray(arrDod)) {
+            for (var di = 0; di < arrDod.length; di++) {
+              var rowD = arrDod[di];
+              if (!rowD || rowD.id_duznosnik == null || rowD.id_korisnik == null) continue;
+              var idDD = String(rowD.id_duznosnik);
+              if (assignmentClanByDuznost[idDD] == null) {
+                assignmentClanByDuznost[idDD] = parseInt(String(rowD.id_korisnik), 10);
+              }
+            }
+          }
+        } catch (eDod) {}
+      }
+      /* Ne postavljaj err — bez dodjela forma i dalje radi za novi upis; samo Nosioc ne bi bio iz baze. */
+      doneOne();
+    };
+    xhrDod.send();
   }
 
   /* --- Blok: Traži – debounce i clear --- */
@@ -346,7 +366,7 @@
         toD = null;
         primijeniFilterDuznost();
         updateEditAndButtons();
-      }, getFilterPronadjiStankaMs());
+      }, typeof window.vnlhGetPronadjiStankaMs === 'function' ? window.vnlhGetPronadjiStankaMs() : 1000);
     });
   }
   var wrapD = editTraziDuznost && editTraziDuznost.closest ? editTraziDuznost.closest('.kontrola-edit-delete') : null;
@@ -368,7 +388,7 @@
         toO = null;
         primijeniFilterOsoba();
         updateEditAndButtons();
-      }, getFilterPronadjiStankaMs());
+      }, typeof window.vnlhGetPronadjiStankaMs === 'function' ? window.vnlhGetPronadjiStankaMs() : 1000);
     });
   }
   var wrapO = editTraziOsobu && editTraziOsobu.closest ? editTraziOsobu.closest('.kontrola-edit-delete') : null;

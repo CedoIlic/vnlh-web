@@ -11,6 +11,11 @@ body.login-win {
   background: var(--login_win_page_bg);
 }
 
+/* Dok je otvoren modal odabira dužnosti, glavni login panel se ne crta (samo modal + podloga). */
+body.login-win--duznost-modal .login-win__shell {
+  visibility: hidden;
+}
+
 .login-win__shell {
   width: 100%;
   max-width: 22rem;
@@ -145,4 +150,112 @@ body.login-win {
   color: var(--napomena_text);
   text-align: justify;
   text-justify: inter-word;
+}
+
+/* --- Popup „Izaberi dužnost” (sredina vidljivog područja) --- */
+.login-duznost-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.login-duznost-overlay[hidden] {
+  display: none !important;
+}
+
+.login-duznost-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* Ista boja kao body — bez „provirivanja” forme za prijavu ispod poluprozirne crne. */
+body.login-win--duznost-modal .login-duznost-overlay__backdrop {
+  background: var(--login_win_page_bg);
+}
+
+.login-duznost-overlay__dialog {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 24rem;
+  max-height: min(90vh, 28rem);
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Zaglavlje modala odabira dužnosti */
+.login-duznost-overlay__head {
+  text-align: center;
+}
+
+.login-duznost-overlay__title {
+  display: block;
+  font-family: var(--panel_header_font_family);
+  font-size: var(--panel_header_font_size);
+  font-weight: var(--panel_header_font_weight);
+  color: var(--panel_header_text);
+}
+
+.login-duznost-overlay__body {
+  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.login-duznost-overlay__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Gumb po stavci: puna širina modala (kontrola-btn je inline-block — lanac do labela) */
+.login-duznost-overlay__item.kontrola-btn {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-duznost-overlay__item .kontrola-btn__outer {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-duznost-overlay__item .kontrola-btn__inner {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: center;
+}
+
+/* Višeredni nazivi dužnosti: tekst ostaje centriran u tipki */
+.login-duznost-overlay__item .kontrola-btn__label {
+  text-align: center;
+}
+
+.login-duznost-overlay__item.kontrola-btn:focus-visible {
+  box-shadow: var(--edit_focus_shadow, 0 0 0 2px var(--edit_border_focus));
+}
+
+/* Odustani: prirodna širina teksta, centrirano u podnožju */
+.login-duznost-overlay__foot {
+  display: flex;
+  justify-content: center;
+}
+
+.login-duznost-overlay__foot-inner {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.login-duznost-overlay__btn-odustani.kontrola-btn {
+  width: auto;
 }

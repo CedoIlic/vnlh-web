@@ -43,6 +43,12 @@ if (!empty($_SESSION['must_change_password'])) {
     exit;
 }
 
+/** Više dužnosti — korisnik mora dovršiti odabir na Login stranici (Login_odabir_duznosti.php). */
+if (!empty($_SESSION['needs_duznost_choice'])) {
+    header('Location: ' . vnlh_login_path(null));
+    exit;
+}
+
 require_once __DIR__ . '/vnlh_db_connect.php';
 require_once __DIR__ . '/vnlh_login_failures.php';
 $vnlhAuthDb = vnlh_db_connect();

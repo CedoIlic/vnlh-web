@@ -39,9 +39,6 @@
   --font_size: 16px;                                                    /* Veličina sistemskog fonta */
   --font_weight: 400;                                                   /* Težina sistemskog fonta */
 
-  /* Stanka (ms) prije primjene filtra "Pronađi" po imenu/prezimenu u tablici. Koristi se u formi Napredovanja - Sekretarijat. Čita JS. */
-  --filter_pronadji_stanka_ms: 1000;
-
   /* =========================================================
      GRUPA: SJENE – CORE (sirove rgba vrijednosti)
      Sirove boje sjene; koriste se u GRUPA: SJENE KONTROLA i naslov forme.

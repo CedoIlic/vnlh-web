@@ -1,4 +1,4 @@
-/* Alati_LogPass_Ini_CRUD.js – sustav_korisnici: prikaz, login, pass, pass_status, login_neuspjesni_pokusaji (Log faill u formi)
+/* Alati_LogPass_Ini_CRUD.js – sustav_korisnici_login: prikaz, login, pass, pass_status, login_neuspjesni_pokusaji (Log faill u formi)
  * Red tablice: [0] prikaz, [1] id_korisnik, [2] login, [3] pass, [4] pass_status, [5] ime, [6] prezime (skriveno od prikaza)
  * API: Alati_LogPass_Ini_CRUD_sve.php, _izmjena.php, _brisanje.php
  */

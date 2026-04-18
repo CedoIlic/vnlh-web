@@ -9,8 +9,9 @@ require_once __DIR__ . '/vnlh_paths.php';
 
 $uid = isset($_SESSION['id_korisnik']) ? (int) $_SESSION['id_korisnik'] : 0;
 $mustChange = !empty($_SESSION['must_change_password']);
+$needsDuznostChoice = !empty($_SESSION['needs_duznost_choice']);
 
-if ($uid > 0 && !$mustChange) {
+if ($uid > 0 && !$mustChange && !$needsDuznostChoice) {
     header('Location: Meni.php', true, 302);
     exit;
 }
@@ -42,15 +43,20 @@ $pathMeni = $phpDir . '/Meni.php';
 $pathLoginApi = $phpDir . '/Login.php';
 $pathLogout = $phpDir . '/Logout.php';
 $pathPass = $phpDir . '/Login_pass_promjena.php';
+$pathOdabirDuznosti = $phpDir . '/Login_odabir_duznosti.php';
+$pathDuznostiList = $phpDir . '/Login_duznosti_list.php';
 
 $passHint = vnlh_password_policy_hint_text();
 $inject = '<script>window.__VNLH_LOGIN_PASS_CHANGE__=' . ($mustChange && $uid > 0 ? 'true' : 'false') . ';';
+$inject .= 'window.__VNLH_LOGIN_NEED_DUTY__=' . ($needsDuznostChoice && $uid > 0 ? 'true' : 'false') . ';';
 $inject .= 'window.__VNLH_LOGIN_LOGIN__=' . json_encode($loginDisplay, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';';
 $inject .= 'window.__VNLH_PASS_HINT__=' . json_encode($passHint, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';';
 $inject .= 'window.__VNLH_MENI_PATH__=' . json_encode($pathMeni, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';';
 $inject .= 'window.__VNLH_LOGIN_API_PATH__=' . json_encode($pathLoginApi, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';';
 $inject .= 'window.__VNLH_LOGOUT_PATH__=' . json_encode($pathLogout, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';';
-$inject .= 'window.__VNLH_PASS_PROMJENA_PATH__=' . json_encode($pathPass, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';</script>';
+$inject .= 'window.__VNLH_PASS_PROMJENA_PATH__=' . json_encode($pathPass, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';';
+$inject .= 'window.__VNLH_LOGIN_ODABIR_DUZNOSTI_PATH__=' . json_encode($pathOdabirDuznosti, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';';
+$inject .= 'window.__VNLH_LOGIN_DUZNOSTI_LIST_PATH__=' . json_encode($pathDuznostiList, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';</script>';
 
 /* Varijable moraju biti definirane prije učitavanja skripti (Login.js na kraju body-ja). */
 if (strpos($html, '</head>') !== false) {

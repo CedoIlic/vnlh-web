@@ -66,6 +66,26 @@
     </div>
 </div>
 
+<!-- Blok: Popup „Izaberi dužnost” — prekriva cijeli viewport; tijekom prikaza glavni login panel je skriven -->
+<div id="login_duznost_overlay" class="login-duznost-overlay" hidden aria-hidden="true">
+    <div class="login-duznost-overlay__backdrop" aria-hidden="true"></div>
+    <div class="kontrola-panel login-duznost-overlay__dialog" role="dialog" aria-modal="true" aria-labelledby="login_duznost_title">
+        <div class="kontrola-panel__header login-duznost-overlay__head">
+            <span class="login-duznost-overlay__title" id="login_duznost_title">Izaberi dužnost</span>
+        </div>
+        <div class="kontrola-panel__body login-duznost-overlay__body">
+            <div id="login_duznost_list" class="login-duznost-overlay__list" role="listbox" aria-label="Lista dužnosti"></div>
+        </div>
+        <div class="kontrola-panel__footer login-duznost-overlay__foot">
+            <div class="login-duznost-overlay__foot-inner">
+                <button type="button" id="login_duznost_odustani" class="kontrola-btn login-duznost-overlay__btn-odustani">
+                    <span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>

@@ -13,6 +13,10 @@
   var data = [];
   log('script start');
 
+  if (typeof window.vnlhLoadPronadjiStankaMsFromVar114 === 'function') {
+    window.vnlhLoadPronadjiStankaMsFromVar114(API_BASE);
+  }
+
   function getApiUrl(path) {
     var p = (window.location.pathname || '').replace(/\/[^/]*$/, '').replace(/\/[^/]*$/, '');
     return window.location.origin + p + '/php/' + path;
@@ -39,18 +43,6 @@
     var d = new Date(s);
     if (isNaN(d.getTime())) return s;
     return d.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
-  }
-
-  /** Vraća stanku (ms) prije primjene filtra Pronađi – token iz 0-Common.css (--filter_pronadji_stanka_ms). */
-  function getFilterPronadjiStankaMs() {
-    try {
-      var v = document.documentElement && getComputedStyle(document.documentElement).getPropertyValue('--filter_pronadji_stanka_ms');
-      if (v != null && v !== '') {
-        var n = parseInt(String(v).trim(), 10);
-        if (!isNaN(n) && n >= 0) return n;
-      }
-    } catch (e) {}
-    return 1000;
   }
 
   // Tablica_Zaglavlje – svaka kolona je objekt sa parametrima:
@@ -641,7 +633,7 @@
     CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, NapredovanjaCRUD_Tablica1.Tablica_Zaglavlje);
   }
 
-  /** Debounce: nakon stanke dužoj od tokena (--filter_pronadji_stanka_ms) primijeni filter po polju Pronađi. */
+  /** Debounce: nakon stanke (sustav_varijable id=114, vnlhGetPronadjiStankaMs) primijeni filter po polju Pronađi. */
   var filterPronadjiTimeout = null;
   if (editPronadi) {
     editPronadi.addEventListener('input', function () {
@@ -650,7 +642,7 @@
         filterPronadjiTimeout = null;
         primijeniFilterPronadji();
         updateEditAndStupnjeviState();
-      }, getFilterPronadjiStankaMs());
+      }, typeof window.vnlhGetPronadjiStankaMs === 'function' ? window.vnlhGetPronadjiStankaMs() : 1000);
     });
   }
 

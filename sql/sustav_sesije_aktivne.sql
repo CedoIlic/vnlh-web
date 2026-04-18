@@ -18,5 +18,5 @@ CREATE TABLE IF NOT EXISTS sustav_sesije_aktivne (
   KEY ix_sustav_sesije_aktivne_korisnik_status (id_korisnik, status),
   KEY ix_sustav_sesije_aktivne_status (status),
   KEY ix_sustav_sesije_aktivne_zadnja_aktivnost (zadnja_aktivnost),
-  CONSTRAINT fk_ssa_korisnik FOREIGN KEY (id_korisnik) REFERENCES sustav_korisnici (id_korisnik) ON UPDATE CASCADE ON DELETE CASCADE
+  CONSTRAINT fk_ssa_korisnik FOREIGN KEY (id_korisnik) REFERENCES sustav_korisnici_login (id_korisnik) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

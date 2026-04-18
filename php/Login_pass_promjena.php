@@ -1,12 +1,14 @@
 <?php
 /**
  * Obvezna promjena lozinke nakon prijave (sesija: must_change_password).
- * POST: pass_new, pass_confirm — plain text; uspjeh: UPDATE pass, pass_status=0; Izlaz: OK | 025 | 026 | prazno
+ * POST: pass_new, pass_confirm — plain text; uspjeh: UPDATE pass, pass_status=0; Izlaz: OK | OK_NEED_DUTY | 025 | 026 | prazno
+ * OK_NEED_DUTY: korisnik ima više dužnosti — nakon lozinke mora odabrati dužnost (Login_odabir_duznosti.php).
  * Pet neuspjelih pokušaja (025) → pass_status=2, odjava, 026.
  */
 require_once __DIR__ . '/auth_start.php';
 require_once __DIR__ . '/vnlh_login_failures.php';
 require_once __DIR__ . '/vnlh_password_policy.php';
+require_once __DIR__ . '/vnlh_login_post_auth.php';
 
 header('Content-Type: text/plain; charset=utf-8');
 
@@ -54,7 +56,7 @@ $loginNew = isset($_POST['login_new']) ? trim((string) $_POST['login_new']) : ''
 if ($loginNew !== '') {
     /* Provjera jedinstvenosti — case-insensitive, isključi trenutnog korisnika */
     $stmtChk = $mysqli->prepare(
-        'SELECT id_korisnik FROM sustav_korisnici WHERE LOWER(TRIM(login)) = LOWER(?) AND id_korisnik <> ? LIMIT 1'
+        'SELECT id_korisnik FROM sustav_korisnici_login WHERE LOWER(TRIM(login)) = LOWER(?) AND id_korisnik <> ? LIMIT 1'
     );
     if (!$stmtChk) {
         $mysqli->close();
@@ -72,8 +74,7 @@ if ($loginNew !== '') {
         exit;
     }
 
-    /* UPDATE login + pass + pass_status */
-    $stmt = $mysqli->prepare('UPDATE sustav_korisnici SET login = ?, pass = ?, pass_status = 0 WHERE id_korisnik = ? LIMIT 1');
+    $stmt = $mysqli->prepare('UPDATE sustav_korisnici_login SET login = ?, pass = ?, pass_status = 0 WHERE id_korisnik = ? LIMIT 1');
     if (!$stmt) {
         $mysqli->close();
         echo '';
@@ -81,8 +82,7 @@ if ($loginNew !== '') {
     }
     $stmt->bind_param('ssi', $loginNew, $hash, $idKorisnik);
 } else {
-    /* Samo promjena lozinke (postojeće ponašanje) */
-    $stmt = $mysqli->prepare('UPDATE sustav_korisnici SET pass = ?, pass_status = 0 WHERE id_korisnik = ? LIMIT 1');
+    $stmt = $mysqli->prepare('UPDATE sustav_korisnici_login SET pass = ?, pass_status = 0 WHERE id_korisnik = ? LIMIT 1');
     if (!$stmt) {
         $mysqli->close();
         echo '';
@@ -100,10 +100,47 @@ if (!$stmt->execute() || $stmt->affected_rows < 1) {
 $stmt->close();
 
 vnlh_login_reset_failures($mysqli, $idKorisnik);
-$mysqli->close();
 
 unset($_SESSION['must_change_password']);
 $_SESSION['last_activity'] = time();
 vnlh_refresh_session_cookie();
 
+$stmtN = $mysqli->prepare('SELECT broj_duznosti FROM sustav_korisnici_login WHERE id_korisnik = ? LIMIT 1');
+if (!$stmtN) {
+    $mysqli->close();
+    echo '';
+    exit;
+}
+$stmtN->bind_param('i', $idKorisnik);
+$stmtN->execute();
+$resN = $stmtN->get_result();
+$rowN = $resN ? $resN->fetch_assoc() : null;
+$stmtN->close();
+$nDuty = $rowN ? (int) ($rowN['broj_duznosti'] ?? 0) : 0;
+
+if ($nDuty > 1) {
+    $_SESSION['needs_duznost_choice'] = true;
+    $_SESSION['id_duznosnik'] = 0;
+    $_SESSION['vnlh_meni_dopustene'] = [];
+    require_once __DIR__ . '/poruke_chat_sesija.php';
+    $_SESSION['chat_dozvoljen'] = poruke_chat_dozvoljen_za_korisnika($mysqli, $idKorisnik);
+    $mysqli->close();
+    echo 'OK_NEED_DUTY';
+    exit;
+}
+
+$idJedina = vnlh_login_jedina_duznost_id($mysqli, $idKorisnik);
+if ($idJedina <= 0) {
+    $mysqli->close();
+    echo '';
+    exit;
+}
+
+$_SESSION['id_duznosnik'] = $idJedina;
+require_once __DIR__ . '/meni_za_sesiju.php';
+$_SESSION['vnlh_meni_dopustene'] = meni_za_sesiju_ucitaj_dopustene($mysqli, $idJedina);
+require_once __DIR__ . '/poruke_chat_sesija.php';
+$_SESSION['chat_dozvoljen'] = poruke_chat_dozvoljen_za_korisnika($mysqli, $idKorisnik);
+
+$mysqli->close();
 echo 'OK';

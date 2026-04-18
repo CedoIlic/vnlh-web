@@ -18,7 +18,7 @@ if ($id <= 0) {
     exit;
 }
 
-$stmt = $mysqli->prepare('SELECT 1 FROM sustav_korisnici WHERE id_korisnik = ? LIMIT 1');
+$stmt = $mysqli->prepare('SELECT 1 FROM sustav_korisnici_login WHERE id_korisnik = ? LIMIT 1');
 if (!$stmt) {
     echo '200,' . $mysqli->errno;
     $mysqli->close();
@@ -35,7 +35,7 @@ if ($stmt->num_rows === 0) {
 }
 $stmt->close();
 
-$stmt = $mysqli->prepare('UPDATE sustav_korisnici SET login = NULL, pass = NULL, pass_status = NULL, login_neuspjesni_pokusaji = 0 WHERE id_korisnik = ?');
+$stmt = $mysqli->prepare('UPDATE sustav_korisnici_login SET login = NULL, pass = NULL, pass_status = NULL, login_neuspjesni_pokusaji = 0 WHERE id_korisnik = ?');
 if (!$stmt) {
     echo '200,' . $mysqli->errno;
     $mysqli->close();

@@ -19,6 +19,13 @@ if (!empty($_SESSION['must_change_password'])) {
     exit;
 }
 
+if (!empty($_SESSION['needs_duznost_choice'])) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'NEEDS_DUTY_CHOICE';
+    exit;
+}
+
 require_once __DIR__ . '/vnlh_db_connect.php';
 require_once __DIR__ . '/vnlh_login_failures.php';
 $vnlhAuthDb = vnlh_db_connect();

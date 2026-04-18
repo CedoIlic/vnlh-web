@@ -29,6 +29,56 @@
     } catch (eMark) {}
   };
 
+  /* --- Blok: Debounce „Traži“ (ms) — sustav_varijable.id = 114; čita Napredovanja_CRUD, Duznosnici_Osobe_CRUD --- */
+  var VNLH_VAR_ID_PRONADJI_STANKA_MS = 114;
+  var VNLH_PRONADJI_STANKA_MS_DEFAULT = 1000;
+
+  /**
+   * Trenutna stanka (ms) za debounce polja Pronađi/Traži. Postavlja vnlhLoadPronadjiStankaMsFromVar114;
+   * dok učitavanje ne završi, ponaša se kao zadano (1000 ms).
+   */
+  window.vnlhGetPronadjiStankaMs = function () {
+    try {
+      var x = window.__VNLH_PRONADJI_STANKA_MS;
+      if (typeof x === 'number' && !isNaN(x) && x >= 0) {
+        return x;
+      }
+    } catch (eMs) {}
+    return VNLH_PRONADJI_STANKA_MS_DEFAULT;
+  };
+
+  /**
+   * Jednokratno dohvaća varijablu 114 (GET common_sustav_varijable.php). apiBase npr. '../php/'.
+   * Nevaljan odgovor ili greška API-ja → __VNLH_PRONADJI_STANKA_MS = 1000.
+   */
+  window.vnlhLoadPronadjiStankaMsFromVar114 = function (apiBase, callback) {
+    var base = apiBase != null && String(apiBase) !== '' ? String(apiBase) : '../php/';
+    var url = base.replace(/\/?$/, '/') + 'common_sustav_varijable.php?id=' + VNLH_VAR_ID_PRONADJI_STANKA_MS;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) {
+        return;
+      }
+      var ms = VNLH_PRONADJI_STANKA_MS_DEFAULT;
+      var raw = trim(xhr.responseText || '');
+      /* API vraća '100' / '120' pri grešci; uspjeh = sadržaj stupca varijabla (broj ms). */
+      if (xhr.status === 200 && raw !== '' && raw !== '100' && raw !== '120') {
+        var n = parseInt(raw, 10);
+        if (!isNaN(n) && n >= 0) {
+          ms = n;
+        }
+      }
+      try {
+        window.__VNLH_PRONADJI_STANKA_MS = ms;
+      } catch (eSet) {}
+      if (typeof callback === 'function') {
+        callback(ms);
+      }
+    };
+    xhr.send();
+  };
+
   /** Uklanja vodeće i prateće razmake iz stringa; null/undefined → prazan string. */
   function trim(s) {
     return s != null ? String(s).replace(/^\s+|\s+$/g, '') : '';

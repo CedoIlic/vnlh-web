@@ -18,7 +18,7 @@ if ($id <= 0) {
 }
 
 $stmt = $mysqli->prepare(
-    'SELECT pass_status, login_neuspjesni_pokusaji FROM sustav_korisnici WHERE id_korisnik = ? LIMIT 1'
+    'SELECT pass_status, login_neuspjesni_pokusaji FROM sustav_korisnici_login WHERE id_korisnik = ? LIMIT 1'
 );
 if (!$stmt) {
     $mysqli->close();

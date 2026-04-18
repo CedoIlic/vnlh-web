@@ -53,7 +53,7 @@ if ($loginVal !== null && (function_exists('mb_strlen') ? mb_strlen($loginVal, '
     exit;
 }
 
-$stmt = $mysqli->prepare('SELECT login, pass FROM sustav_korisnici WHERE id_korisnik = ? LIMIT 1');
+$stmt = $mysqli->prepare('SELECT login, pass FROM sustav_korisnici_login WHERE id_korisnik = ? LIMIT 1');
 if (!$stmt) {
     echo '200,' . $mysqli->errno;
     $mysqli->close();
@@ -79,7 +79,7 @@ $menjaPass = ($passPostTrim !== '') && ($passPostTrim !== $oldPassStr);
 
 if ($loginVal !== null && $loginVal !== '') {
     $stmt = $mysqli->prepare(
-        'SELECT 1 FROM sustav_korisnici WHERE login IS NOT NULL AND TRIM(login) <> \'\' AND LOWER(TRIM(login)) = LOWER(?) AND id_korisnik <> ? LIMIT 1'
+        'SELECT 1 FROM sustav_korisnici_login WHERE login IS NOT NULL AND TRIM(login) <> \'\' AND LOWER(TRIM(login)) = LOWER(?) AND id_korisnik <> ? LIMIT 1'
     );
     if (!$stmt) {
         echo '200,' . $mysqli->errno;
@@ -107,7 +107,7 @@ if ($menjaPass) {
         exit;
     }
     if ($passStatusVal === null) {
-        $stmt = $mysqli->prepare('UPDATE sustav_korisnici SET login = ?, pass = ?, pass_status = NULL WHERE id_korisnik = ?');
+        $stmt = $mysqli->prepare('UPDATE sustav_korisnici_login SET login = ?, pass = ?, pass_status = NULL WHERE id_korisnik = ?');
         if (!$stmt) {
             echo '200,' . $mysqli->errno;
             $mysqli->close();
@@ -115,7 +115,7 @@ if ($menjaPass) {
         }
         $stmt->bind_param('ssi', $loginVal, $hash, $id);
     } else {
-        $stmt = $mysqli->prepare('UPDATE sustav_korisnici SET login = ?, pass = ?, pass_status = ? WHERE id_korisnik = ?');
+        $stmt = $mysqli->prepare('UPDATE sustav_korisnici_login SET login = ?, pass = ?, pass_status = ? WHERE id_korisnik = ?');
         if (!$stmt) {
             echo '200,' . $mysqli->errno;
             $mysqli->close();
@@ -125,7 +125,7 @@ if ($menjaPass) {
     }
 } else {
     if ($passStatusVal === null) {
-        $stmt = $mysqli->prepare('UPDATE sustav_korisnici SET login = ?, pass_status = NULL WHERE id_korisnik = ?');
+        $stmt = $mysqli->prepare('UPDATE sustav_korisnici_login SET login = ?, pass_status = NULL WHERE id_korisnik = ?');
         if (!$stmt) {
             echo '200,' . $mysqli->errno;
             $mysqli->close();
@@ -133,7 +133,7 @@ if ($menjaPass) {
         }
         $stmt->bind_param('si', $loginVal, $id);
     } else {
-        $stmt = $mysqli->prepare('UPDATE sustav_korisnici SET login = ?, pass_status = ? WHERE id_korisnik = ?');
+        $stmt = $mysqli->prepare('UPDATE sustav_korisnici_login SET login = ?, pass_status = ? WHERE id_korisnik = ?');
         if (!$stmt) {
             echo '200,' . $mysqli->errno;
             $mysqli->close();
@@ -159,7 +159,7 @@ require_once __DIR__ . '/vnlh_login_failures.php';
 if ($menjaPass) {
     vnlh_login_reset_failures($mysqli, $id);
 } else {
-    $stmtLf = $mysqli->prepare('UPDATE sustav_korisnici SET login_neuspjesni_pokusaji = ? WHERE id_korisnik = ? LIMIT 1');
+    $stmtLf = $mysqli->prepare('UPDATE sustav_korisnici_login SET login_neuspjesni_pokusaji = ? WHERE id_korisnik = ? LIMIT 1');
     if (!$stmtLf) {
         echo '200,' . $mysqli->errno;
         $mysqli->close();
@@ -174,7 +174,7 @@ if ($menjaPass) {
     }
     $stmtLf->close();
     if ($logFailVal >= vnlh_login_max_failed_attempts($mysqli)) {
-        $stmtBlk = $mysqli->prepare('UPDATE sustav_korisnici SET pass_status = 2 WHERE id_korisnik = ? LIMIT 1');
+        $stmtBlk = $mysqli->prepare('UPDATE sustav_korisnici_login SET pass_status = 2 WHERE id_korisnik = ? LIMIT 1');
         if ($stmtBlk) {
             $stmtBlk->bind_param('i', $id);
             $stmtBlk->execute();

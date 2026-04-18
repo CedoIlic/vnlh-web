@@ -4,7 +4,7 @@
  * Prag neuspjeha: sustav_varijable.id = 107 (kolona varijabla = cijeli broj ≥ 1; nevaljano/prazno → zadano 5).
  * Nakon toliko neuspjelih pokušaja: pass_status = 2 (blokada).
  * Nakon uspješne prijave ili uspješne promjene lozinke: brojač se poništava (vnlh_login_reset_failures).
- * Brojač je po korisniku (isti login kao u sustav_korisnici.login); sesija zrcali po normaliziranom loginu ako stupac nije u bazi.
+ * Brojač je po korisniku (isti login kao u sustav_korisnici_login.login); sesija zrcali po normaliziranom loginu ako stupac nije u bazi.
  * Zahtijeva ALTER: sql/sustav_korisnici_login_neuspjesni_pokusaji.sql (bez njega radi samo sesijski brojač + blokada u bazi).
  */
 
@@ -86,7 +86,7 @@ function vnlh_login_fetch_login_for_korisnik(mysqli $mysqli, int $idKorisnik): s
     if ($idKorisnik <= 0) {
         return '';
     }
-    $stmt = $mysqli->prepare('SELECT login FROM sustav_korisnici WHERE id_korisnik = ? LIMIT 1');
+    $stmt = $mysqli->prepare('SELECT login FROM sustav_korisnici_login WHERE id_korisnik = ? LIMIT 1');
     if (!$stmt) {
         return '';
     }
@@ -118,7 +118,7 @@ function vnlh_login_record_auth_failure(mysqli $mysqli, string $login, int $idKo
     }
 
     $stmt = $mysqli->prepare(
-        'UPDATE sustav_korisnici SET login_neuspjesni_pokusaji = LEAST(IFNULL(login_neuspjesni_pokusaji, 0) + 1, 255)
+        'UPDATE sustav_korisnici_login SET login_neuspjesni_pokusaji = LEAST(IFNULL(login_neuspjesni_pokusaji, 0) + 1, 255)
          WHERE id_korisnik = ? AND (pass_status IS NULL OR pass_status <> 2)
          LIMIT 1'
     );
@@ -146,7 +146,7 @@ function vnlh_login_record_auth_failure(mysqli $mysqli, string $login, int $idKo
     $stmt->close();
 
     if ($aff >= 1) {
-        $stmt2 = $mysqli->prepare('SELECT login_neuspjesni_pokusaji FROM sustav_korisnici WHERE id_korisnik = ? LIMIT 1');
+        $stmt2 = $mysqli->prepare('SELECT login_neuspjesni_pokusaji FROM sustav_korisnici_login WHERE id_korisnik = ? LIMIT 1');
         if (!$stmt2) {
             return false;
         }
@@ -163,7 +163,7 @@ function vnlh_login_record_auth_failure(mysqli $mysqli, string $login, int $idKo
         return vnlh_login_maybe_block_after_count($mysqli, $idKorisnik, $cnt);
     }
 
-    $stmtPs = $mysqli->prepare('SELECT pass_status FROM sustav_korisnici WHERE id_korisnik = ? LIMIT 1');
+    $stmtPs = $mysqli->prepare('SELECT pass_status FROM sustav_korisnici_login WHERE id_korisnik = ? LIMIT 1');
     if (!$stmtPs) {
         return false;
     }
@@ -195,7 +195,7 @@ function vnlh_login_maybe_block_after_count(mysqli $mysqli, int $idKorisnik, int
     if ($cnt < vnlh_login_max_failed_attempts($mysqli)) {
         return false;
     }
-    $stmt = $mysqli->prepare('UPDATE sustav_korisnici SET pass_status = 2 WHERE id_korisnik = ? LIMIT 1');
+    $stmt = $mysqli->prepare('UPDATE sustav_korisnici_login SET pass_status = 2 WHERE id_korisnik = ? LIMIT 1');
     if (!$stmt) {
         return false;
     }
@@ -216,7 +216,7 @@ function vnlh_login_reset_failures(mysqli $mysqli, int $idKorisnik): void {
         unset($_SESSION[$bucket][$key]);
     }
 
-    $stmt = $mysqli->prepare('UPDATE sustav_korisnici SET login_neuspjesni_pokusaji = 0 WHERE id_korisnik = ? LIMIT 1');
+    $stmt = $mysqli->prepare('UPDATE sustav_korisnici_login SET login_neuspjesni_pokusaji = 0 WHERE id_korisnik = ? LIMIT 1');
     if ($stmt) {
         $stmt->bind_param('i', $idKorisnik);
         $stmt->execute();
@@ -233,7 +233,7 @@ function vnlh_auth_user_may_access(mysqli $mysqli, int $idKorisnik): bool {
         return false;
     }
     $stmt = $mysqli->prepare(
-        'SELECT pass_status, login_neuspjesni_pokusaji FROM sustav_korisnici WHERE id_korisnik = ? LIMIT 1'
+        'SELECT pass_status, login_neuspjesni_pokusaji FROM sustav_korisnici_login WHERE id_korisnik = ? LIMIT 1'
     );
     if (!$stmt) {
         return false;

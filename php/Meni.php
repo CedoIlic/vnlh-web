@@ -30,16 +30,17 @@ $logirani_korisnik_tekst = '';
 $mysqliMeniDbg = vnlh_db_connect();
 if ($mysqliMeniDbg !== false) {
     $idKDbg = (int) ($_SESSION['id_korisnik'] ?? 0);
-    if ($idKDbg > 0) {
+    $idDuzSes = (int) ($_SESSION['id_duznosnik'] ?? 0);
+    if ($idKDbg > 0 && $idDuzSes > 0) {
         $stmtDbg = $mysqliMeniDbg->prepare(
             'SELECT d.naziv AS naziv_duznosti, c.prezime, c.ime
              FROM sustav_korisnici sk
              LEFT JOIN duznosnici d ON d.id = sk.id_duznosnik
              LEFT JOIN clanovi c ON c.id = sk.id_korisnik
-             WHERE sk.id_korisnik = ? LIMIT 1'
+             WHERE sk.id_korisnik = ? AND sk.id_duznosnik = ? LIMIT 1'
         );
         if ($stmtDbg) {
-            $stmtDbg->bind_param('i', $idKDbg);
+            $stmtDbg->bind_param('ii', $idKDbg, $idDuzSes);
             $stmtDbg->execute();
             $resDbg = $stmtDbg->get_result();
             if ($resDbg && ($rowDbg = $resDbg->fetch_assoc())) {

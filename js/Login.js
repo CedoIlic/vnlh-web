@@ -1,4 +1,6 @@
-/* Login.js – prijava i obvezna promjena lozinke (pass_status = 1); POST Login.php (putanje iz login_stranica_get ili ../php/) */
+/* Login.js – prijava, obvezna promjena lozinke, odabir dužnosti ako ih je više (MULTI_DUTY / OK_NEED_DUTY).
+ * POST Login.php, Login_pass_promjena.php, Login_odabir_duznosti.php; GET Login_duznosti_list.php (needs_duznost_choice).
+ */
 // @ts-nocheck
 (function () {
   'use strict';
@@ -21,12 +23,15 @@
   var btnToggle = document.getElementById('login_toggle_pass');
   var btnToggleConfirm = document.getElementById('login_toggle_pass_confirm');
 
-  var passChangeMode = false;
+  var overlayDuznost = document.getElementById('login_duznost_overlay');
+  var listDuznost = document.getElementById('login_duznost_list');
+  var btnDuznostOdustani = document.getElementById('login_duznost_odustani');
+  var shellPanel = document.querySelector('.login-win__shell');
 
-  /**
-   * Apsolutna pathname putanja od PHP-a (npr. /vnlh/php/Meni.php) – pouzdana kad location.pathname nema /php/.
-   * Fallback: relativna putanja u odnosu na trenutni URL.
-   */
+  var passChangeMode = false;
+  /** Modal odabira dužnosti aktivan — blokira ostale akcije do izbora ili Odustani. */
+  var dutyChoiceMode = false;
+
   function vnlhUrlFromInjectedPath(absolutePath, fallbackRelative) {
     if (typeof absolutePath === 'string' && absolutePath.length > 0 && absolutePath.charAt(0) === '/') {
       try {
@@ -42,13 +47,14 @@
 
   var API_LOGIN = vnlhUrlFromInjectedPath(window.__VNLH_LOGIN_API_PATH__, '../php/Login.php');
   var API_PASS_PROMJENA = vnlhUrlFromInjectedPath(window.__VNLH_PASS_PROMJENA_PATH__, '../php/Login_pass_promjena.php');
+  var API_ODABIR_DUZNOSTI = vnlhUrlFromInjectedPath(window.__VNLH_LOGIN_ODABIR_DUZNOSTI_PATH__, '../php/Login_odabir_duznosti.php');
+  var API_DUZNOSTI_LIST = vnlhUrlFromInjectedPath(window.__VNLH_LOGIN_DUZNOSTI_LIST_PATH__, '../php/Login_duznosti_list.php');
   var LOGOUT_URL = vnlhUrlFromInjectedPath(window.__VNLH_LOGOUT_PATH__, '../php/Logout.php');
 
   function trim(s) {
     return window.CommonTrim ? window.CommonTrim(s) : (s != null ? String(s).replace(/^\s+|\s+$/g, '') : '');
   }
 
-  /** Trim + ukloni BOM (UTF-8) da se 'OK' pouzdano prepozna */
   function normalizeOdgovorServera(s) {
     return trim(String(s != null ? s : '').replace(/^\uFEFF/, ''));
   }
@@ -57,7 +63,6 @@
     return vnlhUrlFromInjectedPath(window.__VNLH_MENI_PATH__, 'Meni.php');
   }
 
-  /** Popup: window.close(). Inače history.back() ili Meni.php (close() ne radi na običnom tabu). */
   function zatvoriLoginProzor() {
     if (window.opener && !window.opener.closed) {
       try {
@@ -79,10 +84,6 @@
     }, 150);
   }
 
-  /**
-   * Nakon uspješne prijave ili uspješne promjene lozinke: ista sesija, prijelaz na glavni izbornik.
-   * Popup: prvo meni u openeru; ako se prozor ne zatvori, nakon kratke pauze isti URL u ovom prozoru.
-   */
   function nakonUspjeha() {
     var url = meniUrl();
     if (window.opener && !window.opener.closed) {
@@ -147,7 +148,6 @@
     }
   }
 
-  /** Blokada (026): modal, zatim ponovno učitavanje stranice prijave. */
   function prikaziBlokiran() {
     var loginUrl = vnlhUrlFromInjectedPath(window.__VNLH_LOGIN_API_PATH__, 'Login.php');
     if (typeof window.showPorukaModal === 'function' && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['026']) {
@@ -173,7 +173,6 @@
   wireToggle(btnToggle, passEl);
   wireToggle(btnToggleConfirm, passConfirmEl);
 
-  /** Isti tekst kao php/vnlh_password_policy.php (kad PHP ne ubaci __VNLH_PASS_HINT__). */
   function buildPassHintText() {
     var parts = [];
     for (var i = 0; i < PASSWORD_SPECIALS.length; i++) {
@@ -203,7 +202,6 @@
         userEl.value = window.__VNLH_LOGIN_LOGIN__;
       }
     }
-    /* Polje za novo korisničko ime — vidljivo samo u pass_change modu */
     if (newUserRow) newUserRow.removeAttribute('hidden');
     if (newUserEl) newUserEl.value = '';
     if (passEl) {
@@ -215,16 +213,11 @@
       passConfirmEl.setAttribute('autocomplete', 'new-password');
     }
     setHintText();
-    if (confirmRow) {
-      confirmRow.removeAttribute('hidden');
-    }
-    if (hintsEl) {
-      hintsEl.removeAttribute('hidden');
-    }
+    if (confirmRow) confirmRow.removeAttribute('hidden');
+    if (hintsEl) hintsEl.removeAttribute('hidden');
     if (passEl) passEl.focus();
   }
 
-  /** Poruka 027 — korisničko ime već postoji; fokus na novo korisničko ime */
   function show027() {
     if (typeof window.showPorukaModal === 'function' && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['027']) {
       window.showPorukaModal('027', [], function () {
@@ -233,6 +226,88 @@
     } else {
       if (newUserEl) newUserEl.focus();
     }
+  }
+
+  function setDutyChoiceMode(on) {
+    dutyChoiceMode = on;
+    /* Skrivanje glavnog login panela + podloga u boji stranice — CSS .login-win--duznost-modal */
+    if (document.body) {
+      document.body.classList.toggle('login-win--duznost-modal', !!on);
+    }
+    if (shellPanel) {
+      shellPanel.style.pointerEvents = on ? 'none' : '';
+      shellPanel.setAttribute('aria-hidden', on ? 'true' : 'false');
+    }
+    if (btnSubmit) btnSubmit.disabled = on;
+    if (btnOdustani) btnOdustani.disabled = on;
+    if (userEl) userEl.disabled = on;
+    if (passEl) passEl.disabled = on;
+    if (passConfirmEl) passConfirmEl.disabled = on;
+    if (newUserEl) newUserEl.disabled = on;
+  }
+
+  function hideDutyOverlay() {
+    if (!overlayDuznost) return;
+    overlayDuznost.setAttribute('hidden', '');
+    overlayDuznost.setAttribute('aria-hidden', 'true');
+    if (listDuznost) listDuznost.innerHTML = '';
+    setDutyChoiceMode(false);
+  }
+
+  function showDutyOverlay(duznosti) {
+    if (!overlayDuznost || !listDuznost) return;
+    listDuznost.innerHTML = '';
+    setDutyChoiceMode(true);
+    for (var i = 0; i < duznosti.length; i++) {
+      var d = duznosti[i];
+      var id = d.id != null ? parseInt(String(d.id), 10) : 0;
+      var nz = d.naziv != null ? String(d.naziv) : '';
+      if (id <= 0) continue;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'kontrola-btn login-duznost-overlay__item';
+      b.setAttribute('role', 'option');
+      b.setAttribute('data-id-duznosnik', String(id));
+      b.innerHTML = '<span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label"></span></span></span>';
+      var lab = b.querySelector('.kontrola-btn__label');
+      if (lab) lab.textContent = nz || ('Dužnost #' + id);
+      (function (idBind) {
+        b.addEventListener('click', function () {
+          postOdabirDuznosti(idBind);
+        });
+      })(id);
+      listDuznost.appendChild(b);
+    }
+    overlayDuznost.removeAttribute('hidden');
+    overlayDuznost.setAttribute('aria-hidden', 'false');
+  }
+
+  function postOdabirDuznosti(idDuznosnik) {
+    postFormData(API_ODABIR_DUZNOSTI, { id_duznosnik: String(idDuznosnik) }, function (res) {
+      res = normalizeOdgovorServera(res);
+      if (res === 'OK') {
+        /* Ne zovi hideDutyOverlay() prije navigacije — inače se na trenutak vrati vidljivost
+         * login panela (setDutyChoiceMode false) i korisnik vidi „blicanje”. Overlay ostaje
+         * dok location.replace / opener ne učita sljedeću stranicu. */
+        nakonUspjeha();
+      }
+    });
+  }
+
+  function fetchDutyListAndShow() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', API_DUZNOSTI_LIST, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status !== 200) return;
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data && data.duznosti && data.duznosti.length) {
+          showDutyOverlay(data.duznosti);
+        }
+      } catch (e) {}
+    };
+    xhr.send();
   }
 
   function pokreniPromjenuLozinke() {
@@ -250,9 +325,11 @@
     var params = { pass_new: p1, pass_confirm: p2 };
     if (loginNew !== '') params.login_new = loginNew;
     postFormData(API_PASS_PROMJENA, params, function (res) {
-      res = trim(res || '');
+      res = normalizeOdgovorServera(res);
       if (res === 'OK') {
         nakonUspjeha();
+      } else if (res === 'OK_NEED_DUTY') {
+        fetchDutyListAndShow();
       } else if (res === '027') {
         show027();
       } else if (res === '025') {
@@ -264,6 +341,7 @@
   }
 
   function pokreniLogin() {
+    if (dutyChoiceMode) return;
     if (passChangeMode) {
       pokreniPromjenuLozinke();
       return;
@@ -272,10 +350,21 @@
     var pass = passEl ? String(passEl.value) : '';
     postFormData(API_LOGIN, { login: login, pass: pass }, function (res) {
       res = normalizeOdgovorServera(res);
-      if (res === 'OK') {
+      var firstLine = res.split(/\r?\n/)[0];
+      if (firstLine === 'OK') {
         nakonUspjeha();
-      } else if (res === 'PASS_CHANGE') {
+      } else if (firstLine === 'PASS_CHANGE') {
         enterPassChangeMode(false);
+      } else if (firstLine === 'MULTI_DUTY') {
+        var nl = res.indexOf('\n');
+        if (nl >= 0) {
+          try {
+            var payload = JSON.parse(res.slice(nl + 1).trim());
+            if (payload && payload.duznosti && payload.duznosti.length) {
+              showDutyOverlay(payload.duznosti);
+            }
+          } catch (e1) {}
+        }
       } else if (res === '026') {
         prikaziBlokiran();
       } else {
@@ -284,8 +373,20 @@
     });
   }
 
+  function odustaniOdOdabiraDuznosti() {
+    hideDutyOverlay();
+    window.location.href = LOGOUT_URL;
+  }
+
+  if (btnDuznostOdustani) {
+    btnDuznostOdustani.addEventListener('click', function () {
+      odustaniOdOdabiraDuznosti();
+    });
+  }
+
   if (btnOdustani) {
     btnOdustani.addEventListener('click', function () {
+      if (dutyChoiceMode) return;
       if (passChangeMode) {
         window.location.href = LOGOUT_URL;
         return;
@@ -327,6 +428,8 @@
 
   if (typeof window.__VNLH_LOGIN_PASS_CHANGE__ !== 'undefined' && window.__VNLH_LOGIN_PASS_CHANGE__) {
     enterPassChangeMode(true);
+  } else if (typeof window.__VNLH_LOGIN_NEED_DUTY__ !== 'undefined' && window.__VNLH_LOGIN_NEED_DUTY__) {
+    fetchDutyListAndShow();
   } else if (userEl) {
     userEl.focus();
   }
