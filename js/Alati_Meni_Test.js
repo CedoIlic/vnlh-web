@@ -12,6 +12,10 @@
   if (typeof vnlhUcitajPravaCrud === 'function') vnlhUcitajPravaCrud('Alati_Meni_Test.html');
 
   var API_BASE = '../php/';
+  /** Ista kašnjenja kao Meni.js: var 116 glavna stavka, 115 podmeni (vnlhLoadMeniHoverDelaysFromVar116And115). */
+  if (typeof window.vnlhLoadMeniHoverDelaysFromVar116And115 === 'function') {
+    window.vnlhLoadMeniHoverDelaysFromVar116And115(API_BASE);
+  }
   /** Tri grupe (horizontalni / podmeniji / izvršni meni) omogućene samo ako sustav_varijable id=106 ima varijabla trim === '1'. */
   var meniTipConfigByVar106 = false;
 
@@ -287,33 +291,35 @@
       }
       var openTimer = null;
       var closeTimer = null;
+      function openThisMainDropdownTest() {
+        openTimer = null;
+        flipIzvrsniHoverGraceUntil = 0;
+        var open = document.querySelector('.alati-meni-test__meni-dropdown--open');
+        if (open && open !== dropdown) {
+          open.classList.remove('alati-meni-test__meni-dropdown--open');
+          clearPanelWidths(open);
+        }
+        dropdown.style.visibility = 'hidden';
+        dropdown.classList.add('alati-meni-test__meni-dropdown--open');
+        dropdown.style.width = 'max-content';
+        dropdown.style.minWidth = '0';
+        dropdown.offsetHeight;
+        var contentW = dropdown.scrollWidth;
+        var mult = getMeniDropdownWidthMultiplier();
+        var minW = getMeniDropdownMinWidth();
+        var w = contentW > 0 ? Math.round(contentW * mult) : 0;
+        if (w < minW) w = minW;
+        applyPanelFlipBeforeShow(dropdown, mainItem, w, true);
+        if (w > 0) {
+          dropdown.style.width = w + 'px';
+          dropdown.style.minWidth = w + 'px';
+        }
+        dropdown.style.visibility = '';
+      }
       mainItem.addEventListener('mouseenter', function () {
         if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
         flipIzvrsniHoverGraceUntil = 0;
-        openTimer = setTimeout(function () {
-          openTimer = null;
-          var open = document.querySelector('.alati-meni-test__meni-dropdown--open');
-          if (open && open !== dropdown) {
-            open.classList.remove('alati-meni-test__meni-dropdown--open');
-            clearPanelWidths(open);
-          }
-          dropdown.style.visibility = 'hidden';
-          dropdown.classList.add('alati-meni-test__meni-dropdown--open');
-          dropdown.style.width = 'max-content';
-          dropdown.style.minWidth = '0';
-          dropdown.offsetHeight;
-          var contentW = dropdown.scrollWidth;
-          var mult = getMeniDropdownWidthMultiplier();
-          var minW = getMeniDropdownMinWidth();
-          var w = contentW > 0 ? Math.round(contentW * mult) : 0;
-          if (w < minW) w = minW;
-          applyPanelFlipBeforeShow(dropdown, mainItem, w, true);
-          if (w > 0) {
-            dropdown.style.width = w + 'px';
-            dropdown.style.minWidth = w + 'px';
-          }
-          dropdown.style.visibility = '';
-        }, 300);
+        openTimer = setTimeout(openThisMainDropdownTest, typeof window.vnlhGetMeniHoverDelayMainMs === 'function' ? window.vnlhGetMeniHoverDelayMainMs() : 300);
       });
       mainItem.addEventListener('mouseleave', function () {
         if (openTimer) { clearTimeout(openTimer); openTimer = null; }
@@ -323,6 +329,13 @@
           dropdown.classList.remove('alati-meni-test__meni-dropdown--open');
           clearPanelWidths(dropdown);
         }, closeDelay);
+      });
+      btn.addEventListener('click', function () {
+        if (openTimer) {
+          clearTimeout(openTimer);
+          openTimer = null;
+        }
+        openThisMainDropdownTest();
       });
       mainItem.appendChild(btn);
       mainItem.appendChild(dropdown);
@@ -475,19 +488,25 @@
       }
     });
     var hoverTimer = null;
-    izv.addEventListener('mouseenter', function () {
-      hoverTimer = setTimeout(function () {
+    function showIzvrsniHtmlWidthImmediate() {
+      if (hoverTimer) {
+        clearTimeout(hoverTimer);
         hoverTimer = null;
-        var span = izv.querySelector('.alati-meni-test__meni-izvrsni-html');
-        var panel = izv.closest('.alati-meni-test__meni-podmeni-tijelo') || izv.closest('.alati-meni-test__meni-dropdown');
-        /* U layoutu prvo prikaži (html) nevidljivo pa širinu + flip – izbjegava skok kad se širi tekst pa se mijenja open-left. */
-        if (span) {
-          span.style.display = '';
-          span.style.visibility = 'hidden';
-        }
-        if (panel) setPanelWidth(panel, 1, { fromIzvrsniHover: true });
-        if (span) span.style.visibility = '';
-      }, 300);
+      }
+      var span = izv.querySelector('.alati-meni-test__meni-izvrsni-html');
+      var panel = izv.closest('.alati-meni-test__meni-podmeni-tijelo') || izv.closest('.alati-meni-test__meni-dropdown');
+      if (span) {
+        span.style.display = '';
+        span.style.visibility = 'hidden';
+      }
+      if (panel) setPanelWidth(panel, 1, { fromIzvrsniHover: true });
+      if (span) span.style.visibility = '';
+    }
+    izv.addEventListener('mouseenter', function () {
+      hoverTimer = setTimeout(showIzvrsniHtmlWidthImmediate, typeof window.vnlhGetMeniHoverDelayPodmeniMs === 'function' ? window.vnlhGetMeniHoverDelayPodmeniMs() : 500);
+    });
+    izv.addEventListener('mousedown', function () {
+      showIzvrsniHtmlWidthImmediate();
     });
     izv.addEventListener('mouseleave', function () {
       if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
@@ -520,31 +539,32 @@
         var tijelo = document.createElement('div');
         tijelo.className = 'alati-meni-test__meni-podmeni-tijelo';
         renderChildren(node.children, izvrsniTipId, tijelo);
-        (function (w) {
+        (function (w, podmeniBtn) {
           var hoverTimer = null;
           var closeTimerWrap = null;
+          function expandThisPodmeniTest() {
+            hoverTimer = null;
+            var parent = w.parentElement;
+            if (parent) {
+              for (var i = 0; i < parent.children.length; i++) {
+                var sib = parent.children[i];
+                if (sib.classList && sib.classList.contains('alati-meni-test__meni-podmeni-wrap') && sib !== w) {
+                  sib.classList.remove('alati-meni-test__meni-podmeni--expanded');
+                  var sibTijelo = sib.querySelector('.alati-meni-test__meni-podmeni-tijelo');
+                  if (sibTijelo) clearPanelWidths(sibTijelo);
+                }
+              }
+            }
+            w.classList.add('alati-meni-test__meni-podmeni--expanded');
+            var tijeloEl = w.querySelector('.alati-meni-test__meni-podmeni-tijelo');
+            if (tijeloEl) setPanelWidth(tijeloEl, getMeniDropdownWidthMultiplier());
+          }
           w.addEventListener('mouseenter', function () {
             if (closeTimerWrap) {
               clearTimeout(closeTimerWrap);
               closeTimerWrap = null;
             }
-            hoverTimer = setTimeout(function () {
-              hoverTimer = null;
-              var parent = w.parentElement;
-              if (parent) {
-                for (var i = 0; i < parent.children.length; i++) {
-                  var sib = parent.children[i];
-                  if (sib.classList && sib.classList.contains('alati-meni-test__meni-podmeni-wrap') && sib !== w) {
-                    sib.classList.remove('alati-meni-test__meni-podmeni--expanded');
-                    var sibTijelo = sib.querySelector('.alati-meni-test__meni-podmeni-tijelo');
-                    if (sibTijelo) clearPanelWidths(sibTijelo);
-                  }
-                }
-              }
-              w.classList.add('alati-meni-test__meni-podmeni--expanded');
-              var tijeloEl = w.querySelector('.alati-meni-test__meni-podmeni-tijelo');
-              if (tijeloEl) setPanelWidth(tijeloEl, getMeniDropdownWidthMultiplier());
-            }, 500);
+            hoverTimer = setTimeout(expandThisPodmeniTest, typeof window.vnlhGetMeniHoverDelayPodmeniMs === 'function' ? window.vnlhGetMeniHoverDelayPodmeniMs() : 500);
           });
           w.addEventListener('mouseleave', function () {
             if (hoverTimer) {
@@ -560,11 +580,21 @@
             closeTimerWrap = setTimeout(function () {
               closeTimerWrap = null;
               w.classList.remove('alati-meni-test__meni-podmeni--expanded');
-              var tijeloEl = w.querySelector('.alati-meni-test__meni-podmeni-tijelo');
-              if (tijeloEl) clearPanelWidths(tijeloEl);
+              var tijeloEl2 = w.querySelector('.alati-meni-test__meni-podmeni-tijelo');
+              if (tijeloEl2) clearPanelWidths(tijeloEl2);
             }, wrapCloseMs);
           });
-        })(wrap);
+          if (podmeniBtn) {
+            podmeniBtn.addEventListener('click', function (e) {
+              e.preventDefault();
+              if (hoverTimer) {
+                clearTimeout(hoverTimer);
+                hoverTimer = null;
+              }
+              expandThisPodmeniTest();
+            });
+          }
+        })(wrap, podmeni);
         wrap.appendChild(podmeni);
         wrap.appendChild(tijelo);
         parentEl.appendChild(wrap);

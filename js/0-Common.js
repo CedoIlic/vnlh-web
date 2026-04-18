@@ -79,6 +79,74 @@
     xhr.send();
   };
 
+  /* --- Blok: Meni – hover kašnjenje: 116 = glavna stavka (prvi dropdown), 115 = podmeni/ugniježđeni (114 = Traži, ne miješati) --- */
+  var VNLH_VAR_ID_MENI_MAIN_HOVER_MS = 116;
+  var VNLH_VAR_ID_MENI_DROPDOWN_HOVER_MS = 115;
+  var MENI_HOVER_OPEN_MS_DEFAULT_MAIN = 300;
+  var MENI_HOVER_OPEN_MS_DEFAULT_DROPDOWN = 500;
+
+  /**
+   * Glavna stavka trake: ms prije prikaza prvog dropdowna (hover). Varijabla 116 > 0; inače 300.
+   */
+  window.vnlhGetMeniHoverDelayMainMs = function () {
+    try {
+      var x = window.__VNLH_MENI_MAIN_HOVER_MS;
+      if (typeof x === 'number' && !isNaN(x) && x > 0) {
+        return x;
+      }
+    } catch (eMh) {}
+    return MENI_HOVER_OPEN_MS_DEFAULT_MAIN;
+  };
+
+  /**
+   * Podmeni / ugniježđeni dropdown: ms prije proširenja (hover). Varijabla 115 > 0; inače 500.
+   */
+  window.vnlhGetMeniHoverDelayPodmeniMs = function () {
+    try {
+      var x = window.__VNLH_MENI_DROPDOWN_HOVER_MS;
+      if (typeof x === 'number' && !isNaN(x) && x > 0) {
+        return x;
+      }
+    } catch (eMh2) {}
+    return MENI_HOVER_OPEN_MS_DEFAULT_DROPDOWN;
+  };
+
+  /**
+   * Dohvat varijabli 116 i 115 (dva GET-a). 0 / greška → zadane vrijednosti kao dosad.
+   */
+  window.vnlhLoadMeniHoverDelaysFromVar116And115 = function (apiBase, callback) {
+    var base = apiBase != null && String(apiBase) !== '' ? String(apiBase) : '../php/';
+    var pending = 2;
+    function doneOne() {
+      pending--;
+      if (pending === 0 && typeof callback === 'function') {
+        callback();
+      }
+    }
+    function fetchVar(id, windowKey) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', base.replace(/\/?$/, '/') + 'common_sustav_varijable.php?id=' + id, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) {
+          return;
+        }
+        var raw = trim(xhr.responseText || '');
+        if (xhr.status === 200 && raw !== '' && raw !== '100' && raw !== '120') {
+          var n = parseInt(raw, 10);
+          if (!isNaN(n) && n > 0) {
+            try {
+              window[windowKey] = n;
+            } catch (eSetMh) {}
+          }
+        }
+        doneOne();
+      };
+      xhr.send();
+    }
+    fetchVar(VNLH_VAR_ID_MENI_MAIN_HOVER_MS, '__VNLH_MENI_MAIN_HOVER_MS');
+    fetchVar(VNLH_VAR_ID_MENI_DROPDOWN_HOVER_MS, '__VNLH_MENI_DROPDOWN_HOVER_MS');
+  };
+
   /** Uklanja vodeće i prateće razmake iz stringa; null/undefined → prazan string. */
   function trim(s) {
     return s != null ? String(s).replace(/^\s+|\s+$/g, '') : '';
