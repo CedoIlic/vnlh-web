@@ -106,6 +106,9 @@ if ($fromMeni) {
     $id_duznosnik = isset($_GET['id_duznosnik']) ? (int)$_GET['id_duznosnik'] : 0;
 }
 
+/** Za from_meni=1: skup dužnosti za filter (unija pravih); inače null pa se koristi jedan $id_duznosnik. */
+$duznostiZaFilterPrava = null;
+
 /*
  * Bypass filtera po duznosnici_prava za alat „Test menija“ kad dužnosnik nije odabran.
  * NUŽNO: from_meni mora biti laž – inače se parametar zanemaruje (glavni meni).

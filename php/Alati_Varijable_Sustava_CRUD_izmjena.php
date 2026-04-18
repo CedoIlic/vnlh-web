@@ -6,8 +6,8 @@ require_once __DIR__ . '/vnlh_varijable_sustava_razvoj.php';
 // Izmjena retka sustav_varijable (varijabla, Naziv, opis)
 // =====================================================
 //
-// Ulaz (POST): id, varijabla, naziv (obavezno); opis (opcionalno); razvoj (0|1, samo admin retka 1002)
-// Izlaz (TEXT): OK | 100 | 105 | 002 | 107,<errno> | 109 | 200,<errno>
+// Ulaz (POST): id (PK), varijabla (stupac vrijednosti), naziv (obavezno); opis (opcionalno); razvoj (0|1, samo admin retka 1002)
+// Izlaz (TEXT): OK | 100 | 105 | 107,<errno> | 109 | 200,<errno> — nema 002 po tekstu stupca varijabla; PK se u UPDATE-u ne mijenja.
 // =====================================================
 
 // --- Blok: Konekcija na bazu ---
@@ -43,25 +43,6 @@ if (mb_strlen($opis, 'UTF-8') > 2048) {
     echo '105';
     exit;
 }
-
-$varNorm = mb_strtolower($varijabla, 'UTF-8');
-
-// --- Blok: Provjera duplikata varijable (isključujući trenutni id) ---
-$stmt = $mysqli->prepare('SELECT id FROM sustav_varijable WHERE LOWER(varijabla) = ? AND id <> ? LIMIT 1');
-if (!$stmt) {
-    echo '200,' . $mysqli->errno;
-    exit;
-}
-$stmt->bind_param('si', $varNorm, $id);
-$stmt->execute();
-$stmt->store_result();
-if ($stmt->num_rows > 0) {
-    echo '002';
-    $stmt->close();
-    $mysqli->close();
-    exit;
-}
-$stmt->close();
 
 // --- Blok: UPDATE ---
 $stmt = $mysqli->prepare(

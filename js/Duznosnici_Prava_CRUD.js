@@ -1,8 +1,10 @@
 /* Duznosnici_Prava_CRUD.js – forma prava dužnosnika.
    Zaglavlje panela tablice: labela "Dužnosnik" lijevo od selecta, select dužnosnici, desno ikona reload.
+   Select Dužnosnik: Master = window.VNLH_PRAVA_MASTER_ID (id dužnosti iz sesije, umeće Duznosnici_Prava_CRUD.php);
+   punjenje preko 0-Razine.js — smjer ispod; toggle isključen: povrat 0; toggle „Sva prava“: povrat 1 + ukljuci_mastera 1 (Master u selectu).
    Reload_Ikona: 1 u konstantama = CommonCRUD dodaje reload tipku u zaglavlje; funkcionalnost = ponovno učitavanje podataka.
-   Tablica: A. (checkbox 1/0), Naziv (20%), Opis. Footer: Upis, Izbriši, Povratak.
-   API: Duznosnici_CRUD_sve.php (za select), Duznosnici_Prava_CRUD_sve.php, _upis.php, _brisanje.php (kada budu dostupni).
+   Tablica: A. (checkbox 1/0), Naziv (20%), Opis. Footer: Upis, Izbriši, sredina (Sve / toggle „Sva prava” ovisno o var.), Povratak.
+   API: select (0-Razine); Duznosnici_Prava_CRUD_sve.php — GET sva_prava=1 kad je uključen toggle „Sva prava“ (svi meni s html_fajl); inače samo prava logiranog. Toggle: select cijeli skup uključujući Mastera + tablica.
 */
 // @ts-nocheck
 (function () {
@@ -10,15 +12,22 @@
   if (typeof vnlhUcitajPravaCrud === 'function') vnlhUcitajPravaCrud('Duznosnici_Prava_CRUD.html');
 
   var API_BASE = '../php/';
+  /** Prvi redak selecta Dužnosnik (usklađeno s html placeholderom). */
+  var PRAZNA_OPCIJA_DUZNOSNIK = { value: '', label: '— Odaberi dužnosnika —' };
   /** null = još nije učitano; sadržaj kolone varijabla za sustav_varijable.id = 1001. */
   var cachedSustavVar1001 = null;
   var sustav1001Loading = false;
   var sustav1001PendingCallbacks = [];
+  /** null = još nije učitano; sustav_varijable.id = 1003 — ako je '1', prikazuje se toggle „Sva prava“. */
+  var cachedSustavVar1003 = null;
+  var sustav1003Loading = false;
+  var sustav1003PendingCallbacks = [];
 
   /* --- Zaglavlje tablice ---
      Lijevo: labela "Dužnosnik" + select za odabir dužnosnika.
      Desno: ikona reload (dodaje CommonCRUD.initTablica kad Reload_Ikona === 1).
-     Select filtrira podatke – pri promjeni učitavaju se prava za odabranog dužnosnika. */
+     Tablica: redovi iz meni — zadano samo moduli koje logirani dužnosnik smije; uz toggle „Sva prava“ svi aktivni s html_fajl.
+     Select mijenja kolonu aktivno (tko prima prava) i POST; ne mijenja skup redaka kad je toggle isključen. */
 
   // Tablica_Zaglavlje – svaka kolona je objekt sa parametrima:
   // 1) key (string) - Jedinstveni ključ kolone.
@@ -61,6 +70,12 @@
   var selectDuznosnik = document.getElementById('select_duznosnik');
   var tablicaContainerEl = document.getElementById('tablicaContainer');
 
+  /** Toggle „Sva prava“ (vidljiv samo kad var. 1003 = 1): puni select cijelim skupom i tablicu svim HTML modulima iz meni. */
+  function jeRezimSvaPrava() {
+    var el = document.getElementById('toggle_sva_prava');
+    return !!(el && el.checked);
+  }
+
   function getSelectedRowId() {
     return CommonCRUD.getSelectedRowId(tablicaApi);
   }
@@ -101,6 +116,45 @@
     else btn.setAttribute('hidden', '');
   }
 
+  /**
+   * Učitava varijablu 1003; kad je '1', prikazuje omotač togglea „Sva prava“.
+   * Pri svakom učitavanju stranice checkbox se postavlja na isključeno (logika togglea kasnije).
+   */
+  function ucitajSustavVar1003(callback) {
+    if (cachedSustavVar1003 !== null) {
+      if (callback) callback();
+      return;
+    }
+    if (typeof callback === 'function') sustav1003PendingCallbacks.push(callback);
+    if (sustav1003Loading) return;
+    sustav1003Loading = true;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', API_BASE + 'common_sustav_varijable.php?id=1003', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      var t = (xhr.responseText || '').trim();
+      if (t === '120' || t === '100' || t === '401') cachedSustavVar1003 = '0';
+      else cachedSustavVar1003 = t;
+      sustav1003Loading = false;
+      var cbs = sustav1003PendingCallbacks.slice();
+      sustav1003PendingCallbacks = [];
+      for (var i = 0; i < cbs.length; i++) try { cbs[i](); } catch (e) {}
+    };
+    xhr.send();
+  }
+
+  function primijeniVidljivostToggleSvaPrava() {
+    var wrap = document.getElementById('toggle_sva_prava_wrap');
+    var inp = document.getElementById('toggle_sva_prava');
+    if (!wrap || !inp) return;
+    inp.checked = false;
+    if (cachedSustavVar1003 !== null && String(cachedSustavVar1003).trim() === '1') {
+      wrap.removeAttribute('hidden');
+    } else {
+      wrap.setAttribute('hidden', '');
+    }
+  }
+
   /** Ako su svi checkboxovi u prvoj koloni uključeni → isključi sve, inače uključi sve (samo enabled). */
   function toggleSveCheckboxePrvaKolona() {
     var container = document.getElementById('tablicaContainer');
@@ -138,34 +192,54 @@
   }
 
   function ucitajDuznosnici(callback) {
-    var url = API_BASE + 'Duznosnici_CRUD_sve.php';
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status !== 200) { if (callback) callback([]); return; }
-      try {
-        var arr = JSON.parse(xhr.responseText);
-        duznosniciLista = Array.isArray(arr) ? arr : [];
-        var sel = document.getElementById('select_duznosnik');
-        if (sel) {
-          while (sel.options.length > 1) sel.remove(1);
-          for (var i = 0; i < duznosniciLista.length; i++) {
-            var opt = document.createElement('option');
-            opt.value = String(duznosniciLista[i].id);
-            opt.textContent = duznosniciLista[i].naziv != null ? duznosniciLista[i].naziv : '';
-            sel.appendChild(opt);
+    var sel = document.getElementById('select_duznosnik');
+    if (!sel) {
+      if (callback) callback([]);
+      return;
+    }
+    var masterId = typeof window.VNLH_PRAVA_MASTER_ID !== 'undefined' ? Number(window.VNLH_PRAVA_MASTER_ID) : 0;
+    if (isNaN(masterId) || masterId < 0) masterId = 0;
+    var zeljeni = trim(sel.value) !== '' ? sel.value : '';
+
+    if (window.VNLHPostivanjeRazine && typeof window.VNLHPostivanjeRazine.ucitajOpcijeDuznosnikaPodMasterom === 'function') {
+      var svaPrava = jeRezimSvaPrava();
+      // Režim „Sva prava“: povrat_cijelog_seta 1 + ukljuci_mastera 1 → svi dužnosnici uključujući Mastera (PHP Duznosnici_CRUD_opcije_pod_masterom).
+      var povratC = svaPrava ? 1 : 0;
+      var ukljuciMastera = svaPrava ? 1 : 0;
+      window.VNLHPostivanjeRazine.ucitajOpcijeDuznosnikaPodMasterom(
+        masterId,
+        API_BASE,
+        sel,
+        zeljeni,
+        function () {
+          duznosniciLista = [];
+          for (var i = 0; i < sel.options.length; i++) {
+            var o = sel.options[i];
+            if (trim(o.value) !== '') {
+              duznosniciLista.push({ id: Number(o.value), naziv: o.textContent });
+            }
           }
-          if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_duznosnik');
-        }
-        if (callback) callback(duznosniciLista);
-      } catch (e) { if (callback) callback([]); }
-    };
-    xhr.send();
+          if (callback) callback(duznosniciLista);
+        },
+        'ispod',
+        povratC,
+        PRAZNA_OPCIJA_DUZNOSNIK,
+        ukljuciMastera
+      );
+      return;
+    }
+    while (sel.options.length > 1) sel.remove(1);
+    duznosniciLista = [];
+    if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_duznosnik');
+    if (callback) callback(duznosniciLista);
   }
 
   function ucitajPrava(idDuznosnik, callback) {
-    var url = API_BASE + 'Duznosnici_Prava_CRUD_sve.php?id_duznosnik=' + encodeURIComponent(String(idDuznosnik || ''));
+    var url =
+      API_BASE +
+      'Duznosnici_Prava_CRUD_sve.php?id_duznosnik=' +
+      encodeURIComponent(String(idDuznosnik || '')) +
+      (jeRezimSvaPrava() ? '&sva_prava=1' : '');
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function () {
@@ -182,11 +256,16 @@
 
   function pretvoriUPodatkeTablica(arr) {
     var rows = [];
+    var sva = jeRezimSvaPrava();
     for (var i = 0; i < arr.length; i++) {
       var r = arr[i];
       var a = (r.aktivno == 1 || r.aktivno === true) ? 1 : 0;
       var naziv = r.naziv != null ? r.naziv : '';
       var opis = r.opis != null ? r.opis : '';
+      if (sva && r.html_fajl != null && String(r.html_fajl).trim() !== '') {
+        var hf = String(r.html_fajl).trim();
+        opis = hf + (opis ? ' — ' + opis : '');
+      }
       var id = r.id != null ? r.id : (i + 1);
       rows.push([a, naziv, opis, id]);
     }
@@ -195,15 +274,8 @@
 
   function osvjeziTablicu() {
     if (!tablicaApi || typeof CommonCRUD.setDataTablica !== 'function') return;
-    var id = selectDuznosnik ? trim(selectDuznosnik.value) : '';
-    if (id === '') {
-      originalCheckboxState = {};
-      CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], Duznosnici_PravaCRUD.Tablica_Zaglavlje);
-      updateEnabledState();
-      updateCrudUpisiState();
-      return;
-    }
-    ucitajPrava(id, function (arr) {
+    var idZaAktivno = selectDuznosnik && trim(selectDuznosnik.value) !== '' ? trim(selectDuznosnik.value) : '0';
+    ucitajPrava(idZaAktivno, function (arr) {
       var rows = pretvoriUPodatkeTablica(arr);
       originalCheckboxState = {};
       for (var i = 0; i < rows.length; i++) {
@@ -381,6 +453,23 @@
   ucitajSustavVar1001(function () {
     updateFooterSveButton();
   });
+
+  ucitajSustavVar1003(function () {
+    primijeniVidljivostToggleSvaPrava();
+  });
+
+  (function () {
+    var tgl = document.getElementById('toggle_sva_prava');
+    if (!tgl) return;
+    tgl.addEventListener('change', function () {
+      ucitajDuznosnici(function () {
+        osvjeziTablicu();
+        updateEnabledState();
+        updateFooterSveButton();
+        updateCrudUpisiState();
+      });
+    });
+  })();
 
   ucitajDuznosnici(function () {
     osvjeziTablicu();

@@ -7,8 +7,8 @@
    Ne pozivati KontroleSetEnabled na cijeli #edit_panel – ugasio bi i .kontrola-edit-delete.
    Koristi CommonCRUD, 0-Kontrole, 0-Common, 0-Poruke_Tekstovi.
    API: Alati_Varijable_Sustava_CRUD_sve.php, _upis.php, _izmjena.php, _brisanje.php.
-   Klijentska validacija: isti broj varijable (id) ne smije postojati na drugom slogu (002); iznimka pri izmjeni – broj selektiranog retka.
-   Režim Razvoj: administratori iz retka sustav_varijable.id=1002 (stupac varijabla = id-jevi odvojeni zarezom); GET/POST razvoj=1 prikazuje sve id-eve; inače samo 0–999, unos id max 3 znamenke.
+   Klijentska validacija: pri upisu isti PK (polje Varijabla = id u bazi) ne smije postojati u dataIzvor (002). Stupac varijabla (Vrijednost) — bez klijentskog duplikata; PHP upis/izmjena ne provjeravaju jedinstvenost teksta stupca varijabla.
+   Režim Razvoj: vidi/koristi samo korisnik čiji je id_korisnik u retku sustav_varijable.id=1002 (stupac varijabla). GET/POST razvoj=1 samo dok je kliznik uključen u ovoj sesiji stranice; pri svakom učitavanju stranice kliznik je isključen (bez sessionStorage / trajnog pamćenja).
    ========================================================= */
 // @ts-nocheck
 (function () {
@@ -98,17 +98,10 @@
   var dataIzvor = [];
   /** Server: korisnik smije vidjeti toggle (lista u retku id 1002). */
   var mozeRazvojToggle = false;
-  /** Korisnik je uključio Razvoj (sve varijable); sessionStorage za trajanje sesije u pregledniku. */
+  /** Korisnik je uključio Razvoj (sve varijable) — samo u memoriji dok je ova stranica otvorena; nakon ponovnog učitavanja uvijek false. */
   var razvojUkljucen = false;
-  var STORAGE_RAZVOJ_TOGGLE = 'vnlh_alati_var_sust_razvoj';
   /** Najveći id u „ograničenom“ načinu (bez uključenog Razvoja). */
   var RAZVOJ_MAX_ID = 999;
-
-  try {
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(STORAGE_RAZVOJ_TOGGLE) === '1') {
-      razvojUkljucen = true;
-    }
-  } catch (eSt) {}
 
   function razvojEfektivnoUkljucen() {
     return mozeRazvojToggle === true && razvojUkljucen === true;
@@ -119,14 +112,9 @@
     return !razvojEfektivnoUkljucen();
   }
 
-  /** GET parametar razvoj prije nego što znamo mozeRazvojToggle (server i dalje validira). */
+  /** GET parametar razvoj: isključivo trenutačno stanje kliznika (ne čita sessionStorage). */
   function razvojZahtjevZaGet() {
-    try {
-      if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(STORAGE_RAZVOJ_TOGGLE) === '1') {
-        return '1';
-      }
-    } catch (eG) {}
-    return '0';
+    return razvojUkljucen ? '1' : '0';
   }
 
   /** Max znamenaka u edit-delete za novi unos id-a (ne readOnly): 3 ili 5. */
@@ -167,25 +155,20 @@
   }
 
   /**
-   * Broj varijable (id u polju Varijabla) ne smije postojati na drugom slogu u tablici (dataIzvor).
-   * Upis: bilo koji postojeći id = konflikt. Izmjena: konflikt samo ako isti broj pripada drugom retku;
-   * ako je to broj selektiranog retka (isti PK), nije konflikt (npr. readOnly prikaz ili buduća promjena id-a).
+   * Konflikt PK-a: polje „Varijabla” u UI-ju = stupac **id** u bazi. Ako taj broj već postoji u dataIzvor → modal 002 pri upisu.
+   * Polje „Vrijednost” = stupac **varijabla** u bazi — ovdje se ne provjerava duplikat.
    *
-   * @param {string} brojTekst – trimani ili ne sadržaj polja Varijabla
-   * @param {string|number|null|undefined} idSelektiranogRetka – pri upisu null/undefined; pri izmjeni PK odabranog retka
-   * @returns {boolean} true ako treba blokirati upis/izmjenu (modal 002)
+   * @param {string} brojTekst – sadržaj polja Varijabla (PK kao tekst)
+   * @returns {boolean} true ako PK već postoji u učitanom skupu
    */
-  function postojiKonfliktBrojaVarijableDrugogSloga(brojTekst, idSelektiranogRetka) {
+  function postojiKonfliktPkVarijablaNaDrugomSlogu(brojTekst) {
     var u = trim(brojTekst);
     if (u === '') return false;
     var n = parseInt(u, 10);
     if (isNaN(n)) return false;
-    var izuz = idSelektiranogRetka != null && idSelektiranogRetka !== '' ? parseInt(String(idSelektiranogRetka), 10) : NaN;
     for (var i = 0; i < dataIzvor.length; i++) {
       var rid = parseInt(String(dataIzvor[i].id), 10);
-      if (isNaN(rid) || rid !== n) continue;
-      if (!isNaN(izuz) && rid === izuz) continue;
-      return true;
+      if (!isNaN(rid) && rid === n) return true;
     }
     return false;
   }
@@ -432,17 +415,11 @@
       var opis = op ? trim(op.value) : '';
       if (idTekst === '' || varijabla === '' || naziv === '') return;
 
-      var jeIzmjena = this.classList.contains('kontrola-btn--crud-izmjeni');
+      /* Način rada: selekcija retka u tablici (ne samo CSS klasa gumba — izbjegava Upis s postojećim PK i lažni 002). */
+      var idSelekcija = getSelectedRowId();
+      var jeIzmjena = idSelekcija != null;
       if (jeIzmjena) {
-        var id = getSelectedRowId();
-        if (id == null) return;
-        if (postojiKonfliktBrojaVarijableDrugogSloga(idTekst, id)) {
-          if (typeof window.showPorukaModal === 'function' && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['002']) {
-            window.showPorukaModal('002', ['Varijabla']);
-          }
-          return;
-        }
-        varijableUpdate(id, varijabla, naziv, opis, function (res) {
+        varijableUpdate(idSelekcija, varijabla, naziv, opis, function (res) {
           if (res === 'OK') {
             if (typeof window.showPorukaModal === 'function') {
               window.showPorukaModal('004', [], function () {
@@ -470,7 +447,7 @@
             return;
           }
         }
-        if (postojiKonfliktBrojaVarijableDrugogSloga(idTekst, null)) {
+        if (postojiKonfliktPkVarijablaNaDrugomSlogu(idTekst)) {
           if (typeof window.showPorukaModal === 'function' && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['002']) {
             window.showPorukaModal('002', ['Varijabla']);
           }
@@ -597,11 +574,6 @@
           }
           if (!mozeRazvojToggle) {
             razvojUkljucen = false;
-            try {
-              if (typeof sessionStorage !== 'undefined') {
-                sessionStorage.removeItem(STORAGE_RAZVOJ_TOGGLE);
-              }
-            } catch (eR) {}
           }
           var wrapTr = document.getElementById('wrapToggleRazvoj');
           var tgl = document.getElementById('toggleRazvoj');
@@ -690,11 +662,6 @@
         return;
       }
       razvojUkljucen = !!tgl.checked;
-      try {
-        if (typeof sessionStorage !== 'undefined') {
-          sessionStorage.setItem(STORAGE_RAZVOJ_TOGGLE, razvojUkljucen ? '1' : '0');
-        }
-      } catch (eT) {}
       if (!razvojUkljucen && tablicaApi && typeof getSelectedRowId === 'function') {
         var sid = getSelectedRowId();
         if (sid != null && parseInt(String(sid), 10) > RAZVOJ_MAX_ID) {

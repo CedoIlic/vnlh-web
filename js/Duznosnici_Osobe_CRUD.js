@@ -3,7 +3,7 @@
    Lijevo: dužnosti (Traži + tablica). Desno: aktivni članovi (Traži + tablica), prikaz imena „prezime, ime“.
    Donji panel: readonly Dužnost, Nosioc; CRUD – upis u sustav_korisnici (UPDATE/INSERT po id_korisnik), brisanje retka dodjele.
    Koristi CommonCRUD, 0-Kontrole, 0-Common.
-   API: Duznosnici_CRUD_sve.php, Clanovi_CRUD_sve_aktivni.php,
+   API: Duznosnici_CRUD_opcije_pod_masterom.php (lijevo: potomci logiranog Mastera, 0-Razine.js: smjer ispod, povrat 0, ukljuci_mastera 0), Clanovi_CRUD_sve_aktivni.php,
         Duznosnici_Osobe_CRUD_upis.php, Duznosnici_Osobe_CRUD_brisanje.php,
         Sustav_korisnici_modal_pregled.php (modal ellipsis – dužnost / osoba iz sustav_korisnici).
         (Bez Duznosnici_Osobe_CRUD_sve.php – dodjele u UI samo iz lokalnog stanja nakon upisa/brisanja u sesiji.)
@@ -293,20 +293,33 @@
       }
     }
 
-    var xhrD = new XMLHttpRequest();
-    xhrD.open('GET', API_BASE + 'Duznosnici_CRUD_sve.php', true);
-    xhrD.onreadystatechange = function () {
-      if (xhrD.readyState !== 4) return;
-      var t = (xhrD.responseText || '').trim();
-      if (xhrD.status !== 200 || t === '' || t.charAt(0) !== '[') {
-        err = true;
-        showApiError(t || String(xhrD.status));
-      } else {
-        dataDuznosnici = parseJsonArray(t);
-      }
+    var masterOsobeId = typeof window.VNLH_OSOBE_MASTER_ID !== 'undefined' ? Number(window.VNLH_OSOBE_MASTER_ID) : 0;
+    if (isNaN(masterOsobeId)) masterOsobeId = 0;
+    if (window.VNLHPostivanjeRazine && typeof window.VNLHPostivanjeRazine.dohvatiOpcijeDuznosnikaPodMasteromJson === 'function') {
+      window.VNLHPostivanjeRazine.dohvatiOpcijeDuznosnikaPodMasteromJson(
+        masterOsobeId,
+        API_BASE,
+        function (rows, status, text) {
+          var t = (text || '').trim();
+          if (status !== 200 || (t !== '' && t.charAt(0) !== '[')) {
+            err = true;
+            showApiError(t || String(status));
+          } else {
+            dataDuznosnici = (rows || []).map(function (r) {
+              return { id: r.id, naziv: r.naziv != null ? String(r.naziv) : '' };
+            });
+          }
+          doneOne();
+        },
+        'ispod',
+        0,
+        0
+      );
+    } else {
+      err = true;
+      showApiError('');
       doneOne();
-    };
-    xhrD.send();
+    }
 
     var xhrC = new XMLHttpRequest();
     xhrC.open('GET', API_BASE + 'Clanovi_CRUD_sve_aktivni.php', true);

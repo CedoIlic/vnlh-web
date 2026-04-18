@@ -6,7 +6,7 @@
    Nacrt: pri ponovnom omogućenju Upisa vraća se zadnje lokalno stanje (edits, čekboxevi, stupnjevi); sessionStorage po dužnosniku; brisanje pri promjeni dužnosnika / reload.
    Upis: omogućen kad je odabran dužnosnik i stanje (geo, checkboxovi tablice 1, stupnjevi) razlikuje se od baselinea — i kad su sva geo polja prazna nakon brisanja „Sve”, da se može spremiti prazni zapis.
    CRUD tipke u podnožju drugog panela.
-   API: Duznosnici_CRUD_sve.php (select), duznosnici_ogranicenja_sve.php (čitanje), duznosnici_ogranicenja_upis.php (Upis u bazu – jedini zapis ograničenja), stupnjevi_po_obredu + Obredi (tablica 2). Modal stupnjeva: samo lokalni paket do glavnog Upisa.
+   API: select dužnosnika preko 0-Razine.js → Duznosnici_CRUD_opcije_pod_masterom.php (Master = VNLH_OGRANICENJA_MASTER_ID, smjer ispod, povrat 0, ukljuci_mastera 0); duznosnici_ogranicenja_sve.php (čitanje); upis; stupnjevi_po_obredu + Obredi (tablica 2). Modal stupnjeva: samo lokalni paket do glavnog Upisa.
    ========================================================= */
 // @ts-nocheck
 (function () {
@@ -77,6 +77,8 @@
   });
 
   var API_BASE = '../php/';
+  /** Prvi redak selecta Dužnosnik (usklađeno s html placeholderom). */
+  var PRAZNA_OPCIJA_SELECT_DUZNOSNIK_OGR = { value: '', label: '— Odaberi dužnosnika —' };
   /** Isti razdjelnik kao nakon „OK“ u modalima država / regija / loža. */
   var EDIT_POLJA_ID_RAZDJELNIK = ', ';
   /** null = još nije učitano; sadržaj sustav_varijable.id = 1001 (tipka „Sve“ kao Duznosnici_Prava_CRUD). */
@@ -638,33 +640,43 @@
     if (hasPak || stRowCount === 0) primijeniNacrtUTablicuStupnjeva(pak);
   }
 
-  /* --- Blok: Učitavanje dužnosnika u select --- */
+  /* --- Blok: Učitavanje dužnosnika u select (hijerarhija: potomci logiranog Mastera, bez Mastera u listi) --- */
   function ucitajDuznosnici(callback) {
-    var API_BASE = '../php/';
-    var url = API_BASE + 'Duznosnici_CRUD_sve.php';
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status !== 200) { if (callback) callback([]); return; }
-      try {
-        var arr = JSON.parse(xhr.responseText);
-        arr = Array.isArray(arr) ? arr : [];
-        var sel = document.getElementById('select_duznosnik');
-        if (sel) {
-          while (sel.options.length > 1) sel.remove(1);
-          for (var i = 0; i < arr.length; i++) {
-            var opt = document.createElement('option');
-            opt.value = String(arr[i].id);
-            opt.textContent = arr[i].naziv != null ? arr[i].naziv : '';
-            sel.appendChild(opt);
+    var sel = document.getElementById('select_duznosnik');
+    if (!sel) {
+      if (callback) callback([]);
+      return;
+    }
+    var masterId = typeof window.VNLH_OGRANICENJA_MASTER_ID !== 'undefined' ? Number(window.VNLH_OGRANICENJA_MASTER_ID) : 0;
+    if (isNaN(masterId) || masterId < 0) masterId = 0;
+    var zeljeni = trim(sel.value) !== '' ? sel.value : '';
+
+    if (window.VNLHPostivanjeRazine && typeof window.VNLHPostivanjeRazine.ucitajOpcijeDuznosnikaPodMasterom === 'function') {
+      window.VNLHPostivanjeRazine.ucitajOpcijeDuznosnikaPodMasterom(
+        masterId,
+        API_BASE,
+        sel,
+        zeljeni,
+        function () {
+          var arr = [];
+          for (var i = 0; i < sel.options.length; i++) {
+            var o = sel.options[i];
+            if (trim(o.value) !== '') {
+              arr.push({ id: Number(o.value), naziv: o.textContent });
+            }
           }
-          if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_duznosnik');
-        }
-        if (callback) callback(arr);
-      } catch (e) { if (callback) callback([]); }
-    };
-    xhr.send();
+          if (callback) callback(arr);
+        },
+        'ispod',
+        0,
+        PRAZNA_OPCIJA_SELECT_DUZNOSNIK_OGR,
+        0
+      );
+      return;
+    }
+    while (sel.options.length > 1) sel.remove(1);
+    if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_duznosnik');
+    if (callback) callback([]);
   }
 
   /* --- Blok: Zaglavlje (države/regije/lože iz duznosnici_ogranicenja) + prva tablica (prava) --- */
@@ -709,6 +721,33 @@
     }
     scheduleUkrasiStupnjeviPoObreduDrugStupac();
     azurirajEnabledZaglavlje();
+  }
+
+  /**
+   * Nakon uspješnog POST-a (upis ili izmjena ograničenja): forma kao pri „praznom” odabru dužnosnika.
+   * Zašto: korisnik ne treba ručno mijenjati select da vidi da je slog spremlen; izbjegava i slučajno ponovno slanje istog konteksta.
+   * Redoslijed: prazna vrijednost selecta + refresh custom UI → isto čišćenje kao pri change dužnosnika → uklanjanje selekcija retaka → par osvježavanja tablica (prazan id → prazni podaci + baseline).
+   */
+  function ogranicenjaPonistiFormuNakonUspjesnogSpremanja() {
+    if (selectDuznosnik) {
+      selectDuznosnik.value = (PRAZNA_OPCIJA_SELECT_DUZNOSNIK_OGR && PRAZNA_OPCIJA_SELECT_DUZNOSNIK_OGR.value != null)
+        ? String(PRAZNA_OPCIJA_SELECT_DUZNOSNIK_OGR.value)
+        : '';
+      if (typeof KontroleRefreshCustomSelect === 'function') {
+        KontroleRefreshCustomSelect('select_duznosnik');
+      }
+    }
+    ocistiPrikazOgranicenjaPrijePromjeneDuznosnika();
+    if (tablicaApi && typeof tablicaApi.clearSelection === 'function') {
+      tablicaApi.clearSelection();
+    }
+    if (tablicaStupnjeviPoObreduApi && typeof tablicaStupnjeviPoObreduApi.clearSelection === 'function') {
+      tablicaStupnjeviPoObreduApi.clearSelection();
+    }
+    ogranicenjaPocniDvojniOsvjez();
+    osvjeziTablicu();
+    osvjeziTablicuStupnjevaPoObredu();
+    updateFooterSveOgranicenja();
   }
 
   function osvjeziTablicu() {
@@ -1655,9 +1694,7 @@
         if (res === 'OK') {
           obrisiSveNacrteUObrasce();
           if (typeof window.showPorukaModal === 'function') window.showPorukaModal('004', []);
-          ogranicenjaPocniDvojniOsvjez();
-          osvjeziTablicu();
-          osvjeziTablicuStupnjevaPoObredu();
+          ogranicenjaPonistiFormuNakonUspjesnogSpremanja();
         } else {
           var p = parseResponseCode(res);
           if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') {

@@ -6,7 +6,13 @@ if ($db_ret !== -1) {
     echo $db_ret;
     exit;
 }
-$sql = "SELECT d.id, d.naziv, d.id_nadredjeni, n.naziv AS nadredjeni_naziv
+// nositelji_imena: aktivni članovi (clanovi) s id_duznosnik u sustav_korisnici — „Prezime Ime“, više nositelja odvojeno zarezom.
+$sql = "SELECT d.id, d.naziv, d.aktivnost, d.id_nadredjeni, n.naziv AS nadredjeni_naziv,
+        (SELECT GROUP_CONCAT(DISTINCT CONCAT(TRIM(c.prezime), ' ', TRIM(c.ime))
+                ORDER BY c.prezime ASC, c.ime ASC SEPARATOR ', ')
+         FROM sustav_korisnici sk
+         INNER JOIN clanovi c ON c.id = sk.id_korisnik AND c.aktivnost = 1
+         WHERE sk.id_duznosnik = d.id) AS nositelji_imena
         FROM duznosnici d
         LEFT JOIN duznosnici n ON n.id = d.id_nadredjeni
         ORDER BY d.naziv ASC";

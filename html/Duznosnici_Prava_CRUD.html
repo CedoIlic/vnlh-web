@@ -3,10 +3,11 @@
   Duznosnici_Prava_CRUD.html – forma za prava dužnosnika.
   Zaglavlje panela: labela Dužnosnik, select dužnosnici, ikona reload (Reload_Ikona: 1 u JS).
   Tablica: A. (checkbox 1/0), Naziv (20%), Opis.
-  Footer: CRUD tipke, Povratak na pozivnu formu (ref/referrer).
+  Footer: CRUD lijevo, sredina (tipka „Sve” ako var. 1001=1; toggle „Sva prava” ako var. 1003=1), Povratak desno.
 -->
 <html lang="hr">
 <head>
+    <script>window.VNLH_PRAVA_MASTER_ID=__VNLH_SESSION_MASTER_ID_DUZNOSNIK__;</script>
     <meta charset="UTF-8">
     <title>Prava dužnosnika</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -38,6 +39,14 @@
             </div>
             <div class="duznosnici-prava-crud__footer-center">
                 <button type="button" id="btnSvePrava" class="kontrola-btn duznosnici-prava-crud__btn-sve" hidden><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Sve</span></span></span></button>
+                <!-- Vidljivost: sustav_varijable id=1003 = 1; stil kliznika: 0-Poruke.css (.poruke__toggle-*). Logika kasnije. -->
+                <div id="toggle_sva_prava_wrap" class="duznosnici-prava-crud__sva-prava-wrap" hidden>
+                    <label class="poruke__toggle-label" for="toggle_sva_prava">
+                        <input type="checkbox" id="toggle_sva_prava" class="poruke__toggle-input" autocomplete="off" aria-label="Sva prava">
+                        <span class="poruke__toggle-slider" aria-hidden="true"></span>
+                        <span class="poruke__toggle-text">Sva prava</span>
+                    </label>
+                </div>
             </div>
             <div class="duznosnici-prava-crud__footer-right">
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
@@ -48,6 +57,7 @@
 <script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Razine.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/Duznosnici_Prava_CRUD.js?v=__VNLH_ASSET_V__"></script>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="hr">
 <head>
+    <script>window.VNLH_SESSION_ID_DUZNOSNIK=__VNLH_SESSION_MASTER_ID_DUZNOSNIK__;</script>
     <meta charset="UTF-8">
     <title>Dužnosnici</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,11 +9,240 @@
 <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
     <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
     <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <style>
+        /* Neaktivan dužnosnik (aktivnost = 0): prednji plan teksta u retku tablice. */
+        #tablicaContainer tbody tr.duznosnici-crud__row-neaktivan .kontrola-tablica__cell-inner {
+            color: var(--c-gray-300);
+        }
+        /*
+          Kolona „A.” (2. stupac): globalni .kontrola-tablica th/td imaju text-overflow: ellipsis.
+          U uskoj ćeliji „A.” ne stane u širinu pa preglednik prikaže elipsu „…” – izgleda kao višak točke.
+          Isključujemo ellipsis u ovom stupcu; širina u JS je dovoljna da „A.” stane uz padding.
+        */
+        #tablicaContainer .kontrola-tablica__header th:nth-child(2),
+        #tablicaContainer .kontrola-tablica__scroll tbody td:nth-child(2) {
+            overflow: visible;
+            text-overflow: clip;
+        }
+        /* Zaglavlje panela tablice: naslov + ikona strukture (isti modal-tablica kao ostale forme) */
+        .duznosnici-crud__tablica-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 0;
+        }
+        .duznosnici-crud__tablica-header-title {
+            margin: 0;
+            flex: 1 1 auto;
+            min-width: 0;
+            font-size: inherit;
+            font-weight: inherit;
+            line-height: 1.25;
+        }
+        /* Struktura: isti razred kao reload (0-Kontrole — okvir, sjene, hover/active). */
+        #btn_duznosnici_struktura.kontrola-panel-tablica__reload-btn {
+            flex-shrink: 0;
+        }
+        #btn_duznosnici_struktura.kontrola-panel-tablica__reload-btn:focus-visible {
+            outline: 2px solid var(--panel_header_text, currentColor);
+            outline-offset: 2px;
+        }
+        #btn_duznosnici_struktura.kontrola-panel-tablica__reload-btn svg {
+            flex-shrink: 0;
+            display: block;
+        }
+        /*
+         * Modal strukture: globalni .modal-tablica__dialog ima overflow:auto što s nativnim resize
+         * često „guši” proširenje (unutarnji scroll + vanjski resize). Ovdje: overflow:hidden na dijalogu,
+         * fleks-lanac do podnožja, jedan vertikalni scroll u .duznosnici-crud-modal-struktura__tree-wrap.
+         */
+        #modal_duznosnici_struktura.modal-tablica .modal-tablica__dialog.duznosnici-crud-modal-struktura__dialog {
+            overflow: hidden;
+            width: min(560px, 94vw);
+            height: min(68vh, 620px);
+            min-height: 260px;
+            min-width: 300px;
+            max-height: 95vh;
+            max-width: 95vw;
+        }
+        #modal_duznosnici_struktura.modal-tablica .modal-tablica__body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        /*
+         * Stablo hijerarhije: okomito po <li> — zadnji brat u nizu L-završetak (okomito do spoja s vodoravnim),
+         * bez „prevrnutog T” ispod zadnjeg retka. Vodoravni krak po retku. Imena nositelja: --c-blue-600.
+         */
+        #modal_duznosnici_struktura .duznosnici-crud-modal-struktura__tree-wrap {
+            --duzn_hier_line: var(--panel_border);
+            --duzn_hier_line_w: 2px;
+            /* Uvlak po razini stabla: 2× prijašnjih ~0.85rem (okomita + vodoravni krak u tom pojasu). */
+            --duzn_hier_pad: 1.7rem;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            color: inherit;
+            padding: 0.35rem 0.5rem 0.5rem;
+            box-sizing: border-box;
+        }
+        .duznosnici-crud-hijerarhija__tree {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            font-family: var(--tablica_podaci_font_family);
+            font-size: var(--tablica_podaci_font_size);
+            font-weight: var(--tablica_podaci_font_weight);
+            /* Visina spoja okomite + vodoravne linije (em = font retka tablice u ugniježđenim redovima) */
+            --duzn_hier_junc: calc(0.12rem + 0.18rem + (1em * 1.35 * 0.5));
+        }
+        /*
+         * Samo korijenska razina (direktna djeca ul.stabla): jedan red po vršnom dužnosniku —
+         * +30% font, bold (bez tekst-sjene radi čišćeg prikaza). Dublje razine ostaju običan font tablice.
+         */
+        .duznosnici-crud-hijerarhija__tree > li > .duznosnici-crud-hijerarhija__label {
+            font-size: calc(var(--tablica_podaci_font_size) * 1.3);
+            font-weight: 700;
+        }
+        .duznosnici-crud-hijerarhija__tree > li > .duznosnici-crud-hijerarhija__label .duznosnici-crud-hijerarhija__nositelji {
+            font-size: 0.88em;
+            font-weight: 700;
+        }
+        /*
+         * Druga razina (djeca vršnog dužnosnika): +20% font (od tablice), bold.
+         * Treća razina: samo bold, font opet veličina tablice (ne nasljeđuje 1.2× s razine 2).
+         * Četvrta i dublje (osim posebno definirane pete): težina kao tablica.
+         * Peta razina: 10% manji font od tablice, kurziv.
+         */
+        .duznosnici-crud-hijerarhija__tree > li > ul > li > .duznosnici-crud-hijerarhija__label {
+            font-size: calc(var(--tablica_podaci_font_size) * 1.2);
+            font-weight: 700;
+        }
+        .duznosnici-crud-hijerarhija__tree > li > ul > li > ul > li > .duznosnici-crud-hijerarhija__label {
+            font-size: var(--tablica_podaci_font_size);
+            font-weight: 700;
+        }
+        .duznosnici-crud-hijerarhija__tree > li > ul > li > ul > li > ul li > .duznosnici-crud-hijerarhija__label {
+            font-weight: var(--tablica_podaci_font_weight);
+        }
+        /* Peti nivo: peti <li> ispod korijenskog <li> (točno četiri ugniježđena <ul> iznad retka). */
+        .duznosnici-crud-hijerarhija__tree > li > ul > li > ul > li > ul > li > ul > li > .duznosnici-crud-hijerarhija__label {
+            font-size: calc(var(--tablica_podaci_font_size) * 0.9);
+            font-style: italic;
+            font-weight: var(--tablica_podaci_font_weight);
+        }
+        /* Isti red: nositelji inače vraćaju --label_font_size; ovdje skaliraju s 0.9× tablica. */
+        .duznosnici-crud-hijerarhija__tree > li > ul > li > ul > li > ul > li > ul > li > .duznosnici-crud-hijerarhija__label .duznosnici-crud-hijerarhija__nositelji {
+            font-size: 0.88em;
+            font-weight: var(--tablica_podaci_font_weight);
+        }
+        .duznosnici-crud-hijerarhija__tree ul {
+            list-style: none;
+            margin: 0;
+            padding: 0.06rem 0 0.06rem var(--duzn_hier_pad);
+            border-left: none;
+            box-sizing: border-box;
+        }
+        .duznosnici-crud-hijerarhija__item {
+            position: relative;
+            margin: 0;
+            padding: 0.12rem 0 0.12rem 0.7rem;
+        }
+        /* Okomita letva lijevo: ne završava ispod zadnjeg retka (nema „tail” kao kod bordera na cijelom ul). */
+        .duznosnici-crud-hijerarhija__tree ul > .duznosnici-crud-hijerarhija__item::after {
+            content: '';
+            position: absolute;
+            left: calc(-1 * var(--duzn_hier_pad));
+            width: var(--duzn_hier_line_w);
+            background: var(--duzn_hier_line);
+            border-radius: 1px;
+            top: 0;
+            z-index: 0;
+        }
+        .duznosnici-crud-hijerarhija__tree ul > .duznosnici-crud-hijerarhija__item:not(:last-child)::after {
+            bottom: 0;
+            height: auto;
+        }
+        .duznosnici-crud-hijerarhija__tree ul > .duznosnici-crud-hijerarhija__item:last-child::after {
+            height: calc(var(--duzn_hier_junc) + var(--duzn_hier_line_w) * 0.5);
+            bottom: auto;
+        }
+        /* Vodoravni krak (iznad okomitog na spoju zbog z-indexa) */
+        .duznosnici-crud-hijerarhija__tree ul > .duznosnici-crud-hijerarhija__item::before {
+            content: '';
+            position: absolute;
+            left: calc(-1 * var(--duzn_hier_pad) + var(--duzn_hier_line_w));
+            top: calc(var(--duzn_hier_junc) - (var(--duzn_hier_line_w) * 0.5));
+            width: calc(var(--duzn_hier_pad) - var(--duzn_hier_line_w));
+            height: var(--duzn_hier_line_w);
+            background: var(--duzn_hier_line);
+            border-radius: 1px;
+            z-index: 1;
+        }
+        /* Jedan red (uz wrap na uskom ekranu): dužnost — ⟶ — nositelj. */
+        .duznosnici-crud-hijerarhija__label {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            column-gap: 0.35rem;
+            row-gap: 0.12rem;
+            padding: 0.18rem 0.35rem 0.16rem 0.1rem;
+            line-height: 1.35;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+        }
+        .duznosnici-crud-hijerarhija__naziv {
+            display: inline;
+            line-height: 1.35;
+            color: inherit;
+        }
+        .duznosnici-crud-hijerarhija__strelica {
+            display: inline;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+            color: var(--label_text_muted);
+            white-space: nowrap;
+        }
+        .duznosnici-crud-hijerarhija__nositelji {
+            display: inline;
+            font-family: var(--font_family);
+            font-size: var(--label_font_size);
+            font-weight: var(--font_weight);
+            line-height: 1.35;
+            color: var(--c-blue-600);
+        }
+        .duznosnici-crud-hijerarhija__label:hover {
+            background: var(--c-blue-100);
+        }
+        .duznosnici-crud-hijerarhija__label--neaktivan {
+            opacity: 0.45;
+            text-decoration: line-through;
+            text-decoration-color: var(--c-gray-300);
+        }
+    </style>
 </head>
 <body>
 <div class="naslov-forme"><h2>Dužnosnici</h2></div>
 <div class="page-container">
-    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+    <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel kontrola-panel--resize-y mb-3 duznosnici-crud__panel-tablica">
+        <div class="kontrola-panel__header duznosnici-crud__tablica-header">
+            <h3 class="duznosnici-crud__tablica-header-title">Dužnosnici</h3>
+            <button type="button" id="btn_duznosnici_struktura" class="kontrola-panel-tablica__reload-btn" title="Struktura dužnosnika" aria-label="Struktura dužnosnika (grafički prikaz)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="16" y="16" width="5" height="5" rx="1"/>
+                    <rect x="3" y="16" width="5" height="5" rx="1"/>
+                    <rect x="9.5" y="3" width="5" height="5" rx="1"/>
+                    <path d="M5.5 16v-2.5a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1V16"/>
+                    <path d="M12 12.5V8"/>
+                </svg>
+            </button>
+        </div>
         <div class="kontrola-panel__body">
             <div id="tablicaContainer" class="kontrola-tablica"></div>
         </div>
@@ -34,6 +264,10 @@
                     </select>
                 </div>
             </div>
+            <div class="duznosnici-crud__edit-row duznosnici-crud__edit-row--aktivnost" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                <label class="kontrola-labela mb-0" for="edit_aktivnost" style="text-align: left;">Aktivnost</label>
+                <input type="checkbox" id="edit_aktivnost" class="kontrola-checkbox" checked disabled aria-label="Aktivnost">
+            </div>
         </div>
         <div class="kontrola-panel__footer duznosnici-crud__edit-footer">
             <div class="duznosnici-crud__footer-left">
@@ -46,9 +280,25 @@
         </div>
     </div>
 </div>
+
+<!-- Modal: struktura dužnosnika (isti obrasci kao modal-tablica u Transfer_Excel_CRUD / Loze) -->
+<div id="modal_duznosnici_struktura" class="modal-tablica" aria-hidden="true" role="dialog" aria-labelledby="modal_duznosnici_struktura_title">
+    <div class="modal-tablica__overlay"></div>
+    <div class="modal-tablica__dialog duznosnici-crud-modal-struktura__dialog">
+        <div class="modal-tablica__header" id="modal_duznosnici_struktura_title">Struktura dužnosnika</div>
+        <div class="modal-tablica__body">
+            <div id="duznosnici_crud_hijerarhija_tree_root" class="duznosnici-crud-modal-struktura__tree-wrap"></div>
+        </div>
+        <div class="modal-tablica__footer">
+            <button type="button" id="btn_modal_duznosnici_struktura_povratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+        </div>
+    </div>
+</div>
+
 <script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Razine.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/Duznosnici_CRUD.js?v=__VNLH_ASSET_V__"></script>

@@ -1,3 +1,31 @@
 <?php
+/**
+ * Stranica „Dužnosnici“: učitava HTML šablon i umeće ID dužnosti iz sesije (Master za select Odgovornost: povrat_cijelog_seta=1, ukljuci_mastera=1 u JS / 0-Razine).
+ * GET id_duznosnik_test (>0): koristi se umjesto $_SESSION['id_duznosnik'] (Alati_Meni_Test).
+ */
 require_once __DIR__ . '/require_login.php';
-vnlh_emit_html_file('Duznosnici_CRUD.html');
+require_once __DIR__ . '/vnlh_paths.php';
+
+$basename = 'Duznosnici_CRUD.html';
+$abs = __DIR__ . '/../html/' . basename($basename);
+if (!is_readable($abs)) {
+    http_response_code(500);
+    echo 'HTML template missing: ' . htmlspecialchars($basename, ENT_QUOTES, 'UTF-8');
+    return;
+}
+$raw = file_get_contents($abs);
+if ($raw === false) {
+    http_response_code(500);
+    echo 'HTML template read error.';
+    return;
+}
+
+$idTest = isset($_GET['id_duznosnik_test']) ? (int) $_GET['id_duznosnik_test'] : 0;
+$sessionDuznosnikId = ($idTest > 0)
+    ? $idTest
+    : (int) ($_SESSION['id_duznosnik'] ?? 0);
+
+$html = str_replace('__VNLH_SESSION_MASTER_ID_DUZNOSNIK__', (string) $sessionDuznosnikId, $raw);
+$html = vnlh_apply_asset_token_to_html($html);
+$html = vnlh_inject_chat_flag_script($html);
+echo vnlh_inject_sesija_pracenje_aktivnosti_script($html);

@@ -5,10 +5,12 @@
   Prvi panel – tablica: Upis/izmjena (checkbox), Brisanje sloga (checkbox), Funkcionalnost (bez podnožja).
   Drugi panel – zaglavlje „Prikaz stupnjeva po obredu“, tablica Obred + ID dozvoljenih stupnjeva (ellipsis u retku); podnožje: CRUD tipke (Upis, Izbriši, Povratak).
   Oba panela: data-resize-max-vh="none" – vertikalni resize nije ograničen na 90% ekrana; dugačka forma – pomicanje prstom (0-Kontrole.js initPanelResizeBar).
-  Ovisnosti: 0-Common.css, 0-Kontrole.css, Duznosnici_Ogranicenja_CRUD.css; 0-Kontrole.js, 0-Common.js, 0-Poruke_Tekstovi.js, Duznosnici_Ogranicenja_CRUD.js.
+  Ovisnosti: 0-Common.css, 0-Kontrole.css, Duznosnici_Ogranicenja_CRUD.css; 0-Kontrole.js, 0-Common.js, 0-Razine.js (select dužnosnika), 0-Poruke*.js, Duznosnici_Ogranicenja_CRUD.js.
+  Master za select: window.VNLH_OGRANICENJA_MASTER_ID (PHP: __VNLH_SESSION_MASTER_ID_DUZNOSNIK__).
 -->
 <html lang="hr">
 <head>
+    <script>window.VNLH_OGRANICENJA_MASTER_ID=__VNLH_SESSION_MASTER_ID_DUZNOSNIK__;</script>
     <meta charset="UTF-8">
     <title>Ograničenja dužnosnika</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -90,6 +92,7 @@
 <script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Razine.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/Duznosnici_Ogranicenja_CRUD.js?v=__VNLH_ASSET_V__"></script>

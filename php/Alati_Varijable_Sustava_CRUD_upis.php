@@ -8,7 +8,7 @@ require_once __DIR__ . '/vnlh_varijable_sustava_razvoj.php';
 //
 // Ulaz (POST): varijabla, naziv (obavezno); opis (opcionalno, prazno → NULL u bazi)
 //   id (opcionalno): ako je > 0 i u tablici još nema retka s tim id-em, INSERT koristi taj id (rupa / ručni broj);
-//   ako id nema ili je 0, koristi se COALESCE(MAX(id),0)+1. Zauzet id → 002 (isti kod kao duplikat varijable).
+//   ako id nema ili je 0, koristi se COALESCE(MAX(id),0)+1. Zauzet PK (id) → 002 (ne provjerava se jedinstvenost stupca varijabla — to je „Vrijednost”, nije PK).
 // POST razvoj: 1 samo za administratora (redak id 1002); bez uključenog razvoja id mora biti 0–999.
 // Izlaz (TEXT): OK | 100 | 105 | 002 | 200,<errno>
 // =====================================================
@@ -42,24 +42,7 @@ if (mb_strlen($opis, 'UTF-8') > 2048) {
     exit;
 }
 
-$varNorm = mb_strtolower($varijabla, 'UTF-8');
-
-// --- Blok: Provjera duplikata varijable (case-insensitive) i izračun id ---
-$stmt = $mysqli->prepare('SELECT id FROM sustav_varijable WHERE LOWER(varijabla) = ? LIMIT 1');
-if (!$stmt) {
-    echo '200,' . $mysqli->errno;
-    exit;
-}
-$stmt->bind_param('s', $varNorm);
-$stmt->execute();
-$stmt->store_result();
-if ($stmt->num_rows > 0) {
-    echo '002';
-    $stmt->close();
-    $mysqli->close();
-    exit;
-}
-$stmt->close();
+// --- Blok: Izračun id (PK) — jedinstvenost stupca varijabla (Vrijednost u UI-ju) se ne provjerava; u bazi nema UNIQUE na tom stupcu.
 
 $idK = isset($_SESSION['id_korisnik']) ? (int) $_SESSION['id_korisnik'] : 0;
 $zeliRazvoj = isset($_POST['razvoj']) && (string) $_POST['razvoj'] === '1';
