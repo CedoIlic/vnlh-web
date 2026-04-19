@@ -75,5 +75,6 @@ var MODAL_MESSAGES = {
   '121': '121|Korisničko sučelje|(OK)|error||Funkcija nije implementirana.',   /* Izbor dužnosnika – funkcija nije implementirana */
   '122': '122|Korisničko sučelje|OK,(Cancel)|warning||Jesi li siguran da želiš izbrisati sva prava koja ima ovaj dužnosnik?',   /* Duznosnici_Prava_CRUD Izbriši: upozorenje prije brisanja svih prava; tipke OK i Odustani, default Odustani */
   '123': '123|Korisničko sučelje|OK,(Cancel)|warning||Brisanje dužnosti ujedno će obrisati vezana prava i ograničenja. Ako je ovo bila jedina dužnost nekog korisnika biti će obrisani i njegovi login podaci, jesi li siguran da želiš brisati dužnosnika?',   /* Duznosnici_CRUD Izbriši: kaskada (prava, ograničenja, veze korisnik–dužnost, login ako jedina dužnost); OK / Odustani, default Odustani */
+  '154': '154|Baza podataka|(OK)|error||Shema tablica za ovu formu nije ažurna (nedostaje stupac, npr. redosljed). Pokreni u bazi sql/sustav_odgovori_razvoja_dodaj_redosljed_obje_tablice.sql (ili pojedinačno *_boje_* i *_poruke_*), zatim osvježi stranicu.',
   '200': '200|Poruka SQL baze|(OK)|error||Greška SQL baze podataka, kod: #1'             /* SQL greška; #1 = sql kod(ovi) */
 };

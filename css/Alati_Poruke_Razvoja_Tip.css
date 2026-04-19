@@ -1,0 +1,331 @@
+/* Alati_Poruke_Razvoja_Tip – panel uređivanja, dva pickera boja (tekst/podloga), modal color+alpha */
+
+/* Tablica: stupac fg = puna ćelija uzorkom; stupac bg = hex kod centrirano (boja slova = fg) */
+#tablicaContainer .alati-poruke-razvoja-tip__td-fg-swatch {
+  vertical-align: middle;
+  min-height: 2rem;
+}
+
+#tablicaContainer .alati-poruke-razvoja-tip__td-bg-kod {
+  vertical-align: middle;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  letter-spacing: 0.02em;
+  word-break: break-all;
+}
+
+.alati-poruke-razvoja-tip__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.alati-poruke-razvoja-tip__edit-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+/* Obje boje (polje + ikona) u jednom vodoravnom redu (na uskom: scroll).
+   overflow-x: auto implicitno daje overflow-y: auto pa se vanjska sjena kontrola (box-shadow)
+   reže uz rub scroll-containera; dovoljan padding unutra ostavlja prostor za sjenu i fokus. */
+.alati-poruke-razvoja-tip__edit-row--sve-u-redu {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* ~ prostor za --button_outer_shadow / --edit_focus_shadow (npr. 0 6px 16px) + fokus na inputu */
+  padding: 0.5rem 0.5rem 0.85rem 0.5rem;
+  box-sizing: border-box;
+}
+
+.alati-poruke-razvoja-tip__boja-wrap {
+  flex: 1 1 160px;
+  min-width: 11rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+/* Uski blok uz ostale kontrole (širina kao stupci ID / Redosljed u tablici) */
+.alati-poruke-razvoja-tip__boja-wrap--redosljed {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 100px;
+}
+
+.alati-poruke-razvoja-tip__redosljed-edit {
+  width: 100%;
+  max-width: 100px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.alati-poruke-razvoja-tip__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.alati-poruke-razvoja-tip__cell--icon {
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
+
+.alati-poruke-razvoja-tip__boja-display {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  color: var(--edit_text);
+  cursor: default;
+  text-align: center;
+}
+
+.alati-poruke-razvoja-tip__boja-icon-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  color: var(--edit_text);
+  cursor: pointer;
+  box-shadow: var(--button_outer_shadow);
+}
+
+.alati-poruke-razvoja-tip__boja-icon-btn:disabled {
+  color: var(--label_text_disabled);
+  border-color: var(--label_text_disabled);
+  background: var(--edit_bg);
+  cursor: default;
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+@media (hover: hover) {
+  .alati-poruke-razvoja-tip__boja-icon-btn:hover:not(:disabled) {
+    border-color: var(--edit_border_focus);
+    background: var(--edit_bg_hover, var(--c-gray-100));
+    box-shadow: var(--edit_focus_shadow);
+  }
+}
+
+.alati-poruke-razvoja-tip__boja-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.alati-poruke-razvoja-tip__edit-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.alati-poruke-razvoja-tip__footer-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.alati-poruke-razvoja-tip__footer-right {
+  margin-left: auto;
+}
+
+/* --- Poruke (druga tablica + edit): jedan red; redosljed/kod −20% (80px); select 150px; poruka edit raste --- */
+.alati-poruke-razvoja-tip__poruke-edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alati-poruke-razvoja-tip__poruke-edit-row--gornji {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Samo u panelu poruka: uža polja od tabličnih 100px (80px ≈ −20%) */
+.alati-poruke-razvoja-tip__poruke-edit-row--gornji .alati-poruke-razvoja-tip__boja-wrap--redosljed {
+  width: 80px;
+  min-width: 80px;
+}
+
+.alati-poruke-razvoja-tip__poruke-edit-row--gornji .alati-poruke-razvoja-tip__redosljed-edit {
+  max-width: 80px;
+}
+
+.alati-poruke-razvoja-tip__poruke-kod-wrap {
+  flex: 0 0 auto;
+  width: 80px;
+  min-width: 80px;
+}
+
+.alati-poruke-razvoja-tip__poruke-kod-edit {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: right;
+}
+
+.alati-poruke-razvoja-tip__poruke-boja-field {
+  flex: 0 0 150px;
+  width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Kontrola select (0-Kontrole) – fiksna širina bloka boje */
+.alati-poruke-razvoja-tip__poruke-boja-field .alati-poruke-razvoja-tip__poruke-boja-kontrola.kontrola-select {
+  width: 100%;
+  max-width: 150px;
+  box-sizing: border-box;
+  /* Bez column-gap: pozadina na __display ide do lijevog ruba caret zone (0-Kontrole inače ostavlja --select_caret_gap_x). */
+  column-gap: 0;
+}
+
+.alati-poruke-razvoja-tip__poruke-msg-field {
+  flex: 1 1 10rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.alati-poruke-razvoja-tip__poruke-msg-edit {
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.alati-poruke-razvoja-tip__poruke-edit-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.alati-poruke-razvoja-tip__poruke-footer-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Poruke: Boja (ID) + Poruka (tekst) – ista fg/bg paleta iz JOIN-a kad postoji boja */
+#tablicaPorukeContainer .alati-poruke-razvoja-tip__td-poruke-paleta {
+  vertical-align: middle;
+}
+
+#tablicaPorukeContainer .kontrola-tablica__scroll table tbody tr td:nth-child(4) {
+  text-align: center;
+  font-weight: 600;
+}
+
+#tablicaPorukeContainer .kontrola-tablica__scroll table tbody tr td:nth-child(5) {
+  text-align: left;
+  font-weight: inherit;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Modal picker (isti obrasci kao Clanovi_Zastavice_CRUD) */
+.alati-poruke-razvoja-tip__picker-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  color: var(--text);
+}
+
+.alati-poruke-razvoja-tip__picker-modal[hidden] {
+  display: none;
+}
+
+.alati-poruke-razvoja-tip__picker-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.alati-poruke-razvoja-tip__picker-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--edit_bg);
+  color: var(--edit_text);
+  border-radius: var(--edit_radius, 8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+  width: min(338px, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  min-width: 0;
+}
+
+.alati-poruke-razvoja-tip__picker-label {
+  margin: 0;
+  font-weight: 700;
+  color: var(--edit_text);
+}
+
+.alati-poruke-razvoja-tip__picker-color {
+  width: 100%;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.alati-poruke-razvoja-tip__picker-alpha {
+  width: 100%;
+}
+
+.alati-poruke-razvoja-tip__picker-preview {
+  width: 100%;
+  height: 2.5rem;
+  border: 1px solid var(--edit_border);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 1);
+}
+
+.alati-poruke-razvoja-tip__picker-hex {
+  margin: 0;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  color: var(--edit_text);
+}
+
+.alati-poruke-razvoja-tip__picker-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}

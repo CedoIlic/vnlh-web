@@ -1084,6 +1084,9 @@
           optEl.dataset.value = opt.value;
           optEl.setAttribute('role', 'option');
           optEl.setAttribute('aria-selected', opt.value === nativeSel.value ? 'true' : 'false');
+          /* Inline boja na <option> (npr. paleta u Alati_Poruke_Razvoja_Tip) – prikaži u padajućoj listi. */
+          if (opt.style && opt.style.backgroundColor) optEl.style.backgroundColor = opt.style.backgroundColor;
+          if (opt.style && opt.style.color) optEl.style.color = opt.style.color;
           if (opt.disabled) {
             optEl.style.opacity = '0.5';
             optEl.style.cursor = 'default';

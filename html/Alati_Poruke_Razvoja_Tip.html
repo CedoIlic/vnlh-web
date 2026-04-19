@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tipovi poruka za odgovor razvoja</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/Alati_Poruke_Razvoja_Tip.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Tipovi poruka za odgovor razvoja</h2></div>
+<div class="page-container">
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body alati-poruke-razvoja-tip__edit-body">
+            <!-- Jedan red: redosljed, zatim boja teksta + ikona, boja podloge + ikona (ID u tablici). -->
+            <div class="alati-poruke-razvoja-tip__edit-row alati-poruke-razvoja-tip__edit-row--sve-u-redu">
+                <div class="alati-poruke-razvoja-tip__boja-wrap alati-poruke-razvoja-tip__boja-wrap--redosljed">
+                    <div class="alati-poruke-razvoja-tip__cell">
+                        <label class="kontrola-labela mb-0" for="redosljed_edit">Redosljed</label>
+                        <input id="redosljed_edit" type="number" class="kontrola-edit alati-poruke-razvoja-tip__redosljed-edit" min="0" max="255" step="1" value="0" inputmode="numeric" aria-label="Redosljed (0–255)">
+                    </div>
+                </div>
+                <div class="alati-poruke-razvoja-tip__boja-wrap">
+                    <div class="alati-poruke-razvoja-tip__cell">
+                        <label class="kontrola-labela mb-0" for="fg_boja_display">Boja teksta</label>
+                        <input id="fg_boja_display" type="text" class="kontrola-edit alati-poruke-razvoja-tip__boja-display" readonly aria-label="Boja teksta">
+                    </div>
+                    <div class="alati-poruke-razvoja-tip__cell alati-poruke-razvoja-tip__cell--icon">
+                        <button type="button" id="fg_boja_picker_btn" class="alati-poruke-razvoja-tip__boja-icon-btn" aria-label="Odaberi boju teksta">
+                            <svg class="alati-poruke-razvoja-tip__boja-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.38 3.39a15.995 15.995 0 0 0 4.769-4.769 3.39 3.39 0 0 0-3.39-3.39 15.995 15.995 0 0 0-4.77 4.77 3.39 3.39 0 0 0 3.39 3.39z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="alati-poruke-razvoja-tip__boja-wrap">
+                    <div class="alati-poruke-razvoja-tip__cell">
+                        <label class="kontrola-labela mb-0" for="bg_boja_display">Boja podloge</label>
+                        <input id="bg_boja_display" type="text" class="kontrola-edit alati-poruke-razvoja-tip__boja-display" readonly aria-label="Boja podloge">
+                    </div>
+                    <div class="alati-poruke-razvoja-tip__cell alati-poruke-razvoja-tip__cell--icon">
+                        <button type="button" id="bg_boja_picker_btn" class="alati-poruke-razvoja-tip__boja-icon-btn" aria-label="Odaberi boju podloge">
+                            <svg class="alati-poruke-razvoja-tip__boja-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.38 3.39a15.995 15.995 0 0 0 4.769-4.769 3.39 3.39 0 0 0-3.39-3.39 15.995 15.995 0 0 0-4.77 4.77 3.39 3.39 0 0 0 3.39 3.39z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer alati-poruke-razvoja-tip__edit-footer">
+            <div class="alati-poruke-razvoja-tip__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+        </div>
+    </div>
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaPorukeContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel_poruke">
+        <div class="kontrola-panel__body alati-poruke-razvoja-tip__poruke-edit-body">
+            <!-- Jedan red: redosljed, kod, boja (150px), poruka (edit); select prikazuje odabranu boju. -->
+            <div class="alati-poruke-razvoja-tip__poruke-edit-row alati-poruke-razvoja-tip__poruke-edit-row--gornji">
+                <div class="alati-poruke-razvoja-tip__boja-wrap alati-poruke-razvoja-tip__boja-wrap--redosljed">
+                    <div class="alati-poruke-razvoja-tip__cell">
+                        <label class="kontrola-labela mb-0" for="poruke_redosljed_edit">Redosljed</label>
+                        <input id="poruke_redosljed_edit" type="number" class="kontrola-edit alati-poruke-razvoja-tip__redosljed-edit" min="0" max="255" step="1" value="0" inputmode="numeric" aria-label="Redosljed poruke (0–255)">
+                    </div>
+                </div>
+                <div class="alati-poruke-razvoja-tip__boja-wrap alati-poruke-razvoja-tip__poruke-kod-wrap">
+                    <div class="alati-poruke-razvoja-tip__cell">
+                        <label class="kontrola-labela mb-0" for="poruke_kod_edit">Kod</label>
+                        <input id="poruke_kod_edit" type="number" class="kontrola-edit alati-poruke-razvoja-tip__poruke-kod-edit" min="1" max="99" step="1" value="1" inputmode="numeric" aria-label="Kod poruke (1–99)">
+                    </div>
+                </div>
+                <div class="alati-poruke-razvoja-tip__poruke-boja-field">
+                    <label class="kontrola-labela mb-0" for="poruke_boja_select">Boja</label>
+                    <div class="kontrola-select alati-poruke-razvoja-tip__poruke-boja-kontrola">
+                        <select id="poruke_boja_select" aria-label="Boja poruke (iz palete)">
+                            <option value="">— Bez boje —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="alati-poruke-razvoja-tip__poruke-msg-field">
+                    <label class="kontrola-labela mb-0" for="poruke_tekst_edit">Poruka</label>
+                    <input id="poruke_tekst_edit" type="text" class="kontrola-edit alati-poruke-razvoja-tip__poruke-msg-edit" maxlength="250" placeholder="Tekst poruke…" aria-label="Tekst poruke">
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer alati-poruke-razvoja-tip__poruke-edit-footer">
+            <div class="alati-poruke-razvoja-tip__poruke-footer-left">
+                <button type="button" id="btnPorukeUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnPorukeIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="alati-poruke-razvoja-tip__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Jedan color+alpha picker za fg ili bg (odredi gumbom) -->
+<div id="boja_picker_modal" class="alati-poruke-razvoja-tip__picker-modal" role="dialog" aria-label="Odabir boje" aria-modal="true" hidden>
+    <div class="alati-poruke-razvoja-tip__picker-backdrop"></div>
+    <div class="alati-poruke-razvoja-tip__picker-box">
+        <p class="alati-poruke-razvoja-tip__picker-label" id="boja_picker_title">Boja</p>
+        <input type="color" id="boja_picker_color" value="#000000" class="alati-poruke-razvoja-tip__picker-color">
+        <p class="alati-poruke-razvoja-tip__picker-label">Prozirnost</p>
+        <input type="range" id="boja_picker_alpha" min="0" max="255" value="255" class="alati-poruke-razvoja-tip__picker-alpha">
+        <p class="alati-poruke-razvoja-tip__picker-label">Pregled</p>
+        <div id="boja_picker_preview" class="alati-poruke-razvoja-tip__picker-preview" aria-hidden="true"></div>
+        <p class="alati-poruke-razvoja-tip__picker-hex" id="boja_picker_hex"></p>
+        <div class="alati-poruke-razvoja-tip__picker-actions">
+            <button type="button" id="boja_picker_ok" class="kontrola-btn" autofocus><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">U redu</span></span></span></button>
+            <button type="button" id="boja_picker_cancel" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/Alati_Poruke_Razvoja_Tip.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>
