@@ -7,6 +7,17 @@ header('Cache-Control: no-store, no-cache, must-revalidate');
 header('Pragma: no-cache');
 
 $html = file_get_contents(__DIR__ . '/../html/Alati_Meni_Test.html');
+/* Isto kao Duznosnici_Ogranicenja_CRUD.php: Master za 0-Razine (GET id_duznosnik_test > 0) i id korisnika za var. 1002. */
+$idTest = isset($_GET['id_duznosnik_test']) ? (int) $_GET['id_duznosnik_test'] : 0;
+$masterId = ($idTest > 0)
+    ? $idTest
+    : (int) ($_SESSION['id_duznosnik'] ?? 0);
+$idKorisnik = (int) ($_SESSION['id_korisnik'] ?? 0);
+$html = str_replace(
+    ['__VNLH_SESSION_MASTER_ID_DUZNOSNIK__', '__VNLH_ID_KORISNIK__'],
+    [(string) $masterId, (string) $idKorisnik],
+    $html
+);
 $html = vnlh_apply_asset_token_to_html($html);
 /* Pravo na chat ikonu u naslovu (0-Poruke.js); ručni echo stranice ne prolaze vnlh_emit_html_file. */
 $html = vnlh_inject_chat_flag_script($html);

@@ -611,6 +611,24 @@
   align-items: center;
 }
 
+/* Red: select ID izvršnog menija + toggle „Svi“ (klase poruke__toggle-* iz 0-Poruke.css) */
+.alati-meni-test__izvrsni-select-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.alati-meni-test__izvrsni-select-grow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.alati-meni-test__svi-toggle-wrap {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
 .alati-meni-test__grupa--full {
   grid-column: 1 / -1;
   grid-row: 2;

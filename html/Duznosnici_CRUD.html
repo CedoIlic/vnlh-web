@@ -24,6 +24,61 @@
             overflow: visible;
             text-overflow: clip;
         }
+        /* Kolona „R.” (3. stupac): usko zaglavlje, bez elipse. */
+        #tablicaContainer .kontrola-tablica__header th:nth-child(3),
+        #tablicaContainer .kontrola-tablica__scroll tbody td:nth-child(3) {
+            overflow: visible;
+            text-overflow: clip;
+        }
+        /* Edit Razina: širina 100px, broj desno (1–99); placeholder „?”. */
+        .duznosnici-crud__edit-razina {
+            width: 100%;
+            max-width: 100%;
+            text-align: right;
+            box-sizing: border-box;
+        }
+        /* Naziv dužnosnika + Razina u istom redu (razina desno). */
+        .duznosnici-crud__edit-row--naziv-razina {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .duznosnici-crud__edit-col--naziv {
+            flex: 1 1 200px;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+        .duznosnici-crud__edit-col--razina {
+            flex: 0 0 100px;
+            width: 100px;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.25rem;
+        }
+        .duznosnici-crud__edit-col--razina .kontrola-labela {
+            text-align: right;
+            width: 100%;
+        }
+        @media (max-width: 480px) {
+            .duznosnici-crud__edit-row--naziv-razina {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .duznosnici-crud__edit-col--razina {
+                flex: 1 1 auto;
+                width: 100%;
+            }
+            .duznosnici-crud__edit-col--razina .kontrola-labela {
+                text-align: left;
+            }
+        }
         /* Zaglavlje panela tablice: naslov + ikona strukture (isti modal-tablica kao ostale forme) */
         .duznosnici-crud__tablica-header {
             display: flex;
@@ -100,42 +155,42 @@
             --duzn_hier_junc: calc(0.12rem + 0.18rem + (1em * 1.35 * 0.5));
         }
         /*
-         * Samo korijenska razina (direktna djeca ul.stabla): jedan red po vršnom dužnosniku —
-         * +30% font, bold (bez tekst-sjene radi čišćeg prikaza). Dublje razine ostaju običan font tablice.
+         * Veličina fonta u stablu: JS dodaje obje klase (baza + --tier-N). Mora biti .label.tier-N (2 klase),
+         * inače kasnije pravilo .duznosnici-crud-hijerarhija__label { font-size: inherit } poništava tier (ista specifičnost).
+         * R1 +30% bold; R2 +15% bez bolda; R3 bold bazni; R4 normalna težina bazni; R5 −15% kurziv.
          */
-        .duznosnici-crud-hijerarhija__tree > li > .duznosnici-crud-hijerarhija__label {
+        .duznosnici-crud-hijerarhija__label.duznosnici-crud-hijerarhija__label--tier-1 {
             font-size: calc(var(--tablica_podaci_font_size) * 1.3);
             font-weight: 700;
         }
-        .duznosnici-crud-hijerarhija__tree > li > .duznosnici-crud-hijerarhija__label .duznosnici-crud-hijerarhija__nositelji {
+        .duznosnici-crud-hijerarhija__label.duznosnici-crud-hijerarhija__label--tier-1 .duznosnici-crud-hijerarhija__nositelji {
             font-size: 0.88em;
             font-weight: 700;
         }
-        /*
-         * Druga razina (djeca vršnog dužnosnika): +20% font (od tablice), bold.
-         * Treća razina: samo bold, font opet veličina tablice (ne nasljeđuje 1.2× s razine 2).
-         * Četvrta i dublje (osim posebno definirane pete): težina kao tablica.
-         * Peta razina: 10% manji font od tablice, kurziv.
-         */
-        .duznosnici-crud-hijerarhija__tree > li > ul > li > .duznosnici-crud-hijerarhija__label {
-            font-size: calc(var(--tablica_podaci_font_size) * 1.2);
-            font-weight: 700;
+        .duznosnici-crud-hijerarhija__label.duznosnici-crud-hijerarhija__label--tier-2 {
+            font-size: calc(var(--tablica_podaci_font_size) * 1.15);
+            font-weight: var(--tablica_podaci_font_weight);
         }
-        .duznosnici-crud-hijerarhija__tree > li > ul > li > ul > li > .duznosnici-crud-hijerarhija__label {
+        .duznosnici-crud-hijerarhija__label.duznosnici-crud-hijerarhija__label--tier-2 .duznosnici-crud-hijerarhija__nositelji {
+            font-weight: var(--font_weight);
+        }
+        .duznosnici-crud-hijerarhija__label.duznosnici-crud-hijerarhija__label--tier-3 {
             font-size: var(--tablica_podaci_font_size);
             font-weight: 700;
         }
-        .duznosnici-crud-hijerarhija__tree > li > ul > li > ul > li > ul li > .duznosnici-crud-hijerarhija__label {
+        .duznosnici-crud-hijerarhija__label.duznosnici-crud-hijerarhija__label--tier-3 .duznosnici-crud-hijerarhija__nositelji {
+            font-weight: 700;
+        }
+        .duznosnici-crud-hijerarhija__label.duznosnici-crud-hijerarhija__label--tier-4 {
+            font-size: var(--tablica_podaci_font_size);
             font-weight: var(--tablica_podaci_font_weight);
         }
-        /* Peti nivo: peti <li> ispod korijenskog <li> (točno četiri ugniježđena <ul> iznad retka). */
-        .duznosnici-crud-hijerarhija__tree > li > ul > li > ul > li > ul > li > ul > li > .duznosnici-crud-hijerarhija__label {
-            font-size: calc(var(--tablica_podaci_font_size) * 0.9);
+        .duznosnici-crud-hijerarhija__label.duznosnici-crud-hijerarhija__label--tier-5 {
+            font-size: calc(var(--tablica_podaci_font_size) * 0.85);
             font-style: italic;
             font-weight: var(--tablica_podaci_font_weight);
         }
-        /* Isti red: nositelji inače vraćaju --label_font_size; ovdje skaliraju s 0.9× tablica. */
-        .duznosnici-crud-hijerarhija__tree > li > ul > li > ul > li > ul > li > ul > li > .duznosnici-crud-hijerarhija__label .duznosnici-crud-hijerarhija__nositelji {
+        .duznosnici-crud-hijerarhija__label.duznosnici-crud-hijerarhija__label--tier-5 .duznosnici-crud-hijerarhija__nositelji {
             font-size: 0.88em;
             font-weight: var(--tablica_podaci_font_weight);
         }
@@ -249,11 +304,17 @@
     </div>
     <div class="kontrola-panel mb-3" id="edit_panel">
         <div class="kontrola-panel__body duznosnici-crud__edit-body" style="display: flex; flex-direction: column; gap: 1rem;">
-            <div class="duznosnici-crud__edit-row" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
-                <label class="kontrola-labela mb-0" for="edit_naziv" style="text-align: left;">Naziv dužnosnika</label>
-                <div class="kontrola-edit-delete">
-                    <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv dužnosnika...">
-                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+            <div class="duznosnici-crud__edit-row duznosnici-crud__edit-row--naziv-razina">
+                <div class="duznosnici-crud__edit-col duznosnici-crud__edit-col--naziv">
+                    <label class="kontrola-labela mb-0" for="edit_naziv">Naziv dužnosnika</label>
+                    <div class="kontrola-edit-delete">
+                        <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv dužnosnika...">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    </div>
+                </div>
+                <div class="duznosnici-crud__edit-col duznosnici-crud__edit-col--razina">
+                    <label class="kontrola-labela mb-0" for="edit_razina">Razina</label>
+                    <input id="edit_razina" type="text" class="kontrola-edit duznosnici-crud__edit-razina" inputmode="numeric" maxlength="2" placeholder="?" autocomplete="off" aria-label="Razina (1–99)">
                 </div>
             </div>
             <div class="duznosnici-crud__edit-row" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">

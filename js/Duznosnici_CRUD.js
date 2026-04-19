@@ -1,6 +1,6 @@
-/* Duznosnici_CRUD.js – tablica (Dužnosnik, A., Odgovornost) + edit: naziv, Odgovornost, Aktivnost. Tablica: duznosnici; checkbox u koloni A. odmah se snima; panel šalje aktivnost pri Upis/Izmjeni.
+/* Duznosnici_CRUD.js – tablica (Dužnosnik, A., R., Odgovornost) + edit: naziv, Razina (1–99 / prazno=0), Odgovornost, Aktivnost. Tablica: duznosnici; checkbox u koloni A. odmah se snima; panel šalje aktivnost pri Upis/Izmjeni.
    Odgovornost (0-Razine): Master = VNLH_SESSION_ID_DUZNOSNIK (logirani dužnosnik); povrat_cijelog_seta = 1; ukljuci_mastera = 1 (cijeli skup dužnosnika uključujući Mastera; smjer na serveru se ignorira).
-   Ikona strukture u zaglavlju panela tablice: modal-tablica (0-Kontrole) „Struktura dužnosnika“, Povratak u podnožju; stablo iz Duznosnici_CRUD_sve.php (naziv + nositelji_imena iz sustav_korisnici/clanovi). */
+   Ikona strukture u zaglavlju panela tablice: modal-tablica (0-Kontrole) „Struktura dužnosnika“, Povratak u podnožju; stablo iz Duznosnici_CRUD_sve.php (naziv + nositelji_imena). Font retka: kolona razina (tier 1–5; 6–99 = isti prikaz kao 5); ako je razina 0, dubina u grafu. */
 // @ts-nocheck
 (function () {
   'use strict';
@@ -23,18 +23,20 @@
 // 11) mobitel_prikaz (0–255, default 1) - Prikaz kolone na mobilnim uređajima.
 // 12) cell_readonly (0 | 1) - Za type "b": 1 = checkbox nije klikabilan. Default: 0.
 //
-// Red podataka u tablici (KontroleTablica): [ naziv, aktivnost (0|1), nadredjeni_naziv, id ] — četvrti element je skriveni ključ za getRowId.
+// Red podataka u tablici (KontroleTablica): [ naziv, aktivnost (0|1), razina (prazno ako 0), nadredjeni_naziv, id ] — peti element je skriveni ključ za getRowId.
 // Kolona „Dužnosnik”: prikaz naziva dužnosnika (tekst).
 // Kolona „A.”: aktivnost 0/1 kao checkbox (točka samo u zaglavlju THEAD, ne uz sam checkbox); promjena u tablici odmah na Duznosnici_CRUD_aktivnost.php; u panelu checkbox „Aktivnost” pri Upis/Izmjeni.
+// Kolona „R.”: razina (1–99 iz baze; 0 = prazna ćelija).
 // Kolona „Odgovornost”: tekst nadređenog (nadredjeni_naziv iz JOIN-a).
 //
   const DuznosniciCRUD = {
-    Broj_Kolona: 3,
+    Broj_Kolona: 4,
     Reload_Ikona: 1,
     CrudCssPrefix: 'duznosnici-crud',
     Tablica_Zaglavlje: [
       { key: 'naziv', title: 'Dužnosnik', SQL_Naziv: 'naziv', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'aktivnost', title: 'A.', SQL_Naziv: 'aktivnost', sortable: 1, sortable_icon: 0, type: 'b', width: 40, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1, cell_readonly: 0 },
+      { key: 'razina', title: 'R.', SQL_Naziv: 'razina', sortable: 1, sortable_icon: 0, type: 't', width: 44, suffix: '', align: 'R', row_align: 'R', mobitel_prikaz: 1 },
       { key: 'odgovornost', title: 'Odgovornost', SQL_Naziv: 'nadredjeni_naziv', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
     ]
   };
@@ -53,7 +55,12 @@
   }
 
   CommonCRUD.initTablica('tablicaContainer', DuznosniciCRUD, {
-    getRowId: function (row) { return row && row.length > 3 ? row[3] : (row && row.length > 2 ? row[2] : row && row[1]); },
+    getRowId: function (row) {
+      if (!row || !row.length) return undefined;
+      if (row.length > 4) return row[4];
+      if (row.length > 3) return row[3];
+      return row.length > 2 ? row[2] : row[1];
+    },
     onReady: function (api) { tablicaApi = api; },
     onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
   });
@@ -61,10 +68,13 @@
   var selectOdgovornost = document.getElementById('select_odgovornost');
   var chkEditAktivnost = document.getElementById('edit_aktivnost');
   var labelEditAktivnost = document.querySelector('label[for="edit_aktivnost"]');
+  var editRazina = document.getElementById('edit_razina');
+  var labelEditRazina = document.querySelector('label[for="edit_razina"]');
 
   function clearControlsFromSelection() {
     var editEl = document.getElementById('edit_naziv');
     if (editEl) { editEl.value = ''; editEl.dispatchEvent(new Event('input', { bubbles: true })); }
+    if (editRazina) { editRazina.value = ''; }
     if (selectOdgovornost) { selectOdgovornost.value = '0'; }
     if (chkEditAktivnost) { chkEditAktivnost.checked = true; }
   }
@@ -81,7 +91,7 @@
     var data = tablicaApi.getData();
     var idNadredjeni = 0;
     for (var i = 0; i < data.length; i++) {
-      if (data[i][3] == id) {
+      if (data[i][4] == id) {
         var editEl = document.getElementById('edit_naziv');
         if (editEl) { editEl.value = data[i][0] != null ? data[i][0] : ''; editEl.dispatchEvent(new Event('input', { bubbles: true })); }
         for (var j = 0; j < duznosniciLista.length; j++) {
@@ -90,6 +100,11 @@
             if (chkEditAktivnost) {
               var ak = duznosniciLista[j].aktivnost != null ? Number(duznosniciLista[j].aktivnost) : 1;
               chkEditAktivnost.checked = (ak === 1);
+            }
+            if (editRazina) {
+              var rz = duznosniciLista[j].razina != null ? Number(duznosniciLista[j].razina) : 0;
+              if (!isNaN(rz) && rz >= 1 && rz <= 99) editRazina.value = String(rz);
+              else editRazina.value = '';
             }
             break;
           }
@@ -141,6 +156,12 @@
       else chkEditAktivnost.setAttribute('disabled', 'disabled');
     }
     if (labelEditAktivnost) labelEditAktivnost.classList.toggle('kontrola-labela--disabled', !imaSadrzaj);
+    if (editRazina) {
+      editRazina.disabled = !imaSadrzaj;
+      if (imaSadrzaj) editRazina.removeAttribute('disabled');
+      else editRazina.setAttribute('disabled', 'disabled');
+    }
+    if (labelEditRazina) labelEditRazina.classList.toggle('kontrola-labela--disabled', !imaSadrzaj);
 
     // Upis bez odabranog retka: čim korisnik počne tipkati, jednom se učitaju opcije Odgovornosti (Master iz sesije).
     if (!imaSelekciju) {
@@ -165,6 +186,16 @@
     editEl.addEventListener('change', updateCrudUpisiState);
   })();
 
+  (function () {
+    if (!editRazina) return;
+    editRazina.addEventListener('input', function () {
+      var v = editRazina.value.replace(/\D/g, '').slice(0, 2);
+      if (editRazina.value !== v) editRazina.value = v;
+      updateCrudUpisiState();
+    });
+    editRazina.addEventListener('change', updateCrudUpisiState);
+  })();
+
   if (chkEditAktivnost) {
     chkEditAktivnost.addEventListener('change', updateCrudUpisiState);
   }
@@ -179,13 +210,18 @@
       var editEl = document.getElementById('edit_naziv');
       var naziv = editEl ? trim(editEl.value) : '';
       if (naziv === '') return;
+      var pr = parseRazinaZaPost();
+      if (!pr.ok) {
+        if (typeof window.showPorukaModal === 'function') window.showPorukaModal('105', []);
+        return;
+      }
       var idNadredjeni = selectOdgovornost ? (parseInt(selectOdgovornost.value, 10) || 0) : 0;
       var jeIzmjena = this.classList.contains('kontrola-btn--crud-izmjeni');
       if (jeIzmjena) {
         var id = getSelectedRowId();
         if (id == null) return;
         var aktPanel = chkEditAktivnost && chkEditAktivnost.checked ? 1 : 0;
-        duznosniciUpdate(id, naziv, idNadredjeni, aktPanel, function (res) {
+        duznosniciUpdate(id, naziv, idNadredjeni, aktPanel, pr.post, function (res) {
           if (res === 'OK') {
             if (typeof window.showPorukaModal === 'function') window.showPorukaModal('004', [], function () {
               if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
@@ -350,7 +386,10 @@
             var nadr = r.nadredjeni_naziv != null ? r.nadredjeni_naziv : (r.id_nadredjeni === 0 || !r.id_nadredjeni ? '' : '');
             var akt = r.aktivnost != null ? Number(r.aktivnost) : 1;
             if (akt !== 0 && akt !== 1) akt = 1;
-            rows.push([r.naziv != null ? r.naziv : '', akt, nadr, r.id != null ? r.id : 0]);
+            var rz = r.razina != null ? Number(r.razina) : 0;
+            if (isNaN(rz) || rz < 0) rz = 0;
+            var rzPrikaz = rz >= 1 && rz <= 99 ? String(rz) : '';
+            rows.push([r.naziv != null ? r.naziv : '', akt, rzPrikaz, nadr, r.id != null ? r.id : 0]);
           }
         } catch (e) {}
       }
@@ -372,6 +411,11 @@
             if (chkEditAktivnost) {
               var ak2 = duznosniciLista[k].aktivnost != null ? Number(duznosniciLista[k].aktivnost) : 1;
               chkEditAktivnost.checked = (ak2 === 1);
+            }
+            if (editRazina) {
+              var rz2 = duznosniciLista[k].razina != null ? Number(duznosniciLista[k].razina) : 0;
+              if (!isNaN(rz2) && rz2 >= 1 && rz2 <= 99) editRazina.value = String(rz2);
+              else editRazina.value = '';
             }
             break;
           }
@@ -406,24 +450,41 @@
     else callback('');
   }
 
-  function duznosniciAdd(naziv, id_nadredjeni, aktivnost, callback) {
+  /**
+   * Prazno polje → 0 u bazi; inače mora biti 1–99 (dvoznamenkasto u UI).
+   * @returns {{ ok: boolean, post?: string }}
+   */
+  function parseRazinaZaPost() {
+    if (!editRazina) return { ok: true, post: '0' };
+    var t = trim(editRazina.value);
+    if (t === '') return { ok: true, post: '0' };
+    var n = parseInt(t, 10);
+    if (isNaN(n) || n < 1 || n > 99) return { ok: false };
+    return { ok: true, post: String(n) };
+  }
+
+  function duznosniciAdd(naziv, id_nadredjeni, aktivnost, razinaPost, callback) {
     var a = aktivnost != null ? Number(aktivnost) : 1;
     if (a !== 0 && a !== 1) a = 1;
+    var rp = razinaPost != null ? String(razinaPost) : '0';
     postFormData(API_BASE + 'Duznosnici_CRUD_upis.php', {
       naziv: naziv,
       id_nadredjeni: String(id_nadredjeni || 0),
-      aktivnost: String(a)
+      aktivnost: String(a),
+      razina: rp
     }, callback);
   }
 
-  function duznosniciUpdate(id, naziv, id_nadredjeni, aktivnost, callback) {
+  function duznosniciUpdate(id, naziv, id_nadredjeni, aktivnost, razinaPost, callback) {
     var a = aktivnost != null ? Number(aktivnost) : 1;
     if (a !== 0 && a !== 1) a = 1;
+    var rp = razinaPost != null ? String(razinaPost) : '0';
     postFormData(API_BASE + 'Duznosnici_CRUD_izmjena.php', {
       id: String(id),
       naziv: naziv,
       id_nadredjeni: String(id_nadredjeni || 0),
-      aktivnost: String(a)
+      aktivnost: String(a),
+      razina: rp
     }, callback);
   }
 
@@ -540,11 +601,15 @@
         var ak = r.aktivnost != null ? Number(r.aktivnost) : 1;
         if (ak !== 0 && ak !== 1) ak = 1;
         var nos = r.nositelji_imena != null ? trim(String(r.nositelji_imena)) : '';
+        var rz = r.razina != null ? Number(r.razina) : 0;
+        if (isNaN(rz) || rz < 0) rz = 0;
+        if (rz > 99) rz = 99;
         byId[id] = {
           id: id,
           naziv: r.naziv != null ? String(r.naziv) : '',
           nositelji_imena: nos,
           aktivnost: ak,
+          razina: rz,
           id_nadredjeni: pid,
           children: []
         };
@@ -574,11 +639,28 @@
       return roots;
     }
 
-    function hijerarhijaRenderCvor(node) {
+    /**
+     * Stupanj fonta (1–5) u modalu strukture: prioritet kolona razina u bazi (1–99 → cap na 5 za isti skup stilova kao prije).
+     * Ako je razina 0 (nije postavljeno), koristi se dubina čvora u stablu (1 = korijen retka u prikazu).
+     */
+    function hijerarhijaOdluciTier(node, dubina) {
+      var d = dubina != null && dubina > 0 ? dubina : 1;
+      var rz = node.razina != null ? Number(node.razina) : 0;
+      if (isNaN(rz) || rz < 0) rz = 0;
+      if (rz > 99) rz = 99;
+      if (rz >= 1) {
+        return rz <= 5 ? rz : 5;
+      }
+      return d <= 5 ? d : 5;
+    }
+
+    function hijerarhijaRenderCvor(node, dubina) {
+      var dub = dubina != null ? dubina : 1;
       var li = document.createElement('li');
       li.className = 'duznosnici-crud-hijerarhija__item';
       var span = document.createElement('span');
       span.className = 'duznosnici-crud-hijerarhija__label';
+      span.classList.add('duznosnici-crud-hijerarhija__label--tier-' + hijerarhijaOdluciTier(node, dub));
       if (node.aktivnost !== 1) {
         span.classList.add('duznosnici-crud-hijerarhija__label--neaktivan');
       }
@@ -603,7 +685,7 @@
         var ul = document.createElement('ul');
         var c;
         for (c = 0; c < node.children.length; c++) {
-          ul.appendChild(hijerarhijaRenderCvor(node.children[c]));
+          ul.appendChild(hijerarhijaRenderCvor(node.children[c], dub + 1));
         }
         li.appendChild(ul);
       }
@@ -625,7 +707,7 @@
       ul.className = 'duznosnici-crud-hijerarhija__tree';
       var r;
       for (r = 0; r < stablo.length; r++) {
-        ul.appendChild(hijerarhijaRenderCvor(stablo[r]));
+        ul.appendChild(hijerarhijaRenderCvor(stablo[r], 1));
       }
       root.appendChild(ul);
     }

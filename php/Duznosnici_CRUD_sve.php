@@ -7,7 +7,7 @@ if ($db_ret !== -1) {
     exit;
 }
 // nositelji_imena: aktivni članovi (clanovi) s id_duznosnik u sustav_korisnici — „Prezime Ime“, više nositelja odvojeno zarezom.
-$sql = "SELECT d.id, d.naziv, d.aktivnost, d.id_nadredjeni, n.naziv AS nadredjeni_naziv,
+$sql = "SELECT d.id, d.naziv, d.aktivnost, d.razina, d.id_nadredjeni, n.naziv AS nadredjeni_naziv,
         (SELECT GROUP_CONCAT(DISTINCT CONCAT(TRIM(c.prezime), ' ', TRIM(c.ime))
                 ORDER BY c.prezime ASC, c.ime ASC SEPARATOR ', ')
          FROM sustav_korisnici sk

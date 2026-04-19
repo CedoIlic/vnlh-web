@@ -4,11 +4,13 @@
      Horizontalna traka (#traka_h_menija, klase alati-meni-test__*) namjerno je ista komponenta kao u
      Meni.html — dijele se Alati_Meni_Test.css, te Meni.js / Alati_Meni_Test.js (isti ID-jevi u dokumentu).
      Ova stranica nije CRUD članova; ne miješati s html/Clanovi_CRUD.html (koji ne učitava ovaj CSS/JS).
-     Skripte: 0-Kontrole.js, 0-Common.js, Alati_Meni_Test.js
+     Skripte: 0-Kontrole.js, 0-Common.js, 0-Razine.js (select dužnosnika), Alati_Meni_Test.js
      ========================================================= -->
 <!DOCTYPE html>
 <html lang="hr">
 <head>
+    <!-- Master za hijerarhiju dužnosnika (0-Razine.js) i id korisnika za uvjet prikaza togglea „Svi“ (var. 1004 + 1002); PHP: Alati_Meni_Test.php -->
+    <script>window.VNLH_OGRANICENJA_MASTER_ID=__VNLH_SESSION_MASTER_ID_DUZNOSNIK__;window.VNLH_ID_KORISNIK=__VNLH_ID_KORISNIK__;</script>
     <meta charset="UTF-8">
     <title>Test menija</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -47,10 +49,20 @@
                     <label class="kontrola-labela mb-0" for="edit_izvrsni_meni">ID izvršnog menija</label>
                     <div class="alati-meni-test__grupa-kontrole">
                         <input id="edit_izvrsni_meni" type="text" class="kontrola-edit alati-meni-test__edit-id" readonly>
-                        <div class="kontrola-select">
-                            <select id="select_izvrsni_meni">
-                                <option value="0">Nije izabran</option>
-                            </select>
+                        <!-- Select izvršnog menija + toggle „Svi“ (isti uvjet prikaza kao Ograničenja dužnosti: var. 1004=1 i korisnik u listi 1002); kontrolira punjenje select_duznosnik. -->
+                        <div class="alati-meni-test__izvrsni-select-row">
+                            <div class="kontrola-select alati-meni-test__izvrsni-select-grow">
+                                <select id="select_izvrsni_meni">
+                                    <option value="0">Nije izabran</option>
+                                </select>
+                            </div>
+                            <div id="toggle_svi_duznosnik_meni_test_wrap" class="alati-meni-test__svi-toggle-wrap" hidden>
+                                <label class="poruke__toggle-label" for="toggle_svi_duznosnik_meni_test">
+                                    <input type="checkbox" id="toggle_svi_duznosnik_meni_test" class="poruke__toggle-input" autocomplete="off" disabled aria-label="Svi dužnosnici uključujući Mastera">
+                                    <span class="poruke__toggle-slider" aria-hidden="true"></span>
+                                    <span class="poruke__toggle-text">Svi</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -130,6 +142,7 @@
 <script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Razine.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/Alati_Meni_Test.js?v=__VNLH_ASSET_V__"></script>

@@ -18,6 +18,11 @@ $aktivnost = isset($_POST['aktivnost']) ? (int)$_POST['aktivnost'] : 1;
 if ($aktivnost !== 0 && $aktivnost !== 1) {
     $aktivnost = 1;
 }
+$razina = isset($_POST['razina']) ? (int)$_POST['razina'] : 0;
+if ($razina < 0 || $razina > 99) {
+    echo '105';
+    exit;
+}
 try {
     $stmt = $mysqli->prepare("SELECT id FROM duznosnici WHERE LOWER(COALESCE(naziv,'')) = LOWER(?)");
     if (!$stmt) { echo '200,' . $mysqli->errno; exit; }
@@ -26,9 +31,9 @@ try {
     $stmt->store_result();
     if ($stmt->num_rows > 0) { echo '002'; exit; }
     $stmt->close();
-    $stmt = $mysqli->prepare("INSERT INTO duznosnici (naziv, id_nadredjeni, aktivnost) VALUES (?, ?, ?)");
+    $stmt = $mysqli->prepare("INSERT INTO duznosnici (naziv, id_nadredjeni, aktivnost, razina) VALUES (?, ?, ?, ?)");
     if (!$stmt) { echo '200,' . $mysqli->errno; exit; }
-    $stmt->bind_param("sii", $naziv, $id_nadredjeni, $aktivnost);
+    $stmt->bind_param("siii", $naziv, $id_nadredjeni, $aktivnost, $razina);
     $stmt->execute();
     echo 'OK';
     $stmt->close();

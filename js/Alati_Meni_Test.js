@@ -3,6 +3,8 @@
    Test menija – panel uvjeti. Punjenje prvih tri selekta iz Meni_Tip_CRUD_sve.php.
    API menija: meni_dohvat_stabla_menija.php s GET alati_meni_test_puno_stablo=1 (puno stablo kad
    dužnosnik nije odabran) – vidi komentare u tom PHP-u. Meni.js koristi from_meni=1, bez tog parametra.
+   Select dužnosnika: toggle „Svi“ (var. 1004 + 1002 kao Duznosnici_Ogranicenja_CRUD) — uključeno =
+   Duznosnici_CRUD_sve.php; isključeno = 0-Razine.js → Duznosnici_CRUD_opcije_pod_masterom.php (ispod, bez Mastera).
    Logika trake / drawer-a usklađena je s Meni.js (iste klase alati-meni-test__*, isti ID-jevi u DOM-u).
    Ova skripta ne ide na CRUD stranice (npr. Članovi). Na Alati_Meni_Test.html body ima klasu page-alati-meni-test.
    ========================================================= */
@@ -18,6 +20,121 @@
   }
   /** Tri grupe (horizontalni / podmeniji / izvršni meni) omogućene samo ako sustav_varijable id=106 ima varijabla trim === '1'. */
   var meniTipConfigByVar106 = false;
+
+  /**
+   * Prva opcija select_duznosnik za puniSelectIzJsona (0-Razine.js): value/label usklađeni s postojećim „Nije izabran“.
+   * @type {{ value: string, label: string }}
+   */
+  var PRAZNA_OPCIJA_SELECT_DUZNOSNIK_ALATI = { value: '0', label: 'Nije izabran' };
+
+  /** null = još nije učitano; sadržaj sustav_varijable id=1004 (toggle „Svi“ — vidljiv kad je 1 i korisnik u listi 1002). */
+  var cachedSustavVar1004MeniTest = null;
+  /** null = još nije učitano; sadržaj retka 1002 (id_korisnik odvojeni zarezom). */
+  var cachedSustavVar1002MeniTest = null;
+  var sustav10041002LoadingMeniTest = false;
+  var sustav10041002PendingCallbacksMeniTest = [];
+
+  /**
+   * Parsira tekst varijable 1002 u niz pozitivnih cijelih id_korisnik (isti princip kao Duznosnici_Ogranicenja_CRUD.js).
+   * @param {string|null|undefined} t
+   * @returns {number[]}
+   */
+  function parsirajIdKorisnikaIzVar1002TekstaMeniTest(t) {
+    if (t == null || String(t).trim() === '') return [];
+    var s = String(t);
+    var seen = {};
+    var out = [];
+    var re = /\d+/g;
+    var m;
+    while ((m = re.exec(s)) !== null) {
+      var n = parseInt(m[0], 10);
+      if (n > 0 && !seen[n]) {
+        seen[n] = true;
+        out.push(n);
+      }
+    }
+    return out;
+  }
+
+  function korisnikJeUVar1002ListiMeniTest() {
+    var me = typeof window.VNLH_ID_KORISNIK !== 'undefined' ? parseInt(window.VNLH_ID_KORISNIK, 10) : 0;
+    if (isNaN(me) || me <= 0) return false;
+    var ids = parsirajIdKorisnikaIzVar1002TekstaMeniTest(cachedSustavVar1002MeniTest);
+    for (var i2 = 0; i2 < ids.length; i2++) {
+      if (ids[i2] === me) return true;
+    }
+    return false;
+  }
+
+  /** Prikaz i omogućavanje kliznika „Svi“ (sakriveno ako korisnik nema pravo — isti uvjet kao Ograničenja dužnosti). */
+  function updateToggleSviDuznosnikMeniTestUI() {
+    var wrap = document.getElementById('toggle_svi_duznosnik_meni_test_wrap');
+    var chk = document.getElementById('toggle_svi_duznosnik_meni_test');
+    if (!wrap || !chk) return;
+    var prikazi = cachedSustavVar1004MeniTest !== null && String(cachedSustavVar1004MeniTest).trim() === '1' && korisnikJeUVar1002ListiMeniTest();
+    if (prikazi) {
+      wrap.removeAttribute('hidden');
+      chk.removeAttribute('disabled');
+    } else {
+      wrap.setAttribute('hidden', '');
+      chk.checked = false;
+      chk.setAttribute('disabled', '');
+    }
+  }
+
+  /**
+   * Učitava varijable 1004 i 1002 (jednokratno) za uvjet prikaza togglea „Svi“.
+   * @param {function(): void} [callback]
+   */
+  function ucitajSustavVars1004I1002MeniTest(callback) {
+    if (cachedSustavVar1004MeniTest !== null && cachedSustavVar1002MeniTest !== null) {
+      if (callback) callback();
+      return;
+    }
+    if (typeof callback === 'function') sustav10041002PendingCallbacksMeniTest.push(callback);
+    if (sustav10041002LoadingMeniTest) return;
+    sustav10041002LoadingMeniTest = true;
+    var pending = 2;
+    function zavrsiJedan() {
+      pending--;
+      if (pending > 0) return;
+      sustav10041002LoadingMeniTest = false;
+      updateToggleSviDuznosnikMeniTestUI();
+      var cbs = sustav10041002PendingCallbacksMeniTest.slice();
+      sustav10041002PendingCallbacksMeniTest = [];
+      for (var j = 0; j < cbs.length; j++) {
+        try {
+          if (cbs[j]) cbs[j]();
+        } catch (e1004) {}
+      }
+    }
+    var xhr4 = new XMLHttpRequest();
+    xhr4.open('GET', API_BASE + 'common_sustav_varijable.php?id=1004', true);
+    xhr4.onreadystatechange = function () {
+      if (xhr4.readyState !== 4) return;
+      var tx4 = (xhr4.responseText || '').trim();
+      if (tx4 === '120' || tx4 === '100' || tx4 === '401') cachedSustavVar1004MeniTest = '0';
+      else cachedSustavVar1004MeniTest = tx4;
+      zavrsiJedan();
+    };
+    xhr4.send();
+    var xhr1002 = new XMLHttpRequest();
+    xhr1002.open('GET', API_BASE + 'common_sustav_varijable.php?id=1002', true);
+    xhr1002.onreadystatechange = function () {
+      if (xhr1002.readyState !== 4) return;
+      var tx2 = (xhr1002.responseText || '').trim();
+      if (tx2 === '120' || tx2 === '100' || tx2 === '401') cachedSustavVar1002MeniTest = '';
+      else cachedSustavVar1002MeniTest = tx2;
+      zavrsiJedan();
+    };
+    xhr1002.send();
+  }
+
+  /** Je li uključen prikaz svih dužnosnika (uklj. Mastera) — samo kad je toggle vidljiv i checked. */
+  function jeUkljucenoSviDuznosniciMeniTest() {
+    var chk = document.getElementById('toggle_svi_duznosnik_meni_test');
+    return !!(chk && chk.checked && !chk.disabled);
+  }
 
   /** Postavi enable/disable na sve kontrole unutar tri grupe tipa menija (koristi KontroleSetEnabled po podstablu). */
   function applyMeniTipGrupaEnabled(enabled) {
@@ -110,24 +227,71 @@
     xhr.send();
   }
 
-  /** Učitaj Duznosnici_CRUD_sve.php i popuni select_duznosnik. */
-  function loadDuznosnici() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', API_BASE + 'Duznosnici_CRUD_sve.php', true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      var text = (xhr.responseText || '').trim();
-      var arr = [];
-      if (text !== '' && text.charAt(0) === '[') {
-        try { arr = JSON.parse(text || '[]'); } catch (e) {}
+  /**
+   * Nakon fillSelectOptions: vrati odabir ako je još u listi, inače 0 (Nije izabran).
+   * @param {HTMLSelectElement|null} sel
+   * @param {string|number} zeljeniRaw
+   */
+  function primijeniZeljeniDuznosnikNakonPunjenja(sel, zeljeniRaw) {
+    if (!sel) return;
+    var z = zeljeniRaw != null && zeljeniRaw !== '' ? String(zeljeniRaw) : '0';
+    var ok = false;
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === z) {
+        ok = true;
+        break;
       }
-      var sel = document.getElementById('select_duznosnik');
-      fillSelectOptions(sel, arr);
-      if (typeof KontroleRefreshCustomSelect === 'function') {
-        KontroleRefreshCustomSelect('select_duznosnik');
-      }
-    };
-    xhr.send();
+    }
+    sel.value = ok ? z : '0';
+    if (typeof KontroleRefreshCustomSelect === 'function') {
+      KontroleRefreshCustomSelect('select_duznosnik');
+    }
+  }
+
+  /**
+   * Punjenje select_duznosnik: ako je toggle „Svi“ aktivan i uključen — cijeli skup (Duznosnici_CRUD_sve.php).
+   * Inače — potomci Mastera bez Mastera (0-Razine + Duznosnici_CRUD_opcije_pod_masterom.php, isto kao Ograničenja).
+   */
+  function ucitajDuznosniciMeniTest() {
+    var sel = document.getElementById('select_duznosnik');
+    if (!sel) return;
+    var zeljeni = sel.value != null ? sel.value : '0';
+
+    if (jeUkljucenoSviDuznosniciMeniTest()) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', API_BASE + 'Duznosnici_CRUD_sve.php', true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        var text = (xhr.responseText || '').trim();
+        var arr = [];
+        if (text !== '' && text.charAt(0) === '[') {
+          try { arr = JSON.parse(text || '[]'); } catch (e) {}
+        }
+        fillSelectOptions(sel, arr);
+        primijeniZeljeniDuznosnikNakonPunjenja(sel, zeljeni);
+      };
+      xhr.send();
+      return;
+    }
+
+    var masterId = typeof window.VNLH_OGRANICENJA_MASTER_ID !== 'undefined' ? window.VNLH_OGRANICENJA_MASTER_ID : 0;
+    if (typeof window.VNLHPostivanjeRazine === 'undefined' || !window.VNLHPostivanjeRazine.ucitajOpcijeDuznosnikaPodMasterom) {
+      fillSelectOptions(sel, []);
+      primijeniZeljeniDuznosnikNakonPunjenja(sel, zeljeni);
+      return;
+    }
+    var zn = parseInt(String(zeljeni), 10);
+    window.VNLHPostivanjeRazine.ucitajOpcijeDuznosnikaPodMasterom(
+      masterId,
+      API_BASE,
+      sel,
+      isNaN(zn) ? 0 : zn,
+      function () {},
+      'ispod',
+      0,
+      PRAZNA_OPCIJA_SELECT_DUZNOSNIK_ALATI,
+      0
+    );
   }
 
   /** Omogući/onemogući tipku Upiši prema tri prva selecta. */
@@ -928,7 +1092,15 @@
     // Nema restauracije menija iz sessionStorage — meni se crta isključivo klikom na "Osvježi meni".
     // Čistimo eventualne stare podatke iz prethodne sesije.
     try { sessionStorage.removeItem('alati_meni_test_data'); } catch (e) {}
-    loadDuznosnici();
+    ucitajSustavVars1004I1002MeniTest(function () {
+      ucitajDuznosniciMeniTest();
+    });
+    var tglSvi = document.getElementById('toggle_svi_duznosnik_meni_test');
+    if (tglSvi) {
+      tglSvi.addEventListener('change', function () {
+        ucitajDuznosniciMeniTest();
+      });
+    }
     initUpisi();
     initOsvjezi();
     initPovratak();
