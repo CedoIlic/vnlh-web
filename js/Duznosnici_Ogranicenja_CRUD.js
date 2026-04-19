@@ -6,7 +6,7 @@
    Nacrt: pri ponovnom omogućenju Upisa vraća se zadnje lokalno stanje (edits, čekboxevi, stupnjevi); sessionStorage po dužnosniku; brisanje pri promjeni dužnosnika / reload.
    Upis: omogućen kad je odabran dužnosnik i stanje (geo, checkboxovi tablice 1, stupnjevi) razlikuje se od baselinea — i kad su sva geo polja prazna nakon brisanja „Sve”, da se može spremiti prazni zapis.
    CRUD tipke u podnožju drugog panela.
-   API: select dužnosnika preko 0-Razine.js → Duznosnici_CRUD_opcije_pod_masterom.php (Master = VNLH_OGRANICENJA_MASTER_ID, smjer ispod, povrat 0, ukljuci_mastera 0); duznosnici_ogranicenja_sve.php (čitanje); upis; stupnjevi_po_obredu + Obredi (tablica 2). Modal stupnjeva: samo lokalni paket do glavnog Upisa.
+   API: select dužnosnika preko 0-Razine.js → Duznosnici_CRUD_opcije_pod_masterom.php (Master = VNLH_OGRANICENJA_MASTER_ID, smjer ispod; povrat_cijelog_seta + ukljuci_mastera = 1 kad je toggle „Svi“, inače 0); duznosnici_ogranicenja_sve.php (čitanje); upis; stupnjevi_po_obredu + Obredi (tablica 2). Modal stupnjeva: samo lokalni paket do glavnog Upisa.
    ========================================================= */
 // @ts-nocheck
 (function () {
@@ -107,6 +107,115 @@
       for (var i = 0; i < cbs.length; i++) try { cbs[i](); } catch (e) {}
     };
     xhr.send();
+  }
+
+  /** null = još nije učitano; sadržaj sustav_varijable.id = 1004 (toggle „Svi“ dužnosnici — vidljiv kad je 1 i korisnik u listi 1002). */
+  var cachedSustavVar1004Ogr = null;
+  /** null = još nije učitano; sadržaj retka 1002 (id_korisnik odvojeni zarezom, isto kao Poruke razvoj). */
+  var cachedSustavVar1002Ogr = null;
+  var sustav10041002LoadingOgr = false;
+  var sustav10041002PendingCallbacksOgr = [];
+
+  /**
+   * Parsira tekst varijable 1002 u niz pozitivnih cijelih id_korisnik (isti princip kao poruke_razvoj_var_1002.php).
+   * @param {string|null|undefined} t
+   * @returns {number[]}
+   */
+  function parsirajIdKorisnikaIzVar1002TekstaOgr(t) {
+    if (t == null || String(t).trim() === '') return [];
+    var s = String(t);
+    var seen = {};
+    var out = [];
+    var re = /\d+/g;
+    var m;
+    while ((m = re.exec(s)) !== null) {
+      var n = parseInt(m[0], 10);
+      if (n > 0 && !seen[n]) {
+        seen[n] = true;
+        out.push(n);
+      }
+    }
+    return out;
+  }
+
+  function korisnikJeUVar1002ListiOgr() {
+    var me = typeof window.VNLH_ID_KORISNIK !== 'undefined' ? parseInt(window.VNLH_ID_KORISNIK, 10) : 0;
+    if (isNaN(me) || me <= 0) return false;
+    var ids = parsirajIdKorisnikaIzVar1002TekstaOgr(cachedSustavVar1002Ogr);
+    for (var i2 = 0; i2 < ids.length; i2++) {
+      if (ids[i2] === me) return true;
+    }
+    return false;
+  }
+
+  /** Prikaz i omogućavanje kliznika „Svi“ (sakriveno ako korisnik nema pravo). */
+  function updateToggleSviDuznosnikUI() {
+    var wrap = document.getElementById('toggle_svi_duznosnik_wrap');
+    var chk = document.getElementById('toggle_svi_duznosnik');
+    if (!wrap || !chk) return;
+    var prikazi = cachedSustavVar1004Ogr !== null && String(cachedSustavVar1004Ogr).trim() === '1' && korisnikJeUVar1002ListiOgr();
+    if (prikazi) {
+      wrap.removeAttribute('hidden');
+      chk.removeAttribute('disabled');
+    } else {
+      wrap.setAttribute('hidden', '');
+      chk.checked = false;
+      chk.setAttribute('disabled', '');
+    }
+  }
+
+  /**
+   * Učitava varijable 1004 i 1002 (jednokratno) za uvjet prikaza togglea „Svi“.
+   * @param {function(): void} [callback]
+   */
+  function ucitajSustavVars1004I1002Ogr(callback) {
+    if (cachedSustavVar1004Ogr !== null && cachedSustavVar1002Ogr !== null) {
+      if (callback) callback();
+      return;
+    }
+    if (typeof callback === 'function') sustav10041002PendingCallbacksOgr.push(callback);
+    if (sustav10041002LoadingOgr) return;
+    sustav10041002LoadingOgr = true;
+    var pending = 2;
+    function zavrsiJedan() {
+      pending--;
+      if (pending > 0) return;
+      sustav10041002LoadingOgr = false;
+      updateToggleSviDuznosnikUI();
+      var cbs = sustav10041002PendingCallbacksOgr.slice();
+      sustav10041002PendingCallbacksOgr = [];
+      for (var j = 0; j < cbs.length; j++) {
+        try {
+          if (cbs[j]) cbs[j]();
+        } catch (e1004) {}
+      }
+    }
+    var xhr4 = new XMLHttpRequest();
+    xhr4.open('GET', API_BASE + 'common_sustav_varijable.php?id=1004', true);
+    xhr4.onreadystatechange = function () {
+      if (xhr4.readyState !== 4) return;
+      var tx4 = (xhr4.responseText || '').trim();
+      if (tx4 === '120' || tx4 === '100' || tx4 === '401') cachedSustavVar1004Ogr = '0';
+      else cachedSustavVar1004Ogr = tx4;
+      zavrsiJedan();
+    };
+    xhr4.send();
+    var xhr1002 = new XMLHttpRequest();
+    xhr1002.open('GET', API_BASE + 'common_sustav_varijable.php?id=1002', true);
+    xhr1002.onreadystatechange = function () {
+      if (xhr1002.readyState !== 4) return;
+      var tx2 = (xhr1002.responseText || '').trim();
+      if (tx2 === '120' || tx2 === '100' || tx2 === '401') cachedSustavVar1002Ogr = '';
+      else cachedSustavVar1002Ogr = tx2;
+      zavrsiJedan();
+    };
+    xhr1002.send();
+  }
+
+  /** Je li uključen prikaz svih dužnosnika (uklj. Mastera) — samo kad je toggle vidljiv i checked. */
+  function jeUkljucenoSviDuznosniciOgr() {
+    var chk = document.getElementById('toggle_svi_duznosnik');
+    return !!(chk && chk.checked && !chk.disabled);
   }
 
   function updateFooterSveOgranicenja() {
@@ -668,9 +777,9 @@
           if (callback) callback(arr);
         },
         'ispod',
-        0,
+        jeUkljucenoSviDuznosniciOgr() ? 1 : 0,
         PRAZNA_OPCIJA_SELECT_DUZNOSNIK_OGR,
-        0
+        jeUkljucenoSviDuznosniciOgr() ? 1 : 0
       );
       return;
     }
@@ -1715,6 +1824,32 @@
     });
   }
 
+  (function () {
+    var tglSvi = document.getElementById('toggle_svi_duznosnik');
+    if (!tglSvi) return;
+    tglSvi.addEventListener('change', function () {
+      ucitajDuznosnici(function () {
+        var sel = document.getElementById('select_duznosnik');
+        var v = sel && sel.value != null ? String(sel.value).trim() : '';
+        var valid = false;
+        if (v !== '' && sel) {
+          for (var ti = 0; ti < sel.options.length; ti++) {
+            if (String(sel.options[ti].value) === v) {
+              valid = true;
+              break;
+            }
+          }
+        }
+        if (!valid) {
+          ocistiPrikazOgranicenjaPrijePromjeneDuznosnika();
+        }
+        ogranicenjaPocniDvojniOsvjez();
+        osvjeziTablicu();
+        osvjeziTablicuStupnjevaPoObredu();
+      });
+    });
+  })();
+
   /* --- Blok: Delegacija – ellipsis → modal stupnjeva (kao Loze_Tip) --- */
   (function () {
     var el = document.getElementById('tablicaContainerStupnjeviPoObredu');
@@ -1776,10 +1911,12 @@
 
   /* --- Blok: Inicijalizacija – učitaj dužnosnike, prazna tablica, inicijalno disabled stanje --- */
   ucitajSustavVar1001Ogr(updateFooterSveOgranicenja);
-  ucitajDuznosnici(function () {
-    ogranicenjaPocniDvojniOsvjez();
-    osvjeziTablicu();
-    osvjeziTablicuStupnjevaPoObredu();
+  ucitajSustavVars1004I1002Ogr(function () {
+    ucitajDuznosnici(function () {
+      ogranicenjaPocniDvojniOsvjez();
+      osvjeziTablicu();
+      osvjeziTablicuStupnjevaPoObredu();
+    });
   });
 
 })();

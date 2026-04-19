@@ -219,18 +219,28 @@
     btnIzbrisi.addEventListener('click', function () {
       var id = getSelectedRowId();
       if (id == null) return;
-      duznosniciDelete(id, function (res) {
-        if (res === 'OK') {
-          if (typeof window.showPorukaModal === 'function') window.showPorukaModal('003', [], function () {
-            if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
-            clearControlsFromSelection();
-            osvjeziTablicu();
-          });
-        } else {
-          var p = parseResponseCode(res);
-          if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(p.code, p.replacements);
-        }
-      });
+      /** Prije DELETE-a: modal 123 (upozorenje na kaskadu: prava, ograničenja, login ako jedina dužnost). */
+      function pokreniBrisanje() {
+        duznosniciDelete(id, function (res) {
+          if (res === 'OK') {
+            if (typeof window.showPorukaModal === 'function') window.showPorukaModal('003', [], function () {
+              if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
+              clearControlsFromSelection();
+              osvjeziTablicu();
+            });
+          } else {
+            var p = parseResponseCode(res);
+            if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(p.code, p.replacements);
+          }
+        });
+      }
+      if (typeof window.showPorukaModal === 'function' && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['123']) {
+        window.showPorukaModal('123', [], function (buttonKey) {
+          if (buttonKey === 'OK') pokreniBrisanje();
+        });
+      } else {
+        pokreniBrisanje();
+      }
     });
   }
 

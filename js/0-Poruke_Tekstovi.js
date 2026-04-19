@@ -74,5 +74,6 @@ var MODAL_MESSAGES = {
   '120': '120|Korisničko sučelje|(OK)|error||Greška u dohvatu varijabli sustava iz baze. Konzultiraj administratora za nastavak.',   /* common_sustav_varijable: tablica/red/sadržaj nije u redu */
   '121': '121|Korisničko sučelje|(OK)|error||Funkcija nije implementirana.',   /* Izbor dužnosnika – funkcija nije implementirana */
   '122': '122|Korisničko sučelje|OK,(Cancel)|warning||Jesi li siguran da želiš izbrisati sva prava koja ima ovaj dužnosnik?',   /* Duznosnici_Prava_CRUD Izbriši: upozorenje prije brisanja svih prava; tipke OK i Odustani, default Odustani */
+  '123': '123|Korisničko sučelje|OK,(Cancel)|warning||Brisanje dužnosti ujedno će obrisati vezana prava i ograničenja. Ako je ovo bila jedina dužnost nekog korisnika biti će obrisani i njegovi login podaci, jesi li siguran da želiš brisati dužnosnika?',   /* Duznosnici_CRUD Izbriši: kaskada (prava, ograničenja, veze korisnik–dužnost, login ako jedina dužnost); OK / Odustani, default Odustani */
   '200': '200|Poruka SQL baze|(OK)|error||Greška SQL baze podataka, kod: #1'             /* SQL greška; #1 = sql kod(ovi) */
 };

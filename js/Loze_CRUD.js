@@ -284,9 +284,7 @@
     return window.location.origin + p + '/php/' + path;
   }
 
-  /* --- Geo prava (Država → Regija, keš kao Clanovi_CRUD) --- */
-  var _geoPravaKešDrzave = [];
-  var _geoPravaKešRegije = [];
+  /* --- Geo prava (Država → Regija); keš u 0-Filteri_Po_Ogranicenjima.js --- */
   var _geoAutoLockedDrzava = false;
   var _geoAutoLockedRegija = false;
 
@@ -331,12 +329,11 @@
       if (callback) callback();
       return;
     }
-    var filtrirano = [];
-    for (var ri = 0; ri < _geoPravaKešRegije.length; ri++) {
-      if (String(_geoPravaKešRegije[ri].id_drzava) === String(idDrzava)) {
-        filtrirano.push(_geoPravaKešRegije[ri]);
-      }
-    }
+    var g = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
+    var filtrirano =
+      typeof window.vnlhGeoFiltrirajRegijePoDrzavi === 'function'
+        ? window.vnlhGeoFiltrirajRegijePoDrzavi(g.regije, idDrzava)
+        : [];
     popuniSelectIzKeša(selectRegija, filtrirano, '— Odaberi regiju —', 'select_regija');
 
     if (filtrirano.length === 1) {
@@ -363,36 +360,25 @@
    */
   function ucitajPravaGeo(callback) {
     if (!selectDrzava) { if (callback) callback(); return; }
-    var url = getApiUrl('Duznosnici_Drzave_Regije_Loze_sve.php') + '?html_fajl=' + encodeURIComponent('Loze_CRUD.html');
-    try {
-      var sp = new URLSearchParams(window.location.search);
-      var idt = sp.get('id_duznosnik_test');
-      if (idt && parseInt(idt, 10) > 0) url += '&id_duznosnik_test=' + encodeURIComponent(idt);
-    } catch (eGeo) {}
+    var url =
+      typeof window.vnlhGeoOgranicenjaNapraviUrlZaDrzaveRegijeLoze === 'function'
+        ? window.vnlhGeoOgranicenjaNapraviUrlZaDrzaveRegijeLoze(getApiUrl, 'Loze_CRUD.html')
+        : getApiUrl('Duznosnici_Drzave_Regije_Loze_sve.php') +
+          '?html_fajl=' +
+          encodeURIComponent('Loze_CRUD.html');
+    window.vnlhGeoOgranicenjaUcitaj(url, function () {
+      var obj = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
+      var drz = obj.drzave || [];
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      var text = (xhr.responseText || '').trim();
-      var obj = null;
-      if (text !== '' && text.charAt(0) === '{') {
-        try { obj = JSON.parse(text); } catch (eParse) {}
-      }
-      if (!obj) obj = { drzave: [], regije: [], loze: [], upis_izmjena: 0, brisanje_sloga: 0 };
-
-      _geoPravaKešDrzave = obj.drzave || [];
-      _geoPravaKešRegije = obj.regije || [];
-
-      popuniSelectIzKeša(selectDrzava, _geoPravaKešDrzave, '— Odaberi državu —', 'select_drzava');
+      popuniSelectIzKeša(selectDrzava, drz, '— Odaberi državu —', 'select_drzava');
 
       if (typeof vnlhPrimijeniPravaCrud === 'function') {
         vnlhPrimijeniPravaCrud(obj.upis_izmjena, obj.brisanje_sloga);
       }
 
       _geoAutoLockedDrzava = false;
-      if (_geoPravaKešDrzave.length === 1 && selectDrzava) {
-        selectDrzava.value = String(_geoPravaKešDrzave[0].id);
+      if (drz.length === 1 && selectDrzava) {
+        selectDrzava.value = String(drz[0].id);
         selectDrzava.disabled = true;
         _geoAutoLockedDrzava = true;
         setAutoLockedClass(selectDrzava, true);
@@ -401,12 +387,11 @@
       } else {
         _geoAutoLockedDrzava = false;
         setAutoLockedClass(selectDrzava, false);
-        if (selectDrzava) selectDrzava.disabled = (_geoPravaKešDrzave.length === 0);
+        if (selectDrzava) selectDrzava.disabled = (drz.length === 0);
         popuniRegijeIzKeša('', function () {});
         if (callback) callback();
       }
-    };
-    xhr.send();
+    });
   }
 
   function getDrzaveAdreseSveUrl() {

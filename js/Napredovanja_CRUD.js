@@ -1,7 +1,9 @@
 /* =====================================================
    Napredovanja_CRUD.js
-   Panel tablice: Država / Regija / Loža (keš kao Clanovi_CRUD), red Pronađi + reload. Članovi po odabranoj loži (Clanovi_CRUD_sve.php).
-   Panel panel_stupnjevi: tablica St., Naziv stupnja, Datum; CRUD tipke.
+   Panel tablice: Država / Regija / Loža — geo keš i filtri (0-Filteri_Po_Ogranicenjima.js, Duznosnici_Drzave_Regije_Loze_sve.php).
+   Loža napredovanja (edit): samo lože iz tog keša u odabranoj državi (ne cijela država iz baze).
+   Izbor stupnja: Stupnjevi_CRUD_sve + filtriranje tipom 6 (duznosnici_ogranicenja_stupnjevi_po_obredu.php).
+   Članovi: Clanovi_CRUD_sve.php; desna tablica napredovanja + CRUD tipke.
    ===================================================== */
 // @ts-nocheck
 (function () {
@@ -125,12 +127,67 @@
    * Keš iz Duznosnici_Drzave_Regije_Loze_sve.php; tablica članova po id_loza (Clanovi_CRUD_sve.php).
    * ========================================================================= */
 
-  var _geoPravaKešDrzave = [];
-  var _geoPravaKešRegije = [];
-  var _geoPravaKešLoze = [];
+  /* Geo keš: vnlhGeoOgranicenja* u 0-Filteri_Po_Ogranicenjima.js */
   var _geoAutoLockedDrzava = false;
   var _geoAutoLockedRegija = false;
   var _geoAutoLockedLoza = false;
+
+  /** Keš JSON iz duznosnici_ogranicenja_stupnjevi_po_obredu.php (tip 6) za filtriranje selecta Izbor stupnja. */
+  var _napOgrMap = {};
+  var _napOgrLoaded = false;
+  var _napOgrReq = null;
+  var _napOgrWait = [];
+
+  /**
+   * Jednokratno učitava mapu dozvoljenih stupnjeva po obredu za sesijskog dužnosnika (i id_duznosnik_test u testu).
+   * @param {function(): void} [done]
+   */
+  function ucitajStupnjeviOgranicenjaZaNapredovanjaCrud(done) {
+    if (_napOgrLoaded) {
+      if (typeof done === 'function') done();
+      return;
+    }
+    if (typeof done === 'function') {
+      _napOgrWait.push(done);
+    }
+    if (_napOgrReq) {
+      return;
+    }
+    var url = getApiUrl('duznosnici_ogranicenja_stupnjevi_po_obredu.php');
+    try {
+      var spO = new URLSearchParams(window.location.search);
+      var idtO = spO.get('id_duznosnik_test');
+      if (idtO && parseInt(idtO, 10) > 0) {
+        url += (url.indexOf('?') >= 0 ? '&' : '?') + 'id_duznosnik_test=' + encodeURIComponent(idtO);
+      }
+    } catch (eOgrUrl) {}
+    var xhrOgr = new XMLHttpRequest();
+    _napOgrReq = xhrOgr;
+    xhrOgr.open('GET', url, true);
+    xhrOgr.onreadystatechange = function () {
+      if (xhrOgr.readyState !== 4) return;
+      _napOgrReq = null;
+      _napOgrLoaded = true;
+      var txtO = (xhrOgr.responseText || '').trim();
+      if (txtO !== '' && txtO.charAt(0) === '{') {
+        try {
+          _napOgrMap = JSON.parse(txtO);
+        } catch (eParseOgr) {
+          _napOgrMap = {};
+        }
+      } else {
+        _napOgrMap = {};
+      }
+      var cek = _napOgrWait;
+      _napOgrWait = [];
+      for (var wi = 0; wi < cek.length; wi++) {
+        try {
+          if (cek[wi]) cek[wi]();
+        } catch (eCb) {}
+      }
+    };
+    xhrOgr.send();
+  }
 
   /** Postavi/makni CSS klasu kontrola-select--auto-locked na wrapperu oko <select>. */
   function setAutoLockedClass(selectEl, locked) {
@@ -185,12 +242,11 @@
       if (callback) callback();
       return;
     }
-    var filtrirano = [];
-    for (var i = 0; i < _geoPravaKešRegije.length; i++) {
-      if (String(_geoPravaKešRegije[i].id_drzava) === String(idDrzava)) {
-        filtrirano.push(_geoPravaKešRegije[i]);
-      }
-    }
+    var g = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
+    var filtrirano =
+      typeof window.vnlhGeoFiltrirajRegijePoDrzavi === 'function'
+        ? window.vnlhGeoFiltrirajRegijePoDrzavi(g.regije, idDrzava)
+        : [];
     popuniSelectIzKeša(selectRegija, filtrirano, '— Odaberi regiju —', 'select_regija');
 
     if (filtrirano.length === 1) {
@@ -223,12 +279,11 @@
       if (callback) callback();
       return;
     }
-    var filtrirano = [];
-    for (var j = 0; j < _geoPravaKešLoze.length; j++) {
-      if (String(_geoPravaKešLoze[j].id_regija) === String(idRegija)) {
-        filtrirano.push(_geoPravaKešLoze[j]);
-      }
-    }
+    var gL = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
+    var filtrirano =
+      typeof window.vnlhGeoFiltrirajLozePoRegiji === 'function'
+        ? window.vnlhGeoFiltrirajLozePoRegiji(gL.loze, idRegija)
+        : [];
     popuniSelectIzKeša(selectLoza, filtrirano, '— Odaberi ložu —', 'select_loza');
 
     if (filtrirano.length === 1) {
@@ -257,38 +312,26 @@
     log('ucitajPravaGeo: start');
     if (!selectDrzava) { if (callback) callback(); return; }
 
-    var url = getApiUrl('Duznosnici_Drzave_Regije_Loze_sve.php') + '?html_fajl=' + encodeURIComponent('Napredovanja_CRUD.html');
-    try {
-      var sp = new URLSearchParams(window.location.search);
-      var idt = sp.get('id_duznosnik_test');
-      if (idt && parseInt(idt, 10) > 0) url += '&id_duznosnik_test=' + encodeURIComponent(idt);
-    } catch (e2) {}
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
+    var url =
+      typeof window.vnlhGeoOgranicenjaNapraviUrlZaDrzaveRegijeLoze === 'function'
+        ? window.vnlhGeoOgranicenjaNapraviUrlZaDrzaveRegijeLoze(getApiUrl, 'Napredovanja_CRUD.html')
+        : getApiUrl('Duznosnici_Drzave_Regije_Loze_sve.php') +
+          '?html_fajl=' +
+          encodeURIComponent('Napredovanja_CRUD.html');
+    window.vnlhGeoOgranicenjaUcitaj(url, function () {
       log('ucitajPravaGeo: xhr done');
-      var text = (xhr.responseText || '').trim();
-      var obj = null;
-      if (text !== '' && text.charAt(0) === '{') {
-        try { obj = JSON.parse(text); } catch (e) {}
-      }
-      if (!obj) obj = { drzave: [], regije: [], loze: [], upis_izmjena: 0, brisanje_sloga: 0 };
+      var obj = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
+      var drz = obj.drzave || [];
 
-      _geoPravaKešDrzave = obj.drzave || [];
-      _geoPravaKešRegije = obj.regije || [];
-      _geoPravaKešLoze = obj.loze || [];
-
-      popuniSelectIzKeša(selectDrzava, _geoPravaKešDrzave, '— Odaberi državu —', 'select_drzava');
+      popuniSelectIzKeša(selectDrzava, drz, '— Odaberi državu —', 'select_drzava');
 
       if (typeof vnlhPrimijeniPravaCrud === 'function') {
         vnlhPrimijeniPravaCrud(obj.upis_izmjena, obj.brisanje_sloga);
       }
 
       _geoAutoLockedDrzava = false;
-      if (_geoPravaKešDrzave.length === 1 && selectDrzava) {
-        selectDrzava.value = String(_geoPravaKešDrzave[0].id);
+      if (drz.length === 1 && selectDrzava) {
+        selectDrzava.value = String(drz[0].id);
         selectDrzava.disabled = true;
         _geoAutoLockedDrzava = true;
         setAutoLockedClass(selectDrzava, true);
@@ -297,12 +340,11 @@
       } else {
         _geoAutoLockedDrzava = false;
         setAutoLockedClass(selectDrzava, false);
-        if (selectDrzava) selectDrzava.disabled = (_geoPravaKešDrzave.length === 0);
+        if (selectDrzava) selectDrzava.disabled = (drz.length === 0);
         popuniRegijeIzKeša('', function () {});
         if (callback) callback();
       }
-    };
-    xhr.send();
+    });
   }
 
   /* =========================================================================
@@ -326,7 +368,11 @@
     }
   }
 
-  /** Puni select Loža napredovanja: placeholder "— Loža napredovanja —", zatim "Neka druga loža" (value 0), zatim loze za id_drzava. Ako param prazan, samo placeholder i "Neka druga loža". */
+  /**
+   * Puni select Loža napredovanja iz geo keša (dozvoljene lože za dužnost), filtrirano po id_drzava zaglavlja.
+   * Ne koristi Loze_CRUD_sve_drzava.php (sve lože u državi) — samo skup iz vnlhGeoOgranicenjaDohvatiKeš().loze
+   * čija regija pripada toj državi (mapa regija → id_drzava iz istog keša).
+   */
   function popuniSelektLozaNapredovanja(param, done) {
     if (!selectLozaNapredovanja) { if (done) done(); return; }
     while (selectLozaNapredovanja.firstChild) selectLozaNapredovanja.removeChild(selectLozaNapredovanja.firstChild);
@@ -344,27 +390,42 @@
       if (done) done();
       return;
     }
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', getApiUrl('Loze_CRUD_sve_drzava.php') + '?id_drzava=' + encodeURIComponent(param), true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      var arr = [];
-      var text = (xhr.responseText || '').trim();
-      if (text !== '' && text.charAt(0) === '[') {
-        try { arr = JSON.parse(text); } catch (e) {}
+    var g = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
+    var regije = g.regije || [];
+    var loze = g.loze || [];
+    var regijaToDrz = {};
+    for (var r = 0; r < regije.length; r++) {
+      var rg = regije[r];
+      if (rg && rg.id != null) {
+        regijaToDrz[String(rg.id)] = rg.id_drzava;
       }
-      for (var i = 0; i < arr.length; i++) {
-        var o = arr[i];
-        var opt = document.createElement('option');
-        opt.value = o.id != null ? String(o.id) : '';
-        opt.textContent = o.naziv != null ? o.naziv : '';
-        selectLozaNapredovanja.appendChild(opt);
+    }
+    var filtrirano = [];
+    for (var i = 0; i < loze.length; i++) {
+      var L = loze[i];
+      if (!L || L.id_regija == null) continue;
+      var idDz = regijaToDrz[String(L.id_regija)];
+      if (String(idDz) === String(param)) {
+        filtrirano.push(L);
       }
-      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_loza_napredovanja');
-      syncEditImeLozeState();
-      if (done) done();
-    };
-    xhr.send();
+    }
+    filtrirano.sort(function (a, b) {
+      var na = (a.naziv != null ? String(a.naziv) : '').toLowerCase();
+      var nb = (b.naziv != null ? String(b.naziv) : '').toLowerCase();
+      if (na < nb) return -1;
+      if (na > nb) return 1;
+      return 0;
+    });
+    for (var j = 0; j < filtrirano.length; j++) {
+      var o = filtrirano[j];
+      var opt = document.createElement('option');
+      opt.value = o.id != null ? String(o.id) : '';
+      opt.textContent = o.naziv != null ? o.naziv : '';
+      selectLozaNapredovanja.appendChild(opt);
+    }
+    if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_loza_napredovanja');
+    syncEditImeLozeState();
+    if (done) done();
   }
 
   /** Puni edit panel podacima odabranog napredovanja (red u desnoj tablici). row = objekt s id_stupanj, id_tip_napredovanja, id_loza_napredovanja, datum_napredovanja, loza_napredovanja, stupanj, naziv. */
@@ -532,24 +593,34 @@
           if (textSt !== '' && textSt.charAt(0) === '[') {
             try { arrSt = JSON.parse(textSt); } catch (e) {}
           }
-          for (var j = 0; j < arrSt.length; j++) {
-            var o = arrSt[j];
-            var opt = document.createElement('option');
-            opt.value = o.id != null ? String(o.id) : '';
-            opt.textContent = (o.stupanj != null ? String(o.stupanj) + '\u00B0' + ', ' : '') + (o.naziv != null ? o.naziv : '');
-            if (o.stupanj != null) opt.dataset.stupanj = String(o.stupanj);
-            selectIzborStupnja.appendChild(opt);
+          function appendStupnjeviOpcije(niz) {
+            for (var j = 0; j < niz.length; j++) {
+              var o = niz[j];
+              var opt = document.createElement('option');
+              opt.value = o.id != null ? String(o.id) : '';
+              opt.textContent = (o.stupanj != null ? String(o.stupanj) + '\u00B0' + ', ' : '') + (o.naziv != null ? o.naziv : '');
+              if (o.stupanj != null) opt.dataset.stupanj = String(o.stupanj);
+              selectIzborStupnja.appendChild(opt);
+            }
+            if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_izbor_stupnja');
+            stupnjeviDone = true;
+            checkBoth();
           }
-          if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_izbor_stupnja');
-          stupnjeviDone = true;
-          checkBoth();
+          function nakonMapeOgrNap() {
+            var zaPrikaz = arrSt;
+            if (typeof window.vnlhFilteriStupnjeviPoOgranicenjimaZaSelekt === 'function') {
+              zaPrikaz = window.vnlhFilteriStupnjeviPoOgranicenjimaZaSelekt(arrSt, idObred, _napOgrMap);
+            }
+            appendStupnjeviOpcije(zaPrikaz && zaPrikaz.length ? zaPrikaz : []);
+          }
+          ucitajStupnjeviOgranicenjaZaNapredovanjaCrud(nakonMapeOgrNap);
         };
         xhrSt.send();
       }
     }
   }
 
-  /** id države iz zaglavlja (za Loze_CRUD_sve_drzava.php u edit panelu); prazno ako nije odabrana država. */
+  /** id države iz zaglavlja (za select Loža napredovanja iz geo keša); prazno ako nije odabrana država. */
   function getIdDrzavaZaDropdown() {
     if (!selectDrzava) return '';
     return trim(selectDrzava.value);

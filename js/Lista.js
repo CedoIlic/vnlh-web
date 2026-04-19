@@ -1157,9 +1157,7 @@
    * Podržava "Sve države/regije/lože" opcije ako ima >1 stavka.
    * ========================================================================= */
 
-  var _geoPravaKešDrzave = [];
-  var _geoPravaKešRegije = [];
-  var _geoPravaKešLoze   = [];
+  /* Geo keš: vnlhGeoOgranicenja* u 0-Filteri_Po_Ogranicenjima.js */
 
   var _geoAutoLockedDrzava = false;
   var _geoAutoLockedRegija = false;
@@ -1186,33 +1184,14 @@
    * pokreće auto-select kaskadu. CRUD tipke se ne primjenjuju (Lista je read-only).
    */
   function ucitajPravaGeoLista(callback) {
-    var geoUrl = API_BASE + 'Duznosnici_Drzave_Regije_Loze_sve.php?html_fajl=' + encodeURIComponent('Lista.html');
-    // Ako je forma otvorena iz Alati_Meni_Test, URL sadrži id_duznosnik_test —
-    // prosljeđujemo ga PHP-u da koristi ograničenja testiranog dužnosnika.
-    try {
-      var sp = new URLSearchParams(window.location.search);
-      var idt = sp.get('id_duznosnik_test');
-      if (idt && parseInt(idt, 10) > 0) geoUrl += '&id_duznosnik_test=' + encodeURIComponent(idt);
-    } catch (e) {}
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', geoUrl, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      var text = (xhr.responseText || '').trim();
-      var obj = null;
-      if (text !== '' && text.charAt(0) === '{') {
-        try { obj = JSON.parse(text); } catch (e) {}
-      }
-      if (!obj) obj = { drzave: [], regije: [], loze: [] };
-
-      _geoPravaKešDrzave = obj.drzave || [];
-      _geoPravaKešRegije = obj.regije || [];
-      _geoPravaKešLoze   = obj.loze   || [];
-
+    var geoUrl =
+      typeof window.vnlhGeoOgranicenjaNapraviUrlZaDrzaveRegijeLoze === 'function'
+        ? window.vnlhGeoOgranicenjaNapraviUrlZaDrzaveRegijeLoze(API_BASE, 'Lista.html')
+        : API_BASE + 'Duznosnici_Drzave_Regije_Loze_sve.php?html_fajl=' + encodeURIComponent('Lista.html');
+    window.vnlhGeoOgranicenjaUcitaj(geoUrl, function () {
       puniSelectDrzava();
       if (callback) callback();
-    };
-    xhr.send();
+    });
   }
 
   /** Popuni select država iz keša. "Sve države" ako >1. Auto-lock ako točno 1. */
@@ -1221,7 +1200,8 @@
     _geoAutoLockedDrzava = false;
     setAutoLockedClass(selectDrzava, false);
 
-    var arr = _geoPravaKešDrzave;
+    var g0 = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
+    var arr = g0.drzave || [];
     if (arr.length > 1) {
       var optSve = document.createElement('option');
       optSve.value = SVE_DRZAVE;
@@ -1269,18 +1249,18 @@
     }
 
     var sveDrzave = (idDrzava === SVE_DRZAVE);
-    var filtrirano = [];
-    for (var i = 0; i < _geoPravaKešRegije.length; i++) {
-      if (sveDrzave || String(_geoPravaKešRegije[i].id_drzava) === String(idDrzava)) {
-        filtrirano.push(_geoPravaKešRegije[i]);
-      }
-    }
+    var g1 = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
+    var filtrirano =
+      typeof window.vnlhGeoFiltrirajRegijeZaDrzavuIliSve === 'function'
+        ? window.vnlhGeoFiltrirajRegijeZaDrzavuIliSve(g1.regije, idDrzava, SVE_DRZAVE)
+        : [];
 
     // Mapa država id → naziv za prikaz uz regiju kad je "Sve države"
     var drzaveMap = {};
     if (sveDrzave) {
-      for (var d = 0; d < _geoPravaKešDrzave.length; d++) {
-        drzaveMap[_geoPravaKešDrzave[d].id] = _geoPravaKešDrzave[d].naziv || '';
+      var kd = g1.drzave || [];
+      for (var d = 0; d < kd.length; d++) {
+        drzaveMap[kd[d].id] = kd[d].naziv || '';
       }
     }
 
@@ -1347,26 +1327,34 @@
       }
     }
 
-    var filtrirano = [];
-    for (var i = 0; i < _geoPravaKešLoze.length; i++) {
-      var l = _geoPravaKešLoze[i];
-      if (sveRegije ? regijeIdMap[l.id_regija] : String(l.id_regija) === String(idRegija)) {
-        filtrirano.push(l);
-      }
+    var g2 = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
+    var filtrirano;
+    if (sveRegije) {
+      filtrirano =
+        typeof window.vnlhGeoFiltrirajLozePoSkupuRegija === 'function'
+          ? window.vnlhGeoFiltrirajLozePoSkupuRegija(g2.loze, regijeIdMap)
+          : [];
+    } else {
+      filtrirano =
+        typeof window.vnlhGeoFiltrirajLozePoRegiji === 'function'
+          ? window.vnlhGeoFiltrirajLozePoRegiji(g2.loze, idRegija)
+          : [];
     }
 
     // Mape za prikaz naziva regije/države uz ložu
     var showRegija = sveRegije;
     var showDrzava = (selectDrzava && selectDrzava.value === SVE_DRZAVE);
     var regijeMap = {};
-    var drzaveMap = {};
+    var drzaveMapLoza = {};
     if (showRegija || showDrzava) {
-      for (var ri = 0; ri < _geoPravaKešRegije.length; ri++) {
-        regijeMap[_geoPravaKešRegije[ri].id] = _geoPravaKešRegije[ri].naziv || '';
+      var kr = g2.regije || [];
+      var kd2 = g2.drzave || [];
+      for (var ri = 0; ri < kr.length; ri++) {
+        regijeMap[kr[ri].id] = kr[ri].naziv || '';
         if (showDrzava) {
-          for (var di = 0; di < _geoPravaKešDrzave.length; di++) {
-            if (_geoPravaKešDrzave[di].id === _geoPravaKešRegije[ri].id_drzava) {
-              drzaveMap[_geoPravaKešRegije[ri].id] = _geoPravaKešDrzave[di].naziv || '';
+          for (var di = 0; di < kd2.length; di++) {
+            if (kd2[di].id === kr[ri].id_drzava) {
+              drzaveMapLoza[kr[ri].id] = kd2[di].naziv || '';
               break;
             }
           }
@@ -1385,7 +1373,7 @@
       opt.value = filtrirano[j].id != null ? String(filtrirano[j].id) : '';
       var parts = [filtrirano[j].naziv || ''];
       if (showRegija && regijeMap[filtrirano[j].id_regija]) parts.push(regijeMap[filtrirano[j].id_regija]);
-      if (showDrzava && drzaveMap[filtrirano[j].id_regija]) parts.push(drzaveMap[filtrirano[j].id_regija]);
+      if (showDrzava && drzaveMapLoza[filtrirano[j].id_regija]) parts.push(drzaveMapLoza[filtrirano[j].id_regija]);
       opt.textContent = parts.join(', ');
       selectLoza.appendChild(opt);
     }
@@ -1416,6 +1404,65 @@
   /* =========================================================================
    * ▒▒ KRAJ BLOKA 1: PRAVA GEO (Lista) ▒▒
    * ========================================================================= */
+
+  /** Keš: JSON iz duznosnici_ogranicenja_stupnjevi_po_obredu.php (tip 6, dozvoljeni stupnjevi po obredu). */
+  var _stupnjeviOgrMap = {};
+  var _stupnjeviOgrLoaded = false;
+  var _stupnjeviOgrReq = null;
+  /** Callbackovi dok traje jedini XHR za stupnjevi (više uzastopnih ucitajClanovi). */
+  var _stupnjeviOgrWait = [];
+
+  /**
+   * Jednokratni dohvat mape ograničenja stupnjeva po obredu za prijavljenog dužnosnika.
+   * Parametar id_duznosnik_test u URL-u (Alati_Meni_Test) prosljeđuje se kao kod geo API-ja.
+   * @param {function(): void} [done] — nakon učitavanja ili odmah ako je keš već spreman
+   */
+  function ucitajStupnjeviOgranicenjaLista(done) {
+    if (_stupnjeviOgrLoaded) {
+      if (typeof done === 'function') done();
+      return;
+    }
+    if (typeof done === 'function') {
+      _stupnjeviOgrWait.push(done);
+    }
+    if (_stupnjeviOgrReq) {
+      return;
+    }
+    var url = API_BASE + 'duznosnici_ogranicenja_stupnjevi_po_obredu.php';
+    try {
+      var sp2 = new URLSearchParams(window.location.search);
+      var idt2 = sp2.get('id_duznosnik_test');
+      if (idt2 && parseInt(idt2, 10) > 0) {
+        url += (url.indexOf('?') >= 0 ? '&' : '?') + 'id_duznosnik_test=' + encodeURIComponent(idt2);
+      }
+    } catch (eTst) {}
+    var xhrOgr = new XMLHttpRequest();
+    _stupnjeviOgrReq = xhrOgr;
+    xhrOgr.open('GET', url, true);
+    xhrOgr.onreadystatechange = function () {
+      if (xhrOgr.readyState !== 4) return;
+      _stupnjeviOgrReq = null;
+      _stupnjeviOgrLoaded = true;
+      var txtOgr = (xhrOgr.responseText || '').trim();
+      if (txtOgr !== '' && txtOgr.charAt(0) === '{') {
+        try {
+          _stupnjeviOgrMap = JSON.parse(txtOgr);
+        } catch (eJo) {
+          _stupnjeviOgrMap = {};
+        }
+      } else {
+        _stupnjeviOgrMap = {};
+      }
+      var cek = _stupnjeviOgrWait;
+      _stupnjeviOgrWait = [];
+      for (var wi = 0; wi < cek.length; wi++) {
+        try {
+          if (cek[wi]) cek[wi]();
+        } catch (eW) {}
+      }
+    };
+    xhrOgr.send();
+  }
 
   function ucitajClanovi(idLoza, lozaNaziv) {
     podaci = [];
@@ -1476,6 +1523,15 @@
               Stupanj: r.stupanj_show || '',
               StupanjBroj: r.stupanj_broj != null ? String(r.stupanj_broj) : '',
               StupanjNaziv: r.stupanj_naziv || '',
+              id_obred: (function () {
+                var io = parseInt(r.id_obred, 10);
+                return isNaN(io) ? 0 : io;
+              })(),
+              id_stupnj_clan: (function () {
+                var is = parseInt(r.stupanj, 10);
+                return isNaN(is) ? 0 : is;
+              })(),
+              obred_naziv: r.obred_naziv || '',
               Loža: lozaNazivClan || '',
               Grad: r.loza_grad || '',
               DrzavaLoze: r.drzava_loze || '',
@@ -1491,7 +1547,13 @@
               na_prijedlog: [r.na_prijedlog_prezime, r.na_prijedlog_ime].filter(Boolean).join(' ') || ''
             });
           }
-          primijeniFilterTrazi();
+          function nakonOgrStupnjeva() {
+            if (typeof window.vnlhFilteriPrimijeniStupnjevaPoOgranicenjima === 'function') {
+              window.vnlhFilteriPrimijeniStupnjevaPoOgranicenjima(1, podaci, _stupnjeviOgrMap);
+            }
+            primijeniFilterTrazi();
+          }
+          ucitajStupnjeviOgranicenjaLista(nakonOgrStupnjeva);
         } catch (e) {}
       }
     };

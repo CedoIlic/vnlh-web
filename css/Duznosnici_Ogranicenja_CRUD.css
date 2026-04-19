@@ -92,7 +92,12 @@
   grid-column: 2;
 }
 
-/* Dužnosnik: select + ikona reload */
+/* Dužnosnik: opcijski toggle „Svi“ + select + ikona reload */
+.duznosnici-ogranicenja-crud__svi-toggle-wrap {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
 .duznosnici-ogranicenja-crud__duznosnik-wrap {
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Duznosnici_Ogranicenja_CRUD.html – forma za ograničenja dužnosnika.
-  Zaglavlje panela: Dužnosnik (select + reload), zatim Država, Regija, Loža (svaki: edit + ellipsis). Na uskim uređajima labela iznad, kontrole ispod; breakpoint --page_breakpoint_narrow.
+  Zaglavlje panela: Dužnosnik (opcijski toggle „Svi“ + select + reload), zatim Država, Regija, Loža (svaki: edit + ellipsis). Na uskim uređajima labela iznad, kontrole ispod; breakpoint --page_breakpoint_narrow.
   Prvi panel – tablica: Upis/izmjena (checkbox), Brisanje sloga (checkbox), Funkcionalnost (bez podnožja).
   Drugi panel – zaglavlje „Prikaz stupnjeva po obredu“, tablica Obred + ID dozvoljenih stupnjeva (ellipsis u retku); podnožje: CRUD tipke (Upis, Izbriši, Povratak).
   Oba panela: data-resize-max-vh="none" – vertikalni resize nije ograničen na 90% ekrana; dugačka forma – pomicanje prstom (0-Kontrole.js initPanelResizeBar).
@@ -10,7 +10,7 @@
 -->
 <html lang="hr">
 <head>
-    <script>window.VNLH_OGRANICENJA_MASTER_ID=__VNLH_SESSION_MASTER_ID_DUZNOSNIK__;</script>
+    <script>window.VNLH_OGRANICENJA_MASTER_ID=__VNLH_SESSION_MASTER_ID_DUZNOSNIK__;window.VNLH_ID_KORISNIK=__VNLH_ID_KORISNIK__;</script>
     <meta charset="UTF-8">
     <title>Ograničenja dužnosnika</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,6 +30,14 @@
             <div class="duznosnici-ogranicenja-crud__header-row">
                 <label class="kontrola-labela mb-0" for="select_duznosnik">Dužnosnik</label>
                 <div class="duznosnici-ogranicenja-crud__duznosnik-wrap">
+                    <!-- Vidljivost: sustav_varijable 1004 = 1 i id_korisnik u listi iz retka 1002; kliznik 0-Poruke.css -->
+                    <div id="toggle_svi_duznosnik_wrap" class="duznosnici-ogranicenja-crud__svi-toggle-wrap" hidden>
+                        <label class="poruke__toggle-label" for="toggle_svi_duznosnik">
+                            <input type="checkbox" id="toggle_svi_duznosnik" class="poruke__toggle-input" autocomplete="off" disabled aria-label="Svi dužnosnici uključujući Mastera">
+                            <span class="poruke__toggle-slider" aria-hidden="true"></span>
+                            <span class="poruke__toggle-text">Svi</span>
+                        </label>
+                    </div>
                     <div class="kontrola-select">
                         <select id="select_duznosnik" aria-label="Odaberi dužnosnika">
                             <option value="">— Odaberi dužnosnika —</option>

@@ -2,7 +2,8 @@
 require_once __DIR__ . '/require_login_api.php';
 // Clanovi_CRUD_sve_loze.php – dohvat članova za jednu ili više loža.
 // GET id_loza (broj ili zarezom odvojeni id-evi).
-// Isti izlaz kao Clanovi_CRUD_sve.php + l.naziv AS loza_naziv za prikaz kad je više loža.
+// Isti izlaz kao Clanovi_CRUD_sve.php + l.naziv AS loza_naziv za prikaz kad je više loža;
+// l.id_obred, obredi.naziv AS obred_naziv (Lista: filter stupnjeva po ograničenjima tip 6).
 $db_ret = require_once __DIR__ . '/00_db.php';
 if ($db_ret !== -1) {
     header('Content-Type: text/plain');
@@ -64,10 +65,13 @@ $sql = "SELECT
             (SELECT a2.id_drzave_adrese FROM adrese a2 INNER JOIN adrese_tip at2 ON at2.id = a2.id_adrese_tip AND at2.`Tip` = 1 WHERE a2.id_clanovi = c.id ORDER BY a2.id ASC LIMIT 1) AS id_drzava_adrese,
             l.grad AS loza_grad,
             l.naziv AS loza_naziv,
+            l.id_obred AS id_obred,
+            obr.naziv AS obred_naziv,
             d_loza.naziv AS drzava_loze
         FROM clanovi c
         LEFT JOIN stupnjevi s ON s.id = c.stupanj
         LEFT JOIN loze l ON l.id = c.loza
+        LEFT JOIN obredi obr ON obr.id = l.id_obred
         LEFT JOIN drzave d_loza ON d_loza.id = l.id_drzava
         LEFT JOIN clanovi m ON m.id = c.na_prijedlog
         WHERE c.loza IN ($placeholders) AND c.aktivnost = 1
