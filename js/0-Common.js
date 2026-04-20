@@ -666,13 +666,15 @@
         for (var c = 0; c < nKolona && c < zaglavlje.length; c++) {
           var col = zaglavlje[c];
           /* type: neovisno o velikom/malom slovu (t/T=tekst, n/N=numerik, d/D=datum, b/B=binarno) */
+          /* type: t tekst, n broj, d datum, b binarno, i slika (URL u ćeliji – KontroleTablica iscrtava <img>). */
           var type = (col.type != null && col.type !== '') ? String(col.type).toLowerCase() : 't';
           /* align: neovisno o velikom/malom slovu (c/C, l/L, r/R) */
           var align = (col.align != null && col.align !== '') ? String(col.align).toLowerCase() : 'l';
           var cellReadonly = col.cell_readonly === 1 ? 1 : 0;
-          out.push({ title: col.title, sortable_icon: col.sortable_icon === 1 ? 1 : 0, align: align, type: type, cell_readonly: cellReadonly });
+          var sortableCol = (col.sortable === 0 || col.sortable === '0') ? 0 : 1;
+          out.push({ title: col.title, sortable_icon: col.sortable_icon === 1 ? 1 : 0, align: align, type: type, cell_readonly: cellReadonly, sortable: sortableCol });
         }
-        while (out.length < nKolona) out.push({ title: '', sortable_icon: 0, align: 'l', type: 't', cell_readonly: 0 });
+        while (out.length < nKolona) out.push({ title: '', sortable_icon: 0, align: 'l', type: 't', cell_readonly: 0, sortable: 1 });
         return out;
       })();
 
@@ -1022,7 +1024,7 @@
               td.style.maxWidth = pct;
             }
           }
-          if (col.suffix) {
+          if (col.suffix && String(col.type || '').toLowerCase() !== 'i') {
             var target = td.querySelector('.kontrola-tablica__cell-inner') || td;
             var t = (target.textContent || '').trim();
             if (t && !t.endsWith(col.suffix)) target.textContent = t + col.suffix;

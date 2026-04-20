@@ -1,7 +1,7 @@
 /* =====================================================
-   Clanovi_CRUD.js
-   Panel slike (1:1,2), panel tablice s Država/Regija/Loža + reload, tablica Prezime/Ime/Stupanj/Spol (klik na Spol = toggle).
-   Edit u dva stupca, modal obrade slike na dvoklik. PHP upis/izmjena ostavljeni kao stub.
+   Clanovi_Loza_CRUD.js
+   Panel slike (1:1,2), panel tablice: logo + Država/Regija/Loža + Traži (lokalni edit-delete, ne Lista); tablica kao Clanovi_CRUD (klik na Spol = toggle).
+   Logo u zaglavlju = Loze_CRUD_slika. Edit u dva stupca, modal obrade slike na dvoklik.
    ===================================================== */
 // @ts-nocheck
 (function () {
@@ -152,7 +152,7 @@
   // 3) SQL_Naziv (string) - Naziv podatka koji vraća PHP. Ako nije upisan = prvi podatak iza id. id = ključ sloga, skriveni podatak u redu tablice.
   // 4) sortable (0 | 1) - 1 = kolona se može sortirati klikom na zaglavlje; 0 = nije sortabilna, hover na zaglavlju te kolone ne radi.
   // 5) sortable_icon (0 | 1) - 1 = iscrtava se sort ikona u zaglavlju (pravila: align L ili C → ikona uz desni rub ćelije; align R → ikona uz lijevi rub kolone). Default: 0.
-  // 6) type ("t" | "n" | "d" | "b") - Tip podataka u koloni: "t" = tekst, "n" = broj, "d" = datum, "b" = binarno. Koristi se npr. da se datum sortira kao datum, broj kao broj, ne kao string.
+  // 6) type ("t" | "n" | "d" | "b") - Tip podataka u koloni: "t" = tekst, "n" = broj, "d" = datum, "b" = binarno. (Isto kao Clanovi_CRUD.js.)
   // 7) width (number) - Širina te kolone: 0 = auto; < 0 = abs(width) % ukupne širine tablice (npr. -20 → 20%); > 0 = fiksno u px (npr. 30 → 30px).
   // 8) suffix (string) - Dodatak uz prikaz podatka (npr. " €", "%", " kom").
   // 9) align ("L" | "C" | "R") - Orijentacija teksta u zaglavlju tablice: L = lijevo, C = centar, R = desno.
@@ -160,7 +160,8 @@
   // 11) mobitel_prikaz (0–255, default 1) - Prikaz kolone na mobilnim uređajima. 0 = ne prikazuje se, 1 = prikazuje se. Primjenjuje se pri sužavanju (npr. kada kolone grida idu jedna iznad druge).
   // 12) cell_readonly (0 | 1) - Za type "b": 1 = checkbox nije klikabilan (samo prikaz). Default: 0.
   //
-  var ClanoviCRUD = {
+  /* Glavna tablica: ista konfiguracija kolona kao Clanovi_CRUD.js (Prezime, Ime, St., Spol). */
+  var ClanoviLozaCRUD = {
     Broj_Kolona: 4,
     Reload_Ikona: 0,
     CrudCssPrefix: 'clanovi-crud',
@@ -175,7 +176,7 @@
   var tablicaApi = null;
   var onCrudSelectionChange = null;
 
-  CommonCRUD.initTablica('tablicaContainer', ClanoviCRUD, {
+  CommonCRUD.initTablica('tablicaContainer', ClanoviLozaCRUD, {
     getRowId: function (row) { return (row && row.id != null) ? row.id : null; },
     onReady: function (api) { tablicaApi = api; },
     onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
@@ -227,33 +228,21 @@
   }
 
   function clearControlsFromSelection() {
-    var ids = ['edit_prezime', 'edit_ime', 'edit_sifra', 'edit_datum_rodjenja', 'edit_oib', 'edit_datum_inicijacije', 'edit_datum_stupnja', 'edit_telefon', 'edit_email', 'edit_adresa_1', 'edit_adresa_2', 'edit_grad', 'edit_posta', 'edit_napomena', 'edit_stupanj', 'edit_date_time_stamp'];
+    var ids = ['edit_prezime', 'edit_ime', 'edit_datum_rodjenja', 'edit_oib', 'edit_telefon', 'edit_email', 'edit_adresa_1', 'edit_adresa_2', 'edit_grad', 'edit_posta', 'edit_napomena'];
     for (var i = 0; i < ids.length; i++) {
       var el = document.getElementById(ids[i]);
       if (el) { el.value = ''; if (ids[i] === 'edit_prezime') el.dispatchEvent(new Event('input', { bubbles: true })); }
     }
     syncDatumEmptyClass(document.getElementById('edit_datum_rodjenja'));
-    syncDatumEmptyClass(document.getElementById('edit_datum_inicijacije'));
-    syncDatumEmptyClass(document.getElementById('edit_datum_stupnja'));
     if (selectSpol) selectSpol.value = '0';
     if (selectPorijeklo) selectPorijeklo.value = '';
-    if (selectIzborStupnja) selectIzborStupnja.value = '';
     if (selectNaPrijedlog) selectNaPrijedlog.value = '';
     if (selectDrzavaAdrese) selectDrzavaAdrese.value = '';
     if (typeof KontroleRefreshCustomSelect === 'function') {
       if (selectSpol) KontroleRefreshCustomSelect('select_spol');
       if (selectPorijeklo) KontroleRefreshCustomSelect('select_porijeklo');
-      if (selectIzborStupnja) KontroleRefreshCustomSelect('select_izbor_stupnja');
       if (selectNaPrijedlog) KontroleRefreshCustomSelect('select_na_prijedlog');
       if (selectDrzavaAdrese) KontroleRefreshCustomSelect('select_drzava_adrese');
-    }
-    var chkAktivnost = document.getElementById('edit_aktivnost');
-    var chkKandidat = document.getElementById('edit_kandidat');
-    if (chkAktivnost) chkAktivnost.checked = false;
-    if (chkKandidat) chkKandidat.checked = false;
-    for (var zc = 0; zc < 16; zc++) {
-      var chkZast = document.getElementById('edit_zastavice_' + zc);
-      if (chkZast) chkZast.checked = false;
     }
   }
 
@@ -321,19 +310,10 @@
         if (editPrezime) { editPrezime.value = found.prezime != null ? found.prezime : ''; editPrezime.dispatchEvent(new Event('input', { bubbles: true })); }
         var editIme = document.getElementById('edit_ime');
         if (editIme) editIme.value = found.ime != null ? found.ime : '';
-        var editSifra = document.getElementById('edit_sifra');
-        if (editSifra) editSifra.value = found.sifra != null ? found.sifra : '';
         if (selectSpol) selectSpol.value = (found.spol === 1 || found.spol === '1') ? '1' : '0';
         var editDatumRodjenja = document.getElementById('edit_datum_rodjenja');
         if (editDatumRodjenja) { editDatumRodjenja.value = found.datum_rodjenja != null ? found.datum_rodjenja : ''; syncDatumEmptyClass(editDatumRodjenja); }
-        var editDatumInicijacije = document.getElementById('edit_datum_inicijacije');
-        if (editDatumInicijacije) { editDatumInicijacije.value = found.datum_inicijacije != null ? found.datum_inicijacije : ''; syncDatumEmptyClass(editDatumInicijacije); }
         if (selectPorijeklo) selectPorijeklo.value = (found.porijeklo != null && found.porijeklo !== '') ? String(found.porijeklo) : '';
-        var editStupanj = document.getElementById('edit_stupanj');
-        if (editStupanj) editStupanj.value = found.stupanj_show != null ? String(found.stupanj_show).replace(/\.$/, '') + '\u00B0' : '';
-        if (selectIzborStupnja) selectIzborStupnja.value = (found.stupanj != null && found.stupanj !== '') ? String(found.stupanj) : '';
-        var editDatumStupnja = document.getElementById('edit_datum_stupnja');
-        if (editDatumStupnja) { editDatumStupnja.value = found.datum_stupnja != null ? found.datum_stupnja : ''; syncDatumEmptyClass(editDatumStupnja); }
         populateNaPrijedlog(id);
         if (selectNaPrijedlog) selectNaPrijedlog.value = (found.na_prijedlog != null && found.na_prijedlog !== '') ? String(found.na_prijedlog) : '';
         var editTelefon = document.getElementById('edit_telefon');
@@ -349,24 +329,11 @@
         var editPosta = document.getElementById('edit_posta');
         if (editPosta) editPosta.value = found.adresa_posta != null ? found.adresa_posta : '';
         if (selectDrzavaAdrese) selectDrzavaAdrese.value = (found.id_drzava_adrese != null && found.id_drzava_adrese !== '') ? String(found.id_drzava_adrese) : '';
-        var zastaviceVal = found.zastavice != null ? (typeof found.zastavice === 'number' ? found.zastavice : parseInt(found.zastavice, 10)) : 0;
-        if (isNaN(zastaviceVal)) zastaviceVal = 0;
-        for (var zb = 0; zb < 16; zb++) {
-          var chkZ = document.getElementById('edit_zastavice_' + zb);
-          if (chkZ) chkZ.checked = ((zastaviceVal >>> zb) & 1) === 1;
-        }
         var editNapomena = document.getElementById('edit_napomena');
         if (editNapomena) editNapomena.value = found.napomena != null ? found.napomena : '';
-        var editVrijemeUpisa = document.getElementById('edit_date_time_stamp');
-        if (editVrijemeUpisa) editVrijemeUpisa.value = formatVrijemeUpisa(found.upisano);
-        var chkAktivnost = document.getElementById('edit_aktivnost');
-        var chkKandidat = document.getElementById('edit_kandidat');
-        if (chkAktivnost) chkAktivnost.checked = (found.aktivnost === 1 || found.aktivnost === '1');
-        if (chkKandidat) chkKandidat.checked = (found.kandidat === 1 || found.kandidat === '1');
         if (typeof KontroleRefreshCustomSelect === 'function') {
           KontroleRefreshCustomSelect('select_spol');
           KontroleRefreshCustomSelect('select_porijeklo');
-          KontroleRefreshCustomSelect('select_izbor_stupnja');
           KontroleRefreshCustomSelect('select_na_prijedlog');
           KontroleRefreshCustomSelect('select_drzava_adrese');
         }
@@ -478,10 +445,6 @@
       KontroleSetControlEnabled(editDeleteWrap, imaLozu);
     }
     if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
-    var zastaviceWrap = document.getElementById('clanovi_zastavice_wrap');
-    var labelZastavice = document.getElementById('label_zastavice');
-    if (zastaviceWrap) zastaviceWrap.classList.toggle('clanovi-crud__zastavice-edit--disabled', !(imaLozu && imaSadrzaj));
-    if (labelZastavice) labelZastavice.classList.toggle('kontrola-labela--disabled', !(imaLozu && imaSadrzaj));
     var panelTablica = selectLoza && selectLoza.closest ? selectLoza.closest('.clanovi-crud__panel-tablica') : null;
     if (panelTablica && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(panelTablica);
 
@@ -509,14 +472,15 @@
     if (imageFrame) imageFrame.classList.toggle('kontrola-slika--disabled', !imaSadrzaj);
     if (btnReloadTablica) btnReloadTablica.disabled = !imaLozu;
 
+    var traziLozaInput = document.getElementById('clanovi_loza_trazi');
+    var traziLozaWrap = traziLozaInput && traziLozaInput.closest ? traziLozaInput.closest('.kontrola-edit-delete') : null;
+    if (traziLozaWrap && typeof KontroleSetControlEnabled === 'function') {
+      KontroleSetControlEnabled(traziLozaWrap, imaLozu);
+    }
+
     // Tipka Izbriši: može biti enable isključivo kada postoji selekcija u tablici.
     var imaSelekciju = getSelectedRowId() != null;
     if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
-
-    // Ikona bolt uz Šifru iskaznice: disabled kad je edit Šifra iskaznice disabled ili kad postoji selektirani red
-    var editSifra = document.getElementById('edit_sifra');
-    var btnSifraBolt = document.getElementById('btn_sifra_bolt');
-    if (btnSifraBolt) btnSifraBolt.disabled = (editSifra && editSifra.disabled) || imaSelekciju;
 
     // Ikone ellipsis uz Telefon, E-mail, Adresa: enable samo kod selekcije (izmjena) – pri dodavanju novog nema id.
     var editTelefon = document.getElementById('edit_telefon');
@@ -616,14 +580,10 @@
     fd.append('id_loza', payload.id_loza);
     fd.append('prezime', payload.prezime);
     fd.append('ime', payload.ime);
-    fd.append('sifra', payload.sifra);
     fd.append('spol', payload.spol);
     if (payload.datum_rodjenja != null) fd.append('datum_rodjenja', payload.datum_rodjenja);
     if (payload.oib != null) fd.append('oib', payload.oib);
-    if (payload.datum_inicijacije != null) fd.append('datum_inicijacije', payload.datum_inicijacije);
-    if (payload.datum_stupnja != null) fd.append('datum_stupnja', payload.datum_stupnja);
     if (payload.porijeklo != null) fd.append('porijeklo', payload.porijeklo);
-    if (payload.stupanj != null) fd.append('stupanj', payload.stupanj);
     if (payload.na_prijedlog != null) fd.append('na_prijedlog', payload.na_prijedlog);
     if (payload.id_drzava_adrese != null) fd.append('id_drzava_adrese', payload.id_drzava_adrese);
     fd.append('telefon_text', payload.telefon_text);
@@ -633,9 +593,6 @@
     fd.append('grad', payload.grad);
     fd.append('posta', payload.posta);
     fd.append('napomena', payload.napomena);
-    fd.append('aktivnost', payload.aktivnost ? '1' : '0');
-    fd.append('kandidat', payload.kandidat ? '1' : '0');
-    fd.append('zastavice', String(payload.zastavice != null ? payload.zastavice : 0));
     return fd;
   }
 
@@ -695,10 +652,10 @@
   function ucitajPravaGeo(callback) {
     var url =
       typeof window.vnlhGeoOgranicenjaNapraviUrlZaDrzaveRegijeLoze === 'function'
-        ? window.vnlhGeoOgranicenjaNapraviUrlZaDrzaveRegijeLoze(getApiUrl, 'Clanovi_CRUD.html')
+        ? window.vnlhGeoOgranicenjaNapraviUrlZaDrzaveRegijeLoze(getApiUrl, 'Clanovi_Loza_CRUD.html')
         : getApiUrl('Duznosnici_Drzave_Regije_Loze_sve.php') +
           '?html_fajl=' +
-          encodeURIComponent('Clanovi_CRUD.html');
+          encodeURIComponent('Clanovi_Loza_CRUD.html');
     window.vnlhGeoOgranicenjaUcitaj(url, function () {
       var g = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
       var drz = g.drzave || [];
@@ -764,7 +721,7 @@
       popuniLozeIzKeša('', function () {});
       lozeData = [];
       data = [];
-      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje);
+      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviLozaCRUD.Tablica_Zaglavlje);
       scrollTablicaClanoviToTop();
       if (callback) callback();
       return;
@@ -804,7 +761,7 @@
       selectLoza.disabled = true;
       lozeData = [];
       data = [];
-      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje);
+      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviLozaCRUD.Tablica_Zaglavlje);
       scrollTablicaClanoviToTop();
       if (callback) callback();
       return;
@@ -833,6 +790,7 @@
       setAutoLockedClass(selectLoza, true);
       if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_loza');
       osvjeziTablicu(function () {
+        clanoviLozaUpdateNaslovLozu();
         updateEnabledState();
         updateCrudUpisiState();
         if (callback) callback();
@@ -840,8 +798,9 @@
     } else {
       selectLoza.disabled = (filtrirano.length === 0);
       data = [];
-      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje);
+      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviLozaCRUD.Tablica_Zaglavlje);
       scrollTablicaClanoviToTop();
+      clanoviLozaUpdateNaslovLozu();
       if (callback) callback();
     }
   }
@@ -866,29 +825,100 @@
    * ▒▒ KRAJ BLOKA 2: PRAVA CRUD ▒▒
    * ========================================================================= */
 
+  /**
+   * Filtriranje podataka za tablicu prema polju #clanovi_loza_trazi (prezime, ime, stupanj, šifra, upisano, spol).
+   * Ne koristi Lista.js niti lista-trazi klase – samo čitanje vrijednosti inputa.
+   */
+  function clanoviLozaPrimijeniTraži(lista) {
+    var el = document.getElementById('clanovi_loza_trazi');
+    var q = el ? trim(el.value).toLowerCase() : '';
+    if (!q) return lista.slice();
+    var out = [];
+    for (var i = 0; i < lista.length; i++) {
+      var r = lista[i];
+      var sif = r.sifra != null ? String(r.sifra) : '';
+      var st = r.stupanj_show != null ? String(r.stupanj_show) : '';
+      var stNum = r.stupanj != null ? String(r.stupanj) : '';
+      var vu = r.upisano != null ? String(r.upisano) : '';
+      var spolTxt = (r.spol === 1 || r.spol === '1') ? 'ženski' : 'muški';
+      var hay = ((r.prezime || '') + ' ' + (r.ime || '') + ' ' + st + ' ' + stNum + ' ' + sif + ' ' + vu + ' ' + spolTxt).toLowerCase();
+      if (hay.indexOf(q) >= 0) out.push(r);
+    }
+    return out;
+  }
+
+  /** Iz niza zapisa gradi retke za CommonCRUD – isti redoslijed kao Clanovi_CRUD.js (ucitajClanove). */
+  function clanoviLozaPodaciURedove(arr) {
+    var rows = [];
+    for (var i = 0; i < arr.length; i++) {
+      var r = arr[i];
+      var stupanjShow = r.stupanj_show != null ? String(r.stupanj_show) : '';
+      var spolDisplay = (r.spol === 1 || r.spol === '1') ? 'Ženski' : 'Muški';
+      rows.push({
+        id: r.id != null ? r.id : '',
+        0: r.prezime != null ? r.prezime : '',
+        1: r.ime != null ? r.ime : '',
+        2: stupanjShow,
+        3: spolDisplay
+      });
+    }
+    return rows;
+  }
+
+  /** Fiksno broj vidljivih redaka u scroll području (bez UI odabira – kao bivših 10). */
+  var CLANOVI_LOZA_TABLICA_VIDLJIVIH_REDAKA = 10;
+
+  /**
+   * Postavlja --tablica_vidljivih_redova na kontejneru tablice (jedini parametar koji 0-Kontrole.css
+   * stvarno koristi za visinu skrola). Uklonjeno: --tablica_ukupna_visina / --tablica_scroll_visina
+   * (to je bilo vezano uz Lista.css, ovdje ne radi ništa i moglo je zbunjivati layout).
+   */
+  function clanoviLozaPostaviVidljivihRedova() {
+    var container = document.getElementById('tablicaContainer');
+    if (!container || !container.style) return;
+    container.style.setProperty('--tablica_vidljivih_redova', String(CLANOVI_LOZA_TABLICA_VIDLJIVIH_REDAKA));
+  }
+
+  function clanoviLozaOsvjeziPrikazTablice() {
+    var rows = clanoviLozaPodaciURedove(clanoviLozaPrimijeniTraži(data));
+    if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, ClanoviLozaCRUD.Tablica_Zaglavlje);
+    clanoviLozaPostaviVidljivihRedova();
+    scrollTablicaClanoviToTop();
+    /* Nakon filtera ponekad je thead/layout još u tranziciji – ponovno primijeni zaglavlje u idućem okviru. */
+    var tc = document.getElementById('tablicaContainer');
+    if (tc && ClanoviLozaCRUD.Tablica_Zaglavlje && typeof CommonCRUD !== 'undefined' && CommonCRUD.primijeniTablicaZaglavlje) {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          CommonCRUD.primijeniTablicaZaglavlje(tc, ClanoviLozaCRUD.Tablica_Zaglavlje);
+        });
+      });
+    }
+  }
+
   function ucitajClanove(idLoza, callback) {
-    if (!idLoza) { data = []; if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje); scrollTablicaClanoviToTop(); populateNaPrijedlog(null); if (callback) callback(); return; }
+    if (!idLoza) {
+      data = [];
+      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviLozaCRUD.Tablica_Zaglavlje);
+      scrollTablicaClanoviToTop();
+      populateNaPrijedlog(null);
+      if (callback) callback();
+      return;
+    }
     var xhr = new XMLHttpRequest();
     xhr.open('GET', API_BASE + 'Clanovi_CRUD_sve.php?id_loza=' + encodeURIComponent(idLoza), true);
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
       var text = (xhr.responseText || '').trim();
       data = [];
-      var rows = [];
       if (text !== '' && text.charAt(0) === '[') {
         try {
           var arr = JSON.parse(text);
           for (var i = 0; i < arr.length; i++) {
-            var r = arr[i];
-            data.push(r);
-            var stupanjShow = r.stupanj_show != null ? String(r.stupanj_show) : '';
-            var spolDisplay = (r.spol === 1 || r.spol === '1') ? 'Ženski' : 'Muški';
-            rows.push({ id: r.id != null ? r.id : '', 0: r.prezime != null ? r.prezime : '', 1: r.ime != null ? r.ime : '', 2: stupanjShow, 3: spolDisplay });
+            data.push(arr[i]);
           }
         } catch (e) {}
       }
-      CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, ClanoviCRUD.Tablica_Zaglavlje);
-      scrollTablicaClanoviToTop();
+      clanoviLozaOsvjeziPrikazTablice();
       populateNaPrijedlog(getSelectedRowId());
       if (callback) callback();
     };
@@ -1006,11 +1036,6 @@
     var idLoza = selectLoza ? trim(selectLoza.value) : '';
     ucitajClanove(idLoza, function () {
       updateCrudUpisiState();
-      var idObred = null;
-      for (var i = 0; i < lozeData.length; i++) {
-        if (String(lozeData[i].id) === String(idLoza)) { idObred = lozeData[i].id_obred; break; }
-      }
-      ucitajStupnjeve(idObred || 0);
       if (typeof callback === 'function') callback();
     });
   }
@@ -1042,16 +1067,129 @@
     });
   }
 
+  /** Centrirani naslov u edit panelu = naziv opcije trenutne lože. */
+  function clanoviLozaUpdateNaslovLozu() {
+    var el = document.getElementById('edit_loza_naslov');
+    var sel = document.getElementById('select_loza');
+    if (!el || !sel) return;
+    var opt = sel.options[sel.selectedIndex];
+    var t = opt && opt.textContent ? trim(opt.textContent) : '';
+    el.textContent = t && sel.value !== '' ? t : '\u00A0';
+    clanoviLozaUpdateTablicaHeaderLogo();
+  }
+
+  /**
+   * Logo lože u zaglavlju panela tablice: lijevo, kvadrat unutar fiksnog okvira (Loze_CRUD_slika.php – glavna slika, ne thumb).
+   * Bez odabrane lože ili bez slike / greška učitavanja: samo sivi okvir (placeholder).
+   */
+  function clanoviLozaUpdateTablicaHeaderLogo() {
+    var img = document.getElementById('clanovi_loza_tablica_logo');
+    var frame = img && img.closest ? img.closest('.clanovi-loza-crud__tablica-header-logo-frame') : null;
+    if (!img || !frame) return;
+    var idLoza = selectLoza ? trim(selectLoza.value) : '';
+    var placeholderSrc = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    img.onload = null;
+    img.onerror = null;
+    if (!idLoza) {
+      img.hidden = true;
+      img.src = placeholderSrc;
+      frame.classList.add('clanovi-loza-crud__tablica-header-logo-frame--prazno');
+      return;
+    }
+    frame.classList.remove('clanovi-loza-crud__tablica-header-logo-frame--prazno');
+    img.hidden = true;
+    img.onload = function () {
+      if (img.naturalWidth > 0) {
+        img.hidden = false;
+        frame.classList.remove('clanovi-loza-crud__tablica-header-logo-frame--prazno');
+      } else {
+        img.hidden = true;
+        frame.classList.add('clanovi-loza-crud__tablica-header-logo-frame--prazno');
+      }
+    };
+    img.onerror = function () {
+      img.hidden = true;
+      img.src = placeholderSrc;
+      frame.classList.add('clanovi-loza-crud__tablica-header-logo-frame--prazno');
+    };
+    img.src = API_BASE + 'Loze_CRUD_slika.php?id=' + encodeURIComponent(idLoza) + '&t=' + String(Date.now());
+  }
+
+  var _clanoviLozaLogoSyncRaf = null;
+
+  /**
+   * Veličina kvadrata loga u zaglavlju tablice (samo ova forma).
+   * Zaglavlje (.kontrola-panel__header) ima padding – logo se u CSS-u gura marginama za 1 px od ruba.
+   * Stranica kvadrata = paddingTop + visina(stupca kontrola) + paddingBottom − 2 (1 px od gornjeg i donjeg ruba
+   * padding boxa zaglavlja). Logo je u CSS-u position:absolute pa ne povećava flex-visinu zaglavlja.
+   * Ograničenje širine: da desni stupac ne nestane.
+   * Postavlja --clanovi-loza-logo-side (px) na .tablica-header.
+   */
+  function clanoviLozaSyncTablicaHeaderLogoSize() {
+    if (_clanoviLozaLogoSyncRaf) cancelAnimationFrame(_clanoviLozaLogoSyncRaf);
+    _clanoviLozaLogoSyncRaf = requestAnimationFrame(function () {
+      _clanoviLozaLogoSyncRaf = null;
+      var header = document.querySelector('.clanovi-loza-crud__tablica-header');
+      var kontrole = document.querySelector('.clanovi-loza-crud__tablica-header-kontrole');
+      var wrap = document.querySelector('.clanovi-loza-crud__tablica-header-logo-wrap');
+      if (!header || !kontrole || !wrap) return;
+      var csW = getComputedStyle(wrap);
+      if (csW.display === 'none') {
+        header.style.removeProperty('--clanovi-loza-logo-side');
+        return;
+      }
+      var h = kontrole.getBoundingClientRect().height;
+      if (!(h > 0) || !isFinite(h)) return;
+      var csH = getComputedStyle(header);
+      var pt = parseFloat(csH.paddingTop) || 0;
+      var pb = parseFloat(csH.paddingBottom) || 0;
+      var side = Math.floor(pt + h + pb - 2);
+      if (side < 1) return;
+      var hw = header.getBoundingClientRect().width;
+      if (hw > 0 && isFinite(hw)) {
+        var maxByHeader = Math.floor(hw * 0.52);
+        if (maxByHeader > 0) side = Math.min(side, maxByHeader);
+      }
+      header.style.setProperty('--clanovi-loza-logo-side', side + 'px');
+    });
+  }
+
   if (selectLoza) {
     selectLoza.addEventListener('change', function () {
+      var tz = document.getElementById('clanovi_loza_trazi');
+      if (tz) tz.value = '';
       if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection();
       clearControlsFromSelection();
       clearSlikaFromControl();
+      clanoviLozaUpdateNaslovLozu();
       osvjeziTablicu();
       updateEnabledState();
       updateCrudUpisiState();
     });
   }
+
+  (function clanoviLozaInitTraziTablica() {
+    var inpTrazi = document.getElementById('clanovi_loza_trazi');
+    if (!inpTrazi) return;
+    var _traziDebounce = null;
+    inpTrazi.addEventListener('input', function () {
+      if (_traziDebounce) clearTimeout(_traziDebounce);
+      _traziDebounce = setTimeout(function () {
+        _traziDebounce = null;
+        clanoviLozaOsvjeziPrikazTablice();
+        var sid = getSelectedRowId();
+        if (sid != null && tablicaApi && typeof tablicaApi.setSelectedRowIds === 'function') {
+          tablicaApi.setSelectedRowIds([String(sid)]);
+        }
+      }, 200);
+    });
+    var traziEd = inpTrazi.closest('.kontrola-edit-delete');
+    if (traziEd) {
+      traziEd.addEventListener('kontrole-edit-delete-clear', function () {
+        clanoviLozaOsvjeziPrikazTablice();
+      });
+    }
+  })();
 
   if (btnReloadTablica) {
     btnReloadTablica.addEventListener('click', function () {
@@ -2670,44 +2808,8 @@
   if (btnEmailEllipsis) btnEmailEllipsis.addEventListener('click', function () { if (this.disabled) return; openClanoviEllipsisModal('email', this); });
   if (btnAdresaEllipsis) btnAdresaEllipsis.addEventListener('click', function () { if (this.disabled) return; openClanoviEllipsisModal('adresa', this); });
 
-  var btnSifraBolt = document.getElementById('btn_sifra_bolt');
-  var selectLoza = document.getElementById('select_loza');
-  if (btnSifraBolt) {
-    btnSifraBolt.addEventListener('click', function () {
-      if (this.disabled) return;
-      var idLoza = selectLoza && selectLoza.value ? trim(selectLoza.value) : '';
-      if (idLoza === '' || idLoza === '0') return;
-      var editSifraEl = document.getElementById('edit_sifra');
-      if (!editSifraEl) return;
-      var url = getApiUrl('Clanovi_CRUD_sljedeca_sifra.php') + '?id_loza=' + encodeURIComponent(idLoza);
-      fetch(url).then(function (r) { return r.text(); }).then(function (text) {
-        var t = (text || '').trim();
-        if (t.indexOf('-') >= 0 && /^\d{4}-\d{1,6}$/.test(t)) {
-          editSifraEl.value = t;
-        } else if (t === '105' && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['105'] && typeof window.showPorukaModal === 'function') {
-          window.showPorukaModal('105', []);
-        } else if (t === '100' && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['100'] && typeof window.showPorukaModal === 'function') {
-          window.showPorukaModal('100', []);
-        }
-      }).catch(function () {});
-    });
-  }
-
-  if (selectIzborStupnja) {
-    selectIzborStupnja.addEventListener('change', function () {
-      var sel = this.options[this.selectedIndex];
-      var editStupanj = document.getElementById('edit_stupanj');
-      if (!editStupanj) return;
-      if (!sel || sel.value === '') { editStupanj.value = ''; return; }
-      var text = sel.textContent || '';
-      var num = text.indexOf(',') >= 0 ? trim(text.split(',')[0]) : text;
-      var broj = (num || '').replace(/\u00B0$/, '').replace(/\.$/, '');
-      editStupanj.value = broj !== '' ? broj + '\u00B0' : '';
-    });
-  }
-
   (function () {
-    var dateIds = ['edit_datum_rodjenja', 'edit_datum_inicijacije', 'edit_datum_stupnja'];
+    var dateIds = ['edit_datum_rodjenja'];
     for (var d = 0; d < dateIds.length; d++) {
       var el = document.getElementById(dateIds[d]);
       if (el) {
@@ -2728,12 +2830,13 @@
   })();
 
   if (tablicaContainerEl) {
-    /* Bubble faza (ne capture) – stabilniji layout zaglavlja tablice. */
+    /* Bubble faza: ne hvataj klik prije KontroleTablica (capture je uzrokovao nestabilan layout / nestanak zaglavlja). */
     tablicaContainerEl.addEventListener('click', function (e) {
       var td = e.target && e.target.tagName === 'TD' ? e.target : (e.target && e.target.closest ? e.target.closest('td') : null);
       if (!td) return;
       var tr = td.parentNode;
       if (!tr || tr.tagName !== 'TR' || !tr.parentNode || tr.parentNode.tagName !== 'TBODY') return;
+      /* Četvrta kolona = Spol (isti indeks kao u Clanovi_CRUD.js). */
       if (td.cellIndex !== 3) return;
       var rowId = tr.dataset && tr.dataset.rowId;
       if (rowId == null) return;
@@ -2772,7 +2875,7 @@
                 break;
               }
             }
-            CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', tableRows, ClanoviCRUD.Tablica_Zaglavlje);
+            CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', tableRows, ClanoviLozaCRUD.Tablica_Zaglavlje);
             // Vrati selekciju na isti red nakon re-rendera i fokus na tablicu da strelice rade
             if (typeof tablicaApi.setSelectedRowIds === 'function') {
               tablicaApi.setSelectedRowIds([String(keepId)]);
@@ -2803,7 +2906,6 @@
       var idLoza = selectLoza ? trim(selectLoza.value) : '';
       var editPrezime = document.getElementById('edit_prezime');
       var editIme = document.getElementById('edit_ime');
-      var editSifra = document.getElementById('edit_sifra');
       var editTelefon = document.getElementById('edit_telefon');
       var editEmail = document.getElementById('edit_email');
       var editAdresa1 = document.getElementById('edit_adresa_1');
@@ -2812,8 +2914,6 @@
       var editPosta = document.getElementById('edit_posta');
       var editNapomena = document.getElementById('edit_napomena');
       var editDatumRodjenja = document.getElementById('edit_datum_rodjenja');
-      var editDatumInicijacije = document.getElementById('edit_datum_inicijacije');
-      var editDatumStupnja = document.getElementById('edit_datum_stupnja');
 
       var jeIzmjena = this.classList.contains('kontrola-btn--crud-izmjeni');
       var id = jeIzmjena ? getSelectedRowId() : null;
@@ -2831,19 +2931,10 @@
 
       var prezime = editPrezime ? normName(editPrezime.value) : '';
       var ime = editIme ? normName(editIme.value) : '';
-      var sifra = editSifra ? trim(editSifra.value) : '';
-      var kandidatChk = document.getElementById('edit_kandidat');
-      var kandidatVal = !!(kandidatChk && kandidatChk.checked);
 
       if (prezime === '') {
         if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['115'] && typeof window.showPorukaModal === 'function') {
           window.showPorukaModal('115', [], function () { if (editPrezime && editPrezime.focus) editPrezime.focus(); });
-        }
-        return;
-      }
-      if (!kandidatVal && sifra === '') {
-        if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['116'] && typeof window.showPorukaModal === 'function') {
-          window.showPorukaModal('116', [], function () { if (editSifra && editSifra.focus) editSifra.focus(); });
         }
         return;
       }
@@ -2865,11 +2956,8 @@
       }
 
       var datumRodjenjaVal = editDatumRodjenja && editDatumRodjenja.value ? trim(editDatumRodjenja.value) : null;
-      var datumInicVal = editDatumInicijacije && editDatumInicijacije.value ? trim(editDatumInicijacije.value) : null;
-      var datumStupnjaVal = editDatumStupnja && editDatumStupnja.value ? trim(editDatumStupnja.value) : null;
 
       var idPorijeklo = selectPorijeklo ? trim(selectPorijeklo.value) : '';
-      var idStupanj = selectIzborStupnja ? trim(selectIzborStupnja.value) : '';
       var idNaPrijedlog = selectNaPrijedlog ? trim(selectNaPrijedlog.value) : '';
       var idDrzavaAdreseVal = selectDrzavaAdrese ? trim(selectDrzavaAdrese.value) : '';
 
@@ -2877,19 +2965,16 @@
       var oibVal = editOib ? trim(editOib.value) : '';
       if (oibVal !== '' && !/^\d{1,11}$/.test(oibVal)) oibVal = (oibVal.replace(/\D/g, '')).slice(0, 11);
 
+      /* Šifra, stupanj, aktivnost, kandidat, zastavice – ne šalju se; datum inicijacije/stupnja – ne šalju se (ostaju u bazi kakvi jesu). PHP za Loza postavlja defaulte pri upisu / ne dira pri izmjeni. */
       var payload = {
         id: jeIzmjena ? String(id) : null,
         id_loza: idLoza,
         prezime: prezime,
         ime: ime,
-        sifra: sifra,
         spol: selectSpol ? trim(selectSpol.value) : '0',
         datum_rodjenja: datumRodjenjaVal,
         oib: oibVal !== '' ? oibVal : null,
-        datum_inicijacije: datumInicVal,
-        datum_stupnja: datumStupnjaVal,
         porijeklo: idPorijeklo !== '' ? idPorijeklo : null,
-        stupanj: idStupanj !== '' ? idStupanj : null,
         na_prijedlog: idNaPrijedlog !== '' ? idNaPrijedlog : null,
         id_drzava_adrese: idDrzavaAdreseVal !== '' ? idDrzavaAdreseVal : null,
         telefon_text: telefonVal,
@@ -2898,17 +2983,7 @@
         adresa_2: editAdresa2 ? trim(editAdresa2.value) : '',
         grad: editGrad ? trim(editGrad.value) : '',
         posta: editPosta ? trim(editPosta.value) : '',
-        napomena: editNapomena ? trim(editNapomena.value) : '',
-        aktivnost: (function () { var chk = document.getElementById('edit_aktivnost'); return !!(chk && chk.checked); })(),
-        kandidat: kandidatVal,
-        zastavice: (function () {
-          var v = 0;
-          for (var b = 0; b < 16; b++) {
-            var chk = document.getElementById('edit_zastavice_' + b);
-            if (chk && chk.checked) v |= (1 << b);
-          }
-          return v;
-        })()
+        napomena: editNapomena ? trim(editNapomena.value) : ''
       };
 
       var imgPrev = document.getElementById('clanovi_image_preview');
@@ -2921,7 +2996,7 @@
       } else {
         roundOffset = imgPrev && typeof imgPrev._obradaSlikaRoundOffset === 'number' ? imgPrev._obradaSlikaRoundOffset : 0;
       }
-      var url = API_BASE + (jeIzmjena ? 'Clanovi_CRUD_izmjena.php' : 'Clanovi_CRUD_upis.php');
+      var url = API_BASE + (jeIzmjena ? 'Clanovi_Loza_CRUD_izmjena.php' : 'Clanovi_Loza_CRUD_upis.php');
 
       function onSuccess() {
         if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
@@ -3235,6 +3310,8 @@
 
   function initForma() {
     ucitajPravaGeo(function () {
+      clanoviLozaUpdateNaslovLozu();
+      clanoviLozaPostaviVidljivihRedova();
       updateEnabledState();
       setPanelSlikaSizeFromTablica(true);
     });
@@ -3291,7 +3368,7 @@
     if (selectRegija) selectRegija.disabled = true;
     if (selectLoza) selectLoza.disabled = true;
     data = [];
-    if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje);
+    if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviLozaCRUD.Tablica_Zaglavlje);
     updateEnabledState();
     updateCrudUpisiState();
 
@@ -3336,7 +3413,17 @@
         });
         ro.observe(panelTablica);
       }
+      var kontroleHeader = document.querySelector('.clanovi-loza-crud__tablica-header-kontrole');
+      if (kontroleHeader) {
+        var roLogo = new ResizeObserver(function () {
+          clanoviLozaSyncTablicaHeaderLogoSize();
+        });
+        roLogo.observe(kontroleHeader);
+      }
     }
+    clanoviLozaSyncTablicaHeaderLogoSize();
+    setTimeout(function () { clanoviLozaSyncTablicaHeaderLogoSize(); }, 0);
+    setTimeout(function () { clanoviLozaSyncTablicaHeaderLogoSize(); }, 200);
     var lastWide = isClanoviWideTwoColLayout();
     function clanoviOnViewportLayoutChange() {
       var nowWide = isClanoviWideTwoColLayout();
@@ -3364,6 +3451,7 @@
       }
       lastWide = nowWide;
       requestAnimationFrame(sync60_40MaxHeight);
+      clanoviLozaSyncTablicaHeaderLogoSize();
     }
     window.addEventListener('resize', function () {
       requestAnimationFrame(clanoviOnViewportLayoutChange);
@@ -3468,5 +3556,5 @@
     initForma();
   }
 
-  window.ClanoviCRUD = ClanoviCRUD;
+  window.ClanoviLozaCRUD = ClanoviLozaCRUD;
 })();

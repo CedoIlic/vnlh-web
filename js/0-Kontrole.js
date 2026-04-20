@@ -101,10 +101,54 @@
   }
 
   function syncTableWidths(container) {
+    if (!container) return;
     var headerTable = container.querySelector('.kontrola-tablica__header table');
     var tableBody = container.querySelector('.kontrola-tablica__scroll table');
+    var scrollDiv = container.querySelector('.kontrola-tablica__scroll');
+    var headerDiv = container.querySelector('.kontrola-tablica__header');
+    var inner = container.querySelector('.kontrola-tablica__inner');
     if (!headerTable || !tableBody) return;
+
+    /* Primarna širina = zaglavlje. Pri brzom osvježavanju tbody (npr. filter Traži) layout ponekad još
+     * nije izračunat pa je offsetWidth 0 – tada uzmi širinu roditelja (scroll / panel) da tablica podataka
+     * ne ostane na 0 px (nestane zaglavlje/stupci). */
     var w = headerTable.offsetWidth;
+    if (!w || w < 2) {
+      if (headerDiv && headerDiv.clientWidth >= 2) w = headerDiv.clientWidth;
+    }
+    if (!w || w < 2) {
+      if (scrollDiv && scrollDiv.clientWidth >= 2) w = scrollDiv.clientWidth;
+    }
+    if (!w || w < 2) {
+      if (inner && inner.clientWidth >= 2) w = inner.clientWidth;
+    }
+    if (!w || w < 2) {
+      if (container.clientWidth >= 2) w = container.clientWidth;
+    }
+    /* Zadnja uspješna širina (npr. pri kliku/selekciji layout kratko vrati 0 – ne „gubi” zaglavlje). */
+    if ((!w || w < 2) && container._vnlhLastGoodTablicaBodyW >= 2) {
+      w = container._vnlhLastGoodTablicaBodyW;
+    }
+
+    if (!w || w < 2) {
+      var n = (container._vnlhSyncTableWidthsAttempts || 0) + 1;
+      if (n <= 6) {
+        container._vnlhSyncTableWidthsAttempts = n;
+        requestAnimationFrame(function () {
+          syncTableWidths(container);
+        });
+      } else {
+        container._vnlhSyncTableWidthsAttempts = 0;
+        if (container._vnlhLastGoodTablicaBodyW >= 2) {
+          w = container._vnlhLastGoodTablicaBodyW;
+          tableBody.style.width = w + 'px';
+          tableBody.style.minWidth = w + 'px';
+        }
+      }
+      return;
+    }
+    container._vnlhSyncTableWidthsAttempts = 0;
+    container._vnlhLastGoodTablicaBodyW = w;
     tableBody.style.width = w + 'px';
     tableBody.style.minWidth = w + 'px';
   }
@@ -117,6 +161,21 @@
     var totalRows = table.tBodies[0].rows.length;
     var contentHeight = totalRows * rowHeight;
     var viewportH = scrollDiv.clientHeight;
+    /* Kad je visina scroll područja još 0 (fokus/klik prije reflowa), ne diraj inline širine zaglavlja – inače „nestane” cijeli red zaglavlja. */
+    if (viewportH <= 0) {
+      var deferN = (container._vnlhApplyScrollbarDefer || 0) + 1;
+      if (deferN <= 10) {
+        container._vnlhApplyScrollbarDefer = deferN;
+        requestAnimationFrame(function () {
+          var sd = container.querySelector('.kontrola-tablica__scroll');
+          if (sd) applyScrollbarRule(container, sd);
+        });
+      } else {
+        container._vnlhApplyScrollbarDefer = 0;
+      }
+      return;
+    }
+    container._vnlhApplyScrollbarDefer = 0;
     var threshold = 0.1 * rowHeight;
     /* Skrol (i linija lijevo od njega) samo kad stvarno postoji skrol – scrollHeight > clientHeight; inače pri otvaranju modala clientHeight može biti 0 pa bi linija bila vidljiva krivo */
     var skrolVidljiv = viewportH > 0 && scrollDiv.scrollHeight > viewportH && (scrollDiv.scrollHeight - viewportH) > threshold;
@@ -134,7 +193,9 @@
         headerDiv.classList.add('kontrola-tablica__header--skrol-vidljiv');
       } else {
         headerDiv.classList.remove('kontrola-tablica__header--skrol-vidljiv');
-        if (headerTable && !headerTable.getAttribute('data-width-pct')) headerTable.style.width = '';
+        /* Ne skidaj inline širinu zaglavlja dok viewport scrolla nema visine (0) – inače sljedeći
+         * syncTableWidths čita offsetWidth 0 i „nestane” zaglavlje (npr. klik u ćeliju pri tranziciji layouta). */
+        if (viewportH > 0 && headerTable && !headerTable.getAttribute('data-width-pct')) headerTable.style.width = '';
       }
     }
     if (skrolVidljiv) {
@@ -159,7 +220,8 @@
           /* Zaglavlje: tablica = širina područja za sadržaj (bez scrollbara); preskoči ako forma drži postotak (data-width-pct). */
           if (headerTable && skrolVidljiv && !headerTable.getAttribute('data-width-pct')) {
             var contentW = scrollDiv.clientWidth;
-            if (contentW > 0) headerTable.style.width = contentW + 'px';
+            /* Premali broj (npr. 1–2 px u tranziciji) zna zgnječiti thead. */
+            if (contentW >= 8) headerTable.style.width = contentW + 'px';
           }
           syncTableWidths(container);
         });
@@ -169,8 +231,11 @@
       var scrollWrap = scrollDiv.parentElement;
       var linija = scrollWrap ? scrollWrap.querySelector('.kontrola-tablica__scroll-linija') : null;
       if (linija) linija.remove();
+      /* Dvostruki frame kao kod skrol-vidljiv grane – nakon uklanjanja širine zaglavlja layout mora sjesti. */
       requestAnimationFrame(function () {
-        syncTableWidths(container);
+        requestAnimationFrame(function () {
+          syncTableWidths(container);
+        });
       });
     }
   }
@@ -242,6 +307,7 @@
    * dodaje/uklanja selekciju (single ili multi ako je tablica--multi-select); poziva
    * options.onSelectionChange nakon promjene; getRowId(row, index) opcionalno postavlja
    * data-row-id na tr (inače indeks). Sortiranje po zaglavlju kolone.
+   * headerColumns[].type "i" = ćelija sa <img> (row[c] = URL); headerColumns[].sortable 0 = bez sorta na klik TH.
    * @param {HTMLElement} container - Element s klasom .kontrola-tablica
    * @param {Object} options - getBrojKolona(): number, headerLabels: string[] ili function(n), data?: array redova, getRowId?(row, index): any, onSelectionChange?(): void
    * @returns {Object} setData, addRow, removeRow, refresh, build, getData, getSelectedIndices(), getSelectedRowIds()
@@ -292,6 +358,13 @@
           else if (isNaN(ta)) cmp = 1;
           else if (isNaN(tb)) cmp = -1;
           else cmp = ta < tb ? -1 : (ta > tb ? 1 : 0);
+        } else if (colType === 'i') {
+          /* Slika: sortiranje po id retka (stabilno), ne po URL-u. */
+          var ida = (a && a.id != null) ? Number(a.id) : 0;
+          var idb = (b && b.id != null) ? Number(b.id) : 0;
+          if (isNaN(ida)) ida = 0;
+          if (isNaN(idb)) idb = 0;
+          cmp = ida < idb ? -1 : (ida > idb ? 1 : 0);
         } else {
           var vs = va != null ? String(va) : '';
           var vbs = vb != null ? String(vb) : '';
@@ -370,7 +443,7 @@
                 container._tablicaLastClickedIndex = currentIdx;
                 updateTableSelectedState();
                 var sd = container.querySelector('.kontrola-tablica__scroll');
-                if (sd) sd.focus();
+                if (sd) sd.focus({ preventScroll: true });
                 if (options.onSelectionChange) {
                   var cb = options.onSelectionChange;
                   requestAnimationFrame(function () { cb(); });
@@ -389,7 +462,7 @@
 
           updateTableSelectedState();
           var scrollDivForFocus = container.querySelector('.kontrola-tablica__scroll');
-          if (scrollDivForFocus) scrollDivForFocus.focus();
+          if (scrollDivForFocus) scrollDivForFocus.focus({ preventScroll: true });
           if (options.onSelectionChange) {
             var cb = options.onSelectionChange;
             requestAnimationFrame(function () { cb(); });
@@ -410,6 +483,30 @@
               else e.stopPropagation();
             });
             td.appendChild(chk);
+          } else if (colType === 'i') {
+            /* Kolona slike: row[c] = puni URL do slike (GET endpoint); prazno = placeholder bez <img>. */
+            var cellImg = document.createElement('div');
+            cellImg.className = 'kontrola-tablica__cell-inner kontrola-tablica__cell-inner--slika';
+            cellImg.setAttribute('tabindex', '0');
+            var urlSlika = row[c] != null ? String(row[c]).trim() : '';
+            if (urlSlika) {
+              var im = document.createElement('img');
+              im.className = 'kontrola-tablica__cell-img';
+              im.setAttribute('alt', '');
+              im.setAttribute('width', '48');
+              im.setAttribute('height', '48');
+              im.setAttribute('loading', 'lazy');
+              im.setAttribute('decoding', 'async');
+              im.src = urlSlika;
+              im.addEventListener('error', function () {
+                cellImg.classList.add('kontrola-tablica__cell-inner--slika-prazno');
+                if (im.parentNode) im.parentNode.removeChild(im);
+              });
+              cellImg.appendChild(im);
+            } else {
+              cellImg.classList.add('kontrola-tablica__cell-inner--slika-prazno');
+            }
+            td.appendChild(cellImg);
           } else {
             var cellInner = document.createElement('div');
             cellInner.className = 'kontrola-tablica__cell-inner';
@@ -444,6 +541,8 @@
         ? headerColumns.slice(0, n)
         : (typeof headerLabels === 'function' ? headerLabels(n) : headerLabels);
       iscrtajZaglavljeTablice(inner, n, headerData, function (col) {
+        var hc = headerColumns && headerColumns[col];
+        if (hc && hc.sortable === 0) return;
         if (sortColumn === col) sortAsc = !sortAsc;
         else sortAsc = true;
         sortColumn = col;
@@ -695,14 +794,14 @@
       container.addEventListener('mousedown', function (e) {
         if (container.classList.contains('kontrola-tablica--disabled')) return;
         if (container.contains(e.target)) {
-          scrollDiv.focus();
+          scrollDiv.focus({ preventScroll: true });
         }
       });
 
       container.addEventListener('click', function (e) {
         if (container.classList.contains('kontrola-tablica--disabled')) return;
         if (container.contains(e.target) && !e.target.closest('.kontrola-btn')) {
-          scrollDiv.focus();
+          scrollDiv.focus({ preventScroll: true });
         }
       });
 
@@ -710,7 +809,7 @@
         panel.addEventListener('mousedown', function (e) {
           if (container.classList.contains('kontrola-tablica--disabled')) return;
           if (panel.contains(e.target) && !e.target.closest('.kontrola-btn') && !e.target.closest('.kontrola-panel__header')) {
-            scrollDiv.focus();
+            scrollDiv.focus({ preventScroll: true });
           }
         });
       }

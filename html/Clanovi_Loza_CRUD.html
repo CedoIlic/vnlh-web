@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!--
+  Clanovi_Loza_CRUD.html – CRUD članova po loži (djelomični upis/izmjena); uzorak Clanovi_CRUD.
+  Tablica: kao Clanovi_CRUD (Prezime, Ime, St., Spol); zaglavlje: logo (puna visina) + Država/Regija/Loža/Traži ispod lože (lupe, bez placeholdera). Edit: zaglavlje s nazivom lože.
+  Uklonjena polja u odnosu na Clanovi_CRUD: vrijeme upisa, stupanj/izbor, zastavice, aktivnost, kandidat, šifra.
+-->
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Članovi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Obrada_Slike.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/Clanovi_CRUD.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/Clanovi_Loza_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+<body class="vnlh-page-clanovi-loza-crud">
+<div class="naslov-forme"><h2>Članovi</h2></div>
+<div class="page-container clanovi-loza-crud">
+    <div class="clanovi-crud__top-row clanovi-loza-crud__top-row">
+        <div class="kontrola-panel mb-3 clanovi-crud__panel-slika">
+            <div class="kontrola-panel__body">
+                <div class="clanovi-crud__edit-image-area" id="clanovi_image_area" aria-label="Prostor za sliku – dvoklik za uređivanje" tabindex="0">
+                    <button type="button" id="clanovi_image_delete_btn" class="clanovi-crud__edit-image-delete" aria-label="Obriši sliku" title="Obriši sliku" disabled><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
+                    <div id="clanovi_image_frame" class="obrada-slika__preview-wrap clanovi-crud__panel-preview-wrap">
+                        <img id="clanovi_image_preview" class="obrada-slika__img" src="" alt="" aria-hidden="true" style="display: none;" draggable="false">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-four-rows kontrola-panel kontrola-panel--resize-y mb-3 clanovi-crud__panel-tablica clanovi-loza-crud__panel-tablica">
+            <div class="kontrola-panel__header clanovi-crud__tablica-header clanovi-loza-crud__tablica-header">
+                <div class="clanovi-loza-crud__tablica-header-logo-wrap" aria-hidden="true">
+                    <div class="clanovi-loza-crud__tablica-header-logo-frame">
+                        <!-- Logo lože: Loze_CRUD_slika.php; dimenzije ograničene u CSS (ne razvlače panel). -->
+                        <img id="clanovi_loza_tablica_logo" class="clanovi-loza-crud__tablica-header-logo-img" alt="" decoding="async" hidden src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                    </div>
+                </div>
+                <!-- Jedan grid 7ch + 1fr kao kod Države: svi lijevi rubovi kontrola u stupcu 2 poravnati. -->
+                <div class="clanovi-loza-crud__tablica-header-kontrole">
+                    <label class="kontrola-labela mb-0" for="select_drzava">Država</label>
+                    <div class="clanovi-loza-crud__drzava-select-reload">
+                        <div class="kontrola-select clanovi-loza-crud__header-select-drzava">
+                            <select id="select_drzava" aria-label="Odaberi državu">
+                                <option value="">— Odaberi državu —</option>
+                            </select>
+                        </div>
+                        <button type="button" id="btn_reload_tablica" class="clanovi-crud__reload-btn clanovi-loza-crud__reload-btn" aria-label="Ponovno punjenje tablice" title="Puni tablicu"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
+                    </div>
+                    <label class="kontrola-labela mb-0" for="select_regija">Regija</label>
+                    <div class="kontrola-select">
+                        <select id="select_regija" aria-label="Odaberi regiju" disabled>
+                            <option value="">— Odaberi regiju —</option>
+                        </select>
+                    </div>
+                    <label class="kontrola-labela mb-0" for="select_loza">Loža</label>
+                    <div class="kontrola-select">
+                        <select id="select_loza" aria-label="Odaberi ložu" disabled>
+                            <option value="">— Odaberi ložu —</option>
+                        </select>
+                    </div>
+                    <div class="clanovi-loza-crud__header-kontrole__trazi">
+                        <div class="kontrola-edit-delete clanovi-loza-crud__trazi-edit-delete">
+                            <span class="clanovi-loza-crud__trazi-lupe" aria-hidden="true"><span class="kontrola-icon--magnifying-glass"></span></span>
+                            <input id="clanovi_loza_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" aria-label="Filtriraj redove u tablici">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti traženje" title="Očisti"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="kontrola-panel__body">
+                <div id="tablicaContainer" class="kontrola-tablica"></div>
+            </div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__header clanovi-loza-crud__edit-panel-header">
+            <h3 class="clanovi-loza-crud__edit-loza-naslov" id="edit_loza_naslov" aria-live="polite">&nbsp;</h3>
+        </div>
+        <div class="kontrola-panel__body clanovi-crud__edit-body">
+            <div class="clanovi-crud__edit-cols">
+                <div class="clanovi-crud__edit-col">
+                    <div class="clanovi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_prezime">Prezime</label>
+                        <div class="kontrola-edit-delete">
+                            <input id="edit_prezime" type="text" class="kontrola-edit-delete__input" placeholder="Prezime...">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
+                    </div>
+                    <div class="clanovi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_ime">Ime</label>
+                        <input id="edit_ime" type="text" class="kontrola-edit" placeholder="Ime...">
+                    </div>
+                    <div class="clanovi-crud__edit-row clanovi-loza-crud__edit-row--datum-spol">
+                        <div class="clanovi-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="edit_datum_rodjenja">Datum rođenja</label>
+                            <input id="edit_datum_rodjenja" type="date" class="kontrola-edit">
+                        </div>
+                        <div class="clanovi-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="select_spol">Spol</label>
+                            <div class="kontrola-select">
+                                <select id="select_spol" aria-label="Spol">
+                                    <option value="0">Muški</option>
+                                    <option value="1">Ženski</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="clanovi-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="edit_oib">OIB</label>
+                            <input id="edit_oib" type="text" class="kontrola-edit" inputmode="numeric" maxlength="11" placeholder="Upiši oib">
+                        </div>
+                    </div>
+                    <div class="clanovi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="select_porijeklo">Porijeklo</label>
+                        <div class="kontrola-select">
+                            <select id="select_porijeklo" aria-label="Odaberi porijeklo">
+                                <option value="">— Odaberi porijeklo —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="clanovi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="select_na_prijedlog">Na prijedlog</label>
+                        <div class="kontrola-select">
+                            <select id="select_na_prijedlog" aria-label="Na prijedlog">
+                                <option value="">— Odaberi —</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="clanovi-crud__edit-col">
+                    <div class="clanovi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_telefon">Telefon</label>
+                        <div class="clanovi-crud__edit-with-ellipsis">
+                            <input id="edit_telefon" type="text" class="kontrola-edit" placeholder="+385 1 999 9999">
+                            <button type="button" id="btn_telefon_ellipsis" class="clanovi-crud__ellipsis-btn" aria-label="Opcije telefona" title="Opcije telefona"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                        </div>
+                    </div>
+                    <div class="clanovi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_email">E-mail</label>
+                        <div class="clanovi-crud__edit-with-ellipsis">
+                            <input id="edit_email" type="email" class="kontrola-edit" placeholder="pero.peric@vnlh.eu">
+                            <button type="button" id="btn_email_ellipsis" class="clanovi-crud__ellipsis-btn" aria-label="Opcije e-maila" title="Opcije e-maila"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                        </div>
+                    </div>
+                    <div class="clanovi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_adresa_1">Adresa</label>
+                        <div class="clanovi-crud__edit-with-ellipsis">
+                            <input id="edit_adresa_1" type="text" class="kontrola-edit" placeholder="Prvi red adrese">
+                            <button type="button" id="btn_adresa_ellipsis" class="clanovi-crud__ellipsis-btn" aria-label="Opcije adrese" title="Opcije adrese"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                        </div>
+                    </div>
+                    <div class="clanovi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="edit_adresa_2">Dodatni red adrese</label>
+                        <input id="edit_adresa_2" type="text" class="kontrola-edit" placeholder="Drugi red adrese">
+                    </div>
+                    <div class="clanovi-crud__edit-row clanovi-crud__edit-row--inline">
+                        <div class="clanovi-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="edit_grad">Grad</label>
+                            <input id="edit_grad" type="text" class="kontrola-edit" placeholder="Grad">
+                        </div>
+                        <div class="clanovi-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="edit_posta">Pošta</label>
+                            <input id="edit_posta" type="text" class="kontrola-edit" inputmode="numeric" placeholder="broj pošte">
+                        </div>
+                    </div>
+                    <div class="clanovi-crud__edit-row">
+                        <label class="kontrola-labela mb-0" for="select_drzava_adrese">Država adrese</label>
+                        <div class="kontrola-select">
+                            <select id="select_drzava_adrese" aria-label="Odaberi državu adrese">
+                                <option value="">— Odaberi državu adrese —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="clanovi-crud__edit-row clanovi-crud__edit-row--napomena">
+                        <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                        <textarea id="edit_napomena" class="kontrola-edit" rows="3" placeholder="Napomena"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer clanovi-crud__edit-footer">
+            <div class="clanovi-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="clanovi-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="obrada_slika_mount"></div>
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Obrada_Slike.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Filteri_Po_Ogranicenjima.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/Clanovi_Loza_CRUD.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+/**
+ * Clanovi_Loza_CRUD.css – dodatni layout za Clanovi_Loza_CRUD.html
+ * Nasljeđuje Clanovi_CRUD.css; stranica: .vnlh-page-clanovi-loza-crud
+ */
+
+/* Min-height panela: kontrola-panel-tablica--has-header-four-rows (Država, Regija, Loža, Traži). */
+
+/* Select države i tipka refresh u istom flex retku – refresh odmah uz select. */
+.clanovi-loza-crud__drzava-select-reload {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.clanovi-loza-crud__header-select-drzava {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.clanovi-loza-crud__reload-btn {
+  flex: 0 0 auto;
+}
+
+/* Zaglavlje edit panela: centrirani naziv lože */
+.clanovi-loza-crud__edit-panel-header {
+  padding: 0.5rem 0.75rem 0.25rem;
+  border-bottom: 1px solid var(--c-gray-200, #e2e8f0);
+}
+
+.clanovi-loza-crud__edit-loza-naslov {
+  margin: 0;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--c-gray-800, #1a202c);
+}
+
+/* Jedan red: datum rođenja | spol | OIB (tri stupca).
+   Mora biti specifičnije od .clanovi-crud__edit-body .clanovi-crud__edit-row { flex-direction: column },
+   inače se grid ne primijeni i polja idu jedno ispod drugog. */
+.clanovi-crud__edit-body .clanovi-crud__edit-row.clanovi-loza-crud__edit-row--datum-spol {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: end;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Kontrole unutar ćelija rastežu se na širinu stupca (grid). */
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--datum-spol .clanovi-crud__edit-cell .kontrola-edit,
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--datum-spol .clanovi-crud__edit-cell .kontrola-select,
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--datum-spol .clanovi-crud__edit-cell select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .clanovi-crud__edit-body .clanovi-crud__edit-row.clanovi-loza-crud__edit-row--datum-spol {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================================================
+   Zaglavlje panela tablice: logo lijevo (kvadrat 1:1), kontrole desno.
+   Logo je position:absolute (izvan flex toka) da visina zaglavlja ostane pt + h(kontrole) + pb –
+   inače veliki kvadrat u flexu pomakne donju liniju (border) za ~padding.
+   --clanovi-loza-logo-side: JS (px) = paddingTop + h + paddingBottom − 2; top/left: 1px u odnosu na padding box.
+   Kontrole: margin-left = širina kvadrata + 0.5rem (bivši flex gap).
+   ============================================================================= */
+.clanovi-loza-crud__tablica-header {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* Jedan grid 7ch + 1fr (isti mjerni sustav kao prvi red Države): labela u stupcu 1, kontrole u 2. */
+.clanovi-loza-crud__tablica-header-kontrole {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 7ch 1fr;
+  column-gap: 0.75rem;
+  row-gap: 0.5rem;
+  align-items: center;
+  /* Logo je izvan toka – ostavi mjesto kao flex gap + širina kvadrata. */
+  margin-left: calc(var(--clanovi-loza-logo-side, 7.5rem) + 0.5rem);
+}
+
+.clanovi-loza-crud__tablica-header-kontrole > .kontrola-labela {
+  grid-column: 1;
+  white-space: nowrap;
+  width: 7ch;
+  min-width: 7ch;
+  max-width: 7ch;
+  box-sizing: border-box;
+}
+
+.clanovi-loza-crud__tablica-header-kontrole > .clanovi-loza-crud__drzava-select-reload,
+.clanovi-loza-crud__tablica-header-kontrole > .kontrola-select {
+  grid-column: 2;
+  min-width: 0;
+}
+
+/* Traži u 4. retku samo u stupcu kontrola (prvi stupac prazan) – lijevi rub = select Država/Loža. */
+.clanovi-loza-crud__tablica-header-kontrole > .clanovi-loza-crud__header-kontrole__trazi {
+  grid-column: 2;
+  grid-row: 4;
+  min-width: 0;
+}
+
+.clanovi-loza-crud__header-kontrole__trazi .kontrola-edit-delete {
+  width: 100%;
+  max-width: 100%;
+}
+
+.clanovi-loza-crud__tablica-header-logo-wrap {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--clanovi-loza-logo-side, 7.5rem);
+  height: var(--clanovi-loza-logo-side, 7.5rem);
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  z-index: 1;
+}
+
+.clanovi-loza-crud__tablica-header-logo-frame {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--c-gray-200, #e2e8f0);
+  border-radius: 6px;
+  background: var(--c-gray-50, #f7fafc);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.clanovi-loza-crud__tablica-header-logo-frame--prazno {
+  background: var(--c-gray-100, #edf2f7);
+}
+
+/* Cijeli kvadrat okvira (i preko bivšeg 1px paddinga); contain zadržava omjer izvorne slike. */
+.clanovi-loza-crud__tablica-header-logo-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Uski prikaz: bez loga u zaglavlju; makni lijevi odmak stupca kontrola. */
+@media (max-width: 640px) {
+  .clanovi-loza-crud__tablica-header-logo-wrap {
+    display: none !important;
+  }
+  .clanovi-loza-crud__tablica-header-kontrole {
+    margin-left: 0;
+  }
+}
+
+.clanovi-loza-crud__trazi-lupe {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 2.25rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--edit_delete_text, var(--text));
+  opacity: 0.8;
+}
+.clanovi-loza-crud__trazi-edit-delete .kontrola-icon--magnifying-glass {
+  width: 18px;
+  height: 18px;
+  mask-size: 18px 18px;
+  -webkit-mask-size: 18px 18px;
+}
+.clanovi-loza-crud__trazi-edit-delete .kontrola-edit-delete__input {
+  padding-left: calc(2.25rem + var(--edit_padding_x, 8px));
+}
+
+/* =============================================================================
+   Skrol tablice u panelu (resize Y + fiksna visina iz setPanelSlikaSizeFromTablica):
+   lanac flex mora imati min-height: 0 da .kontrola-tablica__scroll dobije ograničenu visinu.
+   Uzorak: .modal-tablica__body-table-wrap u 0-Kontrole.css.
+   ============================================================================= */
+.vnlh-page-clanovi-loza-crud .clanovi-loza-crud__panel-tablica.kontrola-panel-tablica {
+  min-height: 0;
+}
+.vnlh-page-clanovi-loza-crud .clanovi-loza-crud__panel-tablica > .kontrola-panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.vnlh-page-clanovi-loza-crud .clanovi-loza-crud__panel-tablica > .kontrola-panel__body > .kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  height: auto;
+}
+.vnlh-page-clanovi-loza-crud .clanovi-loza-crud__panel-tablica .kontrola-tablica__inner,
+.vnlh-page-clanovi-loza-crud .clanovi-loza-crud__panel-tablica .kontrola-tablica__scroll-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.vnlh-page-clanovi-loza-crud .clanovi-loza-crud__panel-tablica .kontrola-tablica__scroll-wrap {
+  height: auto;
+  flex: 1 1 auto;
+}
