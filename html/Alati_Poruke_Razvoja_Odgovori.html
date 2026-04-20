@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Odgovori razvoja</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/Alati_Poruke_Razvoja_Odgovori.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Odgovori razvoja</h2></div>
+<div class="page-container">
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica alati-poruke-razvoja-odgovori__tablica"></div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body alati-poruke-razvoja-odgovori__edit-body">
+            <div class="alati-poruke-razvoja-odgovori__edit-main">
+                <div class="alati-poruke-razvoja-odgovori__cell alati-poruke-razvoja-odgovori__cell--tekst">
+                    <label class="kontrola-labela mb-0" for="odgovori_poruka_edit">Tekst poruke</label>
+                    <textarea id="odgovori_poruka_edit" class="kontrola-edit alati-poruke-razvoja-odgovori__poruka-textarea" rows="6" readonly disabled aria-label="Tekst poruke iz odabranog retka"></textarea>
+                </div>
+                <div class="alati-poruke-razvoja-odgovori__cell alati-poruke-razvoja-odgovori__cell--predlozak">
+                    <label class="kontrola-labela mb-0" for="odgovori_predlozak_select">Poruka</label>
+                    <div class="kontrola-select alati-poruke-razvoja-odgovori__predlozak-kontrola">
+                        <select id="odgovori_predlozak_select" disabled aria-label="Predložak poruke iz šifrana (boja teksta i podloge)">
+                            <option value="">—</option>
+                        </select>
+                    </div>
+                    <span class="alati-poruke-razvoja-odgovori__checkbox-row">
+                        <input type="checkbox" id="odgovori_brisi_stare_poruke" class="kontrola-checkbox" value="1" disabled aria-label="Brisanje starih odgovora">
+                        <label class="kontrola-labela mb-0" for="odgovori_brisi_stare_poruke">Brisanje starih odgovora</label>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- Podnožje: Izmjeni, Ukloni sve odgovore, Povratak. Vidljivost CRUD tipki: common_prava_crud. -->
+        <div class="kontrola-panel__footer alati-poruke-razvoja-odgovori__edit-footer">
+            <div class="alati-poruke-razvoja-odgovori__footer-left">
+                <button type="button" id="btnOdgovoriIzmjeni" class="kontrola-btn kontrola-btn--crud-upisi kontrola-btn--crud-izmjeni" hidden title="Primjena odabranog predloška (implementacija slijedi)"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izmjeni</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi" title="Skida sve sufiksne odgovore (#kod*tekst#) s poruke i snima tekst; red u tablici ostaje." aria-label="Ukloni sve odgovore"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Ukloni sve odgovore</span></span></span></button>
+            </div>
+            <div class="alati-poruke-razvoja-odgovori__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/Alati_Poruke_Razvoja_Odgovori.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>

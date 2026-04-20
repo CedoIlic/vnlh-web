@@ -33,6 +33,9 @@ if ($db_ret !== -1) {
     exit;
 }
 
+require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
+Alati_Sesije_Aktivne_reconcile_timeout_stale_aktivne($mysqli);
+
 header('Content-Type: application/json; charset=utf-8');
 
 $idJa = (int) ($_SESSION['id_korisnik'] ?? 0);

@@ -4,7 +4,7 @@
 // API: dohvat poruka (tip 'Poruka' ili GET samo_razvoj=1 → 'Poruka razvoju') između logiranog korisnika i odabranog sugovornika.
 // Chat (tip = 'Chat poruka') je odvojen – poruke_chat_povijest.php. Ne miješati tipove.
 // Dohvaća poruke u OBA smjera (primljene + poslane) – cijeli razgovor.
-// Poruke su sortirane po id_razgovor, vrijeme_slanja.
+// Poruke su sortirane najnovije prvo (vrijeme_slanja DESC, id DESC) za prikaz u povijesti modala.
 // Nepročitane primljene poruke se označavaju kao pročitane (status='Pročitano').
 // SQL isključuje brisano=1 (rezime kolone: vidi zaglavlje 0-Poruke_brisi.php).
 //
@@ -69,7 +69,7 @@ $sqlSelect = "
       AND p.tip = ?
       AND ((p.id_posiljatelj = ? AND p.id_primatelj = ?)
        OR (p.id_posiljatelj = ? AND p.id_primatelj = ?))
-    ORDER BY p.id_razgovor ASC, p.vrijeme_slanja ASC
+    ORDER BY p.vrijeme_slanja DESC, p.id DESC
 ";
 
 $stmtSel = $mysqli->prepare($sqlSelect);

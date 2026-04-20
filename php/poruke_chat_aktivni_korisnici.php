@@ -14,6 +14,9 @@
  * neaktivan + nepročitano → --c-red-500 (neaktivni bez nepročitanih nisu u listi). Težina fonta ista kao ostali redovi.
  *
  * 403 CHAT_DENIED ako nema chat_dozvoljen u sesiji.
+ *
+ * Prije SELECT-a: reconciliacija „starih” aktivnih sesija (zadnja_aktivnost starija od idle praga → timeout),
+ * inače bi korisnici bez pinga ostali vječno „aktivni” u listi dok netko ne otvori Alati / aktivne sesije.
  */
 require_once __DIR__ . '/require_login_api.php';
 
@@ -30,6 +33,9 @@ if ($db_ret !== -1) {
     echo $db_ret;
     exit;
 }
+
+require_once __DIR__ . '/Alati_Sesije_Aktivne.php';
+Alati_Sesije_Aktivne_reconcile_timeout_stale_aktivne($mysqli);
 
 header('Content-Type: application/json; charset=utf-8');
 

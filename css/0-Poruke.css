@@ -896,6 +896,75 @@
   margin-left: 2px;
 }
 
+/* Odgovor razvoja (#kod*tekst#) — ispod .poruke__msg; isti wrench kao u podnožju (Lucide), mala ikona + negativ u pozadini */
+.poruke__razvoj-odgovor {
+  position: relative;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 0 0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 0.95em;
+}
+.poruke__razvoj-odgovor__bg-wrench {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  /* „Negativ”: invert + blago prigušenje da ostane vodeni žig na bilo kojoj pozadini */
+  filter: invert(1);
+  mix-blend-mode: multiply;
+}
+.poruke__razvoj-odgovor__bg-wrench-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.poruke__razvoj-odgovor__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.45rem;
+  min-width: 0;
+}
+.poruke__razvoj-odgovor__start-ikon {
+  flex: 0 0 auto;
+  line-height: 0;
+  margin-top: 1px;
+  opacity: 0.92;
+}
+.poruke__razvoj-odgovor__start-ikon svg {
+  display: block;
+}
+.poruke__razvoj-odgovor__tekst {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.poruke__razvoj-odgovor--bez-boje {
+  background: var(--c-gray-100, #f3f4f6);
+  color: var(--text);
+}
+.poruke__razvoj-odgovor--bez-boje .poruke__razvoj-odgovor__bg-wrench {
+  filter: invert(0);
+  opacity: 0.12;
+  mix-blend-mode: normal;
+}
+
 /* --- Blok: Textarea za odgovor + tipka PoÅ¡alji --- */
 .poruke__input-row {
   display: flex;

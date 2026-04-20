@@ -1,0 +1,95 @@
+/* Alati_Poruke_Razvoja_Odgovori – tablica „Poruka razvoju“, edit: tekst lijevo, šifran poruka (select) desno */
+
+.alati-poruke-razvoja-odgovori__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alati-poruke-razvoja-odgovori__edit-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+
+@media (min-width: 769px) {
+  .alati-poruke-razvoja-odgovori__edit-main {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    /* Simetrične kolone: jednaka baza širine, razmak između stupaca */
+    gap: 1.5rem;
+  }
+  .alati-poruke-razvoja-odgovori__cell--tekst,
+  .alati-poruke-razvoja-odgovori__cell--predlozak {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+.alati-poruke-razvoja-odgovori__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+/* Razmak select → checkbox: prije 0,25rem (gap) + 0,35rem; margin duplo od 0,35 → 0,7rem */
+.alati-poruke-razvoja-odgovori__cell--predlozak .alati-poruke-razvoja-odgovori__checkbox-row {
+  margin-top: 0.7rem;
+}
+
+/* kontrola-select: bg/fg do caret zone (kao Tip poruka) */
+.alati-poruke-razvoja-odgovori__cell--predlozak .alati-poruke-razvoja-odgovori__predlozak-kontrola.kontrola-select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  column-gap: 0;
+}
+
+.alati-poruke-razvoja-odgovori__checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Nadjačaj .kontrola-edit (jednolinijski): textarea prikazuje sve retke iz baze (\n) i lomi dugačke riječi. */
+.alati-poruke-razvoja-odgovori__poruka-textarea.kontrola-edit {
+  height: auto;
+  min-height: 10rem;
+  white-space: pre-wrap;
+  overflow-x: hidden;
+  overflow-y: auto;
+  text-overflow: clip;
+  line-height: 1.4;
+  resize: vertical;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.alati-poruke-razvoja-odgovori__edit-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.alati-poruke-razvoja-odgovori__footer-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.alati-poruke-razvoja-odgovori__footer-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}

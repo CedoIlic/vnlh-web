@@ -305,7 +305,11 @@
       if (!tm) {
         tm = '??:??';
       }
-      var tekstPoruke = String(p.poruka != null ? p.poruka : '');
+      var razE = razvojRazloziBazuIBlokoveSKrajaJs(p.poruka != null ? String(p.poruka) : '');
+      var tekstPoruke = razE.baza;
+      for (var bi = 0; bi < razE.blokovi.length; bi++) {
+        tekstPoruke += (tekstPoruke !== '' ? '\n' : '') + razE.blokovi[bi].tekst;
+      }
       /* Jedinstveni red u bazi (0-Poruke_poruke.php šalje polje id) – traženo za međuspremnik u načinu čitanja razvoju. */
       var idPoruke = p.id != null ? Number(p.id) : NaN;
       var sufiksId = !isNaN(idPoruke) && idPoruke > 0 ? ' [ ID: ' + String(idPoruke) + ' ]' : '';
@@ -871,6 +875,154 @@
     return 'Nepoznati Korisnik';
   }
 
+  /* --- Odgovori razvoja: sufiks #kod*tekst# na kraju polja poruka (isti model kao php/poruke_razvoj_odgovor_parse.php) --- */
+
+  function razvojRazloziBazuIBlokoveSKrajaJs(poruka) {
+    var blokovi = [];
+    var s = poruka != null ? String(poruka) : '';
+    var m;
+    while ((m = s.match(/^([\s\S]*)#(\d+)\*([^#]*)#$/))) {
+      blokovi.unshift({ kod: parseInt(m[2], 10), tekst: m[3] });
+      s = m[1];
+    }
+    return { baza: s, blokovi: blokovi };
+  }
+
+  function vnlhRazvojBojaFromStorage(val) {
+    try {
+      if (val == null || typeof val !== 'string') return { hex: '#000000', alpha: 255 };
+      var str = String(val).trim().replace(/^#/, '');
+      if (str.length >= 8) {
+        var hexPart = str.slice(0, 6);
+        if (!/^[0-9A-Fa-f]{6}$/.test(hexPart)) return { hex: '#000000', alpha: 255 };
+        var a = parseInt(str.slice(6, 8), 16);
+        if (isNaN(a)) a = 255;
+        return { hex: '#' + hexPart, alpha: Math.max(0, Math.min(255, a)) };
+      }
+      if (str.length >= 6 && /^[0-9A-Fa-f]{6}$/.test(str.slice(0, 6))) return { hex: '#' + str.slice(0, 6), alpha: 255 };
+    } catch (e) {}
+    return { hex: '#000000', alpha: 255 };
+  }
+
+  function vnlhRazvojBojaHexAlphaToRgba(hex, alpha255) {
+    try {
+      var h = (hex == null ? '' : String(hex)).replace(/^#/, '');
+      if (h.length !== 6 || !/^[0-9A-Fa-f]{6}$/.test(h)) return 'rgba(0,0,0,1)';
+      var r = parseInt(h.slice(0, 2), 16);
+      var g = parseInt(h.slice(2, 4), 16);
+      var b = parseInt(h.slice(4, 6), 16);
+      var a = Math.max(0, Math.min(1, (alpha255 == null ? 255 : parseInt(String(alpha255), 10)) / 255));
+      if (isNaN(a)) a = 1;
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+    } catch (e) {
+      return 'rgba(0,0,0,1)';
+    }
+  }
+
+  /**
+   * Blok odgovora razvoja u povijesti: isti wrench kao gumb u podnožju (PORUKE_LUCIDE_WRENCH_SVG_INNER);
+   * mala ikona na početku + velika u pozadini (negativ / invert za vodeni žig).
+   */
+  function vnlhGradiElementRazvojOdgovor(tekstBloka) {
+    var odg = document.createElement('div');
+    odg.className = 'poruke__razvoj-odgovor';
+    odg.setAttribute('role', 'note');
+
+    var bgW = document.createElement('span');
+    bgW.className = 'poruke__razvoj-odgovor__bg-wrench';
+    bgW.setAttribute('aria-hidden', 'true');
+    bgW.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="poruke__razvoj-odgovor__bg-wrench-svg" aria-hidden="true">' +
+      PORUKE_LUCIDE_WRENCH_SVG_INNER +
+      '</svg>';
+
+    var inner = document.createElement('div');
+    inner.className = 'poruke__razvoj-odgovor__inner';
+
+    var ico = document.createElement('span');
+    ico.className = 'poruke__razvoj-odgovor__start-ikon';
+    ico.setAttribute('aria-hidden', 'true');
+    ico.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18" aria-hidden="true">' +
+      PORUKE_LUCIDE_WRENCH_SVG_INNER +
+      '</svg>';
+
+    var txt = document.createElement('span');
+    txt.className = 'poruke__razvoj-odgovor__tekst';
+    txt.textContent = tekstBloka != null ? String(tekstBloka) : '';
+
+    inner.appendChild(ico);
+    inner.appendChild(txt);
+    odg.appendChild(bgW);
+    odg.appendChild(inner);
+    return odg;
+  }
+
+  function vnlhRazvojPrimijeniBojuNaOdgovorEl(el, fgStr, bgStr) {
+    var bs = bgStr != null ? String(bgStr).trim() : '';
+    var fs = fgStr != null ? String(fgStr).trim() : '';
+    if (/^rgba?\(/i.test(bs)) el.style.backgroundColor = bs;
+    else {
+      var pbg = vnlhRazvojBojaFromStorage(bs !== '' ? bs : '#FFFFFFFF');
+      el.style.backgroundColor = vnlhRazvojBojaHexAlphaToRgba(pbg.hex, pbg.alpha);
+    }
+    if (/^rgba?\(/i.test(fs)) el.style.color = fs;
+    else {
+      var pfg = vnlhRazvojBojaFromStorage(fs !== '' ? fs : '#000000FF');
+      el.style.color = vnlhRazvojBojaHexAlphaToRgba(pfg.hex, pfg.alpha);
+    }
+  }
+
+  /**
+   * Keš mapa kod → { fg, bg } iz Alati_Poruke_Razvoja_Tip_Poruke_CRUD_sve.php (prvi red po kodu nakon sorta).
+   */
+  function vnlhEnsureRazvojKodBojeMap(callback) {
+    if (window.__vnlhRazvojKodBojeMap) {
+      callback();
+      return;
+    }
+    if (window.__vnlhRazvojKodBojeMapPending) {
+      window.__vnlhRazvojKodBojeMapPending.push(callback);
+      return;
+    }
+    window.__vnlhRazvojKodBojeMapPending = [callback];
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', API_BASE + 'Alati_Poruke_Razvoja_Tip_Poruke_CRUD_sve.php', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      var map = {};
+      try {
+        var tx = trim(xhr.responseText);
+        if (tx && tx.charAt(0) === '[') {
+          var arr = JSON.parse(tx);
+          if (Array.isArray(arr)) {
+            var sorted = arr.slice().sort(function (a, b) {
+              var ka = parseInt(a.kod, 10);
+              var kb = parseInt(b.kod, 10);
+              if (ka !== kb) return ka - kb;
+              var ra = parseInt(a.redosljed, 10) - parseInt(b.redosljed, 10);
+              if (ra !== 0) return ra;
+              return parseInt(a.id, 10) - parseInt(b.id, 10);
+            });
+            for (var i = 0; i < sorted.length; i++) {
+              var row = sorted[i];
+              var k = parseInt(row.kod, 10);
+              if (isNaN(k)) continue;
+              if (!map[k]) map[k] = { fg: row.fg_boja, bg: row.bg_boja };
+            }
+          }
+        }
+      } catch (eM) {}
+      window.__vnlhRazvojKodBojeMap = map;
+      var q = window.__vnlhRazvojKodBojeMapPending;
+      window.__vnlhRazvojKodBojeMapPending = null;
+      for (var j = 0; j < q.length; j++) {
+        q[j]();
+      }
+    };
+    xhr.send();
+  }
+
   /**
    * Jednoredni placeholder u povijesti (učitavanje, nema odabira, greška, prazan razgovor).
    * @param {HTMLElement} el #…_edit_povijest
@@ -888,6 +1040,7 @@
   /**
    * Renderira poruke u scroll div – ista logika i CSS klase kao renderPoruke u 0-Poruke.js
    * (boje: primljena / primljena pročitana / odlazna / odlazna pročitana; .poruke__msg-procitano za kvačice).
+   * Odgovori razvoja (#kod*tekst# na kraju poruke): u .poruke__msg samo baza; blokovi ispod pune širine (.poruke__razvoj-odgovor).
    * @param {Array} poruke JSON s 0-Poruke_poruke.php
    * @param {string|number} idPosiljatelj sugovornik
    */
@@ -908,49 +1061,68 @@
       return;
     }
 
-    var lastDate = '';
-    for (var i = 0; i < poruke.length; i++) {
-      var p = poruke[i];
+    vnlhEnsureRazvojKodBojeMap(function () {
+      var map = window.__vnlhRazvojKodBojeMap || {};
+      var lastDate = '';
+      for (var i = 0; i < poruke.length; i++) {
+        var p = poruke[i];
 
-      var datum = testniExtractDate(p.vrijeme_slanja);
-      if (datum !== lastDate) {
-        var sep = document.createElement('div');
-        sep.className = 'poruke__datum-separator';
-        sep.textContent = testniFormatDateHR(datum);
-        napomena.appendChild(sep);
-        lastDate = datum;
+        var datum = testniExtractDate(p.vrijeme_slanja);
+        if (datum !== lastDate) {
+          var sep = document.createElement('div');
+          sep.className = 'poruke__datum-separator';
+          sep.textContent = testniFormatDateHR(datum);
+          napomena.appendChild(sep);
+          lastDate = datum;
+        }
+
+        var raz = razvojRazloziBazuIBlokoveSKrajaJs(p.poruka);
+        var tekstZaBubble = raz.baza;
+
+        var div = document.createElement('div');
+        div.className = 'poruke__msg';
+        if (p.smjer === 'odgovor') {
+          div.classList.add(p.procitano ? 'poruke__msg--odgovor-procitan' : 'poruke__msg--odgovor');
+        } else {
+          div.classList.add(p.procitano ? 'poruke__msg--primljena-procitana' : 'poruke__msg--primljena');
+        }
+
+        var autorSpan = document.createElement('span');
+        autorSpan.className = 'poruke__msg-autor';
+        autorSpan.textContent = p.smjer === 'odgovor' ? 'Ti:' : testniNadjiImePosiljatelja(idPosiljatelj) + ':';
+        div.appendChild(autorSpan);
+
+        div.appendChild(document.createTextNode(tekstZaBubble));
+
+        var vrSpan = document.createElement('span');
+        vrSpan.className = 'poruke__msg-vrijeme';
+        vrSpan.textContent = testniExtractTime(p.vrijeme_slanja);
+        if (p.procitano) {
+          var checkSpan = document.createElement('span');
+          checkSpan.className = 'poruke__msg-procitano';
+          checkSpan.textContent = ' \u2713\u2713';
+          vrSpan.appendChild(checkSpan);
+        }
+        div.appendChild(vrSpan);
+        napomena.appendChild(div);
+
+        for (var bi = 0; bi < raz.blokovi.length; bi++) {
+          var bl = raz.blokovi[bi];
+          var odg = vnlhGradiElementRazvojOdgovor(bl.tekst);
+          var boje = map[bl.kod];
+          if (boje && (boje.bg != null || boje.fg != null)) {
+            vnlhRazvojPrimijeniBojuNaOdgovorEl(odg, boje.fg, boje.bg);
+          } else {
+            odg.classList.add('poruke__razvoj-odgovor--bez-boje');
+          }
+          napomena.appendChild(odg);
+        }
       }
-
-      var div = document.createElement('div');
-      div.className = 'poruke__msg';
-      if (p.smjer === 'odgovor') {
-        div.classList.add(p.procitano ? 'poruke__msg--odgovor-procitan' : 'poruke__msg--odgovor');
-      } else {
-        div.classList.add(p.procitano ? 'poruke__msg--primljena-procitana' : 'poruke__msg--primljena');
-      }
-
-      var autorSpan = document.createElement('span');
-      autorSpan.className = 'poruke__msg-autor';
-      autorSpan.textContent = p.smjer === 'odgovor' ? 'Ti:' : testniNadjiImePosiljatelja(idPosiljatelj) + ':';
-      div.appendChild(autorSpan);
-
-      div.appendChild(document.createTextNode(p.poruka || ''));
-
-      var vrSpan = document.createElement('span');
-      vrSpan.className = 'poruke__msg-vrijeme';
-      vrSpan.textContent = testniExtractTime(p.vrijeme_slanja);
-      if (p.procitano) {
-        var checkSpan = document.createElement('span');
-        checkSpan.className = 'poruke__msg-procitano';
-        checkSpan.textContent = ' \u2713\u2713';
-        vrSpan.appendChild(checkSpan);
-      }
-      div.appendChild(vrSpan);
-      napomena.appendChild(div);
-    }
-    napomena.scrollTop = napomena.scrollHeight;
-    requestAnimationFrame(function () {
-      testniFokusirajPoljePoruke();
+      /* Niz je najnoviji→najstariji; vrh povijesti = najnovije poruke. */
+      napomena.scrollTop = 0;
+      requestAnimationFrame(function () {
+        testniFokusirajPoljePoruke();
+      });
     });
   }
 

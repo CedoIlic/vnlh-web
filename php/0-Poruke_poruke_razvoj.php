@@ -2,7 +2,7 @@
 // =====================================================
 // 0-Poruke_poruke_razvoj.php
 // API: povijest poruka tipa „Poruka razvoju” koje je logirani korisnik poslao timu za razvoj.
-// Jedan zapis u JSON-u po id_razgovor: 0-Poruke_posalji.php pri više primatelja (var. 1002) umeće
+// Poredak u JSON-u: najnovije poruke prve (vrijeme_slanja DESC). Jedan zapis po id_razgovor: 0-Poruke_posalji.php pri više primatelja (var. 1002) umeće
 // više redova s istim id_razgovor – u povijesti se prikazuje jedna poruka bez obzira na broj primatelja.
 // Ne miješa se s 0-Poruke_poruke.php (tip = 'Poruka', razgovor s odabranim pošiljateljem).
 //
@@ -47,7 +47,7 @@ $sql = "
     WHERE p.brisano = 0
       AND p.tip = 'Poruka razvoju'
       AND p.id_posiljatelj = ?
-    ORDER BY p.id_razgovor ASC, p.vrijeme_slanja ASC, p.id ASC
+    ORDER BY p.vrijeme_slanja DESC, p.id DESC
 ";
 
 $stmt = $mysqli->prepare($sql);
