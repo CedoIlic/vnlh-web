@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/require_login_api.php';
-// Clanovi_Loza_CRUD_izmjena.php – UPDATE samo polja s edit panela Clanovi_Loza (ne dira šifru, stupanj, aktivnost, kandidat, zastavice, upisano).
+// Clanovi_Loza_CRUD_izmjena.php – UPDATE polja s edit panela: prazna polja / „nije odabrano“ → NULL u bazi (gdje je nullable).
+// drzava = id_drzava iz POST-a; loza = id_loza. Ne diramo: šifra, stupanj, aktivnost, kandidat, zastavice, upisano, datum_inicijacije, datum_stupnja.
 
 $db_ret = require_once __DIR__ . '/00_db.php';
 if ($db_ret !== -1) {
@@ -29,6 +30,7 @@ try {
 
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
     $id_loza = isset($_POST['id_loza']) ? (int)$_POST['id_loza'] : 0;
+    $id_drzava = isset($_POST['id_drzava']) ? (int)$_POST['id_drzava'] : 0;
 
     $prezime_raw = isset($_POST['prezime']) ? $_POST['prezime'] : '';
     $ime_raw = isset($_POST['ime']) ? $_POST['ime'] : '';
@@ -41,7 +43,6 @@ try {
     $datum_rodjenja = isset($_POST['datum_rodjenja']) && trim((string)$_POST['datum_rodjenja']) !== '' ? trim((string)$_POST['datum_rodjenja']) : null;
     $oib_raw = isset($_POST['oib']) ? preg_replace('/\D/', '', (string)$_POST['oib']) : '';
     $oib = ($oib_raw === '') ? null : substr($oib_raw, 0, 11);
-    /* datum_inicijacije / datum_stupnja: forma Clanovi_Loza ne uređuje – ne diramo u UPDATE-u. */
 
     $raw_porijeklo = isset($_POST['porijeklo']) ? trim((string)$_POST['porijeklo']) : '';
     $porijeklo = ($raw_porijeklo === '' || $raw_porijeklo === '0') ? null : (int)$raw_porijeklo;
@@ -61,7 +62,7 @@ try {
 
     $napomena = isset($_POST['napomena']) ? trim((string)$_POST['napomena']) : '';
 
-    if ($id <= 0 || $id_loza <= 0) {
+    if ($id <= 0 || $id_loza <= 0 || $id_drzava <= 0) {
         $mysqli->rollback();
         echo '105';
         exit;
@@ -71,6 +72,24 @@ try {
         echo '115';
         exit;
     }
+
+    // Loža mora postojati i pripadati odabranoj državi (id_drzava iz forme).
+    $stmt = $mysqli->prepare("SELECT id FROM loze WHERE id = ? AND id_drzava = ? LIMIT 1");
+    if (!$stmt) {
+        $mysqli->rollback();
+        echo '200,' . $mysqli->errno;
+        exit;
+    }
+    $stmt->bind_param('ii', $id_loza, $id_drzava);
+    $stmt->execute();
+    $stmt->store_result();
+    if ($stmt->num_rows === 0) {
+        $stmt->close();
+        $mysqli->rollback();
+        echo '117';
+        exit;
+    }
+    $stmt->close();
 
     // Dohvat postojećih FK za telefon/e_mail/adresa i slike (radi brisanja / update-a).
     $stmt = $mysqli->prepare("SELECT telefon, e_mail, adresa, slika, slika_mime, slika_thumbnail, slika_thumbnail_mime, slika_thumb_round, slika_thumb_round_mime, slika_thumb_round_position FROM clanovi WHERE id = ? FOR UPDATE");
@@ -97,7 +116,61 @@ try {
     $slika_thumb_round_mime = $row_existing['slika_thumb_round_mime'];
     $slika_thumb_round_position = $row_existing['slika_thumb_round_position'] !== null ? (int)$row_existing['slika_thumb_round_position'] : null;
 
-    // Validacija na_prijedlog.
+    $upload_main = false;
+    $upload_thumb = false;
+    $upload_round = false;
+
+    // Obrada slike: nova datoteka zamjenjuje samo dotične kolone.
+    if (isset($_FILES['slika']) && $_FILES['slika']['error'] === UPLOAD_ERR_OK) {
+        $tmp = $_FILES['slika']['tmp_name'];
+        $t = isset($_FILES['slika']['type']) ? $_FILES['slika']['type'] : '';
+        if (is_uploaded_file($tmp) && $t && strpos($t, 'image/') === 0) {
+            $slikaData = file_get_contents($tmp);
+            if ($slikaData !== false) {
+                $slika = $slikaData;
+                $slika_mime = isset($_POST['slika_mime']) ? trim((string)$_POST['slika_mime']) : $t;
+                if (!preg_match('#^image/[a-z0-9.+-]+$#i', $slika_mime) || mb_strlen($slika_mime) > 32) $slika_mime = 'image/webp';
+                $upload_main = true;
+            }
+        }
+    }
+    if (isset($_FILES['thumb']) && $_FILES['thumb']['error'] === UPLOAD_ERR_OK) {
+        $tmp = $_FILES['thumb']['tmp_name'];
+        $t = isset($_FILES['thumb']['type']) ? $_FILES['thumb']['type'] : '';
+        if (is_uploaded_file($tmp) && $t && strpos($t, 'image/') === 0) {
+            $thumbData = file_get_contents($tmp);
+            if ($thumbData !== false) {
+                $slika_thumbnail = $thumbData;
+                $slika_thumbnail_mime = isset($_POST['thumb_mime']) ? trim((string)$_POST['thumb_mime']) : $t;
+                if (!preg_match('#^image/[a-z0-9.+-]+$#i', $slika_thumbnail_mime) || mb_strlen($slika_thumbnail_mime) > 32) $slika_thumbnail_mime = 'image/jpeg';
+                $upload_thumb = true;
+            }
+        }
+    }
+    if (isset($_FILES['thumb_round']) && $_FILES['thumb_round']['error'] === UPLOAD_ERR_OK) {
+        $tmp = $_FILES['thumb_round']['tmp_name'];
+        $t = isset($_FILES['thumb_round']['type']) ? $_FILES['thumb_round']['type'] : '';
+        if (is_uploaded_file($tmp) && $t && strpos($t, 'image/') === 0) {
+            $roundData = file_get_contents($tmp);
+            if ($roundData !== false) {
+                $slika_thumb_round = $roundData;
+                $slika_thumb_round_mime = isset($_POST['thumb_round_mime']) ? trim((string)$_POST['thumb_round_mime']) : $t;
+                if (!preg_match('#^image/[a-z0-9.+-]+$#i', $slika_thumb_round_mime) || mb_strlen($slika_thumb_round_mime) > 32) $slika_thumb_round_mime = 'image/webp';
+                $upload_round = true;
+            }
+        }
+    }
+    $raw_pos = isset($_POST['thumb_round_position']) ? trim((string)$_POST['thumb_round_position']) : '';
+    $position_update = false;
+    if ($raw_pos !== '' && is_numeric($raw_pos)) {
+        $pos = (int)$raw_pos;
+        if ($pos >= -32768 && $pos <= 32767) {
+            $slika_thumb_round_position = $pos;
+            $position_update = true;
+        }
+    }
+
+    // na_prijedlog: ako je odabran ID koji ne postoji → NULL u bazi + informativno 110.
     $infoCode = null;
     if ($na_prijedlog !== null) {
         $stmt = $mysqli->prepare("SELECT id FROM clanovi WHERE id = ? LIMIT 1");
@@ -111,105 +184,94 @@ try {
         $stmt->close();
     }
 
-    // Dohvat id_drzava iz loze (obavezno za kolonu drzava u clanovi; FK, uvjet za sifru).
-    $stmt = $mysqli->prepare("SELECT id_drzava FROM loze WHERE id = ? LIMIT 1");
-    if (!$stmt) {
-        $mysqli->rollback();
-        echo '200,' . $mysqli->errno;
-        exit;
-    }
-    $stmt->bind_param('i', $id_loza);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $row_loza = $res ? $res->fetch_assoc() : null;
-    $stmt->close();
-    if (!$row_loza || $row_loza['id_drzava'] === null || (string)$row_loza['id_drzava'] === '') {
-        $mysqli->rollback();
-        echo '117';
-        exit;
-    }
-    $id_drzava = (int)$row_loza['id_drzava'];
-
-    // Obrada slike: ako je došla nova slika / thumbs, zamijeniti postojeće vrijednosti.
-    if (isset($_FILES['slika']) && $_FILES['slika']['error'] === UPLOAD_ERR_OK) {
-        $tmp = $_FILES['slika']['tmp_name'];
-        $t = isset($_FILES['slika']['type']) ? $_FILES['slika']['type'] : '';
-        if (is_uploaded_file($tmp) && $t && strpos($t, 'image/') === 0) {
-            $slikaData = file_get_contents($tmp);
-            if ($slikaData !== false) {
-                $slika = $slikaData;
-                $slika_mime = isset($_POST['slika_mime']) ? trim((string)$_POST['slika_mime']) : $t;
-                if (!preg_match('#^image/[a-z0-9.+-]+$#i', $slika_mime) || mb_strlen($slika_mime) > 32) $slika_mime = 'image/webp';
-            }
-        }
-    }
-    if (isset($_FILES['thumb']) && $_FILES['thumb']['error'] === UPLOAD_ERR_OK) {
-        $tmp = $_FILES['thumb']['tmp_name'];
-        $t = isset($_FILES['thumb']['type']) ? $_FILES['thumb']['type'] : '';
-        if (is_uploaded_file($tmp) && $t && strpos($t, 'image/') === 0) {
-            $thumbData = file_get_contents($tmp);
-            if ($thumbData !== false) {
-                $slika_thumbnail = $thumbData;
-                $slika_thumbnail_mime = isset($_POST['thumb_mime']) ? trim((string)$_POST['thumb_mime']) : $t;
-                if (!preg_match('#^image/[a-z0-9.+-]+$#i', $slika_thumbnail_mime) || mb_strlen($slika_thumbnail_mime) > 32) $slika_thumbnail_mime = 'image/jpeg';
-            }
-        }
-    }
-    if (isset($_FILES['thumb_round']) && $_FILES['thumb_round']['error'] === UPLOAD_ERR_OK) {
-        $tmp = $_FILES['thumb_round']['tmp_name'];
-        $t = isset($_FILES['thumb_round']['type']) ? $_FILES['thumb_round']['type'] : '';
-        if (is_uploaded_file($tmp) && $t && strpos($t, 'image/') === 0) {
-            $roundData = file_get_contents($tmp);
-            if ($roundData !== false) {
-                $slika_thumb_round = $roundData;
-                $slika_thumb_round_mime = isset($_POST['thumb_round_mime']) ? trim((string)$_POST['thumb_round_mime']) : $t;
-                if (!preg_match('#^image/[a-z0-9.+-]+$#i', $slika_thumb_round_mime) || mb_strlen($slika_thumb_round_mime) > 32) $slika_thumb_round_mime = 'image/webp';
-            }
-        }
-    }
-    $raw_pos = isset($_POST['thumb_round_position']) ? trim((string)$_POST['thumb_round_position']) : '';
-    if ($raw_pos !== '' && is_numeric($raw_pos)) {
-        $pos = (int)$raw_pos;
-        if ($pos >= -32768 && $pos <= 32767) {
-            $slika_thumb_round_position = $pos;
-        }
-    } elseif (isset($_POST['thumb_round_position']) && $raw_pos === '') {
-        $slika_thumb_round_position = null;
-    }
-
-    // UPDATE osnovnih podataka u clanovi – bez šifre, stupnja, aktivnosti, kandidata, zastavica, upisano.
+    /*
+     * UPDATE clanovi: obavezna polja + nullable polja uvijek (prazno u formi → NULL u SQL literal ili bind).
+     */
     $set_parts = [];
     $bind_types = '';
     $bind_values = [];
 
-    $set_parts[] = 'loza=?'; $bind_types .= 'i'; $bind_values[] = &$id_loza;
-    $set_parts[] = 'drzava=?'; $bind_types .= 'i'; $bind_values[] = &$id_drzava;
-    $set_parts[] = 'prezime=?'; $bind_types .= 's'; $bind_values[] = &$prezime;
-    $set_parts[] = 'ime=?'; $bind_types .= 's'; $bind_values[] = &$ime;
-    $set_parts[] = 'spol=?'; $bind_types .= 'i'; $bind_values[] = &$spol;
+    $set_parts[] = 'loza=?';
+    $bind_types .= 'i';
+    $bind_values[] = &$id_loza;
+    $set_parts[] = 'drzava=?';
+    $bind_types .= 'i';
+    $bind_values[] = &$id_drzava;
+    $set_parts[] = 'prezime=?';
+    $bind_types .= 's';
+    $bind_values[] = &$prezime;
+    $set_parts[] = 'ime=?';
+    $bind_types .= 's';
+    $bind_values[] = &$ime;
+    $set_parts[] = 'spol=?';
+    $bind_types .= 'i';
+    $bind_values[] = &$spol;
 
-    $set_parts[] = 'datum_rodjenja=?'; $bind_types .= 's'; $bind_values[] = &$datum_rodjenja;
-    $set_parts[] = ($oib === null ? 'oib=NULL' : 'oib=?'); if ($oib !== null) { $bind_types .= 's'; $bind_values[] = &$oib; }
+    if ($datum_rodjenja === null) {
+        $set_parts[] = 'datum_rodjenja=NULL';
+    } else {
+        $set_parts[] = 'datum_rodjenja=?';
+        $bind_types .= 's';
+        $bind_values[] = &$datum_rodjenja;
+    }
+    if ($oib === null) {
+        $set_parts[] = 'oib=NULL';
+    } else {
+        $set_parts[] = 'oib=?';
+        $bind_types .= 's';
+        $bind_values[] = &$oib;
+    }
+    if ($porijeklo === null) {
+        $set_parts[] = 'porijeklo=NULL';
+    } else {
+        $set_parts[] = 'porijeklo=?';
+        $bind_types .= 'i';
+        $bind_values[] = &$porijeklo;
+    }
+    if ($na_prijedlog === null) {
+        $set_parts[] = 'na_prijedlog=NULL';
+    } else {
+        $set_parts[] = 'na_prijedlog=?';
+        $bind_types .= 'i';
+        $bind_values[] = &$na_prijedlog;
+    }
+    $set_parts[] = 'napomena=?';
+    $bind_types .= 's';
+    $bind_values[] = &$napomena;
 
-    $set_parts[] = ($porijeklo === null ? 'porijeklo=NULL' : 'porijeklo=?'); if ($porijeklo !== null) { $bind_types .= 'i'; $bind_values[] = &$porijeklo; }
-
-    $set_parts[] = ($na_prijedlog === null ? 'na_prijedlog=NULL' : 'na_prijedlog=?'); if ($na_prijedlog !== null) { $bind_types .= 'i'; $bind_values[] = &$na_prijedlog; }
-
-    $set_parts[] = 'napomena=?'; $bind_types .= 's'; $bind_values[] = &$napomena;
-    $set_parts[] = 'slika=?'; $bind_types .= 's'; $bind_values[] = &$slika;
-    $set_parts[] = 'slika_mime=?'; $bind_types .= 's'; $bind_values[] = &$slika_mime;
-    $set_parts[] = 'slika_thumbnail=?'; $bind_types .= 's'; $bind_values[] = &$slika_thumbnail;
-    $set_parts[] = 'slika_thumbnail_mime=?'; $bind_types .= 's'; $bind_values[] = &$slika_thumbnail_mime;
-    $set_parts[] = 'slika_thumb_round=?'; $bind_types .= 's'; $bind_values[] = &$slika_thumb_round;
-    $set_parts[] = 'slika_thumb_round_mime=?'; $bind_types .= 's'; $bind_values[] = &$slika_thumb_round_mime;
-    $set_parts[] = ($slika_thumb_round_position === null ? 'slika_thumb_round_position=NULL' : 'slika_thumb_round_position=?');
-    if ($slika_thumb_round_position !== null) {
+    if ($upload_main) {
+        $set_parts[] = 'slika=?';
+        $bind_types .= 's';
+        $bind_values[] = &$slika;
+        $set_parts[] = 'slika_mime=?';
+        $bind_types .= 's';
+        $bind_values[] = &$slika_mime;
+    }
+    if ($upload_thumb) {
+        $set_parts[] = 'slika_thumbnail=?';
+        $bind_types .= 's';
+        $bind_values[] = &$slika_thumbnail;
+        $set_parts[] = 'slika_thumbnail_mime=?';
+        $bind_types .= 's';
+        $bind_values[] = &$slika_thumbnail_mime;
+    }
+    if ($upload_round) {
+        $set_parts[] = 'slika_thumb_round=?';
+        $bind_types .= 's';
+        $bind_values[] = &$slika_thumb_round;
+        $set_parts[] = 'slika_thumb_round_mime=?';
+        $bind_types .= 's';
+        $bind_values[] = &$slika_thumb_round_mime;
+    }
+    if ($position_update) {
+        $set_parts[] = 'slika_thumb_round_position=?';
         $bind_types .= 'i';
         $bind_values[] = &$slika_thumb_round_position;
     }
 
-    $bind_types .= 'i'; $bind_values[] = &$id;
-    $sql = "UPDATE clanovi SET " . implode(', ', $set_parts) . " WHERE id = ?";
+    $bind_types .= 'i';
+    $bind_values[] = &$id;
+    $sql = 'UPDATE clanovi SET ' . implode(', ', $set_parts) . ' WHERE id = ?';
     $stmt = $mysqli->prepare($sql);
     array_unshift($bind_values, $bind_types);
     $refs = [];
@@ -223,7 +285,6 @@ try {
     // TELEFON
     $telefon_fk = $old_telefon_fk;
     if ($telefon_text === '') {
-        // Brisanje postojećeg telefona (ako postoji).
         if ($old_telefon_fk !== null) {
             $stmt = $mysqli->prepare("DELETE FROM telefoni WHERE id = ?");
             $stmt->bind_param('i', $old_telefon_fk);
@@ -232,7 +293,6 @@ try {
             $telefon_fk = null;
         }
     } else {
-        // Tip telefona = 1
         $res = $mysqli->query("SELECT id FROM telefoni_tip WHERE `Tip` = 1 ORDER BY id ASC LIMIT 1");
         if (!$res || $res->num_rows === 0) {
             $mysqli->rollback();
@@ -331,7 +391,7 @@ try {
         }
     }
 
-    // Ažurirati FK u clanovi (telefon/e_mail/adresa).
+    // FK u clanovi samo ako se promijenio (uključujući NULL nakon brisanja pomoćnog retka).
     $set_fk = [];
     $bind_types_fk = '';
     $bind_vals_fk = [];
@@ -365,14 +425,14 @@ try {
     if (!empty($set_fk)) {
         $bind_types_fk .= 'i';
         $bind_vals_fk[] = &$id;
-        $sql = "UPDATE clanovi SET " . implode(', ', $set_fk) . " WHERE id = ?";
-        $stmt = $mysqli->prepare($sql);
+        $sql_fk = 'UPDATE clanovi SET ' . implode(', ', $set_fk) . ' WHERE id = ?';
+        $stmt = $mysqli->prepare($sql_fk);
         array_unshift($bind_vals_fk, $bind_types_fk);
-        $refs = [];
+        $refs_fk = [];
         foreach ($bind_vals_fk as $k => $v) {
-            $refs[$k] = &$bind_vals_fk[$k];
+            $refs_fk[$k] = &$bind_vals_fk[$k];
         }
-        call_user_func_array([$stmt, 'bind_param'], $refs);
+        call_user_func_array([$stmt, 'bind_param'], $refs_fk);
         $stmt->execute();
         $stmt->close();
     }

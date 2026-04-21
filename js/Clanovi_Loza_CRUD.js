@@ -574,18 +574,31 @@
     });
   }
 
+  /**
+   * FormData za POST. Kod izmjene šaljemo i prazne nullable ključeve da PHP može u bazi postaviti NULL
+   * kad korisnik obriše datum, OIB ili vrati select na „nije odabrano“. Kod upisa i dalje šaljemo samo popunjena polja.
+   */
   function buildClanoviFormData(payload, jeIzmjena) {
     var fd = new FormData();
     if (jeIzmjena && payload.id != null) fd.append('id', String(payload.id));
+    if (payload.id_drzava != null && String(payload.id_drzava) !== '') fd.append('id_drzava', String(payload.id_drzava));
     fd.append('id_loza', payload.id_loza);
     fd.append('prezime', payload.prezime);
     fd.append('ime', payload.ime);
     fd.append('spol', payload.spol);
-    if (payload.datum_rodjenja != null) fd.append('datum_rodjenja', payload.datum_rodjenja);
-    if (payload.oib != null) fd.append('oib', payload.oib);
-    if (payload.porijeklo != null) fd.append('porijeklo', payload.porijeklo);
-    if (payload.na_prijedlog != null) fd.append('na_prijedlog', payload.na_prijedlog);
-    if (payload.id_drzava_adrese != null) fd.append('id_drzava_adrese', payload.id_drzava_adrese);
+    if (jeIzmjena) {
+      fd.append('datum_rodjenja', payload.datum_rodjenja != null && String(payload.datum_rodjenja) !== '' ? String(payload.datum_rodjenja) : '');
+      fd.append('oib', payload.oib != null && String(payload.oib) !== '' ? String(payload.oib) : '');
+      fd.append('porijeklo', payload.porijeklo != null && String(payload.porijeklo) !== '' ? String(payload.porijeklo) : '');
+      fd.append('na_prijedlog', payload.na_prijedlog != null && String(payload.na_prijedlog) !== '' ? String(payload.na_prijedlog) : '');
+      fd.append('id_drzava_adrese', payload.id_drzava_adrese != null && String(payload.id_drzava_adrese) !== '' ? String(payload.id_drzava_adrese) : '');
+    } else {
+      if (payload.datum_rodjenja != null) fd.append('datum_rodjenja', payload.datum_rodjenja);
+      if (payload.oib != null) fd.append('oib', payload.oib);
+      if (payload.porijeklo != null) fd.append('porijeklo', payload.porijeklo);
+      if (payload.na_prijedlog != null) fd.append('na_prijedlog', payload.na_prijedlog);
+      if (payload.id_drzava_adrese != null) fd.append('id_drzava_adrese', payload.id_drzava_adrese);
+    }
     fd.append('telefon_text', payload.telefon_text);
     fd.append('email_text', payload.email_text);
     fd.append('adresa_1', payload.adresa_1);
@@ -609,6 +622,8 @@
       btnUpisi.disabled = !imaLozu || (!imaSelekciju && !imaSadrzaj);
     }
     if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
+    /* Drugi red naslova edit panela – isto stanje kao gumb (enable/disable, Upis vs Izmjeni). */
+    clanoviLozaUpdateNaslovPodnaslovClana();
   }
 
   (function () {
@@ -1067,15 +1082,87 @@
     });
   }
 
-  /** Centrirani naslov u edit panelu = naziv opcije trenutne lože. */
+  /**
+   * Prvi red zaglavlja edit panela: „C ∴ L ∴“ + naziv odabrane lože (Unicode U+2234 = therefore ∴).
+   * Dok nije odabrana loža u select_loza — prazan red (bez C ∴ L ∴).
+   */
   function clanoviLozaUpdateNaslovLozu() {
-    var el = document.getElementById('edit_loza_naslov');
+    var el = document.getElementById('edit_loza_naslov_line1');
     var sel = document.getElementById('select_loza');
     if (!el || !sel) return;
+    if (!trim(sel.value)) {
+      while (el.firstChild) el.removeChild(el.firstChild);
+      el.textContent = '';
+      clanoviLozaUpdateTablicaHeaderLogo();
+      return;
+    }
     var opt = sel.options[sel.selectedIndex];
     var t = opt && opt.textContent ? trim(opt.textContent) : '';
-    el.textContent = t && sel.value !== '' ? t : '\u00A0';
+    var lozeNaziv = (t && sel.value !== '') ? t : '';
+    /* C ∴ L ∴ + naziv lože (spanovi za ∴: pouzdan font). */
+    while (el.firstChild) el.removeChild(el.firstChild);
+    el.appendChild(document.createTextNode('C '));
+    var s1 = document.createElement('span');
+    s1.className = 'clanovi-loza-crud__edit-loza-therefore';
+    s1.setAttribute('aria-hidden', 'true');
+    s1.textContent = '\u2234';
+    el.appendChild(s1);
+    el.appendChild(document.createTextNode(' L '));
+    var s2 = document.createElement('span');
+    s2.className = 'clanovi-loza-crud__edit-loza-therefore';
+    s2.setAttribute('aria-hidden', 'true');
+    s2.textContent = '\u2234';
+    el.appendChild(s2);
+    if (lozeNaziv) el.appendChild(document.createTextNode(' ' + lozeNaziv));
     clanoviLozaUpdateTablicaHeaderLogo();
+  }
+
+  /**
+   * Drugi red zaglavlja edit panela – usklađen s tipkom Upis/Izmjeni (updateCrudUpisiState).
+   * Gumb disabled → prazan red.
+   * Gumb enabled + Upis (nema retka u tablici, ali ima teksta u Prezime) → fiksni tekst za novog kandidata.
+   * Gumb enabled + Izmjeni (odabran red):
+   *   – aktivnost 0 i kandidat 1 (iz Clanovi_CRUD_sve.php): „Korekcija podataka kandidata: prezime, ime“ (bez šifre).
+   *   – inače: „Korekcija podataka člana: prezime, ime, šifra“.
+   */
+  function clanoviLozaUpdateNaslovPodnaslovClana() {
+    var el2 = document.getElementById('edit_loza_naslov_line2');
+    if (!el2) return;
+    if (!btnUpisi || btnUpisi.disabled) {
+      el2.textContent = '';
+      return;
+    }
+    var imaSelekciju = getSelectedRowId() != null;
+    if (!imaSelekciju) {
+      el2.textContent = 'Dodavanje novog kandidata u bazu';
+      return;
+    }
+    var id = getSelectedRowId();
+    var found = null;
+    for (var i = 0; i < data.length; i++) {
+      if (data[i] && String(data[i].id) === String(id)) {
+        found = data[i];
+        break;
+      }
+    }
+    if (!found) {
+      el2.textContent = '';
+      return;
+    }
+    var p = found.prezime != null ? String(found.prezime) : '';
+    var im = found.ime != null ? String(found.ime) : '';
+    var brojIskaznice = found.sifra != null ? String(found.sifra) : '';
+    var aktivnostNum = found.aktivnost != null && String(found.aktivnost).replace(/^\s+|\s+$/g, '') !== ''
+      ? parseInt(String(found.aktivnost), 10)
+      : NaN;
+    var kandidatNum = found.kandidat != null && String(found.kandidat).replace(/^\s+|\s+$/g, '') !== ''
+      ? parseInt(String(found.kandidat), 10)
+      : NaN;
+    if (aktivnostNum === 0 && kandidatNum === 1) {
+      el2.textContent = 'Korekcija podataka kandidata: ' + p + ', ' + im;
+      return;
+    }
+    el2.textContent = 'Korekcija podataka člana: ' + p + ', ' + im + ', ' + brojIskaznice;
   }
 
   /**
@@ -2918,6 +3005,13 @@
       var jeIzmjena = this.classList.contains('kontrola-btn--crud-izmjeni');
       var id = jeIzmjena ? getSelectedRowId() : null;
       if (!idLoza) return;
+      var idDrzavaVal = selectDrzava ? trim(selectDrzava.value) : '';
+      if (!idDrzavaVal) {
+        if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['105'] && typeof window.showPorukaModal === 'function') {
+          window.showPorukaModal('105', []);
+        }
+        return;
+      }
       if (jeIzmjena && id == null) return;
 
       function normName(s) {
@@ -2968,6 +3062,7 @@
       /* Šifra, stupanj, aktivnost, kandidat, zastavice – ne šalju se; datum inicijacije/stupnja – ne šalju se (ostaju u bazi kakvi jesu). PHP za Loza postavlja defaulte pri upisu / ne dira pri izmjeni. */
       var payload = {
         id: jeIzmjena ? String(id) : null,
+        id_drzava: idDrzavaVal,
         id_loza: idLoza,
         prezime: prezime,
         ime: ime,
@@ -3124,7 +3219,14 @@
             izvrsiBrisanje();
           }
         } else if (res === '0') {
-          izvrsiBrisanje();
+          /* Bez vezanih podataka: opća potvrda (124). S vezanim: 023 iznad – dovoljno jedno upozorenje. */
+          if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['124'] && typeof window.showPorukaModal === 'function') {
+            window.showPorukaModal('124', [], function (buttonKey) {
+              if (buttonKey === 'OK') izvrsiBrisanje();
+            });
+          } else {
+            izvrsiBrisanje();
+          }
         } else {
           var p = parseResponseCode(res);
           if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') {
@@ -3309,6 +3411,8 @@
   }
 
   function initForma() {
+    /* Odmah iscrtaj C ∴ L ∴ (ne čekaj ucitajPravaGeo – inače je prvi red prazan dok keš ne stigne). */
+    clanoviLozaUpdateNaslovLozu();
     ucitajPravaGeo(function () {
       clanoviLozaUpdateNaslovLozu();
       clanoviLozaPostaviVidljivihRedova();

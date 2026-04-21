@@ -1,7 +1,10 @@
 <?php
 require_once __DIR__ . '/require_login_api.php';
-// Clanovi_Loza_CRUD_upis.php – INSERT (forma Clanovi_Loza): samo polja s edit panela.
-// Fiksno: aktivnost=0, kandidat=1, zastavice=0; šifra i stupanj = NULL (ne šalju se s forme).
+// Clanovi_Loza_CRUD_upis.php – INSERT (forma Clanovi_Loza): samo polja koja stvarno šaljemo (bez eksplicitnog NULL za „prazna“ polja).
+// drzava = id_drzava iz POST-a (select države); loza = id_loza (select lože). Provjera: loža mora pripadati toj državi.
+// Ne upisujemo: sifra, stupanj, datum_inicijacije, datum_stupnja (kolone u INSERT-u uopće ne ulaze).
+// Fiksno kad upisujemo red: aktivnost=0, kandidat=1, zastavice=0; upisano = NOW().
+// Napredovanja (Transfer Excel) – ovaj endpoint ne upisuje ništa u napredovanja.
 
 $db_ret = require_once __DIR__ . '/00_db.php';
 if ($db_ret !== -1) {
@@ -32,12 +35,10 @@ try {
     $mysqli->begin_transaction();
 
     $id_loza = isset($_POST['id_loza']) ? (int)$_POST['id_loza'] : 0;
+    $id_drzava = isset($_POST['id_drzava']) ? (int)$_POST['id_drzava'] : 0;
 
     $prezime_raw = isset($_POST['prezime']) ? $_POST['prezime'] : '';
     $ime_raw = isset($_POST['ime']) ? $_POST['ime'] : '';
-    /* Šifra i stupanj se na ovoj formi ne unose – uvijek NULL u bazi pri novom članu. */
-    $sifra = '';
-    $stupanj = null;
 
     $prezime = normalize_name($prezime_raw);
     $ime = normalize_name($ime_raw);
@@ -47,7 +48,6 @@ try {
     $datum_rodjenja = isset($_POST['datum_rodjenja']) && trim((string)$_POST['datum_rodjenja']) !== '' ? trim((string)$_POST['datum_rodjenja']) : null;
     $oib_raw = isset($_POST['oib']) ? preg_replace('/\D/', '', (string)$_POST['oib']) : '';
     $oib = ($oib_raw === '') ? null : substr($oib_raw, 0, 11);
-    /* datum_inicijacije / datum_stupnja: forma Loza ne šalje – INSERT kao NULL. */
 
     $raw_porijeklo = isset($_POST['porijeklo']) ? trim((string)$_POST['porijeklo']) : '';
     $porijeklo = ($raw_porijeklo === '' || $raw_porijeklo === '0') ? null : (int)$raw_porijeklo;
@@ -71,7 +71,7 @@ try {
     $kandidat = 1;
     $zastavice = 0;
 
-    if ($id_loza <= 0) {
+    if ($id_loza <= 0 || $id_drzava <= 0) {
         $mysqli->rollback();
         echo '105';
         exit;
@@ -82,11 +82,25 @@ try {
         exit;
     }
 
-    // Za potrebe upisa u bazu: prazna šifra (dozvoljeno samo za kandidata) ide kao NULL,
-    // kako bi se u koloni sifra moglo imati više NULL vrijednosti.
-    $sifra_db = ($sifra === '' ? null : $sifra);
+    // Loža mora postojati i imati isti id_drzava kao odabrana država u formi.
+    $stmt = $mysqli->prepare("SELECT id FROM loze WHERE id = ? AND id_drzava = ? LIMIT 1");
+    if (!$stmt) {
+        $mysqli->rollback();
+        echo '200,' . $mysqli->errno;
+        exit;
+    }
+    $stmt->bind_param('ii', $id_loza, $id_drzava);
+    $stmt->execute();
+    $stmt->store_result();
+    if ($stmt->num_rows === 0) {
+        $stmt->close();
+        $mysqli->rollback();
+        echo '117';
+        exit;
+    }
+    $stmt->close();
 
-    // Validacija na_prijedlog – ako ne postoji član, upisujemo NULL i informacija 110.
+    // Validacija na_prijedlog – ako ne postoji član, ne šaljemo polje (NULL u starom modelu); informacija 110.
     $infoCode = null;
     if ($na_prijedlog !== null) {
         $stmt = $mysqli->prepare("SELECT id FROM clanovi WHERE id = ? LIMIT 1");
@@ -156,117 +170,113 @@ try {
         }
     }
 
-    // Dohvat id_drzava iz loze (obavezno za kolonu drzava u clanovi; FK, uvjet za sifru).
-    $stmt = $mysqli->prepare("SELECT id_drzava FROM loze WHERE id = ? LIMIT 1");
-    if (!$stmt) {
-        $mysqli->rollback();
-        echo '200,' . $mysqli->errno;
-        exit;
-    }
-    $stmt->bind_param('i', $id_loza);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $row_loza = $res ? $res->fetch_assoc() : null;
-    $stmt->close();
-    if (!$row_loza || $row_loza['id_drzava'] === null || (string)$row_loza['id_drzava'] === '') {
-        $mysqli->rollback();
-        echo '117';
-        exit;
-    }
-    $id_drzava = (int)$row_loza['id_drzava'];
+    /*
+     * INSERT: samo kolone za koje imamo vrijednost (bez stupnjeva / datum_inicijacije / datum_stupnja / šifre).
+     * telefon, e_mail, adresa FK-ovi ne ulaze ovdje – popune se UPDATE-om nakon pomoćnih tablica.
+     */
+    $cols = ['loza', 'drzava', 'prezime', 'ime', 'spol'];
+    $placeholders = ['?', '?', '?', '?', '?'];
+    $bind_types = 'iissi';
+    $bind_params = [&$id_loza, &$id_drzava, &$prezime, &$ime, &$spol];
 
-    // Jedinstvenost šifre iskaznice unutar države (UNIQUE drzava, sifra u bazi).
-    if ($sifra !== '') {
-        $stmt = $mysqli->prepare("SELECT id FROM clanovi WHERE drzava = ? AND sifra = ? LIMIT 1");
-        $stmt->bind_param('is', $id_drzava, $sifra);
-        $stmt->execute();
-        $stmt->store_result();
-        if ($stmt->num_rows > 0) {
-            $stmt->close();
-            $mysqli->rollback();
-            echo '114';
-            exit;
-        }
-        $stmt->close();
-    }
-
-    // INSERT u clanovi (bez telefona/e_mail/adresa – oni idu naknadno).
-    $cols = [
-        'sifra', 'loza', 'drzava', 'prezime', 'ime', 'spol',
-        'datum_rodjenja', 'oib', 'datum_inicijacije', 'porijeklo', 'stupanj', 'datum_stupnja',
-        'telefon', 'e_mail', 'adresa', 'na_prijedlog',
-        'slika', 'slika_mime', 'slika_thumbnail', 'slika_thumbnail_mime', 'slika_thumb_round', 'slika_thumb_round_mime', 'slika_thumb_round_position',
-        'napomena', 'upisano', 'aktivnost', 'kandidat', 'zastavice'
-    ];
-    $vals = [];
-    $bind_types = '';
-    $bind_values = [];
-
-    // sifra (može biti NULL ako nije upisana)
-    $vals[] = ($sifra_db === null ? 'NULL' : '?');
-    if ($sifra_db !== null) {
+    if ($datum_rodjenja !== null) {
+        $cols[] = 'datum_rodjenja';
+        $placeholders[] = '?';
         $bind_types .= 's';
-        $bind_values[] = &$sifra_db;
+        $bind_params[] = &$datum_rodjenja;
     }
-    // loza
-    $vals[] = '?'; $bind_types .= 'i'; $bind_values[] = &$id_loza;
-    // drzava (dohvaćena iz loze)
-    $vals[] = '?'; $bind_types .= 'i'; $bind_values[] = &$id_drzava;
-    // prezime, ime, spol
-    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$prezime;
-    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$ime;
-    $vals[] = '?'; $bind_types .= 'i'; $bind_values[] = &$spol;
-    // datumi
-    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$datum_rodjenja;
-    $vals[] = ($oib === null ? 'NULL' : '?'); if ($oib !== null) { $bind_types .= 's'; $bind_values[] = &$oib; }
-    $vals[] = 'NULL'; /* datum_inicijacije */
-    // porijeklo, stupanj (mogu NULL)
-    $vals[] = ($porijeklo === null ? 'NULL' : '?'); if ($porijeklo !== null) { $bind_types .= 'i'; $bind_values[] = &$porijeklo; }
-    $vals[] = ($stupanj === null ? 'NULL' : '?'); if ($stupanj !== null) { $bind_types .= 'i'; $bind_values[] = &$stupanj; }
-    // datum_stupnja
-    $vals[] = 'NULL';
-    // telefon, e_mail, adresa – za sada NULL (popunit ćemo nakon insert-a u pomoćne tablice)
-    $vals[] = 'NULL';
-    $vals[] = 'NULL';
-    $vals[] = 'NULL';
-    // na_prijedlog
-    $vals[] = ($na_prijedlog === null ? 'NULL' : '?'); if ($na_prijedlog !== null) { $bind_types .= 'i'; $bind_values[] = &$na_prijedlog; }
-    // slika i thumbovi
-    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$slika;
-    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$slika_mime;
-    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$slika_thumbnail;
-    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$slika_thumbnail_mime;
-    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$slika_thumb_round;
-    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$slika_thumb_round_mime;
-    $vals[] = ($slika_thumb_round_position === null ? 'NULL' : '?');
-    if ($slika_thumb_round_position !== null) {
+    if ($oib !== null) {
+        $cols[] = 'oib';
+        $placeholders[] = '?';
+        $bind_types .= 's';
+        $bind_params[] = &$oib;
+    }
+    if ($porijeklo !== null) {
+        $cols[] = 'porijeklo';
+        $placeholders[] = '?';
         $bind_types .= 'i';
-        $bind_values[] = &$slika_thumb_round_position;
+        $bind_params[] = &$porijeklo;
     }
-    // napomena
-    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$napomena;
-    // upisano – vrijeme sa servera (NOW())
-    $vals[] = 'NOW()';
-    // aktivnost, kandidat, zastavice
-    $vals[] = '?'; $bind_types .= 'i'; $bind_values[] = &$aktivnost;
-    $vals[] = '?'; $bind_types .= 'i'; $bind_values[] = &$kandidat;
-    $vals[] = '?'; $bind_types .= 'i'; $bind_values[] = &$zastavice;
+    if ($na_prijedlog !== null) {
+        $cols[] = 'na_prijedlog';
+        $placeholders[] = '?';
+        $bind_types .= 'i';
+        $bind_params[] = &$na_prijedlog;
+    }
+    if ($napomena !== '') {
+        $cols[] = 'napomena';
+        $placeholders[] = '?';
+        $bind_types .= 's';
+        $bind_params[] = &$napomena;
+    }
 
-    $sql = "INSERT INTO clanovi (" . implode(', ', $cols) . ") VALUES (" . implode(', ', $vals) . ")";
+    /* Slike – samo ako postoji glavna slika; thumb/kružni samo ako su generirani. */
+    if ($slika !== null) {
+        $cols[] = 'slika';
+        $placeholders[] = '?';
+        $bind_types .= 's';
+        $bind_params[] = &$slika;
+        $cols[] = 'slika_mime';
+        $placeholders[] = '?';
+        $bind_types .= 's';
+        $bind_params[] = &$slika_mime;
+        if ($slika_thumbnail !== null) {
+            $cols[] = 'slika_thumbnail';
+            $placeholders[] = '?';
+            $bind_types .= 's';
+            $bind_params[] = &$slika_thumbnail;
+            $cols[] = 'slika_thumbnail_mime';
+            $placeholders[] = '?';
+            $bind_types .= 's';
+            $bind_params[] = &$slika_thumbnail_mime;
+        }
+        if ($slika_thumb_round !== null) {
+            $cols[] = 'slika_thumb_round';
+            $placeholders[] = '?';
+            $bind_types .= 's';
+            $bind_params[] = &$slika_thumb_round;
+            $cols[] = 'slika_thumb_round_mime';
+            $placeholders[] = '?';
+            $bind_types .= 's';
+            $bind_params[] = &$slika_thumb_round_mime;
+        }
+        if ($slika_thumb_round_position !== null) {
+            $cols[] = 'slika_thumb_round_position';
+            $placeholders[] = '?';
+            $bind_types .= 'i';
+            $bind_params[] = &$slika_thumb_round_position;
+        }
+    }
+
+    $cols[] = 'upisano';
+    $placeholders[] = 'NOW()';
+
+    $cols[] = 'aktivnost';
+    $placeholders[] = '?';
+    $bind_types .= 'i';
+    $bind_params[] = &$aktivnost;
+    $cols[] = 'kandidat';
+    $placeholders[] = '?';
+    $bind_types .= 'i';
+    $bind_params[] = &$kandidat;
+    $cols[] = 'zastavice';
+    $placeholders[] = '?';
+    $bind_types .= 'i';
+    $bind_params[] = &$zastavice;
+
+    $sql = 'INSERT INTO clanovi (' . implode(', ', $cols) . ') VALUES (' . implode(', ', $placeholders) . ')';
     $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
         $mysqli->rollback();
         echo '200,' . $mysqli->errno;
         exit;
     }
-    if ($bind_types !== '') {
-        array_unshift($bind_values, $bind_types);
-        $refs = [];
-        foreach ($bind_values as $k => $v) {
-            $refs[$k] = &$bind_values[$k];
-        }
-        call_user_func_array([$stmt, 'bind_param'], $refs);
+    array_unshift($bind_params, $bind_types);
+    $refs = [];
+    foreach ($bind_params as $key => $value) {
+        $refs[$key] = &$bind_params[$key];
     }
+    call_user_func_array([$stmt, 'bind_param'], $refs);
     $stmt->execute();
     $stmt->close();
 
@@ -327,97 +337,48 @@ try {
         $res->free();
 
         $stmt = $mysqli->prepare("INSERT INTO adrese (id_clanovi, id_adrese_tip, id_drzave_adrese, adresa_1, adresa_2, grad, posta) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        // id_drzave_adrese može biti NULL → koristimo 'i' s nullom, mysqli će postaviti NULL.
         $stmt->bind_param('iiissss', $clan_id, $id_tip_adrese, $id_drzava_adrese, $adresa_1, $adresa_2, $grad, $posta);
         $stmt->execute();
         $adresa_fk = (int)$mysqli->insert_id;
         $stmt->close();
     }
 
-    // Ažurirati FK u tablici clanovi (telefon, e_mail, adresa).
+    // Ažurirati FK u tablici clanovi (telefon, e_mail, adresa) – samo ako postoji novi zapis.
     if ($telefon_fk !== null || $email_fk !== null || $adresa_fk !== null) {
         $sql_set = [];
-        $bind_types = '';
-        $bind_values = [];
+        $bind_types_u = '';
+        $bind_values_u = [];
         if ($telefon_fk !== null) {
             $sql_set[] = 'telefon = ?';
-            $bind_types .= 'i';
-            $bind_values[] = &$telefon_fk;
+            $bind_types_u .= 'i';
+            $bind_values_u[] = &$telefon_fk;
         }
         if ($email_fk !== null) {
             $sql_set[] = 'e_mail = ?';
-            $bind_types .= 'i';
-            $bind_values[] = &$email_fk;
+            $bind_types_u .= 'i';
+            $bind_values_u[] = &$email_fk;
         }
         if ($adresa_fk !== null) {
             $sql_set[] = 'adresa = ?';
-            $bind_types .= 'i';
-            $bind_values[] = &$adresa_fk;
+            $bind_types_u .= 'i';
+            $bind_values_u[] = &$adresa_fk;
         }
         if (!empty($sql_set)) {
-            $sql = "UPDATE clanovi SET " . implode(', ', $sql_set) . " WHERE id = ?";
-            $bind_types .= 'i';
-            $bind_values[] = &$clan_id;
-            $stmt = $mysqli->prepare($sql);
-            array_unshift($bind_values, $bind_types);
-            $refs = [];
-            foreach ($bind_values as $k => $v) {
-                $refs[$k] = &$bind_values[$k];
+            $sql_u = "UPDATE clanovi SET " . implode(', ', $sql_set) . " WHERE id = ?";
+            $bind_types_u .= 'i';
+            $bind_values_u[] = &$clan_id;
+            $stmt = $mysqli->prepare($sql_u);
+            $bind_args_u = [$bind_types_u];
+            foreach ($bind_values_u as $k => $_) {
+                $bind_args_u[] = &$bind_values_u[$k];
             }
-            call_user_func_array([$stmt, 'bind_param'], $refs);
+            call_user_func_array([$stmt, 'bind_param'], $bind_args_u);
             $stmt->execute();
             $stmt->close();
         }
     }
 
-    // Napredovanja (Transfer Excel): jedan red po članu, u istoj transakciji.
-    // POST: simuliraj (1 = nakon upisa rollback), id_stupanj, id_loza_napredovanja (0 = ne postoji, upisujemo NULL), loza_napredovanja, datum_napredovanja.
-    $simuliraj = isset($_POST['simuliraj']) && trim((string)$_POST['simuliraj']) === '1';
-    $napredovanja_id_stupanj = isset($_POST['napredovanja_id_stupanj']) ? (int)$_POST['napredovanja_id_stupanj'] : 0;
-    $napredovanja_id_loza_raw = isset($_POST['napredovanja_id_loza']) ? (int)$_POST['napredovanja_id_loza'] : 0;
-    $napredovanja_id_loza = ($napredovanja_id_loza_raw === 0) ? null : $napredovanja_id_loza_raw; // 0 = loža ne postoji u listi → NULL u bazi
-    $napredovanja_loza_text = isset($_POST['napredovanja_loza_text']) ? trim((string)$_POST['napredovanja_loza_text']) : null;
-    $napredovanja_datum = isset($_POST['napredovanja_datum']) && trim((string)$_POST['napredovanja_datum']) !== '' ? trim((string)$_POST['napredovanja_datum']) : null;
-    $id_tip_napredovanja = 1;
-    if ($napredovanja_id_stupanj > 0) {
-        $d_nap = $napredovanja_datum;
-        $l_nap = $napredovanja_loza_text === null || $napredovanja_loza_text === '' ? null : $napredovanja_loza_text;
-        $col_loza = $napredovanja_id_loza === null ? 'NULL' : '?';
-        $col_datum = $d_nap === null ? 'NULL' : '?';
-        $col_loza_text = $l_nap === null ? 'NULL' : '?';
-        $sql = "INSERT INTO napredovanja (id_clanovi, id_stupanj, id_tip_napredovanja, id_loza_napredovanja, datum_napredovanja, loza_napredovanja) VALUES (?, ?, ?, $col_loza, $col_datum, $col_loza_text)";
-        $stmt = $mysqli->prepare($sql);
-        if ($stmt) {
-            $bind_types = 'iii';
-            $bind_values = [&$clan_id, &$napredovanja_id_stupanj, &$id_tip_napredovanja];
-            if ($napredovanja_id_loza !== null) {
-                $bind_types .= 'i';
-                $bind_values[] = &$napredovanja_id_loza;
-            }
-            if ($d_nap !== null) {
-                $bind_types .= 's';
-                $bind_values[] = &$d_nap;
-            }
-            if ($l_nap !== null) {
-                $bind_types .= 's';
-                $bind_values[] = &$l_nap;
-            }
-            array_unshift($bind_values, $bind_types);
-            $refs = [];
-            foreach ($bind_values as $k => $v) {
-                $refs[$k] = &$bind_values[$k];
-            }
-            call_user_func_array([$stmt, 'bind_param'], $refs);
-            $stmt->execute();
-            $stmt->close();
-        }
-    }
-
-    if ($simuliraj) {
-        $mysqli->rollback();
-    } else {
-        $mysqli->commit();
-    }
+    $mysqli->commit();
 
     if ($infoCode !== null) {
         echo $infoCode;

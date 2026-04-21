@@ -46,5 +46,6 @@ if ($data === null || $data === '') {
     exit;
 }
 $mime = $mime ?: 'application/octet-stream';
+header('Cache-Control: private, max-age=3600');
 header('Content-Type: ' . $mime);
 echo $data;

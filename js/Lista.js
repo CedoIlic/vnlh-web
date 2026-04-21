@@ -50,12 +50,138 @@
   var ukupnoStranica = 1;
   var podaci = [];
   var filtriraniPodaci = [];
-  var currentLogoUrl = '';
   var sortCol = -1;
   var sortDir = 1;
 
   var API_BASE = '../php/';
+  var LISTA_IMG_T = Date.now();
   var LISTA_RELOAD_IKONA = 1;  /* 1 = reload ikona desno od selecta Redaka; 0 = nema */
+
+  /** Blob URL-ovi za thumb slike u tablici (čisti se revoke pri promjeni stranice / novom učitavanju). */
+  var listaThumbBlobUrls = [];
+  /** Sprječava primjenu starog batch odgovora ako korisnik brzo promijeni stranicu. */
+  var _listaThumbBatchGen = 0;
+  var _listaThumbBatchXhr = null;
+
+  /**
+   * Poništava blob URL-ove i briše img/logo na svim retcima podataka (prije novog rendera / novog batcha).
+   */
+  function revokeListaThumbBlobUrls() {
+    var i;
+    for (i = 0; i < listaThumbBlobUrls.length; i++) {
+      try {
+        URL.revokeObjectURL(listaThumbBlobUrls[i]);
+      } catch (eRev) {}
+    }
+    listaThumbBlobUrls.length = 0;
+    for (i = 0; i < podaci.length; i++) {
+      podaci[i].img = '';
+      podaci[i].logo = '';
+    }
+  }
+
+  /**
+   * Jedan POST za sve thumb slike trenutne stranice (član + loža), umjesto N paralelnih GET-ova na img.
+   * Nakon uspjeha ažurira row.img / row.logo i ponovno crta tbody.
+   */
+  function ucitajThumbBatchZaTrenutnuStranicu() {
+    _listaThumbBatchGen++;
+    var myGen = _listaThumbBatchGen;
+    if (_listaThumbBatchXhr) {
+      try {
+        _listaThumbBatchXhr.abort();
+      } catch (eAb) {}
+      _listaThumbBatchXhr = null;
+    }
+    var br = getBrojRedaka();
+    var start = (trenutnaStranica - 1) * br;
+    var end = Math.min(start + br, filtriraniPodaci.length);
+    if (end <= start) {
+      return;
+    }
+    var idClanovi = [];
+    var idLoze = [];
+    var seenC = {};
+    var seenL = {};
+    var ii;
+    for (ii = start; ii < end; ii++) {
+      var row0 = filtriraniPodaci[ii];
+      if (!row0) continue;
+      var c = row0.listaThumbClanId;
+      if (c && !seenC[c]) {
+        seenC[c] = true;
+        var ic = parseInt(c, 10);
+        if (ic > 0) idClanovi.push(ic);
+      }
+      var l = row0.listaLogoLozaId;
+      if (l && !seenL[l]) {
+        seenL[l] = true;
+        var il = parseInt(l, 10);
+        if (il > 0) idLoze.push(il);
+      }
+    }
+    if (idClanovi.length === 0 && idLoze.length === 0) {
+      return;
+    }
+
+    function b64ToBlobUrl(b64, mime) {
+      try {
+        var bin = atob(b64);
+        var bytes = new Uint8Array(bin.length);
+        var bi;
+        for (bi = 0; bi < bin.length; bi++) bytes[bi] = bin.charCodeAt(bi);
+        var blob = new Blob([bytes], { type: mime || 'application/octet-stream' });
+        var u = URL.createObjectURL(blob);
+        listaThumbBlobUrls.push(u);
+        return u;
+      } catch (eB) {
+        return '';
+      }
+    }
+
+    var xhr = new XMLHttpRequest();
+    _listaThumbBatchXhr = xhr;
+    xhr.open('POST', API_BASE + 'Lista_slika_thumb_batch.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      _listaThumbBatchXhr = null;
+      if (myGen !== _listaThumbBatchGen) return;
+      var text = (xhr.responseText || '').trim();
+      if (text === '' || text.charAt(0) !== '{') return;
+      var data;
+      try {
+        data = JSON.parse(text);
+      } catch (eJ) {
+        return;
+      }
+      if (!data || !data.ok) return;
+      var clanovi = data.clanovi || {};
+      var loze = data.loze || {};
+      var jj;
+      for (jj = start; jj < end; jj++) {
+        var row2 = filtriraniPodaci[jj];
+        if (!row2) continue;
+        var ck = row2.listaThumbClanId;
+        if (ck && clanovi[ck]) {
+          var ent = clanovi[ck];
+          row2.img = b64ToBlobUrl(ent.b64, ent.mime || '');
+        }
+        var lk = row2.listaLogoLozaId;
+        if (lk && loze[lk]) {
+          var entL = loze[lk];
+          row2.logo = b64ToBlobUrl(entL.b64, entL.mime || '');
+        }
+      }
+      if (myGen !== _listaThumbBatchGen) return;
+      var tbody2 = container.querySelector('.lista-tablica__scroll tbody');
+      if (tbody2) {
+        renderTbody(tbody2);
+        primijeniMobitelPrikaz();
+      }
+    };
+    xhr.send(JSON.stringify({ id_clanovi: idClanovi, id_loze: idLoze }));
+  }
 
   function getToken(name) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -589,7 +715,7 @@
     }
     body.innerHTML = '';
     if (row) {
-      var imgUrl = row.id ? (API_BASE + 'Clanovi_CRUD_slika.php?id=' + encodeURIComponent(row.id) + '&t=' + (Date.now ? Date.now() : 0)) : '';
+      var imgUrl = row.id ? (API_BASE + 'Clanovi_CRUD_slika.php?id=' + encodeURIComponent(row.id) + '&t=' + LISTA_IMG_T) : '';
       var slikaWrap = document.createElement('div');
       slikaWrap.className = 'lista-slika lista-detalji-modal__slika';
       if (imgUrl) {
@@ -1087,12 +1213,14 @@
   }
 
   function osvjeziTablicu() {
+    revokeListaThumbBlobUrls();
     var tbody = container.querySelector('.lista-tablica__scroll tbody');
     if (!tbody) {
       tbody = iscrtajZaglavlje();
     }
     renderTbody(tbody);
     primijeniMobitelPrikaz();
+    ucitajThumbBatchZaTrenutnuStranicu();
   }
 
   function izracunajPaginaciju() {
@@ -1465,6 +1593,7 @@
   }
 
   function ucitajClanovi(idLoza, lozaNaziv) {
+    revokeListaThumbBlobUrls();
     podaci = [];
     var viseLoz = (idLoza === SVE_LOZE);
     var idParam = idLoza;
@@ -1476,7 +1605,6 @@
       }
       idParam = ids.join(',');
     }
-    currentLogoUrl = (!viseLoz && idLoza) ? (API_BASE + 'Loze_CRUD_slika_thumb.php?id=' + encodeURIComponent(idLoza) + '&t=' + (Date.now ? Date.now() : 0)) : '';
     /* Odmah prazna tablica (i primjena Traži na prazan skup) dok ne stigne odgovor. */
     primijeniFilterTrazi();
     if (!idLoza) return;
@@ -1493,7 +1621,12 @@
             var r = arr[i];
             var mid = r.id != null ? r.id : '';
             if (seenIds[mid]) continue;
-            var imgUrl = r.id ? (API_BASE + 'Clanovi_CRUD_slika_thumb_round.php?id=' + encodeURIComponent(r.id) + '&t=' + (Date.now ? Date.now() : 0)) : '';
+            var listaLogoLozaIdVal = '';
+            if (viseLoz && r.loza != null && String(r.loza) !== '') {
+              listaLogoLozaIdVal = String(r.loza);
+            } else if (!viseLoz && idLoza && idLoza !== SVE_LOZE) {
+              listaLogoLozaIdVal = String(idLoza);
+            }
             var datumStr = '';
             var rodendanDanas = false;
             if (r.datum_rodjenja) {
@@ -1508,14 +1641,15 @@
             }
             var spolStr = (r.spol === 1 || r.spol === '1') ? 'Ženski' : 'Muški';
             var lozaNazivClan = viseLoz && r.loza_naziv ? r.loza_naziv : lozaNaziv;
-            var logoUrl = viseLoz && r.loza ? (API_BASE + 'Loze_CRUD_slika_thumb.php?id=' + encodeURIComponent(r.loza)) : currentLogoUrl;
             var datumInicStr = formatDatumSDanom(r.datum_inicijacije);
             var datumStupanjStr = formatDatumSDanom(r.datum_stupnja);
             seenIds[mid] = true;
             podaci.push({
               id: r.id,
-              img: imgUrl,
-              logo: logoUrl,
+              img: '',
+              logo: '',
+              listaThumbClanId: r.id != null ? String(r.id) : '',
+              listaLogoLozaId: listaLogoLozaIdVal,
               line1: r.ime || '',
               line2: r.prezime || '',
               Ime: r.ime || '',

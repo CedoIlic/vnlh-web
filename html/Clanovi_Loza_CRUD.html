@@ -78,7 +78,11 @@
     </div>
     <div class="kontrola-panel mb-3" id="edit_panel">
         <div class="kontrola-panel__header clanovi-loza-crud__edit-panel-header">
-            <h3 class="clanovi-loza-crud__edit-loza-naslov" id="edit_loza_naslov" aria-live="polite">&nbsp;</h3>
+            <!-- Dva reda: (1) C ∴ L ∴ + ime lože tek kad je odabrana loža — (2) podnaslov prema Upis/Izmjeni. -->
+            <div class="clanovi-loza-crud__edit-loza-naslov-stack" aria-live="polite">
+                <div class="clanovi-loza-crud__edit-loza-naslov-line1" id="edit_loza_naslov_line1"></div>
+                <div class="clanovi-loza-crud__edit-loza-naslov-line2" id="edit_loza_naslov_line2"></div>
+            </div>
         </div>
         <div class="kontrola-panel__body clanovi-crud__edit-body">
             <div class="clanovi-crud__edit-cols">
@@ -129,8 +133,6 @@
                             </select>
                         </div>
                     </div>
-                </div>
-                <div class="clanovi-crud__edit-col">
                     <div class="clanovi-crud__edit-row">
                         <label class="kontrola-labela mb-0" for="edit_telefon">Telefon</label>
                         <div class="clanovi-crud__edit-with-ellipsis">
@@ -138,6 +140,8 @@
                             <button type="button" id="btn_telefon_ellipsis" class="clanovi-crud__ellipsis-btn" aria-label="Opcije telefona" title="Opcije telefona"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
                         </div>
                     </div>
+                </div>
+                <div class="clanovi-crud__edit-col">
                     <div class="clanovi-crud__edit-row">
                         <label class="kontrola-labela mb-0" for="edit_email">E-mail</label>
                         <div class="clanovi-crud__edit-with-ellipsis">

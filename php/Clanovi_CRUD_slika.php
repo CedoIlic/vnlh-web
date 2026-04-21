@@ -39,5 +39,6 @@ if ($row['slika'] === null || $row['slika'] === '') {
     exit;
 }
 $mime = !empty($row['slika_mime']) ? trim($row['slika_mime']) : 'application/octet-stream';
+header('Cache-Control: private, max-age=3600');
 header('Content-Type: ' . $mime);
 echo $row['slika'];

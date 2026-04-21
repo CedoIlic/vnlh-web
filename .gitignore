@@ -1,6 +1,7 @@
 # Backup i arhive (radne kopije, ne trebaju povijest)
 0-Arhiva/
 0-Backup_SQL/
+VNLH WEB.zip
 
 # SQL dumpovi i backupi (ali ne i sql/ mapa - ona ima skripte aplikacije)
 *.bak

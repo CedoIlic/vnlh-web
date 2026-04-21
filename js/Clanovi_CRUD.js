@@ -3049,7 +3049,14 @@
             izvrsiBrisanje();
           }
         } else if (res === '0') {
-          izvrsiBrisanje();
+          /* Bez vezanih podataka: opća potvrda (124). S vezanim: 023 iznad – dovoljno jedno upozorenje. */
+          if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['124'] && typeof window.showPorukaModal === 'function') {
+            window.showPorukaModal('124', [], function (buttonKey) {
+              if (buttonKey === 'OK') izvrsiBrisanje();
+            });
+          } else {
+            izvrsiBrisanje();
+          }
         } else {
           var p = parseResponseCode(res);
           if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') {
