@@ -1,6 +1,7 @@
 /* =========================================================
    Lista.js
-   Forma "Lista članova" – tablica, select, paginacija, Traži (debounce iz var. 114).
+   Forma "Lista članova" – tablica, select, paginacija, Traži (debounce iz var. 114),
+   thumb slike u batchu (Lista_batch_thumbnails.php; prozor stranica var. 117, nav delay 118).
    Učitava se uz 0-Common.js (preusmjerenje na prijavu pri 401 s API-ja).
    ========================================================= */
 
@@ -56,6 +57,221 @@
 
   var API_BASE = '../php/';
   var LISTA_RELOAD_IKONA = 1;  /* 1 = reload ikona desno od selecta Redaka; 0 = nema */
+
+  /** sustav_varijable: 117 = prozor stranica ±X za batch thumbove; 118 = cooldown navigacije (ms). Ako API ne učita → 300 ms. */
+  var LISTA_VAR_BAFER_STRANICA = 117;
+  var LISTA_VAR_NAV_DELAY_MS = 118;
+  var _listaBaferStranicaX = 3;
+  var _listaNavDelayMs = 300;
+  var _listaThumbByClanId = {};
+  var _listaThumbByLozaId = {};
+  var _listaThumbBatchLoading = false;
+  var _listaThumbBatchGen = 0;
+  var _listaNavLockUntil = 0;
+
+  function listaTrimApiText(s) {
+    return s != null ? String(s).replace(/^\s+|\s+$/g, '') : '';
+  }
+
+  function listaDataUrlFromMimeB64(mime, b64) {
+    if (!mime || !b64) return '';
+    return 'data:' + mime + ';base64,' + b64;
+  }
+
+  function listaThumbSrcClan(id) {
+    if (id == null || id === '') return '';
+    var k = String(id);
+    return _listaThumbByClanId[k] || '';
+  }
+
+  function listaThumbSrcLoza(idLoza) {
+    if (idLoza == null || idLoza === '') return '';
+    var k = String(idLoza);
+    return _listaThumbByLozaId[k] || '';
+  }
+
+  function listaJeNavBlokiran() {
+    if (_listaThumbBatchLoading) return true;
+    try {
+      if (Date.now() < _listaNavLockUntil) return true;
+    } catch (eNav) {}
+    return false;
+  }
+
+  function listaTouchNavLock() {
+    try {
+      _listaNavLockUntil = Date.now() + Math.max(0, _listaNavDelayMs);
+    } catch (eL) {}
+    osvjeziPaginaciju();
+    try {
+      setTimeout(function () { osvjeziPaginaciju(); }, _listaNavDelayMs + 10);
+    } catch (eT) {}
+  }
+
+  function listaOsvjeziNavButtonsStanje() {
+    var blok = listaJeNavBlokiran();
+    var prazna = filtriraniPodaci.length === 0;
+    var atStart = trenutnaStranica <= 1;
+    var atEnd = trenutnaStranica >= ukupnoStranica;
+    if (btnBackward) btnBackward.disabled = prazna || atStart || blok;
+    if (btnPrev) btnPrev.disabled = prazna || atStart || blok;
+    if (btnNext) btnNext.disabled = prazna || atEnd || blok;
+    if (btnForward) btnForward.disabled = prazna || atEnd || blok;
+  }
+
+  /** Jednokratno učitava 117 i 118 (common_sustav_varijable.php). */
+  function listaUcitajSustav117118(callback) {
+    var left = 2;
+    var fin = function () {
+      left--;
+      if (left <= 0 && typeof callback === 'function') callback();
+    };
+    var url117 = API_BASE.replace(/\/?$/, '/') + 'common_sustav_varijable.php?id=' + LISTA_VAR_BAFER_STRANICA;
+    var xhr1 = new XMLHttpRequest();
+    xhr1.open('GET', url117, true);
+    xhr1.onreadystatechange = function () {
+      if (xhr1.readyState !== 4) return;
+      var raw = listaTrimApiText(xhr1.responseText || '');
+      if (xhr1.status === 200 && raw !== '' && raw !== '100' && raw !== '120') {
+        var n = parseInt(raw, 10);
+        if (!isNaN(n) && n >= 0 && n <= 50) _listaBaferStranicaX = n;
+      }
+      fin();
+    };
+    xhr1.send();
+    var url118 = API_BASE.replace(/\/?$/, '/') + 'common_sustav_varijable.php?id=' + LISTA_VAR_NAV_DELAY_MS;
+    var xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', url118, true);
+    xhr2.onreadystatechange = function () {
+      if (xhr2.readyState !== 4) return;
+      var raw = listaTrimApiText(xhr2.responseText || '');
+      if (xhr2.status === 200 && raw !== '' && raw !== '100' && raw !== '120') {
+        var n = parseInt(raw, 10);
+        if (!isNaN(n) && n >= 0 && n <= 60000) _listaNavDelayMs = n;
+      }
+      fin();
+    };
+    xhr2.send();
+  }
+
+  function listaPrimijeniBatchOdgovor(clanovi, loze) {
+    var k;
+    if (clanovi && typeof clanovi === 'object') {
+      for (k in clanovi) {
+        if (!Object.prototype.hasOwnProperty.call(clanovi, k)) continue;
+        var c = clanovi[k];
+        if (!c || !c.b64) continue;
+        var du = listaDataUrlFromMimeB64(c.mime || 'image/jpeg', c.b64);
+        if (du) _listaThumbByClanId[String(k)] = du;
+      }
+    }
+    if (loze && typeof loze === 'object') {
+      for (k in loze) {
+        if (!Object.prototype.hasOwnProperty.call(loze, k)) continue;
+        var z = loze[k];
+        if (!z || !z.b64) continue;
+        var duz = listaDataUrlFromMimeB64(z.mime || 'image/jpeg', z.b64);
+        if (duz) _listaThumbByLozaId[String(k)] = duz;
+      }
+    }
+  }
+
+  /**
+   * Iz filtriranih podataka i trenutne stranice: prozor N±X, eviction članovskog cachea,
+   * batch POST ako treba nedostajući thumbovi (bez GET bursta).
+   */
+  function listaPrefetchThumbsZaProzor() {
+    if (!filtriraniPodaci.length) return;
+
+    var myGen = ++_listaThumbBatchGen;
+    var br = getBrojRedaka();
+    var X = _listaBaferStranicaX;
+    var pFrom = Math.max(1, trenutnaStranica - X);
+    var pTo = Math.min(ukupnoStranica, trenutnaStranica + X);
+
+    var neededClan = {};
+    var neededLoza = {};
+    var pi;
+    var pj;
+    for (pi = pFrom; pi <= pTo; pi++) {
+      var start = (pi - 1) * br;
+      var end = Math.min(start + br, filtriraniPodaci.length);
+      for (pj = start; pj < end; pj++) {
+        var row = filtriraniPodaci[pj];
+        if (row && row.id != null && row.id !== '') neededClan[String(row.id)] = true;
+        if (row && row.loza != null && row.loza !== '') neededLoza[String(row.loza)] = true;
+      }
+    }
+
+    for (var ck in _listaThumbByClanId) {
+      if (!Object.prototype.hasOwnProperty.call(_listaThumbByClanId, ck)) continue;
+      if (!neededClan[ck]) delete _listaThumbByClanId[ck];
+    }
+
+    var idClanovi = [];
+    var idLoze = [];
+    for (ck in neededClan) {
+      if (!Object.prototype.hasOwnProperty.call(neededClan, ck)) continue;
+      if (!_listaThumbByClanId[ck]) {
+        var ic = parseInt(ck, 10);
+        if (!isNaN(ic) && ic > 0) idClanovi.push(ic);
+      }
+    }
+    for (var lk in neededLoza) {
+      if (!Object.prototype.hasOwnProperty.call(neededLoza, lk)) continue;
+      if (!_listaThumbByLozaId[lk]) {
+        var il = parseInt(lk, 10);
+        if (!isNaN(il) && il > 0) idLoze.push(il);
+      }
+    }
+
+    if (idClanovi.length === 0 && idLoze.length === 0) {
+      osvjeziTablicu({ skipThumbPrefetch: true });
+      return;
+    }
+
+    _listaThumbBatchLoading = true;
+    listaOsvjeziNavButtonsStanje();
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', API_BASE.replace(/\/?$/, '/') + 'Lista_batch_thumbnails.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      _listaThumbBatchLoading = false;
+      listaOsvjeziNavButtonsStanje();
+
+      if (myGen !== _listaThumbBatchGen) {
+        listaPrefetchThumbsZaProzor();
+        return;
+      }
+
+      var text = listaTrimApiText(xhr.responseText || '');
+      if (xhr.status !== 200 || !text || text.charAt(0) !== '{') {
+        osvjeziTablicu({ skipThumbPrefetch: true });
+        return;
+      }
+      var resp;
+      try {
+        resp = JSON.parse(text);
+      } catch (eJ) {
+        osvjeziTablicu({ skipThumbPrefetch: true });
+        return;
+      }
+      if (!resp || !resp.ok) {
+        osvjeziTablicu({ skipThumbPrefetch: true });
+        return;
+      }
+      listaPrimijeniBatchOdgovor(resp.clanovi, resp.loze);
+      osvjeziTablicu({ skipThumbPrefetch: true });
+    };
+    try {
+      xhr.send(JSON.stringify({ id_clanovi: idClanovi, id_loze: idLoze }));
+    } catch (eSend) {
+      _listaThumbBatchLoading = false;
+      listaOsvjeziNavButtonsStanje();
+    }
+  }
 
   function getToken(name) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -784,7 +1000,12 @@
           td.className = 'lista-tablica__cell--img';
           var img = document.createElement('img');
           img.className = col.type === 'logo' ? 'lista-tablica__cell-logo' : 'lista-tablica__cell-img';
-          var imgSrc = row[col.field] || row.img || '';
+          var imgSrc = '';
+          if (col.type === 'img') {
+            imgSrc = listaThumbSrcClan(row.id) || (row.img || '');
+          } else {
+            imgSrc = listaThumbSrcLoza(row.loza) || (row.logo || '');
+          }
           img.src = imgSrc || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1" height="1"%3E%3C/svg%3E';
           img.alt = '';
           img.draggable = false;
@@ -1086,13 +1307,17 @@
     }
   }
 
-  function osvjeziTablicu() {
+  function osvjeziTablicu(opts) {
+    opts = opts || {};
     var tbody = container.querySelector('.lista-tablica__scroll tbody');
     if (!tbody) {
       tbody = iscrtajZaglavlje();
     }
     renderTbody(tbody);
     primijeniMobitelPrikaz();
+    if (!opts.skipThumbPrefetch) {
+      listaPrefetchThumbsZaProzor();
+    }
   }
 
   function izracunajPaginaciju() {
@@ -1112,35 +1337,40 @@
       redovaSpan.textContent = 'Redova: ' + filtriraniPodaci.length;
       redovaSpan.classList.toggle('lista-paginacija__redova--disabled', prazna);
     }
-    btnBackward.disabled = trenutnaStranica <= 1;
-    btnPrev.disabled = trenutnaStranica <= 1;
-    btnNext.disabled = trenutnaStranica >= ukupnoStranica;
-    btnForward.disabled = trenutnaStranica >= ukupnoStranica;
+    listaOsvjeziNavButtonsStanje();
   }
 
   function naPocetak() {
+    if (listaJeNavBlokiran()) return;
+    if (trenutnaStranica <= 1) return;
+    listaTouchNavLock();
     trenutnaStranica = 1;
     osvjeziPaginaciju();
     osvjeziTablicu();
   }
 
   function stranicaNatrag() {
-    if (trenutnaStranica > 1) {
-      trenutnaStranica--;
-      osvjeziPaginaciju();
-      osvjeziTablicu();
-    }
+    if (listaJeNavBlokiran()) return;
+    if (trenutnaStranica <= 1) return;
+    listaTouchNavLock();
+    trenutnaStranica--;
+    osvjeziPaginaciju();
+    osvjeziTablicu();
   }
 
   function stranicaNaprijed() {
-    if (trenutnaStranica < ukupnoStranica) {
-      trenutnaStranica++;
-      osvjeziPaginaciju();
-      osvjeziTablicu();
-    }
+    if (listaJeNavBlokiran()) return;
+    if (trenutnaStranica >= ukupnoStranica) return;
+    listaTouchNavLock();
+    trenutnaStranica++;
+    osvjeziPaginaciju();
+    osvjeziTablicu();
   }
 
   function naKraj() {
+    if (listaJeNavBlokiran()) return;
+    if (trenutnaStranica >= ukupnoStranica) return;
+    listaTouchNavLock();
     trenutnaStranica = ukupnoStranica;
     osvjeziPaginaciju();
     osvjeziTablicu();
@@ -1466,6 +1696,7 @@
 
   function ucitajClanovi(idLoza, lozaNaziv) {
     podaci = [];
+    _listaThumbByClanId = {};
     var viseLoz = (idLoza === SVE_LOZE);
     var idParam = idLoza;
     if (viseLoz) {
@@ -1476,7 +1707,7 @@
       }
       idParam = ids.join(',');
     }
-    currentLogoUrl = (!viseLoz && idLoza) ? (API_BASE + 'Loze_CRUD_slika_thumb.php?id=' + encodeURIComponent(idLoza) + '&t=' + (Date.now ? Date.now() : 0)) : '';
+    currentLogoUrl = '';
     /* Odmah prazna tablica (i primjena Traži na prazan skup) dok ne stigne odgovor. */
     primijeniFilterTrazi();
     if (!idLoza) return;
@@ -1493,7 +1724,7 @@
             var r = arr[i];
             var mid = r.id != null ? r.id : '';
             if (seenIds[mid]) continue;
-            var imgUrl = r.id ? (API_BASE + 'Clanovi_CRUD_slika_thumb_round.php?id=' + encodeURIComponent(r.id) + '&t=' + (Date.now ? Date.now() : 0)) : '';
+            var imgUrl = '';
             var datumStr = '';
             var rodendanDanas = false;
             if (r.datum_rodjenja) {
@@ -1508,12 +1739,14 @@
             }
             var spolStr = (r.spol === 1 || r.spol === '1') ? 'Ženski' : 'Muški';
             var lozaNazivClan = viseLoz && r.loza_naziv ? r.loza_naziv : lozaNaziv;
-            var logoUrl = viseLoz && r.loza ? (API_BASE + 'Loze_CRUD_slika_thumb.php?id=' + encodeURIComponent(r.loza)) : currentLogoUrl;
+            var logoUrl = '';
             var datumInicStr = formatDatumSDanom(r.datum_inicijacije);
             var datumStupanjStr = formatDatumSDanom(r.datum_stupnja);
             seenIds[mid] = true;
+            var idLozaRow = viseLoz ? r.loza : idLoza;
             podaci.push({
               id: r.id,
+              loza: idLozaRow != null && idLozaRow !== '' ? idLozaRow : '',
               img: imgUrl,
               logo: logoUrl,
               line1: r.ime || '',
@@ -1718,8 +1951,9 @@
     trenutnaStranica = 1;
     injectMobStyles();
     iscrtajZaglavlje();
-    osvjeziTablicu();
+    listaUcitajSustav117118();
     osvjeziPaginaciju();
+    osvjeziTablicu();
     primijeniMobitelPrikaz();
 
     var mq = window.matchMedia && window.matchMedia('(max-width: 640px)');
