@@ -2539,6 +2539,33 @@
         document.body.appendChild(modalEl);
       }
 
+      /* --- Blok: Modal – URL PNG ikone (korijen aplikacije + /slike/; pouzdanije od CSS var u ::before) --- */
+      function modalIconSrcForStanje(stanje) {
+        var s = String(stanje || '').toLowerCase();
+        var fileByStanje = {
+          ok: 'Check.png',
+          error: 'Error.png',
+          forbidden: 'Forbidden.png',
+          information: 'information.png',
+          warning: 'Warning.png'
+        };
+        var name = fileByStanje[s] || fileByStanje.information;
+        if (typeof window.vnlhAppBasePathname === 'function') {
+          var base = window.vnlhAppBasePathname();
+          if (base !== '') {
+            var pathname = base.replace(/\/$/, '') + '/slike/' + name;
+            pathname = pathname.replace(/\/{2,}/g, '/');
+            if (pathname.charAt(0) !== '/') pathname = '/' + pathname;
+            return pathname;
+          }
+        }
+        try {
+          return new URL('../slike/' + name, window.location.href).href;
+        } catch (e) {
+          return '../slike/' + name;
+        }
+      }
+
       function parseModalMessage(raw) {
         if (raw == null) raw = '';
         var parts = String(raw).split('|');
@@ -2597,7 +2624,14 @@
         contentEl.textContent = tekst;
 
         imageEl.setAttribute('aria-hidden', 'false');
-        imageEl.className = 'kontrola-modal__image kontrola-modal__image--' + msg.stanje;
+        imageEl.className =
+          'kontrola-modal__image kontrola-modal__image--' + msg.stanje + ' kontrola-modal__image--has-png';
+        imageEl.innerHTML = '';
+        var imgPng = document.createElement('img');
+        imgPng.className = 'kontrola-modal__image-png';
+        imgPng.alt = '';
+        imgPng.src = modalIconSrcForStanje(msg.stanje);
+        imageEl.appendChild(imgPng);
         ['ok', 'error', 'forbidden', 'information', 'warning'].forEach(function (s) {
           modalEl.classList.remove('kontrola-modal--' + s);
         });

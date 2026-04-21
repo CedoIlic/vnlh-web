@@ -63,7 +63,7 @@
   var onCrudSelectionChange = null;
   /** Redovi sesijskih poruka (isti poredak kao učitana tablica) */
   var odgovoriRawData = [];
-  /** Šifran Sustav_Odgovori_Razvoja_Poruke (+ fg/bg iz JOIN-a) za padajući predložak */
+  /** Šifran sustav_odgovori_razvoja_poruke (+ fg/bg iz JOIN-a) za padajući predložak */
   var predlozakPorukeRawData = [];
 
   /** MutationObserver na tbody — nakon sorta KontroleTablica ponovo iscrtava ćelije; vratimo format datuma u col0. */
@@ -370,14 +370,14 @@
       var text = (xhr.responseText || '').trim();
       predlozakPorukeRawData = [];
       try {
-        if (text !== '' && text.charAt(0) === '[') {
-          var arr = JSON.parse(text);
-          if (Array.isArray(arr)) predlozakPorukeRawData = arr;
-        } else {
+        if (text !== '' && text.charAt(0) !== '[' && text.charAt(0) !== '{') {
           var parsed = parseResponseCode(text);
           if (parsed && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[parsed.code] && typeof window.showPorukaModal === 'function') {
             window.showPorukaModal(parsed.code, parsed.replacements);
           }
+        } else {
+          var rawO = JSON.parse(text || '[]');
+          predlozakPorukeRawData = Array.isArray(rawO) ? rawO : (rawO && Array.isArray(rawO.rows) ? rawO.rows : []);
         }
       } catch (e) {
         predlozakPorukeRawData = [];

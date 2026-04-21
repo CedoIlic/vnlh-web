@@ -3,7 +3,7 @@
  * Parsiranje sufiksa odgovora razvoja na kraju polja sustav_sesije_poruke.poruka.
  *
  * Kanonski blok (jedan ili više uzastopnih na kraju niza): #<kod>*<tekst>#
- * - kod: cijeli broj (polje kod u Sustav_Odgovori_Razvoja_Poruke).
+ * - kod: cijeli broj (polje kod u sustav_odgovori_razvoja_poruke).
  * - tekst: ne smije sadržavati '#' (inače je potreban drugačiji format).
  *
  * Baza poruke = sve što ostane nakon uklanjanja svih blokova s kraja (prefiks).

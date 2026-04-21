@@ -22,7 +22,7 @@ if (strlen($fg) > 64 || strlen($bg) > 64) {
     exit;
 }
 require_once __DIR__ . '/Alati_Poruke_Razvoja_Tip_mysql_err.php';
-$stmt = $mysqli->prepare('UPDATE `Sustav_Odgovori_Razvoja_Boje` SET redosljed = ?, fg_boja = ?, bg_boja = ? WHERE id = ?');
+$stmt = $mysqli->prepare('UPDATE `sustav_odgovori_razvoja_boje` SET redosljed = ?, fg_boja = ?, bg_boja = ? WHERE id = ?');
 if (!$stmt) {
     echo vnlh_tip_razvoja_je_mysql_1054($mysqli->errno) ? '154' : ('200,' . $mysqli->errno);
     exit;

@@ -30,7 +30,7 @@ require_once __DIR__ . '/Alati_Poruke_Razvoja_Tip_mysql_err.php';
 try {
     if ($bojaId === null) {
         $stmt = $mysqli->prepare(
-            'INSERT INTO `Sustav_Odgovori_Razvoja_Poruke` (redosljed, kod, boja, tekst) VALUES (?, ?, NULL, ?)'
+            'INSERT INTO `sustav_odgovori_razvoja_poruke` (redosljed, kod, boja, tekst) VALUES (?, ?, NULL, ?)'
         );
         if (!$stmt) {
             echo vnlh_tip_razvoja_je_mysql_1054($mysqli->errno) ? '154' : ('200,' . $mysqli->errno);
@@ -39,7 +39,7 @@ try {
         $stmt->bind_param('iis', $red, $kod, $tekst);
     } else {
         $stmt = $mysqli->prepare(
-            'INSERT INTO `Sustav_Odgovori_Razvoja_Poruke` (redosljed, kod, boja, tekst) VALUES (?, ?, ?, ?)'
+            'INSERT INTO `sustav_odgovori_razvoja_poruke` (redosljed, kod, boja, tekst) VALUES (?, ?, ?, ?)'
         );
         if (!$stmt) {
             echo vnlh_tip_razvoja_je_mysql_1054($mysqli->errno) ? '154' : ('200,' . $mysqli->errno);

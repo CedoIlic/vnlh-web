@@ -1,5 +1,5 @@
-/* Alati_Poruke_Razvoja_Tip.js – (1) paleta Sustav_Odgovori_Razvoja_Boje + color picker;
-   (2) poruke Sustav_Odgovori_Razvoja_Poruke + kontrola-select boje (stupac Boja = ID palete; Poruka = tekst; fg/bg na obje ćelije). */
+/* Alati_Poruke_Razvoja_Tip.js – (1) paleta sustav_odgovori_razvoja_boje + color picker;
+   (2) poruke sustav_odgovori_razvoja_poruke + kontrola-select boje (stupac Boja = ID palete; Poruka = tekst; fg/bg na obje ćelije). */
 // @ts-nocheck
 (function () {
   'use strict';
@@ -41,7 +41,7 @@
   });
 
   /*
-   * Druga tablica: Sustav_Odgovori_Razvoja_Poruke (JOIN na Boje za fg/bg).
+   * Druga tablica: sustav_odgovori_razvoja_poruke (JOIN na Boje za fg/bg).
    * Boja: 100px – prikaz ID sloga palete; Poruka: width 0 = preostali prostor u tablici.
    */
   const AlatiPorukeRazvojaTipPoruke = {
@@ -69,10 +69,36 @@
     syncHeaderOnChange: false
   });
 
-  var API_BASE = '../php/';
+  /**
+   * Prefiks za php/*.php — mora biti usklađen s 0-Poruke.js (resolveApiBase) i s vnlhUcitajPravaCrud (0-Common.js).
+   * Samo `../php/` je krivo kad dokument nije u html/ niti u php/ (npr. index.php u korijenu aplikacije): XHR završi na /php/ umjesto /vnlh/php/.
+   */
+  function resolveApiBase() {
+    if (typeof window.vnlhAppBasePathname === 'function') {
+      var base = window.vnlhAppBasePathname();
+      if (base !== '') {
+        var abs = base.replace(/\/$/, '') + '/php/';
+        abs = abs.replace(/\/{2,}/g, '/');
+        if (abs.charAt(0) !== '/') abs = '/' + abs;
+        return abs;
+      }
+    }
+    var p = window.location.pathname || '';
+    if (/\/html\//i.test(p) || /\/html$/i.test(p)) return '../php/';
+    if (/\/php\//i.test(p)) return '';
+    return 'php/';
+  }
+  var API_BASE = resolveApiBase();
 
   function trim(s) {
     return window.CommonTrim ? window.CommonTrim(s) : (s != null ? String(s).replace(/^\s+|\s+$/g, '') : '');
+  }
+
+  /** BOM + trim — bez ovoga charAt(0) može biti \uFEFF pa JSON [{ nije prepoznat (prazne tablice na nekim serverima). */
+  function normalizeXhrResponseText(raw) {
+    var s = raw == null ? '' : String(raw);
+    if (s.length > 0 && s.charCodeAt(0) === 0xfeff) s = s.slice(1);
+    return trim(s);
   }
 
   function parseResponseCode(res) {
@@ -604,15 +630,20 @@
     xhr.open('GET', API_BASE + 'Alati_Poruke_Razvoja_Tip_Poruke_CRUD_sve.php', true);
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
-      var text = (xhr.responseText || '').trim();
+      var text = normalizeXhrResponseText(xhr.responseText);
       var rows = [];
       porukeRawData = [];
-      try {
-        if (text !== '' && text.charAt(0) === '[') {
-          var arr = JSON.parse(text);
-          if (!Array.isArray(arr)) arr = [];
-          for (var i = 0; i < arr.length; i++) {
-            var r = arr[i];
+      if (text !== '' && text.charAt(0) !== '[' && text.charAt(0) !== '{') {
+        var parsedP = parseResponseCode(text);
+        if (parsedP && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[parsedP.code] && typeof window.showPorukaModal === 'function') {
+          window.showPorukaModal(parsedP.code, parsedP.replacements);
+        }
+      } else {
+        try {
+          var rawP = JSON.parse(text || '[]');
+          var arrP = Array.isArray(rawP) ? rawP : (rawP && Array.isArray(rawP.rows) ? rawP.rows : []);
+          for (var i = 0; i < arrP.length; i++) {
+            var r = arrP[i];
             if (!r || typeof r !== 'object') continue;
             var rid = safeInt(r.id, 0);
             var rred = safeInt(r.redosljed, 0);
@@ -632,16 +663,11 @@
             });
             rows.push([rid, rred, rkod, rboja, rtekst]);
           }
-        } else if (text !== '' && text.charAt(0) !== '[') {
-          var parsedP = parseResponseCode(text);
-          if (parsedP && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[parsedP.code] && typeof window.showPorukaModal === 'function') {
-            window.showPorukaModal(parsedP.code, parsedP.replacements);
-          }
+        } catch (eU) {
+          rows = [];
+          porukeRawData = [];
+          console.error('Alati_Poruke_Razvoja_Tip ucitajPodatkePoruke', eU);
         }
-      } catch (eU) {
-        rows = [];
-        porukeRawData = [];
-        console.error('Alati_Poruke_Razvoja_Tip ucitajPodatkePoruke', eU);
       }
       if (typeof callback === 'function') callback(rows);
     };
@@ -698,18 +724,18 @@
     xhr.open('GET', API_BASE + 'Alati_Poruke_Razvoja_Tip_CRUD_sve.php', true);
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
-      var text = (xhr.responseText || '').trim();
+      var text = normalizeXhrResponseText(xhr.responseText);
       var rows = [];
       bojeRawData = [];
-      try {
-        if (text === '' || text.charAt(0) !== '[') {
-          var parsed = parseResponseCode(text);
-          if (parsed && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[parsed.code] && typeof window.showPorukaModal === 'function') {
-            window.showPorukaModal(parsed.code, parsed.replacements);
-          }
-        } else {
-          var arr = JSON.parse(text);
-          if (!Array.isArray(arr)) arr = [];
+      if (text !== '' && text.charAt(0) !== '[' && text.charAt(0) !== '{') {
+        var parsed = parseResponseCode(text);
+        if (parsed && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[parsed.code] && typeof window.showPorukaModal === 'function') {
+          window.showPorukaModal(parsed.code, parsed.replacements);
+        }
+      } else {
+        try {
+          var raw = JSON.parse(text || '[]');
+          var arr = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.rows) ? raw.rows : []);
           for (var i = 0; i < arr.length; i++) {
             var r = arr[i];
             if (!r || typeof r !== 'object') continue;
@@ -722,11 +748,11 @@
             bojeRawData.push({ id: id, redosljed: red, fg_boja: fg, bg_boja: bg });
             rows.push([id, red, fg, bg]);
           }
+        } catch (e) {
+          rows = [];
+          bojeRawData = [];
+          console.error('Alati_Poruke_Razvoja_Tip ucitajPodatkeTablica', e);
         }
-      } catch (e) {
-        rows = [];
-        bojeRawData = [];
-        console.error('Alati_Poruke_Razvoja_Tip ucitajPodatkeTablica', e);
       }
       if (typeof callback === 'function') callback(rows);
     };
@@ -742,6 +768,8 @@
       setDataTablica(rows);
       ucitajPodatkePoruke(function (rowsP) {
         setDataTablicaPoruke(rowsP);
+        updateCrudUpisiState();
+        updatePorukeCrudState();
       });
     });
   }
@@ -778,10 +806,6 @@
   function getSelectedRowId() {
     return CommonCRUD.getSelectedRowId(tablicaApi);
   }
-
-  osvjeziTablicu();
-
-  updateCrudUpisiState();
 
   var btnPorukeUpisi = document.getElementById('btnPorukeUpisi');
   var btnPorukeUpisiLabel = btnPorukeUpisi ? btnPorukeUpisi.querySelector('.kontrola-btn__label') : null;
@@ -953,6 +977,7 @@
   }
 
   updatePorukeCrudState();
+  osvjeziTablicu();
   window.AlatiPorukeRazvojaTip = AlatiPorukeRazvojaTip;
   window.AlatiPorukeRazvojaTipPoruke = AlatiPorukeRazvojaTipPoruke;
 })();

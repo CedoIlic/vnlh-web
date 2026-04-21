@@ -4,13 +4,6 @@ DirectoryIndex php/Login.php
 # --- Točka 6: Zabrana listinga direktorija ---
 Options -Indexes
 
-# --- Točka 3: PHP postavke (produkcija) ---
-# display_errors isključen – PHP greške ne smiju biti vidljive posjetiteljima.
-# log_errors uključen – greške i dalje idu u server log.
-php_flag display_errors Off
-php_flag log_errors On
-php_value error_reporting 0
-
 # --- Točka 5: Sigurnosni HTTP headeri ---
 <IfModule mod_headers.c>
     # Zabrana umetanja u iframe (clickjacking zaštita)

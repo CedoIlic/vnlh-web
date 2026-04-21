@@ -18,7 +18,7 @@ if (strlen($fg) > 64 || strlen($bg) > 64) {
 }
 require_once __DIR__ . '/Alati_Poruke_Razvoja_Tip_mysql_err.php';
 try {
-    $stmt = $mysqli->prepare('INSERT INTO `Sustav_Odgovori_Razvoja_Boje` (redosljed, fg_boja, bg_boja) VALUES (?, ?, ?)');
+    $stmt = $mysqli->prepare('INSERT INTO `sustav_odgovori_razvoja_boje` (redosljed, fg_boja, bg_boja) VALUES (?, ?, ?)');
     if (!$stmt) {
         echo vnlh_tip_razvoja_je_mysql_1054($mysqli->errno) ? '154' : ('200,' . $mysqli->errno);
         exit;

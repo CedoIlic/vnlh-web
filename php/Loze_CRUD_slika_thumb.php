@@ -2,6 +2,9 @@
 require_once __DIR__ . '/require_login_api.php';
 // Loze_CRUD_slika_thumb.php – dohvat thumb slike loze (GET id).
 // Vraća slika_thumbnail; ako nema, fallback na slika.
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
 $db_ret = require_once __DIR__ . '/00_db.php';
 if ($db_ret !== -1) {
     http_response_code(500);

@@ -1,0 +1,5 @@
+# Zalijepi ovaj blok na SAM VRH postojećeg .htaccessa (prije cPanel # php -- BEGIN).
+# Datoteka se na serveru i dalje zove .htaccess — ovo je samo zasebni snippet za copy-paste.
+
+Options -Indexes
+DirectoryIndex index.html index.php

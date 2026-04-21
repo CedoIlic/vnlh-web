@@ -907,6 +907,19 @@ body {
   background-position: center;
   background-repeat: no-repeat;
 }
+/* Kad JS učita <img>, ne crtati dupli sloj iz CSS var (keš / putanja od CSS datoteke). */
+.kontrola-modal__image--has-png::before {
+  content: none;
+  display: none;
+}
+.kontrola-modal__image-png {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 3.75rem;
+  height: 3.75rem;
+  object-fit: contain;
+}
 .kontrola-modal__image--ok { background-color: var(--modal_image_bg_ok); }
 .kontrola-modal__image--ok::before { background-image: var(--modal_image_ok); }
 .kontrola-modal__image--error { background-color: var(--modal_image_bg_error); }

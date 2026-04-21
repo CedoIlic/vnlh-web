@@ -34,7 +34,7 @@ if ($bojaId !== null && $bojaId <= 0) {
 require_once __DIR__ . '/Alati_Poruke_Razvoja_Tip_mysql_err.php';
 if ($bojaId === null) {
     $stmt = $mysqli->prepare(
-        'UPDATE `Sustav_Odgovori_Razvoja_Poruke` SET redosljed = ?, kod = ?, boja = NULL, tekst = ? WHERE id = ?'
+        'UPDATE `sustav_odgovori_razvoja_poruke` SET redosljed = ?, kod = ?, boja = NULL, tekst = ? WHERE id = ?'
     );
     if (!$stmt) {
         echo vnlh_tip_razvoja_je_mysql_1054($mysqli->errno) ? '154' : ('200,' . $mysqli->errno);
@@ -43,7 +43,7 @@ if ($bojaId === null) {
     $stmt->bind_param('iisi', $red, $kod, $tekst, $id);
 } else {
     $stmt = $mysqli->prepare(
-        'UPDATE `Sustav_Odgovori_Razvoja_Poruke` SET redosljed = ?, kod = ?, boja = ?, tekst = ? WHERE id = ?'
+        'UPDATE `sustav_odgovori_razvoja_poruke` SET redosljed = ?, kod = ?, boja = ?, tekst = ? WHERE id = ?'
     );
     if (!$stmt) {
         echo vnlh_tip_razvoja_je_mysql_1054($mysqli->errno) ? '154' : ('200,' . $mysqli->errno);

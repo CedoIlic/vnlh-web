@@ -20,17 +20,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
 header('Content-Type: application/json; charset=utf-8');
 
-// --- Parsiranje JSON tijela ---
-$raw = file_get_contents('php://input');
-$in = json_decode($raw, true);
-if (!is_array($in)) {
-    http_response_code(400);
-    echo json_encode(['ok' => false, 'error' => 'invalid_json'], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-$idClanoviIn = isset($in['id_clanovi']) && is_array($in['id_clanovi']) ? $in['id_clanovi'] : [];
-$idLozeIn = isset($in['id_loze']) && is_array($in['id_loze']) ? $in['id_loze'] : [];
+// --- Parsiranje GET parametara (CSV integer vrijednosti) ---
+$idClanoviIn = isset($_GET['c']) && $_GET['c'] !== '' ? explode(',', $_GET['c']) : [];
+$idLozeIn    = isset($_GET['l']) && $_GET['l'] !== '' ? explode(',', $_GET['l']) : [];
 
 /**
  * Normalizira niz u pozitivne jedinstvene cijele brojeve.

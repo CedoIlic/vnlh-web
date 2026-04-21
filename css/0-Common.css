@@ -372,14 +372,13 @@
   --modal_image_bg_information: var(--c-blue-500);                   /* Podloga slike za stanje information */
   --modal_image_bg_warning: var(--c-yellow-500);                     /* Podloga slike za stanje warning */
 
-  /* Slika po stanju – putanja relativna na css/ (../slike/ = korijenski slike/) */
-  --modal_image_ok: url("../slike/check.png");                      /* Ikona za stanje ok */
-  --modal_image_error: url("../slike/error.png");                   /* Ikona za stanje error */
-  --modal_image_forbidden: url("../slike/forbidden.png");           /* Ikona za stanje forbidden */
-  --modal_image_information: url("../slike/information.png");       /* Ikona za stanje information */
-  --modal_image_warning: url("../slike/warning.png");               /* Ikona za stanje warning */
-
-  --modal_images_path: "slike/";                                     /* Base putanja za slike modala (iz HTML-a) */
+  /* Ikone modala: putanja relativna na css/ → ../slike/. Na Linuxu imena moraju točno odgovarati datotekama (velika/mala slova). */
+  --modal_image_ok: url("../slike/Check.png");
+  --modal_image_error: url("../slike/Error.png");
+  --modal_image_forbidden: url("../slike/Forbidden.png");
+  --modal_image_information: url("../slike/information.png");
+  --modal_image_warning: url("../slike/Warning.png");
+  --modal_images_path: "slike/";                                     /* Dokumentacija: korijen za modal PNG (Check/Error/… + information.png) */
   --modal_auto_close_ms: 2000;                                       /* Automatsko zatvaranje u ms kad nema tipki */
   --modal_button_caption_default: var(--c-red-500);                        /* Boja captiona default tipke u modalu */
 

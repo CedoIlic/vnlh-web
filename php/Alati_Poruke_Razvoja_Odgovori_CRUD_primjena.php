@@ -1,11 +1,11 @@
 <?php
 /**
- * API: primjena predloška (Sustav_Odgovori_Razvoja_Poruke) na poruku tipa „Poruka razvoju“.
+ * API: primjena predloška (sustav_odgovori_razvoja_poruke) na poruku tipa „Poruka razvoju“.
  * Na kraj polja poruka dodaje blok #kod*tekst# (tekst iz predloška). Opcionalno prvo uklanja sve postojeće blokove.
  *
  * Ulaz (POST):
  *   id             — ID retka sustav_sesije_poruke
- *   id_predlozak   — ID retka Sustav_Odgovori_Razvoja_Poruke
+ *   id_predlozak   — ID retka sustav_odgovori_razvoja_poruke
  *   brisi_stare    — 1 = ukloni sve postojeće sufiksne odgovore pa dodaj novi; 0 = dodaj još jedan blok na kraj
  *
  * Izlaz: „OK“ ili kod greške (105 = nevaljani parametri, 108 = nije pronađeno, 200,errno = SQL).
@@ -57,7 +57,7 @@ if (!$rowP) {
 }
 
 $stmtT = $mysqli->prepare(
-    'SELECT kod, tekst FROM `Sustav_Odgovori_Razvoja_Poruke` WHERE id = ? LIMIT 1'
+    'SELECT kod, tekst FROM `sustav_odgovori_razvoja_poruke` WHERE id = ? LIMIT 1'
 );
 if (!$stmtT) {
     echo '200,' . (int) $mysqli->errno;

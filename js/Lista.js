@@ -56,131 +56,165 @@
   var API_BASE = '../php/';
   var LISTA_IMG_T = Date.now();
   var LISTA_RELOAD_IKONA = 1;  /* 1 = reload ikona desno od selecta Redaka; 0 = nema */
+  var _listaNavDelayMs = 300;  /* sustav_varijable #118; default dok se ne učita */
+  var _listaNavKooldownTimer = null;
 
-  /** Blob URL-ovi za thumb slike u tablici (čisti se revoke pri promjeni stranice / novom učitavanju). */
-  var listaThumbBlobUrls = [];
-  /** Sprječava primjenu starog batch odgovora ako korisnik brzo promijeni stranicu. */
-  var _listaThumbBatchGen = 0;
-  var _listaThumbBatchXhr = null;
+  /** Cache thumb slika unutar sesije: ključ 'c_ID'/'l_ID', vrijednost data-URL ili '' (nema slike).
+   *  Loža logotipovi (l_) se ne brišu pri eviction — dijele ih sve stranice. */
+  var _listaImgCache = {};
+  /** Bafer stranica: pageNum → true (učitano) ili 'l' (XHR u letu). */
+  var _listaBafer = {};
+  /** Broj stranica unaprijed i unatrag u baferu (sustav_varijable #117, default 3). */
+  var _listaBaferX = 3;
+  /** Aktivni batch XHR — samo jedan istovremeno. */
+  var _listaBaferXhr = null;
+  /** Generacija; raste pri resetiranju (promjena loze/regije) da invalidira zaostale XHR odgovore. */
+  var _listaBaferGen = 0;
 
-  /**
-   * Poništava blob URL-ove i briše img/logo na svim retcima podataka (prije novog rendera / novog batcha).
-   */
-  function revokeListaThumbBlobUrls() {
-    var i;
-    for (i = 0; i < listaThumbBlobUrls.length; i++) {
-      try {
-        URL.revokeObjectURL(listaThumbBlobUrls[i]);
-      } catch (eRev) {}
-    }
-    listaThumbBlobUrls.length = 0;
-    for (i = 0; i < podaci.length; i++) {
-      podaci[i].img = '';
-      podaci[i].logo = '';
-    }
+  /** Resetira bafer i cache pri promjeni loze/regije; abortira aktivni XHR. */
+  function _listaBaferReset() {
+    _listaBaferGen++;
+    if (_listaBaferXhr) { try { _listaBaferXhr.abort(); } catch (eA) {} _listaBaferXhr = null; }
+    _listaBafer = {};
+    _listaImgCache = {};
   }
 
   /**
-   * Jedan POST za sve thumb slike trenutne stranice (član + loža), umjesto N paralelnih GET-ova na img.
-   * Nakon uspjeha ažurira row.img / row.logo i ponovno crta tbody.
+   * Glavni buffer mehanizam: jedan batch XHR za sve stranice u prozoru [N-X .. N+X].
+   * Preskače stranice već u baferu i ID-eve već u cacheu (loža se ne šalje ponovo).
+   * Na odgovor popunjava _listaImgCache data-URL-ovima i re-renderira tbody ako je
+   * trenutna stranica bila dio batch-a.
    */
-  function ucitajThumbBatchZaTrenutnuStranicu() {
-    _listaThumbBatchGen++;
-    var myGen = _listaThumbBatchGen;
-    if (_listaThumbBatchXhr) {
-      try {
-        _listaThumbBatchXhr.abort();
-      } catch (eAb) {}
-      _listaThumbBatchXhr = null;
-    }
+  function _listaBaferUcitaj() {
+    if (_listaBaferXhr) { console.log('[LSB] skip: XHR aktivan'); return; }
     var br = getBrojRedaka();
-    var start = (trenutnaStranica - 1) * br;
-    var end = Math.min(start + br, filtriraniPodaci.length);
-    if (end <= start) {
-      return;
+    if (!br || filtriraniPodaci.length === 0) { console.log('[LSB] skip: br=' + br + ' filtrirani=' + filtriraniPodaci.length); return; }
+    var ukupno = Math.ceil(filtriraniPodaci.length / br);
+    var N = trenutnaStranica;
+    var from = Math.max(1, N - _listaBaferX);
+    var to   = Math.min(ukupno, N + _listaBaferX);
+
+    // Eviction: ukloni stranice i njihove member-slike izvan prozora
+    var evictPages = [];
+    for (var ep in _listaBafer) {
+      var epn = parseInt(ep, 10);
+      if (epn < from || epn > to) evictPages.push(epn);
     }
-    var idClanovi = [];
-    var idLoze = [];
-    var seenC = {};
-    var seenL = {};
-    var ii;
-    for (ii = start; ii < end; ii++) {
-      var row0 = filtriraniPodaci[ii];
-      if (!row0) continue;
-      var c = row0.listaThumbClanId;
-      if (c && !seenC[c]) {
-        seenC[c] = true;
-        var ic = parseInt(c, 10);
-        if (ic > 0) idClanovi.push(ic);
+    for (var ei = 0; ei < evictPages.length; ei++) {
+      var evp = evictPages[ei];
+      var evS = (evp - 1) * br;
+      var evE = Math.min(evS + br, filtriraniPodaci.length);
+      for (var evi = evS; evi < evE; evi++) {
+        var evr = filtriraniPodaci[evi];
+        if (evr && evr.id) delete _listaImgCache['c_' + evr.id];
       }
-      var l = row0.listaLogoLozaId;
-      if (l && !seenL[l]) {
-        seenL[l] = true;
-        var il = parseInt(l, 10);
-        if (il > 0) idLoze.push(il);
-      }
+      delete _listaBafer[evp];
     }
-    if (idClanovi.length === 0 && idLoze.length === 0) {
+
+    // Skupi stranice koje nedostaju u baferu
+    var missingPages = [];
+    for (var mp = from; mp <= to; mp++) {
+      if (!_listaBafer[mp]) missingPages.push(mp);
+    }
+    if (missingPages.length === 0) { console.log('[LSB] skip: sve stranice u baferu', JSON.stringify(_listaBafer)); return; }
+
+    // Skupi ID-eve (preskači ono što je već u cacheu)
+    var memberIds = [], lozeIds = [];
+    var seenM = {}, seenL = {};
+    for (var mi = 0; mi < missingPages.length; mi++) {
+      var pg = missingPages[mi];
+      var pgS = (pg - 1) * br;
+      var pgE = Math.min(pgS + br, filtriraniPodaci.length);
+      for (var ri = pgS; ri < pgE; ri++) {
+        var row = filtriraniPodaci[ri];
+        if (!row) continue;
+        if (row.id && !seenM[row.id] && _listaImgCache['c_' + row.id] === undefined) {
+          seenM[row.id] = true;
+          memberIds.push(parseInt(row.id, 10));
+        }
+        if (row.listaLogoLozaId && !seenL[row.listaLogoLozaId] && _listaImgCache['l_' + row.listaLogoLozaId] === undefined) {
+          seenL[row.listaLogoLozaId] = true;
+          lozeIds.push(parseInt(row.listaLogoLozaId, 10));
+        }
+      }
+      _listaBafer[pg] = 'l'; // označi kao "u letu" da spriječi duple zahtjeve
+    }
+
+    // Ako su svi ID-evi već u cacheu, samo označi stranice kao učitane
+    if (memberIds.length === 0 && lozeIds.length === 0) {
+      console.log('[LSB] skip: svi ID-evi u cacheu, stranice=' + missingPages);
+      for (var fi = 0; fi < missingPages.length; fi++) _listaBafer[missingPages[fi]] = true;
       return;
     }
 
-    function b64ToBlobUrl(b64, mime) {
-      try {
-        var bin = atob(b64);
-        var bytes = new Uint8Array(bin.length);
-        var bi;
-        for (bi = 0; bi < bin.length; bi++) bytes[bi] = bin.charCodeAt(bi);
-        var blob = new Blob([bytes], { type: mime || 'application/octet-stream' });
-        var u = URL.createObjectURL(blob);
-        listaThumbBlobUrls.push(u);
-        return u;
-      } catch (eB) {
-        return '';
-      }
-    }
-
+    var myGen   = _listaBaferGen;
+    var myPages = missingPages.slice();
     var xhr = new XMLHttpRequest();
-    _listaThumbBatchXhr = xhr;
-    xhr.open('POST', API_BASE + 'Lista_slika_thumb_batch.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      _listaThumbBatchXhr = null;
-      if (myGen !== _listaThumbBatchGen) return;
-      var text = (xhr.responseText || '').trim();
-      if (text === '' || text.charAt(0) !== '{') return;
-      var data;
-      try {
-        data = JSON.parse(text);
-      } catch (eJ) {
-        return;
-      }
-      if (!data || !data.ok) return;
-      var clanovi = data.clanovi || {};
-      var loze = data.loze || {};
-      var jj;
-      for (jj = start; jj < end; jj++) {
-        var row2 = filtriraniPodaci[jj];
-        if (!row2) continue;
-        var ck = row2.listaThumbClanId;
-        if (ck && clanovi[ck]) {
-          var ent = clanovi[ck];
-          row2.img = b64ToBlobUrl(ent.b64, ent.mime || '');
-        }
-        var lk = row2.listaLogoLozaId;
-        if (lk && loze[lk]) {
-          var entL = loze[lk];
-          row2.logo = b64ToBlobUrl(entL.b64, entL.mime || '');
-        }
-      }
-      if (myGen !== _listaThumbBatchGen) return;
-      var tbody2 = container.querySelector('.lista-tablica__scroll tbody');
-      if (tbody2) {
-        renderTbody(tbody2);
-        primijeniMobitelPrikaz();
+    _listaBaferXhr = xhr;
+    xhr.open('POST', API_BASE + 'lsb.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = 90000;
+
+    function _onDone() { if (_listaBaferXhr === xhr) _listaBaferXhr = null; }
+
+    xhr.onerror = xhr.ontimeout = function () {
+      _onDone();
+      if (myGen !== _listaBaferGen) return;
+      // Poništi "u letu" oznake da se može pokušati ponovo pri sljedećoj navigaciji
+      for (var ui = 0; ui < myPages.length; ui++) {
+        if (_listaBafer[myPages[ui]] === 'l') delete _listaBafer[myPages[ui]];
       }
     };
-    xhr.send(JSON.stringify({ id_clanovi: idClanovi, id_loze: idLoze }));
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      _onDone();
+      if (myGen !== _listaBaferGen) return;
+
+      // Označi stranice kao učitane (i na grešci — da spriječimo spam pri trajnom 403)
+      for (var pi = 0; pi < myPages.length; pi++) _listaBafer[myPages[pi]] = true;
+
+      console.log('[LSB] odgovor status=' + xhr.status + ' len=' + (xhr.responseText || '').length);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        var text = (xhr.responseText || '').trim();
+        if (text && text.charAt(0) === '{') {
+          var data;
+          try { data = JSON.parse(text); } catch (eJ) { data = null; }
+          if (data && data.ok) {
+            var clanovi = data.clanovi || {};
+            var loze    = data.loze    || {};
+            var cid, lid;
+            for (cid in clanovi) {
+              var ent = clanovi[cid];
+              _listaImgCache['c_' + cid] = (ent && ent.b64)
+                ? 'data:' + (ent.mime || 'image/jpeg') + ';base64,' + ent.b64
+                : '';
+            }
+            for (lid in loze) {
+              var entL = loze[lid];
+              _listaImgCache['l_' + lid] = (entL && entL.b64)
+                ? 'data:' + (entL.mime || 'image/jpeg') + ';base64,' + entL.b64
+                : '';
+            }
+            // Re-render ako je trenutna stranica bila u ovom batchu
+            var curCovered = false;
+            for (var ci = 0; ci < myPages.length; ci++) {
+              if (myPages[ci] === trenutnaStranica) { curCovered = true; break; }
+            }
+            if (curCovered && container) {
+              var tbody2 = container.querySelector('.lista-tablica__scroll tbody');
+              if (tbody2) { renderTbody(tbody2); primijeniMobitelPrikaz(); }
+            }
+          }
+        }
+      }
+
+      // Provjeri ima li novih stranica za dohvatiti (korisnik je možda navigirao dok je XHR bio u letu)
+      _listaBaferUcitaj();
+    };
+
+    console.log('[LSB] POST lsb.php clanovi=' + memberIds.length + ' loze=' + lozeIds.length + ' stranice=' + myPages);
+    xhr.send(JSON.stringify({ id_clanovi: memberIds, id_loze: lozeIds }));
   }
 
   function getToken(name) {
@@ -910,12 +944,23 @@
           td.className = 'lista-tablica__cell--img';
           var img = document.createElement('img');
           img.className = col.type === 'logo' ? 'lista-tablica__cell-logo' : 'lista-tablica__cell-img';
-          var imgSrc = row[col.field] || row.img || '';
-          img.src = imgSrc || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1" height="1"%3E%3C/svg%3E';
+          var imgSrc = col.type === 'logo'
+            ? (row.listaLogoLozaId ? API_BASE + 'Loze_CRUD_slika_thumb.php?id=' + encodeURIComponent(row.listaLogoLozaId) + '&t=' + LISTA_IMG_T : '')
+            : (row.id ? API_BASE + 'Clanovi_CRUD_slika_thumb_round.php?id=' + encodeURIComponent(row.id) + '&t=' + LISTA_IMG_T : '');
+          var imgCacheKey = col.type === 'logo' ? ('l_' + row.listaLogoLozaId) : ('c_' + row.id);
+          var imgCached  = imgSrc ? _listaImgCache[imgCacheKey] : '';
           img.alt = '';
           img.draggable = false;
-          if (!imgSrc) img.style.display = 'none';
           img.onerror = function () { this.style.display = 'none'; };
+          if (!imgSrc || imgCached === '') {
+            img.style.display = 'none';
+            img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1" height="1"%3E%3C/svg%3E';
+          } else if (imgCached) {
+            img.src = imgCached; // data-URL iz bafera → instant, bez HTTP zahtjeva
+          } else {
+            // Još nije učitano — placeholder; _listaBaferUcitaj će re-renderirati kad stigne
+            img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1" height="1"%3E%3C/svg%3E';
+          }
           td.appendChild(img);
         } else if (col.titleRow2 && col.titleField && col.titleRow2Field) {
           var line1 = row[col.titleField] != null ? String(row[col.titleField]) : '';
@@ -1213,14 +1258,11 @@
   }
 
   function osvjeziTablicu() {
-    revokeListaThumbBlobUrls();
     var tbody = container.querySelector('.lista-tablica__scroll tbody');
-    if (!tbody) {
-      tbody = iscrtajZaglavlje();
-    }
+    if (!tbody) { tbody = iscrtajZaglavlje(); }
     renderTbody(tbody);
     primijeniMobitelPrikaz();
-    ucitajThumbBatchZaTrenutnuStranicu();
+    _listaBaferUcitaj();
   }
 
   function izracunajPaginaciju() {
@@ -1246,10 +1288,23 @@
     btnForward.disabled = trenutnaStranica >= ukupnoStranica;
   }
 
+  function _listaNavKooldown() {
+    btnBackward.disabled = true;
+    btnPrev.disabled = true;
+    btnNext.disabled = true;
+    btnForward.disabled = true;
+    if (_listaNavKooldownTimer) clearTimeout(_listaNavKooldownTimer);
+    _listaNavKooldownTimer = setTimeout(function () {
+      _listaNavKooldownTimer = null;
+      osvjeziPaginaciju();
+    }, _listaNavDelayMs);
+  }
+
   function naPocetak() {
     trenutnaStranica = 1;
     osvjeziPaginaciju();
     osvjeziTablicu();
+    _listaNavKooldown();
   }
 
   function stranicaNatrag() {
@@ -1257,6 +1312,7 @@
       trenutnaStranica--;
       osvjeziPaginaciju();
       osvjeziTablicu();
+      _listaNavKooldown();
     }
   }
 
@@ -1265,6 +1321,7 @@
       trenutnaStranica++;
       osvjeziPaginaciju();
       osvjeziTablicu();
+      _listaNavKooldown();
     }
   }
 
@@ -1272,6 +1329,7 @@
     trenutnaStranica = ukupnoStranica;
     osvjeziPaginaciju();
     osvjeziTablicu();
+    _listaNavKooldown();
   }
 
   var SVE_DRZAVE = 'sve_drzave';
@@ -1593,7 +1651,7 @@
   }
 
   function ucitajClanovi(idLoza, lozaNaziv) {
-    revokeListaThumbBlobUrls();
+    _listaBaferReset();
     podaci = [];
     var viseLoz = (idLoza === SVE_LOZE);
     var idParam = idLoza;
@@ -1942,6 +2000,28 @@
     btnPrev.addEventListener('click', stranicaNatrag);
     btnNext.addEventListener('click', stranicaNaprijed);
     btnForward.addEventListener('click', naKraj);
+
+    (function () {
+      var xhrNav = new XMLHttpRequest();
+      xhrNav.open('GET', API_BASE + 'common_sustav_varijable.php?id=118', true);
+      xhrNav.onreadystatechange = function () {
+        if (xhrNav.readyState !== 4) return;
+        var v = parseInt((xhrNav.responseText || '').trim(), 10);
+        if (!isNaN(v) && v >= 0) _listaNavDelayMs = v;
+      };
+      xhrNav.send();
+    })();
+
+    (function () {
+      var xhrBuf = new XMLHttpRequest();
+      xhrBuf.open('GET', API_BASE + 'common_sustav_varijable.php?id=117', true);
+      xhrBuf.onreadystatechange = function () {
+        if (xhrBuf.readyState !== 4) return;
+        var v = parseInt((xhrBuf.responseText || '').trim(), 10);
+        if (!isNaN(v) && v >= 1) _listaBaferX = v;
+      };
+      xhrBuf.send();
+    })();
 
     if (container) {
       container.addEventListener('click', function (e) {

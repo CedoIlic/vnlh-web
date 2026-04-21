@@ -384,6 +384,11 @@ body {
   flex-shrink: 0;
 }
 
+/* Dok traje batch thumb slika — paginacija je disabled; blagi vizualni signal (uz aria-busy na #listaTablicaContainer). */
+.lista-footer--thumbs-loading .lista-paginacija {
+  opacity: 0.72;
+}
+
 /* =========================================================
    LISTA SELECT – custom dropdown s tokenima (kao kontrola-select)
    ========================================================= */

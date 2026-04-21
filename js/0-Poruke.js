@@ -993,23 +993,27 @@
       var map = {};
       try {
         var tx = trim(xhr.responseText);
-        if (tx && tx.charAt(0) === '[') {
-          var arr = JSON.parse(tx);
-          if (Array.isArray(arr)) {
-            var sorted = arr.slice().sort(function (a, b) {
-              var ka = parseInt(a.kod, 10);
-              var kb = parseInt(b.kod, 10);
-              if (ka !== kb) return ka - kb;
-              var ra = parseInt(a.redosljed, 10) - parseInt(b.redosljed, 10);
-              if (ra !== 0) return ra;
-              return parseInt(a.id, 10) - parseInt(b.id, 10);
-            });
-            for (var i = 0; i < sorted.length; i++) {
-              var row = sorted[i];
-              var k = parseInt(row.kod, 10);
-              if (isNaN(k)) continue;
-              if (!map[k]) map[k] = { fg: row.fg_boja, bg: row.bg_boja };
-            }
+        var arr = [];
+        if (tx !== '' && tx.charAt(0) !== '[' && tx.charAt(0) !== '{') {
+          arr = [];
+        } else {
+          var rawP = JSON.parse(tx || '[]');
+          arr = Array.isArray(rawP) ? rawP : (rawP && Array.isArray(rawP.rows) ? rawP.rows : []);
+        }
+        if (Array.isArray(arr) && arr.length) {
+          var sorted = arr.slice().sort(function (a, b) {
+            var ka = parseInt(a.kod, 10);
+            var kb = parseInt(b.kod, 10);
+            if (ka !== kb) return ka - kb;
+            var ra = parseInt(a.redosljed, 10) - parseInt(b.redosljed, 10);
+            if (ra !== 0) return ra;
+            return parseInt(a.id, 10) - parseInt(b.id, 10);
+          });
+          for (var i = 0; i < sorted.length; i++) {
+            var row = sorted[i];
+            var k = parseInt(row.kod, 10);
+            if (isNaN(k)) continue;
+            if (!map[k]) map[k] = { fg: row.fg_boja, bg: row.bg_boja };
           }
         }
       } catch (eM) {}

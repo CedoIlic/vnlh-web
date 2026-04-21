@@ -123,6 +123,20 @@ function vnlh_inject_chat_flag_script(string $html): string
 }
 
 /**
+ * Umeće window.__VNLH_APP_BASE_PATH__ (vidi vnlh_app_base_path_for_js) — isto kao Meni.php za pouzdane API putanje u 0-Common.js.
+ */
+function vnlh_inject_app_base_path_script(string $html): string
+{
+    $base = vnlh_app_base_path_for_js();
+    $snip = '<script>window.__VNLH_APP_BASE_PATH__=' . json_encode($base, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';</script>';
+    if (stripos($html, '<head>') === false) {
+        return $html;
+    }
+    $out = preg_replace('/<head>/i', '<head>' . "\n" . $snip, $html, 1);
+    return is_string($out) ? $out : $html;
+}
+
+/**
  * Umeće ping / zatvaranje-kartice skriptu (sesija_pracenje_aktivnosti_lib) odmah nakon <head>.
  */
 function vnlh_inject_sesija_pracenje_aktivnosti_script(string $html): string
@@ -152,6 +166,7 @@ function vnlh_emit_html_file(string $htmlBasename): void {
     $raw = file_get_contents($abs);
     $html = vnlh_apply_asset_token_to_html($raw !== false ? $raw : '');
     $html = vnlh_inject_chat_flag_script($html);
+    $html = vnlh_inject_app_base_path_script($html);
     echo vnlh_inject_sesija_pracenje_aktivnosti_script($html);
 }
 
@@ -167,5 +182,6 @@ function vnlh_emit_html_absolute(string $absolutePath): void {
     $raw = file_get_contents($absolutePath);
     $html = vnlh_apply_asset_token_to_html($raw !== false ? $raw : '');
     $html = vnlh_inject_chat_flag_script($html);
+    $html = vnlh_inject_app_base_path_script($html);
     echo vnlh_inject_sesija_pracenje_aktivnosti_script($html);
 }

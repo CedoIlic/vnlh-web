@@ -59,8 +59,8 @@ if ($kodSet !== []) {
     $placeholders = implode(',', array_fill(0, count($kodList), '?'));
     $types = str_repeat('i', count($kodList));
     $sqlB = 'SELECT p.kod, b.fg_boja AS s_fg_boja, b.bg_boja AS s_bg_boja
-             FROM `Sustav_Odgovori_Razvoja_Poruke` p
-             LEFT JOIN `Sustav_Odgovori_Razvoja_Boje` b ON p.boja = b.id
+             FROM `sustav_odgovori_razvoja_poruke` p
+             LEFT JOIN `sustav_odgovori_razvoja_boje` b ON p.boja = b.id
              WHERE p.kod IN (' . $placeholders . ')
              ORDER BY p.kod ASC, p.redosljed ASC, p.id ASC';
     $stmtB = $mysqli->prepare($sqlB);

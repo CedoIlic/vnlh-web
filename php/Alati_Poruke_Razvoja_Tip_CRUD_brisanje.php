@@ -12,7 +12,7 @@ if ($id <= 0) {
 }
 require_once __DIR__ . '/Alati_Poruke_Razvoja_Tip_mysql_err.php';
 try {
-    $stmt = $mysqli->prepare('DELETE FROM `Sustav_Odgovori_Razvoja_Boje` WHERE id = ?');
+    $stmt = $mysqli->prepare('DELETE FROM `sustav_odgovori_razvoja_boje` WHERE id = ?');
     if (!$stmt) {
         echo vnlh_tip_razvoja_je_mysql_1054($mysqli->errno) ? '154' : ('200,' . $mysqli->errno);
         exit;
