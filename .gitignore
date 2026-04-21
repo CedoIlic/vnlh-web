@@ -17,9 +17,6 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
-# Lokalna kopija / rename (sadržaj kao Lista_slika_thumb_batch; ne treba u repou)
-php/lsb.php
-
 # Logovi i privremene datoteke
 *.log
 *.tmp
