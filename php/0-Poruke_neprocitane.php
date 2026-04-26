@@ -65,20 +65,33 @@ $stmt->close();
 
 $idJa = (int) ($_SESSION['id_korisnik'] ?? 0);
 
-// Fallback: flag možda nije postavljen za stare 'Poruka razvoju' – provjeri direktno.
-if ($flagMail === 0 && $idJa > 0) {
+// Sinkronizacija flaga s realnim stanjem nepročitanih poruka razvoju.
+if ($idJa > 0) {
     $stR = $mysqli->prepare("SELECT 1 FROM sustav_sesije_poruke WHERE id_primatelj = ? AND tip = 'Poruka razvoju' AND status = 'Novo' AND brisano = 0 LIMIT 1");
     if ($stR) {
         $stR->bind_param('i', $idJa);
         $stR->execute();
-        $rR = $stR->get_result()->fetch_assoc();
-        if ($rR) {
+        $imaRazvoj = (bool) $stR->get_result()->fetch_assoc();
+        $stR->close();
+        if ($imaRazvoj && $flagMail === 0) {
             $flagMail = 1;
-            // Uskladi flag u bazi da sljedeći poll bude brži
             $stFix = $mysqli->prepare("UPDATE sustav_sesije_aktivne SET ima_neprocitanih = 1 WHERE session_id = ? AND status = 'aktivna'");
             if ($stFix) { $stFix->bind_param('s', $sessionId); $stFix->execute(); $stFix->close(); }
+        } elseif (!$imaRazvoj && $flagMail === 1) {
+            // Nema nepročitanih poruka razvoju – provjeri ima li nepročitanih običnih poruka.
+            $stOb = $mysqli->prepare("SELECT 1 FROM sustav_sesije_poruke WHERE id_primatelj = ? AND tip = 'Poruka' AND status = 'Novo' AND brisano = 0 LIMIT 1");
+            if ($stOb) {
+                $stOb->bind_param('i', $idJa);
+                $stOb->execute();
+                $imaObicnih = (bool) $stOb->get_result()->fetch_assoc();
+                $stOb->close();
+                if (!$imaObicnih) {
+                    $flagMail = 0;
+                    $stFix = $mysqli->prepare("UPDATE sustav_sesije_aktivne SET ima_neprocitanih = 0 WHERE session_id = ? AND status = 'aktivna'");
+                    if ($stFix) { $stFix->bind_param('s', $sessionId); $stFix->execute(); $stFix->close(); }
+                }
+            }
         }
-        $stR->close();
     }
 }
 $chatZadnjaId = 0;
