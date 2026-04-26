@@ -167,7 +167,7 @@
     Tablica_Zaglavlje: [
       { key: 'prezime', title: 'Prezime', SQL_Naziv: 'prezime', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'ime', title: 'Ime', SQL_Naziv: 'ime', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
-      { key: 'stupanj', title: 'St.', SQL_Naziv: 'stupanj', sortable: 1, sortable_icon: 0, type: 'n', width: 60, suffix: '°', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
+      { key: 'stupanj', title: 'St.', SQL_Naziv: 'stupanj', sortable: 1, sortable_icon: 0, type: 'n', width: 60, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
       { key: 'spol', title: 'Spol', SQL_Naziv: 'spol', sortable: 1, sortable_icon: 0, type: 't', width: 70, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 0 }
     ]
   };
@@ -882,7 +882,7 @@
             var r = arr[i];
             data.push(r);
             var jeKandidat = parseInt(r.kandidat, 10) === 1;
-            var stupanjShow = jeKandidat ? 'K' : (r.stupanj_show != null ? String(r.stupanj_show) : '');
+            var stupanjShow = jeKandidat ? 'K' : (r.stupanj_show != null ? String(r.stupanj_show) + '°' : '');
             var spolDisplay = (r.spol === 1 || r.spol === '1') ? 'Ženski' : 'Muški';
             rows.push({ id: r.id != null ? r.id : '', 0: r.prezime != null ? r.prezime : '', 1: r.ime != null ? r.ime : '', 2: stupanjShow, 3: spolDisplay, _kandidat: jeKandidat });
           }
@@ -904,8 +904,8 @@
     var trs = container.querySelectorAll('.kontrola-tablica__scroll tbody tr');
     for (var i = 0; i < trs.length; i++) {
       if (!rows[i] || !rows[i]._kandidat) continue;
-      trs[i].style.color = 'var(--c-gray-300)';
       var tds = trs[i].querySelectorAll('td');
+      for (var j = 0; j < tds.length; j++) tds[j].style.color = 'var(--c-gray-300)';
       if (tds[2]) tds[2].style.backgroundColor = 'var(--c-green-500)';
     }
   }
