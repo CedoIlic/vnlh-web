@@ -2058,6 +2058,7 @@
     modal.setAttribute('aria-hidden', 'true');
     modal.classList.remove('kontrola-modal--open', 'testni-modal--pending-layout');
     modalOpen = false;
+    porukeNeprocitaneGlobalTick();
     porukeResetFooterWrenchBtn();
     /* Sljedeće otvaranje: textarea mora biti disabled dok korisnik ne odabere red (kao zatvaranje modala Poruke). */
     testniOdznaciListu();
