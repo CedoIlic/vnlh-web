@@ -1342,7 +1342,7 @@
     if (redovaSpan) {
       var brClanova = filtriraniPodaci.filter(function (r) { return !r.kandidat; }).length;
       var brKandidata = filtriraniPodaci.filter(function (r) { return r.kandidat; }).length;
-      redovaSpan.textContent = 'Članovi: ' + brClanova + ' : Kandidata: ' + brKandidata;
+      redovaSpan.textContent = 'Članovi: ' + brClanova + ' : Kandidati: ' + brKandidata;
       redovaSpan.classList.toggle('lista-paginacija__redova--disabled', prazna);
     }
     listaOsvjeziNavButtonsStanje();
