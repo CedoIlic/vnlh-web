@@ -478,11 +478,12 @@
       KontroleSetControlEnabled(traziLozaWrap, imaLozu);
     }
 
-    // Tipka Izbriši: može biti enable isključivo kada postoji selekcija u tablici.
-    var imaSelekciju = getSelectedRowId() != null;
-    if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
+    // Tipka Izbriši: vidljiva i enable samo kada je selektirani red aktivnost=0 i kandidat=1.
+    var smijeBrisatiE = clanoviLozaSmijeBrisati();
+    if (btnIzbrisi) { btnIzbrisi.style.display = smijeBrisatiE ? '' : 'none'; btnIzbrisi.disabled = !smijeBrisatiE; }
 
     // Ikone ellipsis uz Telefon, E-mail, Adresa: enable samo kod selekcije (izmjena) – pri dodavanju novog nema id.
+    var imaSelekciju = getSelectedRowId() != null;
     var editTelefon = document.getElementById('edit_telefon');
     var editEmail = document.getElementById('edit_email');
     var editAdresa1 = document.getElementById('edit_adresa_1');
@@ -497,7 +498,7 @@
   var btnUpisi = document.getElementById('btnUpisi');
   var btnUpisiLabel = btnUpisi ? btnUpisi.querySelector('.kontrola-btn__label') : null;
   var btnIzbrisi = document.getElementById('btnIzbrisi');
-  if (btnIzbrisi) btnIzbrisi.disabled = true; // Bez selekcije na tablici tipka Izbriši je uvijek disabled.
+  if (btnIzbrisi) { btnIzbrisi.style.display = 'none'; btnIzbrisi.disabled = true; }
 
   function isValidEmailClan(s) {
     if (typeof s !== 'string' || trim(s) === '') return false;
@@ -609,6 +610,17 @@
     return fd;
   }
 
+  function clanoviLozaSmijeBrisati() {
+    var selId = getSelectedRowId();
+    if (selId == null) return false;
+    for (var k = 0; k < data.length; k++) {
+      if (String(data[k].id) === String(selId)) {
+        return parseInt(data[k].aktivnost, 10) === 0 && parseInt(data[k].kandidat, 10) === 1;
+      }
+    }
+    return false;
+  }
+
   function updateCrudUpisiState() {
     var imaLozu = selectLoza && trim(selectLoza.value) !== '';
     var imaSelekciju = getSelectedRowId() != null;
@@ -621,7 +633,8 @@
       btnUpisi.setAttribute('aria-label', imaSelekciju ? 'Izmjeni' : 'Upis');
       btnUpisi.disabled = !imaLozu || (!imaSelekciju && !imaSadrzaj);
     }
-    if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
+    var smijeBrisati = clanoviLozaSmijeBrisati();
+    if (btnIzbrisi) { btnIzbrisi.style.display = smijeBrisati ? '' : 'none'; btnIzbrisi.disabled = !smijeBrisati; }
     /* Drugi red naslova edit panela – isto stanje kao gumb (enable/disable, Upis vs Izmjeni). */
     clanoviLozaUpdateNaslovPodnaslovClana();
   }
