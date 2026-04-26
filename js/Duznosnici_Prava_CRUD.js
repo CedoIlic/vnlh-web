@@ -5,7 +5,7 @@
    Reload_Ikona: 1 u konstantama = CommonCRUD dodaje reload tipku u zaglavlje; funkcionalnost = ponovno učitavanje podataka.
    Tablica: A. (checkbox 1/0), Naziv (20%), Opis. Footer: Upis, Izbriši, sredina (Sve / toggle „Sva prava” ovisno o var.), Povratak.
    API: select (0-Razine); Duznosnici_Prava_CRUD_sve.php — GET sva_prava=1 kad je uključen toggle „Sva prava“ (svi meni s html_fajl); inače samo prava logiranog. Toggle: select cijeli skup uključujući Mastera + tablica.
-   Toggle „Sva prava”: vidljiv ako je var. 1003 = 1 i id_korisnik (sesija) u listi iz var. 1002 (isto kao Poruke razvoj / Ograničenja „Svi”).
+   Toggle „Sva prava”: vidljiv ako je var. 1004 = 1 i id_korisnik (sesija) u listi iz var. 1002 (isto kao Poruke razvoj / Ograničenja „Svi”).
 */
 // @ts-nocheck
 (function () {
@@ -19,17 +19,17 @@
   var cachedSustavVar1001 = null;
   var sustav1001Loading = false;
   var sustav1001PendingCallbacks = [];
-  /** null = još nije učitano; sustav_varijable.id = 1003 — uz 1002 određuje prikaz togglea „Sva prava“. */
-  var cachedSustavVar1003 = null;
+  /** null = još nije učitano; sustav_varijable.id = 1004 — uz 1002 određuje prikaz togglea „Sva prava“. */
+  var cachedSustavVar1004Prava = null;
   /** null = još nije učitano; retak 1002 (id_korisnik odvojeni zarezom). */
   var cachedSustavVar1002Prava = null;
-  var sustav10031002LoadingPrava = false;
-  var sustav10031002PendingCallbacksPrava = [];
+  var sustav10041002LoadingPrava = false;
+  var sustav10041002PendingCallbacksPrava = [];
 
   /* --- Zaglavlje tablice ---
      Lijevo: labela "Dužnosnik" + select za odabir dužnosnika.
      Desno: ikona reload (dodaje CommonCRUD.initTablica kad Reload_Ikona === 1).
-     Tablica: redovi iz meni — zadano samo moduli koje logirani dužnosnik smije; uz toggle „Sva prava“ (1003+1002) svi aktivni s html_fajl.
+     Tablica: redovi iz meni — zadano samo moduli koje logirani dužnosnik smije; uz toggle „Sva prava“ (1004+1002) svi aktivni s html_fajl.
      Select mijenja kolonu aktivno (tko prima prava) i POST; ne mijenja skup redaka kad je toggle isključen. */
 
   // Tablica_Zaglavlje – svaka kolona je objekt sa parametrima:
@@ -73,7 +73,7 @@
   var selectDuznosnik = document.getElementById('select_duznosnik');
   var tablicaContainerEl = document.getElementById('tablicaContainer');
 
-  /** Toggle „Sva prava“ (vidljiv kad 1003=1 i korisnik u 1002): puni select cijelim skupom i tablicu svim HTML modulima iz meni. */
+  /** Toggle „Sva prava“ (vidljiv kad 1004=1 i korisnik u 1002): puni select cijelim skupom i tablicu svim HTML modulima iz meni. */
   function jeRezimSvaPrava() {
     var el = document.getElementById('toggle_sva_prava');
     return !!(el && el.checked && !el.disabled);
@@ -152,23 +152,23 @@
   }
 
   /**
-   * Učitava varijable 1003 i 1002 (jednokratno, paralelno); toggle „Sva prava“ vidljiv samo ako je 1003='1' i sesijski korisnik u listi 1002.
+   * Učitava varijable 1004 i 1002 (jednokratno, paralelno); toggle „Sva prava“ vidljiv samo ako je 1004='1' i sesijski korisnik u listi 1002.
    */
-  function ucitajSustavVars1003I1002ZaTogglePrava(callback) {
-    if (cachedSustavVar1003 !== null && cachedSustavVar1002Prava !== null) {
+  function ucitajSustavVars1004I1002ZaTogglePrava(callback) {
+    if (cachedSustavVar1004Prava !== null && cachedSustavVar1002Prava !== null) {
       if (callback) callback();
       return;
     }
-    if (typeof callback === 'function') sustav10031002PendingCallbacksPrava.push(callback);
-    if (sustav10031002LoadingPrava) return;
-    sustav10031002LoadingPrava = true;
+    if (typeof callback === 'function') sustav10041002PendingCallbacksPrava.push(callback);
+    if (sustav10041002LoadingPrava) return;
+    sustav10041002LoadingPrava = true;
     var pending = 2;
     function zavrsiJedan() {
       pending--;
       if (pending > 0) return;
-      sustav10031002LoadingPrava = false;
-      var cbs = sustav10031002PendingCallbacksPrava.slice();
-      sustav10031002PendingCallbacksPrava = [];
+      sustav10041002LoadingPrava = false;
+      var cbs = sustav10041002PendingCallbacksPrava.slice();
+      sustav10041002PendingCallbacksPrava = [];
       for (var j = 0; j < cbs.length; j++) {
         try {
           if (cbs[j]) cbs[j]();
@@ -176,12 +176,12 @@
       }
     }
     var xhr3 = new XMLHttpRequest();
-    xhr3.open('GET', API_BASE + 'common_sustav_varijable.php?id=1003', true);
+    xhr3.open('GET', API_BASE + 'common_sustav_varijable.php?id=1004', true);
     xhr3.onreadystatechange = function () {
       if (xhr3.readyState !== 4) return;
       var t3 = (xhr3.responseText || '').trim();
-      if (t3 === '120' || t3 === '100' || t3 === '401') cachedSustavVar1003 = '0';
-      else cachedSustavVar1003 = t3;
+      if (t3 === '120' || t3 === '100' || t3 === '401') cachedSustavVar1004Prava = '0';
+      else cachedSustavVar1004Prava = t3;
       zavrsiJedan();
     };
     xhr3.send();
@@ -202,7 +202,7 @@
     var inp = document.getElementById('toggle_sva_prava');
     if (!wrap || !inp) return;
     inp.checked = false;
-    var prikazi = cachedSustavVar1003 !== null && String(cachedSustavVar1003).trim() === '1' && korisnikJeUVar1002ListiPrava();
+    var prikazi = cachedSustavVar1004Prava !== null && String(cachedSustavVar1004Prava).trim() === '1' && korisnikJeUVar1002ListiPrava();
     if (prikazi) {
       wrap.removeAttribute('hidden');
       inp.removeAttribute('disabled');
@@ -511,7 +511,7 @@
     updateFooterSveButton();
   });
 
-  ucitajSustavVars1003I1002ZaTogglePrava(function () {
+  ucitajSustavVars1004I1002ZaTogglePrava(function () {
     primijeniVidljivostToggleSvaPrava();
   });
 

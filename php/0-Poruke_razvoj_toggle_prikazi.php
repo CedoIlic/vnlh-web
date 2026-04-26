@@ -2,10 +2,10 @@
 // =====================================================
 // 0-Poruke_razvoj_toggle_prikazi.php
 // API: vidljivost togglea „Razvoj” u modalu Poruke (lista + povijest tipa Poruka razvoju).
-// Prikaz samo ako je logirani id_korisnik u listi iz sustav_varijable.id = 1002 (i lista nije prazna).
+// Prikaz samo ako je var. 1004 = '1' I logirani id_korisnik u listi iz sustav_varijable.id = 1002.
 //
 // Izlaz:
-//   (JSON) { "prikazi": true|false }
+//   (JSON) { “prikazi”: true|false }
 //   (TEXT) Greška konekcije: 100
 // =====================================================
 
@@ -21,7 +21,15 @@ if ($db_ret !== -1) {
 
 header('Content-Type: application/json; charset=utf-8');
 
-$prikazi = poruke_razvoj_sesija_je_clan_tima($mysqli);
+$prikazi = false;
+if (poruke_razvoj_sesija_je_clan_tima($mysqli)) {
+    $res1004 = $mysqli->query('SELECT varijabla FROM sustav_varijable WHERE id = 1004 LIMIT 1');
+    if ($res1004) {
+        $row1004 = $res1004->fetch_assoc();
+        $res1004->free();
+        $prikazi = $row1004 && trim((string)($row1004['varijabla'] ?? '')) === '1';
+    }
+}
 $mysqli->close();
 
 echo json_encode(['prikazi' => $prikazi], JSON_UNESCAPED_UNICODE);
