@@ -122,6 +122,7 @@
   var API_BASE = '../php/';
   var data = [];
   var lozeData = [];
+  var _scrollRedId = null;
 
   /* Geo keš: window.vnlhGeoOgranicenja* u 0-Filteri_Po_Ogranicenjima.js (jedan GET, zajednički filtri). */
 
@@ -922,12 +923,36 @@
     container.style.setProperty('--tablica_vidljivih_redova', String(CLANOVI_LOZA_TABLICA_VIDLJIVIH_REDAKA));
   }
 
+  function clanoviLozaZapamtiScrollRed() {
+    _scrollRedId = null;
+    var container = document.getElementById('tablicaContainer');
+    var scrollEl = container && container.querySelector('.kontrola-tablica__scroll');
+    if (!scrollEl) return;
+    var trs = scrollEl.querySelectorAll('tbody tr');
+    var st = scrollEl.scrollTop;
+    for (var i = 0; i < trs.length; i++) {
+      if (trs[i].offsetTop >= st) { _scrollRedId = trs[i].dataset.rowId || null; break; }
+    }
+  }
+
+  function clanoviLozaVratiScrollRed() {
+    var container = document.getElementById('tablicaContainer');
+    var scrollEl = container && container.querySelector('.kontrola-tablica__scroll');
+    if (!scrollEl) { _scrollRedId = null; return; }
+    if (_scrollRedId != null) {
+      var tr = scrollEl.querySelector('tbody tr[data-row-id="' + _scrollRedId + '"]');
+      _scrollRedId = null;
+      if (tr) { scrollEl.scrollTop = tr.offsetTop; return; }
+    }
+    scrollEl.scrollTop = 0;
+  }
+
   function clanoviLozaOsvjeziPrikazTablice() {
     var rows = clanoviLozaPodaciURedove(clanoviLozaPrimijeniTraži(data));
     if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, ClanoviLozaCRUD.Tablica_Zaglavlje);
     clanoviLozaPrimijenKandidatStil(rows);
     clanoviLozaPostaviVidljivihRedova();
-    scrollTablicaClanoviToTop();
+    clanoviLozaVratiScrollRed();
     /* Nakon filtera ponekad je thead/layout još u tranziciji – ponovno primijeni zaglavlje u idućem okviru. */
     var tc = document.getElementById('tablicaContainer');
     if (tc && ClanoviLozaCRUD.Tablica_Zaglavlje && typeof CommonCRUD !== 'undefined' && CommonCRUD.primijeniTablicaZaglavlje) {
@@ -1077,6 +1102,7 @@
   }
 
   function osvjeziTablicu(callback) {
+    clanoviLozaZapamtiScrollRed();
     var idLoza = selectLoza ? trim(selectLoza.value) : '';
     ucitajClanove(idLoza, function () {
       updateCrudUpisiState();
