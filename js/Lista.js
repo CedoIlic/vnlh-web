@@ -992,11 +992,11 @@
     pageData.forEach(function (row) {
       var tr = document.createElement('tr');
       tr._listaRow = row;
-      if (row.kandidat) tr.style.color = 'var(--c-gray-300)';
       Tablica_Zaglavlje.forEach(function (col, colIdx) {
         var td = document.createElement('td');
         if ((col.mobitel_prikaz || 1) === 0) td.classList.add('lista-tablica__col--mob-hide');
         td.style.textAlign = col.align === 'r' ? 'right' : (col.align === 'c' ? 'center' : 'left');
+        if (row.kandidat) td.style.color = 'var(--c-gray-300)';
         if (col.type === 'img' || col.type === 'logo') {
           td.className = 'lista-tablica__cell--img';
           var img = document.createElement('img');
