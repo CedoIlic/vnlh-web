@@ -130,8 +130,25 @@ if ($listaPrimateljaRazvoj !== null) {
 }
 
 $stmt->close();
+
+// Koverica: za 'Poruka razvoju' trigger ne postavlja ima_neprocitanih — radimo to ručno.
+if ($listaPrimateljaRazvoj !== null && $listaPrimateljaRazvoj !== []) {
+    $primateljiOsimMene = array_values(array_filter($listaPrimateljaRazvoj, function ($id) use ($idPosiljatelj) {
+        return $id !== $idPosiljatelj;
+    }));
+    if ($primateljiOsimMene !== []) {
+        $ph = implode(',', array_fill(0, count($primateljiOsimMene), '?'));
+        $tp = str_repeat('i', count($primateljiOsimMene));
+        $stmtF = $mysqli->prepare("UPDATE sustav_sesije_aktivne SET ima_neprocitanih = 1 WHERE id_korisnik IN ($ph) AND status = 'aktivna'");
+        if ($stmtF) {
+            $stmtF->bind_param($tp, ...$primateljiOsimMene);
+            $stmtF->execute();
+            $stmtF->close();
+        }
+    }
+}
+
 $mysqli->close();
-// Triger trg_poruke_after_insert postavlja ima_neprocitanih samo za tip = 'Poruka', ne za 'Poruka razvoju' ni Chat.
 
 // Uspjeh – VNLH konvencija
 echo '-1';

@@ -881,18 +881,33 @@
           for (var i = 0; i < arr.length; i++) {
             var r = arr[i];
             data.push(r);
-            var stupanjShow = r.stupanj_show != null ? String(r.stupanj_show) : '';
+            var jeKandidat = parseInt(r.kandidat, 10) === 1;
+            var stupanjShow = jeKandidat ? 'K' : (r.stupanj_show != null ? String(r.stupanj_show) : '');
             var spolDisplay = (r.spol === 1 || r.spol === '1') ? 'Ženski' : 'Muški';
-            rows.push({ id: r.id != null ? r.id : '', 0: r.prezime != null ? r.prezime : '', 1: r.ime != null ? r.ime : '', 2: stupanjShow, 3: spolDisplay });
+            rows.push({ id: r.id != null ? r.id : '', 0: r.prezime != null ? r.prezime : '', 1: r.ime != null ? r.ime : '', 2: stupanjShow, 3: spolDisplay, _kandidat: jeKandidat });
           }
         } catch (e) {}
       }
       CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, ClanoviCRUD.Tablica_Zaglavlje);
+      clanoviPrimijenKandidatStil(rows);
       scrollTablicaClanoviToTop();
       populateNaPrijedlog(getSelectedRowId());
       if (callback) callback();
     };
     xhr.send();
+  }
+
+  /** Primijeni boje na retke kandidata (kandidat=1): sivi tekst retka, zeleni bg na koloni St. */
+  function clanoviPrimijenKandidatStil(rows) {
+    var container = document.getElementById('tablicaContainer');
+    if (!container) return;
+    var trs = container.querySelectorAll('.kontrola-tablica__scroll tbody tr');
+    for (var i = 0; i < trs.length; i++) {
+      if (!rows[i] || !rows[i]._kandidat) continue;
+      trs[i].style.color = 'var(--c-gray-300)';
+      var tds = trs[i].querySelectorAll('td');
+      if (tds[2]) tds[2].style.backgroundColor = 'var(--c-green-500)';
+    }
   }
 
   /**
@@ -2773,6 +2788,7 @@
               }
             }
             CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', tableRows, ClanoviCRUD.Tablica_Zaglavlje);
+            clanoviPrimijenKandidatStil(tableRows);
             // Vrati selekciju na isti red nakon re-rendera i fokus na tablicu da strelice rade
             if (typeof tablicaApi.setSelectedRowIds === 'function') {
               tablicaApi.setSelectedRowIds([String(keepId)]);

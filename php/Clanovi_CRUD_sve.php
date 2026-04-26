@@ -52,6 +52,7 @@ $sql = "SELECT
         LEFT JOIN stupnjevi s ON s.id = c.stupanj
         LEFT JOIN loze l ON l.id = c.loza
         WHERE c.loza = ?
+          AND NOT (c.aktivnost = 0 AND c.kandidat = 0)
         ORDER BY c.prezime ASC, c.ime ASC";
 $stmt = $mysqli->prepare($sql);
 if (!$stmt) {

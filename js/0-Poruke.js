@@ -1093,7 +1093,15 @@
 
         var autorSpan = document.createElement('span');
         autorSpan.className = 'poruke__msg-autor';
-        autorSpan.textContent = p.smjer === 'odgovor' ? 'Ti:' : testniNadjiImePosiljatelja(idPosiljatelj) + ':';
+        var autorTekst;
+        if (p.smjer === 'odgovor') {
+          autorTekst = 'Ti:';
+        } else if (p.clan_prezime || p.clan_ime) {
+          autorTekst = [p.clan_prezime, p.clan_ime].filter(Boolean).join(', ') + ':';
+        } else {
+          autorTekst = testniNadjiImePosiljatelja(idPosiljatelj) + ':';
+        }
+        autorSpan.textContent = autorTekst;
         div.appendChild(autorSpan);
 
         div.appendChild(document.createTextNode(tekstZaBubble));

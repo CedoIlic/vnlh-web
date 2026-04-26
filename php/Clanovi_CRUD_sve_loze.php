@@ -74,7 +74,7 @@ $sql = "SELECT
         LEFT JOIN obredi obr ON obr.id = l.id_obred
         LEFT JOIN drzave d_loza ON d_loza.id = l.id_drzava
         LEFT JOIN clanovi m ON m.id = c.na_prijedlog
-        WHERE c.loza IN ($placeholders) AND c.aktivnost = 1
+        WHERE c.loza IN ($placeholders) AND NOT (c.aktivnost = 0 AND c.kandidat = 0)
         ORDER BY c.prezime ASC, c.ime ASC";
 $stmt = $mysqli->prepare($sql);
 if (!$stmt) {

@@ -867,17 +867,32 @@
     var rows = [];
     for (var i = 0; i < arr.length; i++) {
       var r = arr[i];
-      var stupanjShow = r.stupanj_show != null ? String(r.stupanj_show) : '';
+      var jeKandidat = parseInt(r.kandidat, 10) === 1;
+      var stupanjShow = jeKandidat ? 'K' : (r.stupanj_show != null ? String(r.stupanj_show) : '');
       var spolDisplay = (r.spol === 1 || r.spol === '1') ? 'Ženski' : 'Muški';
       rows.push({
         id: r.id != null ? r.id : '',
         0: r.prezime != null ? r.prezime : '',
         1: r.ime != null ? r.ime : '',
         2: stupanjShow,
-        3: spolDisplay
+        3: spolDisplay,
+        _kandidat: jeKandidat
       });
     }
     return rows;
+  }
+
+  /** Primijeni boje na retke kandidata (kandidat=1): sivi tekst retka, zeleni bg na koloni St. */
+  function clanoviLozaPrimijenKandidatStil(rows) {
+    var container = document.getElementById('tablicaContainer');
+    if (!container) return;
+    var trs = container.querySelectorAll('.kontrola-tablica__scroll tbody tr');
+    for (var i = 0; i < trs.length; i++) {
+      if (!rows[i] || !rows[i]._kandidat) continue;
+      trs[i].style.color = 'var(--c-gray-300)';
+      var tds = trs[i].querySelectorAll('td');
+      if (tds[2]) tds[2].style.backgroundColor = 'var(--c-green-500)';
+    }
   }
 
   /** Fiksno broj vidljivih redaka u scroll području (bez UI odabira – kao bivših 10). */
@@ -897,6 +912,7 @@
   function clanoviLozaOsvjeziPrikazTablice() {
     var rows = clanoviLozaPodaciURedove(clanoviLozaPrimijeniTraži(data));
     if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, ClanoviLozaCRUD.Tablica_Zaglavlje);
+    clanoviLozaPrimijenKandidatStil(rows);
     clanoviLozaPostaviVidljivihRedova();
     scrollTablicaClanoviToTop();
     /* Nakon filtera ponekad je thead/layout još u tranziciji – ponovno primijeni zaglavlje u idućem okviru. */

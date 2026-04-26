@@ -992,6 +992,7 @@
     pageData.forEach(function (row) {
       var tr = document.createElement('tr');
       tr._listaRow = row;
+      if (row.kandidat) tr.style.color = 'var(--c-gray-300)';
       Tablica_Zaglavlje.forEach(function (col, colIdx) {
         var td = document.createElement('td');
         if ((col.mobitel_prikaz || 1) === 0) td.classList.add('lista-tablica__col--mob-hide');
@@ -1057,9 +1058,14 @@
             td.appendChild(wrap);
           }
         } else if (col.field === 'Stupanj') {
-          var v1 = row[col.field] != null ? String(row[col.field]) : '';
           td.className = 'lista-tablica__cell--stupanj';
-          td.textContent = v1 ? v1 + '\u00B0' : '';
+          if (row.kandidat) {
+            td.textContent = 'K';
+            td.style.backgroundColor = 'var(--c-green-500)';
+          } else {
+            var v1 = row[col.field] != null ? String(row[col.field]) : '';
+            td.textContent = v1 ? v1 + '\u00B0' : '';
+          }
         } else {
           var v1 = row[col.field] != null ? String(row[col.field]) : '';
           var v2 = col.field2 && row[col.field2] != null ? ' ' + String(row[col.field2]) : '';
@@ -1753,6 +1759,7 @@
               line2: r.prezime || '',
               Ime: r.ime || '',
               Prezime: r.prezime || '',
+              kandidat: parseInt(r.kandidat, 10) === 1,
               Stupanj: r.stupanj_show || '',
               StupanjBroj: r.stupanj_broj != null ? String(r.stupanj_broj) : '',
               StupanjNaziv: r.stupanj_naziv || '',
