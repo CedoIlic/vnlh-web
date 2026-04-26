@@ -1340,7 +1340,9 @@
     editSpan.classList.toggle('lista-paginacija__edit--disabled', prazna);
     if (container) container.classList.toggle('lista-tablica--disabled', prazna);
     if (redovaSpan) {
-      redovaSpan.textContent = 'Redova: ' + filtriraniPodaci.length;
+      var brClanova = filtriraniPodaci.filter(function (r) { return !r.kandidat; }).length;
+      var brKandidata = filtriraniPodaci.filter(function (r) { return r.kandidat; }).length;
+      redovaSpan.textContent = 'Članovi: ' + brClanova + ' : Kandidata: ' + brKandidata;
       redovaSpan.classList.toggle('lista-paginacija__redova--disabled', prazna);
     }
     listaOsvjeziNavButtonsStanje();
