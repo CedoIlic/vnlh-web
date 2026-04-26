@@ -64,6 +64,23 @@ $flagChat = $row ? (int) ($row['ima_chat_neprocitanih'] ?? 0) : 0;
 $stmt->close();
 
 $idJa = (int) ($_SESSION['id_korisnik'] ?? 0);
+
+// Fallback: flag možda nije postavljen za stare 'Poruka razvoju' – provjeri direktno.
+if ($flagMail === 0 && $idJa > 0) {
+    $stR = $mysqli->prepare("SELECT 1 FROM sustav_sesije_poruke WHERE id_primatelj = ? AND tip = 'Poruka razvoju' AND status = 'Novo' AND brisano = 0 LIMIT 1");
+    if ($stR) {
+        $stR->bind_param('i', $idJa);
+        $stR->execute();
+        $rR = $stR->get_result()->fetch_assoc();
+        if ($rR) {
+            $flagMail = 1;
+            // Uskladi flag u bazi da sljedeći poll bude brži
+            $stFix = $mysqli->prepare("UPDATE sustav_sesije_aktivne SET ima_neprocitanih = 1 WHERE session_id = ? AND status = 'aktivna'");
+            if ($stFix) { $stFix->bind_param('s', $sessionId); $stFix->execute(); $stFix->close(); }
+        }
+        $stR->close();
+    }
+}
 $chatZadnjaId = 0;
 $chatSugId = 0;
 $chatSugPrez = '';
