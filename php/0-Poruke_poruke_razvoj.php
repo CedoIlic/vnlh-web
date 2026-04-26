@@ -77,6 +77,15 @@ while ($row = $result->fetch_assoc()) {
 }
 
 $stmt->close();
+
+// Označi nepročitane primljene poruke kao pročitane (trigger ažurira ima_neprocitanih automatski).
+$stmtUpd = $mysqli->prepare("UPDATE sustav_sesije_poruke SET status = 'Pročitano', vrijeme_procitano = NOW() WHERE id_primatelj = ? AND tip = 'Poruka razvoju' AND status = 'Novo' AND brisano = 0");
+if ($stmtUpd) {
+    $stmtUpd->bind_param('i', $idKorisnik);
+    $stmtUpd->execute();
+    $stmtUpd->close();
+}
+
 $mysqli->close();
 
 echo json_encode($poruke, JSON_UNESCAPED_UNICODE);
