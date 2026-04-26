@@ -39,11 +39,12 @@
                 </div>
             </div>
         </div>
-        <!-- Podnožje: Izmjeni, Ukloni sve odgovore, Povratak. Vidljivost CRUD tipki: common_prava_crud. -->
+        <!-- Podnožje: Izmjeni, Ukloni sve odgovore, Obriši poruku, Povratak. Vidljivost Izmjeni / brisanje: common_prava_crud. -->
         <div class="kontrola-panel__footer alati-poruke-razvoja-odgovori__edit-footer">
             <div class="alati-poruke-razvoja-odgovori__footer-left">
                 <button type="button" id="btnOdgovoriIzmjeni" class="kontrola-btn kontrola-btn--crud-upisi kontrola-btn--crud-izmjeni" hidden title="Primjena odabranog predloška (implementacija slijedi)"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izmjeni</span></span></span></button>
                 <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi" title="Skida sve sufiksne odgovore (#kod*tekst#) s poruke i snima tekst; red u tablici ostaje." aria-label="Ukloni sve odgovore"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Ukloni sve odgovore</span></span></span></button>
+                <button type="button" id="btnObrisiPoruku" class="kontrola-btn kontrola-btn--crud-izbrisi" title="Uklanjanje cijele poruke iz popisa (logičko brisanje u bazi). Potreban je odabran red u tablici." aria-label="Obriši poruku"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Obriši poruku</span></span></span></button>
             </div>
             <div class="alati-poruke-razvoja-odgovori__footer-right">
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>

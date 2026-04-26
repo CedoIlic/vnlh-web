@@ -78,7 +78,24 @@
   box-sizing: border-box;
 }
 
-.duznosnici-osobe-crud__header-row .kontrola-edit-delete {
+/* Lijevo: opcijski toggle „Sve“ (1004+1002) + Traži — isti uzorak kao Ograničenja (kliznik 0-Poruke.css). */
+.duznosnici-osobe-crud__trazi-segment-wrap {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.duznosnici-osobe-crud__svi-toggle-wrap {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.duznosnici-osobe-crud__header-row .kontrola-edit-delete,
+.duznosnici-osobe-crud__trazi-segment-wrap .kontrola-edit-delete {
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -98,7 +115,13 @@
     align-self: flex-start;
   }
 
-  .duznosnici-osobe-crud__header-row .kontrola-edit-delete {
+  .duznosnici-osobe-crud__trazi-segment-wrap {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .duznosnici-osobe-crud__trazi-segment-wrap .kontrola-edit-delete {
     flex: 0 0 auto;
     width: 100%;
     max-width: 100%;
@@ -120,7 +143,13 @@
     align-self: flex-start;
   }
 
-  .duznosnici-osobe-crud__header-row .kontrola-edit-delete {
+  .duznosnici-osobe-crud__trazi-segment-wrap {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .duznosnici-osobe-crud__trazi-segment-wrap .kontrola-edit-delete {
     flex: 0 0 auto;
     width: 100%;
     max-width: 100%;

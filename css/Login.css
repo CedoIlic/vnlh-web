@@ -239,6 +239,7 @@ body.login-win--duznost-modal .login-duznost-overlay__backdrop {
 /* Višeredni nazivi dužnosti: tekst ostaje centriran u tipki */
 .login-duznost-overlay__item .kontrola-btn__label {
   text-align: center;
+  white-space: normal;
 }
 
 .login-duznost-overlay__item.kontrola-btn:focus-visible {

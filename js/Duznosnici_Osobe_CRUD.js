@@ -3,8 +3,9 @@
    Lijevo: dužnosti (Traži + tablica). Desno: aktivni članovi (Traži + tablica), prikaz imena „prezime, ime“.
    Donji panel: readonly Dužnost, Nosioc; CRUD – upis u sustav_korisnici (UPDATE/INSERT po id_korisnik), brisanje retka dodjele.
    Koristi CommonCRUD, 0-Kontrole, 0-Common.
-   API: Duznosnici_CRUD_opcije_pod_masterom.php (lijevo: potomci logiranog Mastera, 0-Razine.js: smjer ispod, povrat 0, ukljuci_mastera 0), Clanovi_CRUD_sve_aktivni.php,
-        common_sustav_varijable.php?id=114 (stanka debounce Traži — 0-Common.js), Duznosnici_Osobe_CRUD_dodjele.php (GET master_id — početna mapa dužnost → nosioc iz sustav_korisnici),
+   API: Duznosnici_CRUD_opcije_pod_masterom.php (lijevo: potomci, JSON s razina; 0-Razine: ispod, povrat 0, ukljuci_mastera 0), Clanovi_CRUD_sve_aktivni.php,
+   Toggle „Sve“: 1004+1002. Uključeno: GET kao Ogr „Svi“ (povrat_cijelog_seta=1, ukljuci_mastera=1) — cijeli aktivni skup dužnosnika, i bez filtra R. Isključeno: ispod+0+0, uz filtar samo retci s razina>0. Bez togglea: kao dosad samo ispod+0+0, bez R-filtra.
+        common_sustav_varijable.php?id=114 (stanka debounce Traži — 0-Common.js), Duznosnici_Osobe_CRUD_dodjele.php (GET master_id — početna mapa),
         Duznosnici_Osobe_CRUD_upis.php, Duznosnici_Osobe_CRUD_brisanje.php,
         Sustav_korisnici_modal_pregled.php (modal ellipsis – dužnost / osoba iz sustav_korisnici).
    ========================================================= */
@@ -18,6 +19,123 @@
 
   if (typeof window.vnlhLoadPronadjiStankaMsFromVar114 === 'function') {
     window.vnlhLoadPronadjiStankaMsFromVar114(API_BASE);
+  }
+
+  /** null = nije učitano; sadržaj sustav_varijable id 1004 (1 = vidljiv toggle; kao Duznosnici_Ogranicenja_CRUD). */
+  var cachedSustavVar1004Osobe = null;
+  /** null = nije učitano; tekst retka 1002 (id_korisnik, odvojeno zarezom). */
+  var cachedSustavVar1002Osobe = null;
+  var sustav10041002LoadingOsobe = false;
+  var sustav10041002PendingOsobe = [];
+
+  function parsirajIdKorisnikaIzVar1002TekstaOsobe(t) {
+    if (t == null || String(t).trim() === '') return [];
+    var s = String(t);
+    var seen = {};
+    var out = [];
+    var re = /\d+/g;
+    var m;
+    while ((m = re.exec(s)) !== null) {
+      var n = parseInt(m[0], 10);
+      if (n > 0 && !seen[n]) {
+        seen[n] = true;
+        out.push(n);
+      }
+    }
+    return out;
+  }
+
+  function korisnikJeUVar1002ListiOsobe() {
+    var me = typeof window.VNLH_ID_KORISNIK !== 'undefined' ? parseInt(String(window.VNLH_ID_KORISNIK), 10) : 0;
+    if (isNaN(me) || me <= 0) return false;
+    var ids = parsirajIdKorisnikaIzVar1002TekstaOsobe(cachedSustavVar1002Osobe);
+    for (var k = 0; k < ids.length; k++) {
+      if (ids[k] === me) return true;
+    }
+    return false;
+  }
+
+  function updateToggleOsobeSrazinomUI() {
+    var wrap = document.getElementById('toggle_osobe_s_razinom_wrap');
+    var chk = document.getElementById('toggle_osobe_s_razinom');
+    if (!wrap || !chk) return;
+    var prikazi = cachedSustavVar1004Osobe !== null && String(cachedSustavVar1004Osobe).trim() === '1' && korisnikJeUVar1002ListiOsobe();
+    if (prikazi) {
+      wrap.removeAttribute('hidden');
+      chk.removeAttribute('disabled');
+    } else {
+      wrap.setAttribute('hidden', '');
+      chk.checked = false;
+      chk.setAttribute('disabled', '');
+    }
+  }
+
+  function ucitajSustavVars1004I1002Osobe(callback) {
+    if (cachedSustavVar1004Osobe !== null && cachedSustavVar1002Osobe !== null) {
+      if (typeof callback === 'function') callback();
+      return;
+    }
+    if (typeof callback === 'function') sustav10041002PendingOsobe.push(callback);
+    if (sustav10041002LoadingOsobe) return;
+    sustav10041002LoadingOsobe = true;
+    var pending = 2;
+    function zavrsiJedan() {
+      pending--;
+      if (pending > 0) return;
+      sustav10041002LoadingOsobe = false;
+      updateToggleOsobeSrazinomUI();
+      var cbs = sustav10041002PendingOsobe.slice();
+      sustav10041002PendingOsobe = [];
+      for (var i = 0; i < cbs.length; i++) {
+        try {
+          if (cbs[i]) cbs[i]();
+        } catch (e) {}
+      }
+    }
+    var xhr4 = new XMLHttpRequest();
+    xhr4.open('GET', API_BASE + 'common_sustav_varijable.php?id=1004', true);
+    xhr4.onreadystatechange = function () {
+      if (xhr4.readyState !== 4) return;
+      var tx4 = (xhr4.responseText || '').trim();
+      if (tx4 === '120' || tx4 === '100' || tx4 === '401') cachedSustavVar1004Osobe = '0';
+      else cachedSustavVar1004Osobe = tx4;
+      zavrsiJedan();
+    };
+    xhr4.send();
+    var xhr2 = new XMLHttpRequest();
+    xhr2.open('GET', API_BASE + 'common_sustav_varijable.php?id=1002', true);
+    xhr2.onreadystatechange = function () {
+      if (xhr2.readyState !== 4) return;
+      var tx2 = (xhr2.responseText || '').trim();
+      if (tx2 === '120' || tx2 === '100' || tx2 === '401') cachedSustavVar1002Osobe = '';
+      else cachedSustavVar1002Osobe = tx2;
+      zavrsiJedan();
+    };
+    xhr2.send();
+  }
+
+  /**
+   * Isto kao Duznici_Ogranicenja: „Svi“ = cijela tablica (API povrat=1, ukljuci=1; smjer se u PHP ignorira).
+   * Samo kad je omot vidljiv i „Sve“ uključeno; inače učitavamo ispod+0+0.
+   */
+  function nosiociOsobeDohvatiCijeliSetAktivnihDuznosnika() {
+    var wrap = document.getElementById('toggle_osobe_s_razinom_wrap');
+    var chk = document.getElementById('toggle_osobe_s_razinom');
+    if (!wrap || !chk) return false;
+    if (wrap.hasAttribute('hidden')) return false;
+    return !!chk.checked;
+  }
+
+  /**
+   * Klijentski filtar stupca R. (samo razina>0): kad je omot vidljiv i „Sve“ isključeno.
+   * Kad je „Sve“ uključeno, podaci su već cijeli skup s poslužitelja — R-filtar se ne smije.
+   */
+  function jeAktivnaFiltarBez0RazinaOsobe() {
+    var wrap = document.getElementById('toggle_osobe_s_razinom_wrap');
+    var chk = document.getElementById('toggle_osobe_s_razinom');
+    if (!wrap || !chk) return false;
+    if (wrap.hasAttribute('hidden')) return false;
+    return !chk.checked;
   }
 
   function trim(s) {
@@ -128,6 +246,13 @@
     if (!tablicaDuznostApi) return;
     var txt = editTraziDuznost ? trim(editTraziDuznost.value) : '';
     var list = dataDuznosnici || [];
+    if (jeAktivnaFiltarBez0RazinaOsobe()) {
+      list = list.filter(function (r) {
+        var rz = r.razina != null ? Number(r.razina) : 0;
+        if (isNaN(rz)) rz = 0;
+        return rz > 0;
+      });
+    }
     if (txt !== '') {
       var t = txt.toLowerCase();
       list = list.filter(function (r) {
@@ -135,6 +260,7 @@
         return nz.indexOf(t) !== -1;
       });
     }
+    var selPrije = CommonCRUD.getSelectedRowId(tablicaDuznostApi);
     var rows = [];
     for (var i = 0; i < list.length; i++) {
       var r = list[i];
@@ -144,6 +270,22 @@
       });
     }
     CommonCRUD.setDataTablica(tablicaDuznostApi, 'tablicaContainerDuznost', rows, DuznosniciOsobe_TablicaDuznost.Tablica_Zaglavlje);
+    if (selPrije != null) {
+      var j = 0;
+      var nadjen = false;
+      for (; j < list.length; j++) {
+        if (String(list[j].id) === String(selPrije)) {
+          nadjen = true;
+          break;
+        }
+      }
+      if (nadjen) {
+        tablicaDuznostApi.setSelectedRowIds([String(selPrije)]);
+      } else if (tablicaDuznostApi.clearSelection) {
+        tablicaDuznostApi.clearSelection();
+        updateEditAndButtons();
+      }
+    }
   }
 
   function primijeniFilterOsoba() {
@@ -269,8 +411,9 @@
     function doneOne() {
       pending--;
       if (pending === 0) {
+        /* Lijeva tablica (filtar po toggleu) uvijek — i kad err: inače jedan neuspjeli XHR gasi cijeli blok. */
+        primijeniFilterDuznost();
         if (!err) {
-          primijeniFilterDuznost();
           primijeniFilterOsoba();
           syncingFromDuznosnik = true;
           if (keepD != null && tablicaDuznostApi) {
@@ -282,8 +425,8 @@
             tablicaOsobaApi.setSelectedRowIds([String(wantC)]);
           }
           syncingFromDuznosnik = false;
-          updateEditAndButtons();
         }
+        updateEditAndButtons();
         if (callback) callback(!err);
       }
     }
@@ -291,6 +434,10 @@
     var masterOsobeId = typeof window.VNLH_OSOBE_MASTER_ID !== 'undefined' ? Number(window.VNLH_OSOBE_MASTER_ID) : 0;
     if (isNaN(masterOsobeId)) masterOsobeId = 0;
     if (window.VNLHPostivanjeRazine && typeof window.VNLHPostivanjeRazine.dohvatiOpcijeDuznosnikaPodMasteromJson === 'function') {
+      var cijeliSkup = nosiociOsobeDohvatiCijeliSetAktivnihDuznosnika();
+      /* Kao Ogr „Svi“: cijela tablica; inače samo potomci Mastera (Duznosnici_CRUD_opcije_pod_masterom.php). */
+      var pCjelog = cijeliSkup ? 1 : 0;
+      var uM = cijeliSkup ? 1 : 0;
       window.VNLHPostivanjeRazine.dohvatiOpcijeDuznosnikaPodMasteromJson(
         masterOsobeId,
         API_BASE,
@@ -301,14 +448,16 @@
             showApiError(t || String(status));
           } else {
             dataDuznosnici = (rows || []).map(function (r) {
-              return { id: r.id, naziv: r.naziv != null ? String(r.naziv) : '' };
+              var rz = r.razina != null ? Number(r.razina) : 0;
+              if (isNaN(rz)) rz = 0;
+              return { id: r.id, naziv: r.naziv != null ? String(r.naziv) : '', razina: rz };
             });
           }
           doneOne();
         },
         'ispod',
-        0,
-        0
+        pCjelog,
+        uM
       );
     } else {
       err = true;
@@ -369,6 +518,39 @@
       }, typeof window.vnlhGetPronadjiStankaMs === 'function' ? window.vnlhGetPronadjiStankaMs() : 1000);
     });
   }
+  /*
+   * .poruke__toggle-input ima pointer-events: none (0-Poruke.css) — klik ide na label/slider;
+   * u nekim okruženjima change na inputu ne okine. Slušamo change+input+klik na wrapu i
+   * odgađamo osvježenje (setTimeout 0) da bude gotov ažuriran checked stanja.
+   */
+  var nakonSveToggleDebounceTajmer = null;
+  function nakonPromjeneToggleSveOsobe() {
+    if (nakonSveToggleDebounceTajmer) clearTimeout(nakonSveToggleDebounceTajmer);
+    nakonSveToggleDebounceTajmer = setTimeout(function () {
+      nakonSveToggleDebounceTajmer = null;
+      /* Odmah: checked je već ažuriran, dataDuznosnici su iz zadnjeg učitavanja — tablica reagira i ako XHR zakaže. */
+      requestAnimationFrame(function () {
+        primijeniFilterDuznost();
+        updateEditAndButtons();
+        ucitajSvePodatke(null);
+      });
+    }, 0);
+  }
+  (function initToggleSveDuznostOsobe() {
+    var tglW = document.getElementById('toggle_osobe_s_razinom_wrap');
+    var tgl = document.getElementById('toggle_osobe_s_razinom');
+    if (!tgl) return;
+    tgl.addEventListener('change', nakonPromjeneToggleSveOsobe);
+    tgl.addEventListener('input', nakonPromjeneToggleSveOsobe);
+    if (tglW) {
+      tglW.addEventListener('click', function () {
+        if (tglW.hasAttribute('hidden')) return;
+        if (tgl.disabled) return;
+        nakonPromjeneToggleSveOsobe();
+      });
+    }
+  })();
+
   var wrapD = editTraziDuznost && editTraziDuznost.closest ? editTraziDuznost.closest('.kontrola-edit-delete') : null;
   var clearD = wrapD ? wrapD.querySelector('.kontrola-edit-delete__clear') : null;
   if (clearD) {
@@ -649,8 +831,10 @@
     setTimeout(initPanelsHeightSync, 0);
   }
 
-  ucitajSvePodatke(function () {
-    duznosniciRunPanelLayoutSync();
+  ucitajSustavVars1004I1002Osobe(function () {
+    ucitajSvePodatke(function () {
+      duznosniciRunPanelLayoutSync();
+    });
   });
 
   if (document.readyState === 'loading') {

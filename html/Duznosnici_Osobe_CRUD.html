@@ -2,13 +2,14 @@
 <!--
   Duznosnici_Osobe_CRUD.html – Nosioci dužnosti: dužnosti + aktivni članovi, dodjela u donjem panelu.
   Lijeva tablica (dužnosti): potomci logiranog Mastera — window.VNLH_OSOBE_MASTER_ID (PHP: __VNLH_SESSION_MASTER_ID_DUZNOSNIK__).
+  Opcijski toggle „Sve“ (lijevo od Traži): vidljiv kad 1004 = 1 i korisnik u 1002. Uključeno = ponovno punjenje tablice bez filtra (0-razine uključene); isključeno = punjenje s uključenim filtrom (samo razina &gt; 0).
 -->
 <html lang="hr">
 <head>
     <meta charset="UTF-8">
     <title>Nosioci dužnosti - Sekretarijat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script>window.VNLH_OSOBE_MASTER_ID=__VNLH_SESSION_MASTER_ID_DUZNOSNIK__;</script>
+    <script>window.VNLH_OSOBE_MASTER_ID=__VNLH_SESSION_MASTER_ID_DUZNOSNIK__;window.VNLH_ID_KORISNIK=__VNLH_ID_KORISNIK__;</script>
         <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
 <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
     <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
@@ -24,9 +25,18 @@
             <div class="kontrola-panel__header duznosnici-osobe-crud__tablica-header">
                 <div class="duznosnici-osobe-crud__header-row">
                     <label class="kontrola-labela mb-0" for="edit_trazi_duznost" id="label_trazi_duznost">Traži</label>
-                    <div class="kontrola-edit-delete duznosnici-osobe-crud__trazi-wrap">
-                        <input id="edit_trazi_duznost" type="text" class="kontrola-edit-delete__input" aria-label="Traži dužnost" placeholder="Traži...">
-                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    <div class="duznosnici-osobe-crud__trazi-segment-wrap">
+                        <div id="toggle_osobe_s_razinom_wrap" class="duznosnici-osobe-crud__svi-toggle-wrap" hidden>
+                            <label class="poruke__toggle-label" for="toggle_osobe_s_razinom">
+                                <input type="checkbox" id="toggle_osobe_s_razinom" class="poruke__toggle-input" autocomplete="off" disabled aria-label="Sve: uključi cijeli skup dužnosti; isključi filtar po razini (samo s razinom)">
+                                <span class="poruke__toggle-slider" aria-hidden="true"></span>
+                                <span class="poruke__toggle-text">Sve</span>
+                            </label>
+                        </div>
+                        <div class="kontrola-edit-delete duznosnici-osobe-crud__trazi-wrap">
+                            <input id="edit_trazi_duznost" type="text" class="kontrola-edit-delete__input" aria-label="Traži dužnost" placeholder="Traži...">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
                     </div>
                 </div>
             </div>

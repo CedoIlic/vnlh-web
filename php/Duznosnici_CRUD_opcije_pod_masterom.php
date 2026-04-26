@@ -25,6 +25,7 @@
  *                       • 1 — Master je u listi (kod povrat_cijelog_seta = 1: cijela tablica).
  *
  * Povrat: u JSON-u samo slogovi s aktivnost = 1 (neaktivni dužnosnici se ne vraćaju).
+ *         Svaki slog: id, naziv, razina (0–99; 0 = nije uneseno u Dužnici; za Nosioci / filtar „S razinom“).
  */
 require_once __DIR__ . '/require_login_api.php';
 $db_ret = require_once __DIR__ . '/00_db.php';
@@ -80,9 +81,9 @@ $stmt->close();
 // Cijeli set — bez filtriranja po smjeru; po defaultu bez Mastera, uz ukljuci_mastera = 1 i Master.
 if ($povratCijelogSeta === 1) {
     if ($ukljuciMastera === 1) {
-        $resFull = $mysqli->query('SELECT id, naziv FROM duznosnici WHERE aktivnost = 1 ORDER BY naziv ASC');
+        $resFull = $mysqli->query('SELECT id, naziv, razina FROM duznosnici WHERE aktivnost = 1 ORDER BY naziv ASC');
     } else {
-        $stmt = $mysqli->prepare('SELECT id, naziv FROM duznosnici WHERE id <> ? AND aktivnost = 1 ORDER BY naziv ASC');
+        $stmt = $mysqli->prepare('SELECT id, naziv, razina FROM duznosnici WHERE id <> ? AND aktivnost = 1 ORDER BY naziv ASC');
         if (!$stmt) {
             header('Content-Type: text/plain');
             echo '200,' . $mysqli->errno;
@@ -99,6 +100,7 @@ if ($povratCijelogSeta === 1) {
             $outFull[] = [
                 'id' => (int) $r['id'],
                 'naziv' => $r['naziv'] !== null ? $r['naziv'] : '',
+                'razina' => isset($r['razina']) ? (int) $r['razina'] : 0,
             ];
         }
     }
@@ -190,7 +192,7 @@ if (empty($idsZaNazive)) {
 }
 
 $inList = implode(',', $idsZaNazive);
-$sql = "SELECT id, naziv FROM duznosnici WHERE id IN ($inList) AND aktivnost = 1 ORDER BY naziv ASC";
+$sql = "SELECT id, naziv, razina FROM duznosnici WHERE id IN ($inList) AND aktivnost = 1 ORDER BY naziv ASC";
 $res2 = $mysqli->query($sql);
 $out = [];
 if ($res2) {
@@ -198,6 +200,7 @@ if ($res2) {
         $out[] = [
             'id' => (int) $r['id'],
             'naziv' => $r['naziv'] !== null ? $r['naziv'] : '',
+            'razina' => isset($r['razina']) ? (int) $r['razina'] : 0,
         ];
     }
 }

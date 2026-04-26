@@ -25,7 +25,12 @@ $masterId = ($idTest > 0)
     ? $idTest
     : (int) ($_SESSION['id_duznosnik'] ?? 0);
 
-$html = str_replace('__VNLH_SESSION_MASTER_ID_DUZNOSNIK__', (string) $masterId, $raw);
+$idKorisnik = (int) ($_SESSION['id_korisnik'] ?? 0);
+$html = str_replace(
+    ['__VNLH_SESSION_MASTER_ID_DUZNOSNIK__', '__VNLH_ID_KORISNIK__'],
+    [(string) $masterId, (string) $idKorisnik],
+    $raw
+);
 $html = vnlh_apply_asset_token_to_html($html);
 $html = vnlh_inject_chat_flag_script($html);
 echo vnlh_inject_sesija_pracenje_aktivnosti_script($html);

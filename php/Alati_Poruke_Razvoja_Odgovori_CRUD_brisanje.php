@@ -2,7 +2,7 @@
 /**
  * API: logičko brisanje jedne poruke tipa „Poruka razvoju“ (brisano = 1).
  * Ulaz: POST id (int, primarni ključ retka u sustav_sesije_poruke).
- * Izlaz: tekst „OK“ ili kod greške (105 = nevaljan id, 200,errno = SQL).
+ * Izlaz: tekst „OK“ ili kod greške (105 = nevaljan id, 108 = red nije pronađen, 200,errno = SQL).
  */
 require_once __DIR__ . '/require_login_api.php';
 $db_ret = require_once __DIR__ . '/00_db.php';

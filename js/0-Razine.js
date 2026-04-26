@@ -225,7 +225,7 @@
      * Isti endpoint i parametri kao ucitajOpcijeDuznosnikaPodMasterom, ali bez select elementa: za tablice (npr. Nosioci dužnosti).
      * @param {string|number|null|undefined} masterId
      * @param {string} apiBase
-     * @param {function(Array<{id:number,naziv?:string}>, number, string): void} onDone — (redovi, httpStatus, rawBody); redovi su [] ako status≠200 ili tijelo nije JSON niz.
+     * @param {function(Array<{id:number,naziv?:string,razina?:number}>, number, string): void} onDone — (redovi, httpStatus, rawBody); redovi su [] ako status≠200 ili tijelo nije JSON niz. Polje razina (0–99) prisutno u JSON-u od Duznosnici_CRUD_opcije_pod_masterom.php.
      */
     dohvatiOpcijeDuznosnikaPodMasteromJson: function (masterId, apiBase, onDone, smjer, povratCijelogSeta, ukljuciMastera) {
       var fin = typeof onDone === 'function' ? onDone : function () {};

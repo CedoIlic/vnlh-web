@@ -7,6 +7,8 @@
  * - Primjena predloška: POST Alati_Poruke_Razvoja_Odgovori_CRUD_primjena.php (sufiks #kod*tekst# na poruku).
  * - Tipka „Ukloni sve odgovore“ (id btnIzbrisi): POST Alati_Poruke_Razvoja_Odgovori_CRUD_ukloni_odgovore.php —
  *   skida sve sufiksne odgovore s polja poruka i snima bazu; red u tablici se ne briše (brisano ostaje 0).
+ * - Gumb „Obriši poruku“ (id btnObrisiPoruku): ista vidljivost / pravo kao Izbriši (brisanje_sloga); omogućen samo
+ *   s odabranim retkom. POST Alati_Poruke_Razvoja_Odgovori_CRUD_brisanje.php — logičko brisanje retka (brisano=1).
  */
 // @ts-nocheck
 (function () {
@@ -18,9 +20,16 @@
   if (typeof vnlhUcitajPravaCrud === 'function') {
     vnlhUcitajPravaCrud(
       'Alati_Poruke_Razvoja_Odgovori.html',
-      function (upisIzmjena) {
+      function (upisIzmjena, brisanjeSloga) {
         pravaUpisIzmjena = upisIzmjena != null ? parseInt(String(upisIzmjena), 10) : 0;
         if (isNaN(pravaUpisIzmjena)) pravaUpisIzmjena = 0;
+        /* „Obriši poruku“ dijeli pravilo s tipkom Ukloni (brisanje_sloga) — ista skrivanost. */
+        var sakrijB = brisanjeSloga == null || parseInt(String(brisanjeSloga), 10) !== 1;
+        var bObrisiPor = document.getElementById('btnObrisiPoruku');
+        if (bObrisiPor) {
+          bObrisiPor.hidden = sakrijB;
+          bObrisiPor.style.display = sakrijB ? 'none' : '';
+        }
         updateFooterButtons();
       },
       { upisiId: 'btnOdgovoriIzmjeni', izbrisiId: 'btnIzbrisi' }
@@ -453,6 +462,8 @@
     var imaRed = getSelectedRowId() != null;
     var btnIzbrisi = document.getElementById('btnIzbrisi');
     if (btnIzbrisi && !btnIzbrisi.hidden) btnIzbrisi.disabled = !imaRed;
+    var btnObrisiPoruku = document.getElementById('btnObrisiPoruku');
+    if (btnObrisiPoruku && !btnObrisiPoruku.hidden) btnObrisiPoruku.disabled = !imaRed;
 
     var btnIzm = document.getElementById('btnOdgovoriIzmjeni');
     /* Vidljivost Izmjeni: isključivo common_prava_crud (vnlhPrimijeniPravaCrud). Omogućen samo uz odabran red. */
@@ -571,6 +582,13 @@
     postFormData(API_BASE + 'Alati_Poruke_Razvoja_Odgovori_CRUD_ukloni_odgovore.php', { id: String(id) }, callback);
   }
 
+  /**
+   * Logičko brisanje cijele poruke (UPDATE brisano=1). Red više nije u listi Alati_Poruke_Razvoja_Odgovori_CRUD_sve.
+   */
+  function obrisiCijeluPorukuRazvoja(id, callback) {
+    postFormData(API_BASE + 'Alati_Poruke_Razvoja_Odgovori_CRUD_brisanje.php', { id: String(id) }, callback);
+  }
+
   var selPredlozak = document.getElementById('odgovori_predlozak_select');
   if (selPredlozak) {
     selPredlozak.addEventListener('change', function () {
@@ -637,6 +655,35 @@
             window.showPorukaModal(p.code, p.replacements);
           }
         }
+      });
+    });
+  }
+
+  var btnObrisiPoruku = document.getElementById('btnObrisiPoruku');
+  if (btnObrisiPoruku) {
+    btnObrisiPoruku.addEventListener('click', function () {
+      if (btnObrisiPoruku.hidden || btnObrisiPoruku.disabled) return;
+      var id = getSelectedRowId();
+      if (id == null) return;
+      btnObrisiPoruku.disabled = true;
+      obrisiCijeluPorukuRazvoja(id, function (res) {
+        btnObrisiPoruku.disabled = false;
+        if (res === 'OK') {
+          if (typeof window.showPorukaModal === 'function') {
+            /* 003: standardna potvrda brisanja sloga (vidi 0-Poruke_Tekstovi.js). */
+            window.showPorukaModal('003', [], function () {
+              odgovoriResetirajPanelNakonSnimanja();
+            });
+          } else {
+            odgovoriResetirajPanelNakonSnimanja();
+          }
+        } else {
+          var p = parseResponseCode(res);
+          if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') {
+            window.showPorukaModal(p.code, p.replacements);
+          }
+        }
+        updateFooterButtons();
       });
     });
   }
