@@ -1,3 +1,6 @@
+# Distribucija (kopije za deployment – sadržaj je već praćen u js/ php/ itd.)
+0-Distribution/
+
 # Backup i arhive (radne kopije, ne trebaju povijest)
 0-Arhiva/
 0-Backup_SQL/
