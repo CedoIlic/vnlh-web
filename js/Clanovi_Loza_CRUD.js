@@ -314,6 +314,8 @@
         if (selectSpol) selectSpol.value = (found.spol === 1 || found.spol === '1') ? '1' : '0';
         var editDatumRodjenja = document.getElementById('edit_datum_rodjenja');
         if (editDatumRodjenja) { editDatumRodjenja.value = found.datum_rodjenja != null ? found.datum_rodjenja : ''; syncDatumEmptyClass(editDatumRodjenja); }
+        var editOibSel = document.getElementById('edit_oib');
+        if (editOibSel) editOibSel.value = found.oib != null ? found.oib : '';
         if (selectPorijeklo) selectPorijeklo.value = (found.porijeklo != null && found.porijeklo !== '') ? String(found.porijeklo) : '';
         populateNaPrijedlog(id);
         if (selectNaPrijedlog) selectNaPrijedlog.value = (found.na_prijedlog != null && found.na_prijedlog !== '') ? String(found.na_prijedlog) : '';
