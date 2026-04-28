@@ -1,0 +1,360 @@
+/* =========================================================
+   Zapisnik_CRUD.css
+   Vanjski panel: min. visina resiza (data-resize-min-px) računa Zapisnik_CRUD.js – zaglavlje, traka kartica,
+   prvi tab (#zapisnikKontrolaTabPanel0: oba ugniježdena panela + 12px ispod), traka u tijelu, podnožje; skrol u .kontrola-tab__tijelo.
+   Traka: 0-Kontrole.js, data-resize-max-vh="full" = bez stropa. Učitati nakon 0-Common, 0-Kontrole, 0-Kontrole_Tab.
+   ========================================================= */
+
+/* Odmak nakon naslova (0-Common) + približna visina retka s h2/verzijom: ostatak = „cijelo vidljivo područje” ispod. */
+body {
+  --zapisnik_crud_ostatak_vh: calc(100dvh - 5rem);
+}
+
+/* Glavni stubac ispod naslova: najmanje preostala visina ekrana (panel unutra puni 3/3 tog prostora u smislu min-visine). */
+.zapisnik-crud__wrap {
+  box-sizing: border-box;
+  min-height: var(--zapisnik_crud_ostatak_vh);
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * Vanjski panel: min-height:0 – u flexu (jedino dijete u .zapisnik-crud__wrap) inače „min-content” = cijela forma
+ * i postavljanje visine s trakom (inline height) ne smanjuje stvaran okvir. Donju granicu trake: data-resize-min-px u HTML
+ * + getLimits (0-Kontrole.js). Sadržaj: skrol u .kontrola-tab__tijelo.
+ */
+.zapisnik-crud__panel.kontrola-panel {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Zaglavlje: Država / Regija / Loža + logo (Clanovi_Loza_CRUD.css – .clanovi-loza-crud__tablica-header*). */
+.zapisnik-crud__panel-header.clanovi-loza-crud__tablica-header {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Tijelo: min-height:0 + overflow da flex lanac smije suziti vanjski panel; skrol u .kontrola-tab__tijelo. */
+.zapisnik-crud__panel .kontrola-panel__body.zapisnik-crud__panel-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/*
+ * Tab: unutar panela s overflow hidden; sadržaj u tijelu (niže) skrola kad je visina ograničena resizeom.
+ * Kartice: mod 1 + orijentacija L (0-Common: --tab_kontrola_kartice_*).
+ */
+.zapisnik-crud__tab.kontrola-tab {
+  --tab_kontrola_kartice_sirina_mod: 1;
+  --tab_kontrola_kartice_tekst_orient: left; /* L */
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+/* Traka s naslovima kartica: ne smije se stisnuti u stubcu taba (istaknuta visina). */
+.zapisnik-crud__tab .kontrola-tab__traka {
+  flex-shrink: 0;
+}
+
+/* Kad je vanjski panel nizak (resize), sadržaj taba skrola ovdje; traka s karticama ostaje vidljiva. */
+.zapisnik-crud__tab .kontrola-tab__tijelo {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Zapisnik: u naslovu aktivne kartice zamjena bg / fg (0-Kontrole_Tab: aktivna = podloga kao tijelo, tekst naslijeđen s trake).
+ * Ovdje: pozadina = bivši prednji plan (boja teksta trake), tekst = bivša pozadina plohe tijela – samo kad kartica nije disabled.
+ */
+.zapisnik-crud__tab .kontrola-tab__kartica--aktivna:not(:disabled) {
+  background: var(--tab_kontrola_header_text);
+  color: var(--tab_kontrola_body_bg);
+  -webkit-text-fill-color: var(--tab_kontrola_body_bg);
+  border-color: var(--tab_kontrola_header_text);
+}
+
+/*
+ * Dok nema odabrane lože (#zapisnikKontrolaTab + klasa .zapisnik-crud__tab--onemogucen u JS):
+ * - cijeli .kontrola-tab: sjena isključena (--tab_kontrola_sjena), okviri/pozadine/boje kao --edit_* / --label_text_disabled (0-Common);
+ * - traka, tijelo, kartice, tekst: isti rječnik boja kao disabled labela;
+ * - ugniježdeni .kontrola-panel (Podaci o radovima): --panel_sjena none, prigušene varijable panela;
+ * - labele i uvodni tekst u tabu: var(--label_text_disabled).
+ */
+/* Varijable koje 0-Kontrole_Tab veže na .kontrola-tab (border, background, box-shadow) – nema sjenke, prigušene boje. */
+.zapisnik-crud__tab.kontrola-tab.zapisnik-crud__tab--onemogucen {
+  --tab_kontrola_sjena: var(--edit_focus_shadow_disabled);
+  --tab_kontrola_border: var(--edit_border_disabled);
+  --tab_kontrola_bg: var(--edit_bg_disabled);
+  --tab_kontrola_header_bg: var(--edit_bg_disabled);
+  --tab_kontrola_header_text: var(--label_text_disabled);
+  --tab_kontrola_header_border_bottom: 1px solid var(--edit_border_disabled);
+  --tab_kontrola_kartica_bg: var(--edit_bg_disabled);
+  --tab_kontrola_body_bg: var(--edit_bg_disabled);
+  --tab_kontrola_body_text: var(--label_text_disabled);
+}
+
+/* Kartice: bez dvostrukog opacity prigušenja; boje kao ostale disabled tipke. */
+.zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .kontrola-tab__kartica:disabled {
+  opacity: 1;
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  cursor: not-allowed;
+}
+
+/* Aktivna kartica u disabled grupi i dalje spaja s tijelom (isti tokeni kao traka i tijelo). */
+.zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .kontrola-tab__kartica--aktivna:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+}
+
+/* Ugniježdeni paneli (Opći podaci, Ovjera zapisnika) kad nema lože: varijable panela kao disabled. */
+.zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .zapisnik-crud__podpanel-opci-radovi.kontrola-panel,
+.zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .zapisnik-crud__podpanel-ovjera.kontrola-panel {
+  --panel_sjena: var(--edit_focus_shadow_disabled);
+  --panel_border: var(--edit_border_disabled);
+  --panel_bg: var(--edit_bg_disabled);
+  --panel_header_bg: var(--edit_bg_disabled);
+  --panel_header_text: var(--label_text_disabled);
+  --panel_header_border_bottom: 1px solid var(--edit_border_disabled);
+  --panel_body_bg: var(--edit_bg_disabled);
+}
+
+.zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .kontrola-tab__tijelo .kontrola-labela {
+  color: var(--label_text_disabled);
+}
+
+.zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .zapisnik-crud__uvod {
+  color: var(--label_text_disabled);
+}
+
+/* U tijelu taba: aktivni panel raste; Zapisnik želi min-content. */
+.zapisnik-crud__tab .kontrola-tab__tijelo {
+  min-height: min-content;
+}
+
+.zapisnik-crud__tab .kontrola-tab__panel:not([hidden]) {
+  flex: 1 1 auto;
+  min-height: min-content;
+}
+/* 12px ispod zadnjeg sadržaja (ugniježdenih panela) u tabu – uključeno u proračun min. visine vanjskog panela (Zapisnik_CRUD.js). */
+.zapisnik-crud__tab .kontrola-tab__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding-bottom: 12px;
+  box-sizing: border-box;
+}
+
+/* Ugniježdeni paneli (Opći podaci, Ovjera) u tabu ne smiju se stisnuti ispod prirodne visine sadržaja. */
+.zapisnik-crud__tab .kontrola-tab__panel .zapisnik-crud__podpanel--fiksna.kontrola-panel {
+  flex-shrink: 0;
+}
+
+.zapisnik-crud__uvod {
+  color: var(--tab_kontrola_body_text);
+  font: inherit;
+}
+
+/* Ugniježdeni panel u tabu: fiksna visina sadržaja, bez resize trake. */
+.zapisnik-crud__podpanel--fiksna.kontrola-panel {
+  resize: none;
+}
+.zapisnik-crud__podpanel-opci-radovi.kontrola-panel,
+.zapisnik-crud__podpanel-ovjera.kontrola-panel {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* Odmak ispod panela „Opći podaci o radovima” (sličan mb-3 / razmak između blokova). */
+.zapisnik-crud__podpanel-ispod.kontrola-panel {
+  margin-top: 1rem;
+}
+
+/*
+ * Opći podaci: grid 2×2. Stupci 54fr | 71fr (≈ 43% | 57%; lijevi dodatno sužen ~10% u odnosu na 12|13).
+ * .polje-stog = label iznad kontrole.
+ */
+.zapisnik-crud__opci-radovi-wrap {
+  /* Jedna vrijednost za redove: isti razmak ispod cijele ćelije / između labela i selecta u .polje-tip (kroz var). */
+  --zapisnik_opci_red_razmak: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 54fr) minmax(0, 71fr);
+  column-gap: 1.5rem;
+  row-gap: var(--zapisnik_opci_red_razmak);
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* Zajednički blok: labela gore, kontrola dolje (ne koristiti crud__edit-row – inače labela i controla u retku). */
+.zapisnik-crud__polje-stog {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* Datum: input ograničen u širinu unutar lijevog stupca. */
+.zapisnik-crud__polje-datum .kontrola-edit[type="date"] {
+  flex: 0 1 auto;
+  max-width: 12.5rem;
+  min-width: 0;
+  align-self: flex-start;
+}
+.zapisnik-crud__polje-stupanj .zapisnik-crud__select-stupanj-wrap,
+.zapisnik-crud__polje-tip .zapisnik-crud__select-tip-wrap {
+  width: 100%;
+  min-width: 0;
+}
+/* Tip: dva bloka (gornji = label+select, dolje = ellipsis) – vertikalni razmak = row-gap cijele mreže. */
+.zapisnik-crud__polje-tip.zapisnik-crud__polje-stog {
+  gap: var(--zapisnik_opci_red_razmak, 0.75rem);
+}
+/* U gornjem bloku isti label–kontrola razmak kao u ostalim .polje-stog (0.25rem). */
+.zapisnik-crud__polje-tip-gornji {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* Ispod selecta Tip: ellipsis (Heroicons outline mask u 0-Kontrole), cijeli red poravnat udesno. */
+.zapisnik-crud__tip-ellipsis-red {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* Tipka: isti vizualni jezik kao .clanovi-crud__ellipsis-btn (Zapisnik ne učitava Clanovi_CRUD.css). */
+.zapisnik-crud__ellipsis-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  color: var(--label_text, inherit);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2, 0 1px 2px rgba(0, 0, 0, 0.06));
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.zapisnik-crud__ellipsis-btn:hover:not(:disabled) {
+  background: var(--c-gray-100, #eee);
+  box-shadow: var(--kontrole_sjena_slaba_1, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+.zapisnik-crud__ellipsis-btn:active:not(:disabled) {
+  box-shadow: inset 0 2px 4px var(--c-shadow-30, rgba(0, 0, 0, 0.12));
+}
+.zapisnik-crud__ellipsis-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+.zapisnik-crud__ellipsis-btn .kontrola-icon--ellipsis-horizontal {
+  width: 1.25rem;
+  height: 1.25rem;
+  mask-size: 1.25rem 1.25rem;
+  -webkit-mask-size: 1.25rem 1.25rem;
+}
+/* Napomena: puna širina stupca; nema vert. resizea (global .kontrola-napomena). */
+.zapisnik-crud__polje-loze .zapisnik-crud__textarea-loza.kontrola-napomena {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  resize: none;
+  overflow-y: auto;
+}
+
+/* Prazan datum: ista boja kao prazan custom select (.kontrola-select--placeholder → --select_placeholder). */
+#zapisnik_datum_radova.date-empty {
+  color: var(--select_placeholder);
+}
+#zapisnik_datum_radova.date-empty::-webkit-datetime-edit {
+  color: var(--select_placeholder);
+}
+
+/*
+ * Panel „Ovjera zapisnika”: dvije kolone; okomita linija = ista debljina i boja kao vanjski okvir panela (--panel_border_w, --panel_border).
+ */
+.zapisnik-crud__ovjera-dvije-kolone {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.zapisnik-crud__ovjera-kol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-right: 0.75rem;
+}
+/* Desna kolona: graničnik u sredini (boja/debljina kao okvir panela). */
+.zapisnik-crud__ovjera-kol--desno {
+  border-left: var(--panel_border_w) solid var(--panel_border);
+  padding-left: 0.75rem;
+  padding-right: 0;
+}
+.zapisnik-crud__ovjera-kol-naslov {
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--tab_kontrola_body_text, var(--label_text));
+  margin: 0 0 0.125rem 0;
+}
+/* Red: čekbox + labela (poravnanje kao .loze-crud__aktivnost-wrap). */
+.zapisnik-crud__ovjera-cb-red {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.zapisnik-crud__ovjera-cb-red .kontrola-checkbox {
+  flex-shrink: 0;
+}
+.zapisnik-crud__ovjera-cb-red .kontrola-labela {
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .zapisnik-crud__ovjera-dvije-kolone {
+    grid-template-columns: 1fr;
+  }
+  .zapisnik-crud__ovjera-kol {
+    padding-right: 0;
+  }
+  .zapisnik-crud__ovjera-kol--desno {
+    border-left: none;
+    border-top: var(--panel_border_w) solid var(--panel_border);
+    padding-left: 0;
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+  }
+}
