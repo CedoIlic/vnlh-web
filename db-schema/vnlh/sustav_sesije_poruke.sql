@@ -1,0 +1,23 @@
+CREATE TABLE `sustav_sesije_poruke` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'PK – jedinstveni identifikator poruke',
+  `id_razgovor` int(11) NOT NULL DEFAULT 0 COMMENT 'FK razgovor – grupira poruke u tijek komunikacije',
+  `id_posiljatelj` int(11) NOT NULL COMMENT 'FK korisnik – tko šalje poruku',
+  `id_primatelj` int(11) NOT NULL COMMENT 'FK korisnik – tko prima poruku',
+  `session_id_posiljatelj` varchar(128) DEFAULT NULL COMMENT 'Sesija iz koje je poruka poslana (korisnik može imati više sesija)',
+  `session_id_primatelj` varchar(128) DEFAULT NULL COMMENT 'Sesija kojoj je poruka usmjerena (točna sesija primatelja)',
+  `poruka` text NOT NULL COMMENT 'Tekst poruke – sadržaj vidljiv u prozoru razgovora',
+  `vrijeme_slanja` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Kada je poruka poslana – za kronološki prikaz',
+  `vrijeme_isporuke` datetime DEFAULT NULL COMMENT 'Kada je poruka dostavljena klijentu primatelja',
+  `vrijeme_procitano` datetime DEFAULT NULL COMMENT 'Kada je primatelj otvorio/pročitao poruku',
+  `status` enum('Novo','Isporučeno','Pročitano') NOT NULL DEFAULT 'Novo' COMMENT 'Stanje poruke u životnom ciklusu dostave: Novo | Isporučeno | Pročitano',
+  `tip` enum('Poruka','Poruka razvoju','Chat poruka') NOT NULL DEFAULT 'Poruka' COMMENT 'Vrsta poruke: Poruka – interna između korisnika | Poruka razvoju – bug/prijedlog timu | Chat poruka – real-time chat',
+  `brisano` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Logičko brisanje: 0 = poruka je aktivna (lista razgovora, dohvat niti, broj nepročitanih). 1 = korisnik je u aplikaciji obrisao cijelu nit s tim sugovornikom (API 0-Poruke_brisi postavlja 1; red ostaje u bazi). Upiti i triggeri za nepročitane uzimaju samo redove uz brisano=0.',
+  PRIMARY KEY (`id`),
+  KEY `ix_sustav_sesije_poruke_id_razgovor` (`id_razgovor`),
+  KEY `ix_sustav_sesije_poruke_id_posiljatelj` (`id_posiljatelj`),
+  KEY `ix_sustav_sesije_poruke_id_primatelj` (`id_primatelj`),
+  KEY `ix_sustav_sesije_poruke_status` (`status`),
+  KEY `ix_sustav_sesije_poruke_vrijeme_slanja` (`vrijeme_slanja`),
+  KEY `ix_sustav_sesije_poruke_primatelj_status` (`id_primatelj`,`status`),
+  KEY `ix_sustav_sesije_poruke_session_primatelj` (`session_id_primatelj`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

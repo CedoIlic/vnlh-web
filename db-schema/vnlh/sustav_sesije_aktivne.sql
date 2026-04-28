@@ -1,0 +1,23 @@
+CREATE TABLE `sustav_sesije_aktivne` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Jedinstveni identifikator sloga; interno razlikovanje zapisa.',
+  `id_korisnik` int(11) NOT NULL COMMENT 'Identifikator korisnika kojem sesija pripada; koristi se za dohvat sesija korisnika.',
+  `session_id` varchar(128) NOT NULL COMMENT 'Jedinstveni identifikator sesije; služi za identifikaciju konkretnog login-a/browsera/uređaja.',
+  `login_vrijeme` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Vrijeme otvaranja sesije (login); služi za evidenciju trajanja sesije.',
+  `zadnja_aktivnost` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Vrijeme zadnje aktivnosti; ažurira se pri radu i koristi za timeout.',
+  `otvorena_stranica` varchar(255) DEFAULT NULL COMMENT 'Trenutno otvorena forma, modul ili ruta; informacija gdje se korisnik nalazi.',
+  `povijest_sesije` text DEFAULT NULL COMMENT 'Pamti povijest korištenih formi unutar sesije; služi za pregled kretanja korisnika kroz aplikaciju i dijagnostiku.',
+  `ip_adresa` varchar(45) DEFAULT NULL COMMENT 'IP adresa korisnika; koristi se za sigurnost i dijagnostiku.',
+  `user_agent` varchar(1024) DEFAULT NULL COMMENT 'Podaci o pregledniku ili uređaju; služe za tehničku evidenciju i debug.',
+  `status` enum('aktivna','timeout','logout') NOT NULL DEFAULT 'aktivna' COMMENT 'Stanje sesije: aktivna, timeout ili logout; sustav postavlja status i job briše istekle slogove.',
+  `ima_neprocitanih` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Flag nepročitanih poruka (0=nema, 1=ima). Postavlja 0-Poruke_posalji (1 pri slanju), 0-Poruke_poruke i 0-Poruke_brisi (0 kad nema nepročitanih), Login (inicijalno). Polling čita samo ovaj flag umjesto COUNT(*) na tablici poruka.',
+  `ima_chat_neprocitanih` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = postoji nepročitana Chat poruka (tip=Chat poruka, status=Novo, brisano=0) za id_korisnik ove sesije kao primatelja.',
+  `chat_modal_otvoren` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = chat modal otvoren (poruke_chat_modal_status.php akcija=otvori). 0 = zatvoreno (zatvori ili slanje koje zatvara modal).',
+  `chat_modal_sugovornik_id` int(11) NOT NULL DEFAULT 0 COMMENT 'sustav_korisnici.id_korisnik sugovornika u otvorenom chat modalu; 0 ako modal nije otvoren.',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_sustav_sesije_aktivne_session_id` (`session_id`),
+  KEY `ix_sustav_sesije_aktivne_id_korisnik` (`id_korisnik`),
+  KEY `ix_sustav_sesije_aktivne_zadnja_aktivnost` (`zadnja_aktivnost`),
+  KEY `ix_sustav_sesije_aktivne_status` (`status`),
+  KEY `ix_sustav_sesije_aktivne_korisnik_status` (`id_korisnik`,`status`),
+  CONSTRAINT `fk_ssa_korisnik` FOREIGN KEY (`id_korisnik`) REFERENCES `sustav_korisnici_login` (`id_korisnik`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

@@ -1,0 +1,10 @@
+localbdefault-character-set=utf8mb4
+default-collation=utf8mb4_general_ci
+generator=skeema:1.13.2-community
+schema=vnlh
+
+[production]
+flavor=mariadb:10.4
+host=172.26.0.1
+port=3306
+user=skeema
