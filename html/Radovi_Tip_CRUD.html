@@ -1,0 +1,62 @@
+<!-- =========================================================
+     Radovi_Tip_CRUD.html
+     CRUD za tablicu radovi_tip: Redosljed, Naziv u tablici; edit: Naziv, Redosljed.
+     Skripte: 0-Kontrole.js, 0-Common.js, 0-Poruke_Tekstovi.js, Radovi_Tip_CRUD.js
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tipovi radova</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/Radovi_Tip_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Tipovi radova</h2></div>
+<div class="page-container">
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body radovi-tip-crud__edit-body">
+            <div class="radovi-tip-crud__edit-inner" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem;">
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 0; min-width: 0;">
+                        <label class="kontrola-labela mb-0" for="edit_naziv">Naziv</label>
+                        <div class="kontrola-edit-delete">
+                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv tipa rada..." maxlength="50">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; flex: 0 0 auto; width: 5rem;">
+                        <label class="kontrola-labela mb-0" for="edit_redosljed">Redosljed</label>
+                        <input id="edit_redosljed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="1–99" aria-label="Redosljed 1 do 99" style="text-align: right;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer radovi-tip-crud__edit-footer">
+            <div class="radovi-tip-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="radovi-tip-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/Radovi_Tip_CRUD.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>

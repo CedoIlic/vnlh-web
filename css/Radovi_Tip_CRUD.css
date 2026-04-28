@@ -1,0 +1,35 @@
+/* Radovi_Tip_CRUD – Tipovi radova; uzorak layouta: Loze_Tip_CRUD (naziv + redosljed 5rem). */
+
+/* Stupac R. (redosljed): fiksno 100px — uz table-layout:fixed druga kolona (width:0 u JS) uzima ostatak. */
+#tablicaContainer .kontrola-tablica__header table > colgroup > col:first-child,
+#tablicaContainer .kontrola-tablica__scroll table > colgroup > col:first-child {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+#tablicaContainer .kontrola-tablica__header thead tr th:first-child,
+#tablicaContainer .kontrola-tablica__scroll tbody tr td:first-child {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  box-sizing: border-box;
+}
+
+@media (max-width: var(--page_breakpoint_narrow, 640px)) {
+  .radovi-tip-crud__edit-body .radovi-tip-crud__edit-inner > div {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  .radovi-tip-crud__edit-body .radovi-tip-crud__edit-inner > div > div {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+  .radovi-tip-crud__edit-body .radovi-tip-crud__edit-inner > div > div:has(#edit_redosljed) {
+    flex: 0 0 auto;
+    width: 5rem;
+    max-width: none;
+    align-self: flex-start;
+  }
+}
