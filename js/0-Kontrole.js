@@ -2272,7 +2272,8 @@
      * ne nativni resize kuta; sync-group još i usklađuje visinu više panela pri dragu.
      */
     function initPanelResizeBar(scope) {
-      var panels = (scope || document).querySelectorAll('.kontrola-panel--resize-y .kontrola-panel__body, .kontrola-panel--resize-both .kontrola-panel__body');
+      /* Samo izravno dijete korena s --resize-y / --resize-both: ugniježdeni .kontrola-panel (npr. Zapisnik_CRUD) ne smije dobiti vlastitu traku. */
+      var panels = (scope || document).querySelectorAll('.kontrola-panel--resize-y > .kontrola-panel__body, .kontrola-panel--resize-both > .kontrola-panel__body');
       panels.forEach(function (body) {
         if (body.querySelector('.kontrola-panel__resize-bar')) return;
         var panel = body.closest('.kontrola-panel');
@@ -2308,7 +2309,8 @@
             var csEl = getComputedStyle(panEl).minHeight;
             if (csEl && csEl !== 'none' && csEl !== 'auto') {
               var pxEl = parseFloat(csEl);
-              if (!isNaN(pxEl) && pxEl > 0) panelMin = Math.round(pxEl);
+              /* 0px (npr. privremeno u Zapisnik_CRUD) – ne vraćati zastarjeli pod; px>0 je kriv za 0. */
+              if (!isNaN(pxEl) && isFinite(pxEl)) panelMin = pxEl <= 0 ? 120 : Math.round(pxEl);
             }
           }
           var vhEl = typeof window !== 'undefined' && window.innerHeight ? window.innerHeight : 800;
@@ -2329,11 +2331,18 @@
           return { panelMin: panelMin, maxH: maxHEl };
         }
         function getLimitsForPanelResize() {
-          var panelMin = minH;
+          /* Donja granica s elementa; ne koristiti closure minH (inicijalno min+traka) kad je min-height 0px. */
+          var panelMin = 120;
           var cs = typeof getComputedStyle !== 'undefined' && panel.ownerDocument && getComputedStyle(panel).minHeight;
           if (cs && cs !== 'none' && cs !== 'auto') {
             var px = parseFloat(cs);
-            if (!isNaN(px) && px > 0) panelMin = Math.round(px);
+            if (!isNaN(px) && isFinite(px)) panelMin = px <= 0 ? 120 : Math.round(px);
+          }
+          /* npr. Zapisnik: min-height:0 (flex) + donja točka u px; inače flex min-content = cijela forma i traka ne smanjuje. */
+          var dMinAttr = panel.getAttribute && panel.getAttribute('data-resize-min-px');
+          if (dMinAttr != null && String(dMinAttr).replace(/^\s+|\s+$/g, '') !== '') {
+            var dPx2 = parseInt(String(dMinAttr).trim(), 10);
+            if (!isNaN(dPx2) && dPx2 > 0) panelMin = Math.max(panelMin, dPx2);
           }
           var vhNow = typeof window !== 'undefined' && window.innerHeight ? window.innerHeight : 800;
           var maxH = Math.round(vhNow * 0.9);
@@ -2378,14 +2387,34 @@
             typeof eff.maxH === 'number' && isFinite(eff.maxH)
               ? Math.max(eff.panelMin, Math.min(eff.maxH, newH))
               : Math.max(eff.panelMin, newH);
+          /**
+           * U stubcu (flex-direction: column) flex-stavka s flex-grow: 1 nakon pomicanja učita preostali prostor
+           * u roditelja i ponašanje je kao da inline visina nije pogođena (npr. Zapisnik, jedno dijete u .zapisnik-crud__wrap).
+           * 0 0 <target> fiksira glavnu os kako resizana visina stvarno ostane; u redu (row) ovo ne smijemo
+           * postaviti – tu bi flex-basis bio širina, ne visina.
+           */
+          function setPanelResizedSize(el) {
+            el.style.height = target + 'px';
+            var pr = el.parentElement;
+            if (pr && pr.nodeType === 1 && typeof getComputedStyle !== 'undefined') {
+              var pds = getComputedStyle(pr);
+              if (pds && pds.display === 'flex' && (pds.flexDirection === 'column' || pds.flexDirection === 'column-reverse')) {
+                el.style.flex = '0 0 ' + target + 'px';
+              } else {
+                el.style.flex = '';
+              }
+            } else {
+              el.style.flex = '';
+            }
+          }
           var syncGroup = panel.getAttribute && panel.getAttribute('data-resize-sync-group');
           if (syncGroup) {
             var allSync = (panel.ownerDocument || document).querySelectorAll('.kontrola-panel[data-resize-sync-group="' + syncGroup + '"]');
             for (var i = 0; i < allSync.length; i++) {
-              allSync[i].style.height = target + 'px';
+              setPanelResizedSize(allSync[i]);
             }
           } else {
-            panel.style.height = target + 'px';
+            setPanelResizedSize(panel);
           }
         }
         function clientYFromTouchLike(ev) {

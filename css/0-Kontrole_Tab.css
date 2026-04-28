@@ -1,0 +1,121 @@
+/* =========================================================
+   0-Kontrole_Tab.css
+   Izgled tab kontrole (traka kartica + tijelo + opcijski podnožje).
+   Učitati nakon Bootstrapa i 0-Common.css (sadrži tokene --tab_kontrola_*).
+   Prvi korisnik / uključivanje: Zapisnik_CRUD (kad bude dodan).
+   ========================================================= */
+
+/* --- Blok: korijen tab kontrole --- */
+.kontrola-tab {
+  display: flex;
+  flex-direction: column;                               /* vertikalni tok: traka, tijelo, podnožje */
+  box-sizing: border-box;
+  border: var(--tab_kontrola_border_w) solid var(--tab_kontrola_border);  /* okvir, debljina iz tokena u px */
+  border-radius: var(--tab_kontrola_radius);             /* zaobljenje, px */
+  background: var(--tab_kontrola_bg);                     /* pozadina kontejnera, boja iz tokena */
+  box-shadow: var(--tab_kontrola_sjena);                  /* sjena, box-shadow iz tokena */
+  overflow: hidden;                                     /* reže podlogu djece uz zaobljenje; inače tijelo/kartice „cure” u kutovima */
+  isolation: isolate;                                    /* jasniji painting order naspram sjenke/susjeda */
+}
+
+/* --- Blok: traka s karticama (logički „header”) --- */
+.kontrola-tab__traka {
+  display: flex;
+  flex-wrap: wrap;                                       /* mod 0: prelom; mod 1: .kontrola-tab--kartice-sirina-proporcija postavlja nowrap */
+  align-items: flex-start;                               /* flex-end + veliki min-height radilo je prazan prostor iznad naslova na karticama */
+  gap: 0.25rem;                                          /* razmak između kartica, rem */
+  /* Bez paddinga ispod reda kartica (donji odmak 0) – karte „sjede” na border-bottom; gornji i bokovi prema tokenu. */
+  padding: var(--tab_kontrola_header_padding_y) var(--tab_kontrola_header_padding_x) 0;
+  min-height: 0;                                         /* visina = sadržaj + padding; token --tab_kontrola_header_min_height ostaje u 0-Common za druge slučajeve */
+  background: var(--tab_kontrola_header_bg);             /* podloga trake, boja */
+  color: var(--tab_kontrola_header_text);                /* boja teksta na traci */
+  font-family: var(--tab_kontrola_header_font_family);
+  font-size: var(--tab_kontrola_header_font_size);
+  font-weight: var(--tab_kontrola_header_font_weight);
+  border-bottom: var(--tab_kontrola_header_border_bottom); /* 1px solid, boja iz tokena */
+  box-sizing: border-box;
+  /* Unutar zaobljenog roditelja: gornji unutarnji rub usklađen s --tab_kontrola_radius (1px unutar vanjskog brida). */
+  border-top-left-radius: calc(var(--tab_kontrola_radius) - var(--tab_kontrola_border_w));
+  border-top-right-radius: calc(var(--tab_kontrola_radius) - var(--tab_kontrola_border_w));
+}
+
+/* --- Blok: pojedina kartica (tab) --- */
+.kontrola-tab__kartica {
+  margin: 0;
+  /* Mod 0 (zadano): širina = naslov. Mod 1: vidi .kontrola-tab--kartice-sirina-proporcija ispod. */
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 0.32rem 0.72rem;                              /* unutarnji razmak kartice, rem */
+  border: var(--tab_kontrola_border_w) solid var(--tab_kontrola_border);  /* okvir kartice, px + boja */
+  border-bottom: none;
+  border-radius: var(--tab_kontrola_radius) var(--tab_kontrola_radius) 0 0;  /* gornji kutovi, px */
+  background: var(--tab_kontrola_kartica_bg);            /* pozadina kartice, boja iz tokena */
+  background-clip: padding-box;                          /* zaokružena podloga ne „curi” ispod bordera */
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  box-sizing: border-box;
+  text-align: var(--tab_kontrola_kartice_tekst_orient, left); /* 0-Common: left | center | right (L, C, R) */
+  appearance: none;                                      /* inače preglednički gumb (posebno WebKit) kvadratni kutovi */
+  -webkit-appearance: none;
+  overflow: hidden;                                      /* podloga slijedi border-radius (inače ostaju oštri kutovi) */
+}
+
+/*
+ * Mod 1: --tab_kontrola_kartice_sirina_mod: 1 u tokenu; na istom .kontrola-tab obavezno klasa
+ * .kontrola-tab--kartice-sirina-proporcija (CSS ne može granati po broju toka bez ove klase / style querya).
+ * Kartice jednako dijele širinu trake; dugački naslovi mogu se prelomiti unutar ćelije.
+ */
+.kontrola-tab--kartice-sirina-proporcija .kontrola-tab__traka {
+  flex-wrap: nowrap;
+}
+.kontrola-tab--kartice-sirina-proporcija .kontrola-tab__kartica {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.kontrola-tab__kartica--aktivna {
+  background: var(--tab_kontrola_body_bg);               /* aktivna kartica u boji tijela, boja iz tokena */
+  font-weight: var(--tab_kontrola_header_font_weight);
+}
+
+/* --- Blok: tijelo (sadržaj aktivnog taba) --- */
+.kontrola-tab__tijelo {
+  flex: 1 1 auto;                                        /* zauzima preostali prostor u stubcu, broj bez dim. (flex-grow/shrink) */
+  display: flex;                                         /* stubac – aktivni .kontrola-tab__panel puni visinu (npr. Zapisnik_CRUD) */
+  flex-direction: column;
+  min-height: 0;                                         /* u flex lancu: omogućuje ugniježdeni overflow kad je namjena; Zapisnik može overridati */
+  /* Gornji i bočni padding isti (--tab_kontrola_body_padding_x); donji --tab_kontrola_body_padding_y. */
+  padding: var(--tab_kontrola_body_padding_x) var(--tab_kontrola_body_padding_x) var(--tab_kontrola_body_padding_y) var(--tab_kontrola_body_padding_x);
+  background: var(--tab_kontrola_body_bg);
+  background-clip: padding-box;
+  color: var(--tab_kontrola_body_text);                    /* boja teksta sadržaja, var kroz --tab_kontrola_body_text */
+  box-sizing: border-box;
+}
+/* Donji kutovi samo na zadnjem sadržajnom bloku (ako slijedi podnožje, ono preuzima zaokruživanje). */
+.kontrola-tab__tijelo:last-child {
+  border-bottom-left-radius: calc(var(--tab_kontrola_radius) - var(--tab_kontrola_border_w));
+  border-bottom-right-radius: calc(var(--tab_kontrola_radius) - var(--tab_kontrola_border_w));
+}
+
+/* Jedan ili više panela (samo jedan vidljiv; ostatak [hidden] ili CSS). */
+.kontrola-tab__panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  box-sizing: border-box;
+}
+.kontrola-tab__panel[hidden] {
+  display: none !important;                               /* nije aktivno – ne učestvuje u layoutu; !important pobjeđuje [hidden] display */
+}
+
+/* --- Blok: podnožje (opcijski) --- */
+.kontrola-tab__podnozje {
+  padding: var(--tab_kontrola_footer_padding_y) var(--tab_kontrola_footer_padding_x);  /* px */
+  background: var(--tab_kontrola_footer_bg);
+  color: var(--tab_kontrola_footer_text);
+  border-top: var(--tab_kontrola_footer_border_top);      /* 1px solid, boja iz tokena */
+  box-sizing: border-box;
+  border-bottom-left-radius: calc(var(--tab_kontrola_radius) - var(--tab_kontrola_border_w));
+  border-bottom-right-radius: calc(var(--tab_kontrola_radius) - var(--tab_kontrola_border_w));
+}

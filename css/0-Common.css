@@ -327,6 +327,74 @@
   --panel_resize_bar_icon_height: 4px;                                /* Visina bloka crtica */
 
   /* =========================================================
+     GRUPA: TAB KONTROLA (UI tabovi; prvi korisnik Zapisnik_CRUD)
+     Neovisno o PANEL tokenima (bez var(--panel_*)); iste vrijednosti i primitivi.
+     Neaktivni parovi ispod u zasebnom bloku komentara (višeredno, buffer, resize traka).
+     ========================================================= */
+  /* --- Opće / okvir --- */
+  --tab_kontrola_border_w: 1px;                                       /* okvir, debljina u px */
+  --tab_kontrola_border: var(--c-gray-300);                             /* boja okvira, var(--c-*) */
+  --tab_kontrola_radius: 12px;                                        /* zaobljenje kutova, duljina u px */
+  --tab_kontrola_sjena: var(--kontrole_sjena_tablica);                 /* box-shadow (cijeli sastav), isti kao panel */
+  --tab_kontrola_bg: var(--c-white);                                    /* pozadina cijelog bloka taba, boja var(--c-*) */
+  /* --- Zaglavlje trake tabova --- */
+  --tab_kontrola_header_bg: var(--c-gray-100);                          /* podloga trake s karticama, boja var(--c-*) */
+  --tab_kontrola_header_text: var(--text);                              /* tekst na karticama, boja var(--text) */
+  --tab_kontrola_header_font_family: var(--font_family);               /* font, var(--font_family) */
+  --tab_kontrola_header_font_size: var(--font_size);                   /* veličina u rem/px preko --font_size */
+  --tab_kontrola_header_font_weight: 700;                              /* težina fonta, broj (CSS 100–900) */
+  --tab_kontrola_header_padding_y: 12px;                              /* okomiti padding trake (gore; dolje 0 u 0-Kontrole_Tab), px */
+  --tab_kontrola_header_padding_x: 18px;                             /* vodoravni padding trake, px (malo više od 16 radi čitljivosti) */
+  --tab_kontrola_header_border_bottom: 1px solid var(--c-gray-300);  /* linija ispod trake; 1px + boja var(--c-*) */
+  /* Minimalna visina za posebne slučajeve / override; traka u 0-Kontrole_Tab veličine je sadržaja (kartice + padding), ne ovaj iznos. */
+  --tab_kontrola_header_min_height: calc(var(--tab_kontrola_header_padding_y) + 2rem);
+  /* --- Tijelo sadržaja (aktivni tab) --- */
+  --tab_kontrola_body_bg: var(--c-white);                              /* pozadina područja sadržaja, boja var(--c-*) */
+  --tab_kontrola_body_text: var(--text);                              /* boja teksta sadržaja taba, var(--text) */
+  --tab_kontrola_body_padding_y: 16px;                                 /* padding tijela, okomito, px */
+  --tab_kontrola_body_padding_x: 16px;                                /* padding tijela, vodoravno, px */
+  /* --- Podnožje (opcijski) --- */
+  --tab_kontrola_footer_bg: var(--c-gray-50);                          /* podnožje, boja var(--c-*) */
+  --tab_kontrola_footer_text: var(--text);                             /* tekst u podnožju, boja var(--text) */
+  --tab_kontrola_footer_padding_y: 12px;                               /* padding podnožja, okomito, px */
+  --tab_kontrola_footer_padding_x: 16px;                                /* padding podnožja, vodoravno, px */
+  --tab_kontrola_footer_border_top: 1px solid var(--c-gray-300);       /* gornja linija; 1px + boja var(--c-*) */
+  /* --- Kartice u traci: širina (mod) + orijentacija naslova u prostoru kartice --- */
+  /*
+   * --tab_kontrola_kartice_sirina_mod: 0 | 1
+   * 0 = svaka kartica zauzima širinu svog naslova (intrinzično, min-content); traka se može prelomiti (wrap).
+   * 1 = kartice dijele cijelu širinu trake (jednake proporcionalne flex kolone, jedan red: nowrap na širokom traku).
+   * U HTML-u: za mod 1 na korijen .kontrola-tab dodati modifikator .kontrola-tab--kartice-sirina-proporcija (0-Kontrole_Tab.css);
+   * token ostaje izvor istine u dokumentaciji i za budući JS; mora biti usklađen s klasom.
+   */
+  --tab_kontrola_kartice_sirina_mod: 0;
+  /*
+   * --tab_kontrola_kartice_tekst_orient: orijentacija naslova unutar prostora kartice (isti prostor u oba moda).
+   * Vrijednosti: left | center | right (L = lijevo, C = sredina, R = desno). Primjena: text-align na .kontrola-tab__kartica.
+   */
+  --tab_kontrola_kartice_tekst_orient: left;
+  /* --- Kartica (pojedinačni tab u traci) --- */
+  --tab_kontrola_kartica_bg: var(--c-gray-100);                        /* pozadina kartice, boja var(--c-*) (usklađeno s trakom) */
+  /*
+  --tab_kontrola_header_min_height_two_rows: calc(2 * var(--tab_kontrola_header_padding_y) + 2 * var(--edit_height) + 0.5rem);
+  --tab_kontrola_header_min_height_three_rows: calc(2 * var(--tab_kontrola_header_padding_y) + 3 * var(--edit_height) + 1rem);
+  --tab_kontrola_header_min_height_four_rows: calc(2 * var(--tab_kontrola_header_padding_y) + 4 * var(--edit_height) + 1.5rem);
+  --tab_kontrola_header_min_height_four_rows_stacked: calc(2 * var(--tab_kontrola_header_padding_y) + 8 * var(--edit_height) + 3rem);
+  neaktivno: višeredna traka (analog PANEL zaglavlja); tab u prvom koraku jednoredan; rem u calc za razmake */
+  /*
+  --tab_kontrola_min_height_buffer: 74px;
+  neaktivno: buffer min-height (panel s resize+footer); tab kontrola nema resize u prvom koraku; vrijednost u px */
+  /*
+  --tab_kontrola_resize_bar_height: 28px;
+  --tab_kontrola_resize_bar_bg: var(--c-transparent);
+  --tab_kontrola_resize_bar_border_top: 1px solid var(--c-transparent);
+  --tab_kontrola_resize_bar_color: var(--c-gray-300);
+  --tab_kontrola_resize_bar_color_hover: var(--c-gray-700);
+  --tab_kontrola_resize_bar_icon_width: 24px;
+  --tab_kontrola_resize_bar_icon_height: 4px;
+  neaktivno: resize traka (analog PANEL); drag; px i boje var(--c-*) / transparent token */
+
+  /* =========================================================
      GRUPA: MODAL WINDOW (prozor za obavijesti / greške)
      Overlay + panel (dialog). Tijelo: lijevo slika+podloga, desno poruka. Stanja: ok, error, forbidden, information, warning.
      ========================================================= */
