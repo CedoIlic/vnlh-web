@@ -80,6 +80,8 @@ function vnlh_establish_login_session(int $idKorisnik, int $idDuznosnik): void {
     session_regenerate_id(true);
     $_SESSION['id_korisnik'] = $idKorisnik;
     $_SESSION['id_duznosnik'] = $idDuznosnik;
+    /* Popunjava se iz duznosnici.razina kad je poznata dužnost (vnlh_session_postavi_razinu_za_duznosnika). */
+    $_SESSION['id_duznosnik_razina'] = 0;
     $_SESSION['last_activity'] = time();
     $_SESSION['client_ip'] = vnlh_client_ip();
     vnlh_refresh_session_cookie();

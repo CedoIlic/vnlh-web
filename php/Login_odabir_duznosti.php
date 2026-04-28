@@ -89,6 +89,7 @@ if ($trebaPuniInsert) {
     $_SESSION['vnlh_meni_dopustene'] = meni_za_sesiju_ucitaj_dopustene($mysqli, $idDuznosnik);
     require_once __DIR__ . '/poruke_chat_sesija.php';
     $_SESSION['chat_dozvoljen'] = poruke_chat_dozvoljen_za_korisnika($mysqli, $idKorisnik);
+    vnlh_session_postavi_razinu_za_duznosnika($mysqli, $idDuznosnik);
 }
 
 $mysqli->close();

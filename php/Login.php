@@ -1,6 +1,7 @@
 <?php
 // Login.php – GET: prijavna forma (html/Login.html). POST (login, pass): API – provjera sustav_korisnici_login + dodjele u sustav_korisnici;
-// uspjeh: sesija id_korisnik, id_duznosnik (ili 0 dok se ne odabere dužnost), vnlh_meni_dopustene kad je poznata dužnost.
+// uspjeh: sesija id_korisnik, id_duznosnik (ili 0 dok se ne odabere dužnost), id_duznosnik_razina (iz duznosnici.razina),
+// vnlh_meni_dopustene kad je poznata dužnost.
 // Izlaz POST: OK | PASS_CHANGE | MULTI_DUTY + JSON u drugom retku | 026 | prazno (neuspjeh)
 // pass_status: NULL = odbij; 0 = normalna; 1 = obvezna promjena lozinke; 2 = blokiran (026).
 

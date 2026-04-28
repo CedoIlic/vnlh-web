@@ -74,6 +74,23 @@ if (!isset($_SESSION['vnlh_meni_dopustene']) && isset($_SESSION['id_duznosnik'])
     }
 }
 
+/** Stare sesije bez id_duznosnik_razina: duznosnici.razina za trenutni id_duznosnik. */
+if (!array_key_exists('id_duznosnik_razina', $_SESSION)) {
+    $idDuzSes = isset($_SESSION['id_duznosnik']) ? (int) $_SESSION['id_duznosnik'] : 0;
+    if ($idDuzSes > 0) {
+        $dbRz = vnlh_db_connect();
+        if ($dbRz !== false) {
+            require_once __DIR__ . '/vnlh_login_post_auth.php';
+            vnlh_session_postavi_razinu_za_duznosnika($dbRz, $idDuzSes);
+            $dbRz->close();
+        } else {
+            $_SESSION['id_duznosnik_razina'] = 0;
+        }
+    } else {
+        $_SESSION['id_duznosnik_razina'] = 0;
+    }
+}
+
 /** Stare sesije: pravo na chat (sustav_varijable id 110) – isto kao nakon uspješnog logina. */
 if (!array_key_exists('chat_dozvoljen', $_SESSION) && isset($_SESSION['id_korisnik'])) {
     $idK = (int) $_SESSION['id_korisnik'];

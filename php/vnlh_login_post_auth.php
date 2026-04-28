@@ -68,6 +68,36 @@ function vnlh_login_jedina_duznost_id(mysqli $mysqli, int $idKorisnik): int
 }
 
 /**
+ * Postavlja $_SESSION['id_duznosnik_razina'] prema koloni duznosnici.razina za trenutnu dužnost (0 = nema retka / id ≤ 0).
+ * Koristi se nakon logina, odabira dužnosti i za usklađivanje starih sesija (require_login).
+ */
+function vnlh_session_postavi_razinu_za_duznosnika(mysqli $mysqli, int $idDuznosnik): void {
+    if ($idDuznosnik <= 0) {
+        $_SESSION['id_duznosnik_razina'] = 0;
+        return;
+    }
+    $stmt = $mysqli->prepare('SELECT razina FROM duznosnici WHERE id = ? LIMIT 1');
+    if (!$stmt) {
+        $_SESSION['id_duznosnik_razina'] = 0;
+        return;
+    }
+    $stmt->bind_param('i', $idDuznosnik);
+    if (!$stmt->execute()) {
+        $stmt->close();
+        $_SESSION['id_duznosnik_razina'] = 0;
+        return;
+    }
+    $res = $stmt->get_result();
+    $row = $res ? $res->fetch_assoc() : null;
+    $stmt->close();
+    if ($row && array_key_exists('razina', $row) && $row['razina'] !== null) {
+        $_SESSION['id_duznosnik_razina'] = (int) $row['razina'];
+    } else {
+        $_SESSION['id_duznosnik_razina'] = 0;
+    }
+}
+
+/**
  * Nakon odabira dužnosti (ili jedne dodjele): meni, chat, INSERT aktivne sesije, zastavice nepročitanih u sustav_sesije_aktivne.
  * Poziva se iz Login.php (jedna dužnost) i Login_odabir_duznosti.php (više dužnosti nakon izbora).
  *
@@ -127,4 +157,6 @@ function vnlh_login_zavrsi_sesiju_puni_meni_chat_sesije(
         $stmtSetFlag->execute();
         $stmtSetFlag->close();
     }
+
+    vnlh_session_postavi_razinu_za_duznosnika($mysqli, $idDuznosnik);
 }

@@ -45,6 +45,23 @@ if (!vnlh_auth_user_may_access($vnlhAuthDb, (int) $_SESSION['id_korisnik'])) {
 }
 $vnlhAuthDb->close();
 
+/** Stare XHR sesije: duznosnici.razina u sesiji (kao require_login). */
+if (!array_key_exists('id_duznosnik_razina', $_SESSION)) {
+    $idDuzApi = isset($_SESSION['id_duznosnik']) ? (int) $_SESSION['id_duznosnik'] : 0;
+    if ($idDuzApi > 0) {
+        $dbRz = vnlh_db_connect();
+        if ($dbRz !== false) {
+            require_once __DIR__ . '/vnlh_login_post_auth.php';
+            vnlh_session_postavi_razinu_za_duznosnika($dbRz, $idDuzApi);
+            $dbRz->close();
+        } else {
+            $_SESSION['id_duznosnik_razina'] = 0;
+        }
+    } else {
+        $_SESSION['id_duznosnik_razina'] = 0;
+    }
+}
+
 /** Stare XHR sesije bez punog require_login.php: pravo na chat (varijabla 110). */
 if (!array_key_exists('chat_dozvoljen', $_SESSION) && isset($_SESSION['id_korisnik'])) {
     $idK = (int) $_SESSION['id_korisnik'];

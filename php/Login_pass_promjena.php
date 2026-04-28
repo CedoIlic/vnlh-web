@@ -121,6 +121,7 @@ $nDuty = $rowN ? (int) ($rowN['broj_duznosti'] ?? 0) : 0;
 if ($nDuty > 1) {
     $_SESSION['needs_duznost_choice'] = true;
     $_SESSION['id_duznosnik'] = 0;
+    $_SESSION['id_duznosnik_razina'] = 0;
     $_SESSION['vnlh_meni_dopustene'] = [];
     require_once __DIR__ . '/poruke_chat_sesija.php';
     $_SESSION['chat_dozvoljen'] = poruke_chat_dozvoljen_za_korisnika($mysqli, $idKorisnik);
@@ -141,6 +142,7 @@ require_once __DIR__ . '/meni_za_sesiju.php';
 $_SESSION['vnlh_meni_dopustene'] = meni_za_sesiju_ucitaj_dopustene($mysqli, $idJedina);
 require_once __DIR__ . '/poruke_chat_sesija.php';
 $_SESSION['chat_dozvoljen'] = poruke_chat_dozvoljen_za_korisnika($mysqli, $idKorisnik);
+vnlh_session_postavi_razinu_za_duznosnika($mysqli, $idJedina);
 
 $mysqli->close();
 echo 'OK';
