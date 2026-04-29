@@ -77,6 +77,7 @@
      ========================================================= */
   --naslov_forme_grad_start: var(--c-blue-800);                      /* Tamnija boja gradienta podloge naslova */
   --naslov_forme_grad_end:   var(--c-blue-500);                      /* Svjetlija boja gradienta podloge naslova */
+
   --naslov_forme_text: var(--c-white);                               /* Boja teksta naslova forme */
   --naslov_forme_font: Arial, sans-serif;                            /* Font naslova forme */
   --naslov_forme_weight: 700;                                        /* Težina fonta naslova form */
@@ -94,6 +95,7 @@
      ========================================================= */
   --pozadina_grad_dark:  var(--c-blue-100);                          /* tamniji dio trake (sredina) */
   --pozadina_grad_light: var(--c-gray-50);                           /* svjetliji dio trake (rubovi) */
+
   --pozadina_grad_band_h: 100px;                                     /* visina jedne trake u pikselima */
 
   /* =========================================================
@@ -114,6 +116,19 @@
   --clanovi_crud_edit_stack_viewport_breakpoint: 700px;
 
   /* =========================================================
+     GRUPA: POSEBNE BOJE ZA RAZVOJNO OKRUŽENJE
+     Zamjenske boje za razvojno okruženje (localhost).
+     Primjenjuju se u body.env-dev bloku; klasu dodaje 0-Common.js.
+     ========================================================= */
+  --naslov_forme_razvoj_grad_start: #0b4a1f;                         /* Razvoj: tamno zelena podloga naslova forme (zamjena za --c-blue-800) */
+  --naslov_forme_razvoj_grad_end:   #6fba7f;                         /* Razvoj: svjetlo zelena podloga naslova forme (zamjena za --c-blue-500) */
+  --meni_traka_razvoj_bg_1:         #3a8a50;                         /* Razvoj: zelena traka menija – gradient start (zamjena za --c-blue-500) */
+  --meni_traka_razvoj_bg_2:         #3a8a50;                         /* Razvoj: zelena traka menija – gradient end */
+  --login_win_razvoj_page_bg:       #c3e8cb;                         /* Razvoj: zelena pozadina Login.html i Meni.html (zamjena za --c-blue-200) */
+  --pozadina_razvoj_grad_dark:      #d0ead8;                         /* Razvoj: tamno zelena traka pozadine (zamjena za --c-blue-100) */
+  --pozadina_razvoj_grad_light:     #f0f9f2;                         /* Razvoj: svjetlo zelena traka pozadine (zamjena za --c-gray-50) */
+
+  /* =========================================================
      GRUPA: IZGLED GLAVNOG MENIA
      Tokeni za izgled glavnog menija (traka, dropdown prozori).
      ========================================================= */
@@ -121,6 +136,7 @@
   /*   boje */
   --meni_traka_bg_1: var(--c-blue-500);                              /* pozadina trake (gradient start) */
   --meni_traka_bg_2: var(--c-blue-500);                              /* pozadina trake (gradient end); isti kao _1 = jednobojno */
+
   --meni_traka_text: var(--c-blue-800);                                 /* boja teksta stavki */
   --meni_traka_hover_bg: var(--c-blue-200);                  /* pozadina stavke na hover */
   --meni_traka_outline_boja: var(--c-gray-50);                      /* boja outline teksta stavki */
@@ -294,6 +310,7 @@
      GRUPA: LOGIN PROZOR (popup stranica Login.html – kontrola-panel)
      ========================================================= */
   --login_win_page_bg: var(--c-blue-200);                             /* Pozadina cijele stranice Login.html (body) */
+
   --login_win_shell_bg: var(--login_win_page_bg);                     /* Alias (popup „ljuska“ = ista kao stranica) */
   --meni_glavni_page_bg: var(--login_win_page_bg);                    /* Glavni izbornik Meni.html (body) – ista podloga kao Login */
   /* Meni – red s logiranim korisnikom (PHP na body postavlja --logirani_korisnik_text, JSON string za content) */
@@ -759,6 +776,21 @@
   --edit_delete_focus_shadow: var(--kontrole_sjena_slaba_1);         /* Minimalna sjena edit-delete kontrole u selektiranom stanju */
   --edit_delete_focus_shadow_disabled: none;                         /* Sjena edit-delete kontrole kada je disabled */
 
+}
+
+/* =========================================================
+   RAZVOJ – override tokena naslova forme (zeleni gradijent)
+   Klasu env-dev na body dodaje 0-Common.js kad je localhost.
+   ========================================================= */
+body.env-dev {
+  --naslov_forme_grad_start: var(--naslov_forme_razvoj_grad_start);
+  --naslov_forme_grad_end:   var(--naslov_forme_razvoj_grad_end);
+  --meni_traka_bg_1:         var(--meni_traka_razvoj_bg_1);
+  --meni_traka_bg_2:         var(--meni_traka_razvoj_bg_2);
+  --login_win_page_bg:       var(--login_win_razvoj_page_bg);
+  --meni_glavni_page_bg:     var(--login_win_razvoj_page_bg);
+  --pozadina_grad_dark:      var(--pozadina_razvoj_grad_dark);
+  --pozadina_grad_light:     var(--pozadina_razvoj_grad_light);
 }
 
 /* =========================================================

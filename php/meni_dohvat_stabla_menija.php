@@ -58,7 +58,7 @@
  * Ulaz (GET)
  * ----------------------------------------------------------------------------
  *   device (opcionalno)
- *       0 = svi uređaji (default), 1 = desktop, 2 = mobitel → filter (m.device = 0 OR m.device = ?)
+ *       0 = svi uređaji (default), 1 = desktop, 2 = mobitel → filter COALESCE(device,0) kao 0 ako je NULL.
  *
  *   from_meni (opcionalno)
  *       "1" = način glavnog izbornika: id_duznosnik se uzima ISKLJUČIVO iz $_SESSION['id_duznosnik'],
@@ -220,7 +220,8 @@ if ($izvrsniTipIdForFilter !== null && !$bypassDuznosnikZaTest) {
 }
 
 if ($device > 0) {
-    $sql .= " AND (m.device = 0 OR m.device = ?)";
+    /* NULL tretira kao „sve uređaje” (0); inače (device=0 OR m.device=X) ispada iz rezultata. */
+    $sql .= ' AND (COALESCE(m.device, 0) = 0 OR COALESCE(m.device, 0) = ?)';
     $params[] = $device;
 }
 
@@ -467,7 +468,7 @@ if ($mainTipId !== null) {
     list($params, $types, $ph) = $buildNekoristeniParams($mainTipId, $idsZaNekoristene, $device);
     $sql = "SELECT id, naziv FROM meni WHERE meni_tip_id = ? AND aktivno = 1";
     if ($ph !== null) $sql .= " AND id NOT IN ($ph)";
-    if ($device > 0) $sql .= " AND (device = 0 OR device = ?)";
+    if ($device > 0) $sql .= ' AND (COALESCE(device, 0) = 0 OR COALESCE(device, 0) = ?)';
     $sql .= " ORDER BY naziv ASC";
     $stmt = $mysqli->prepare($sql);
     if ($stmt) {
@@ -486,7 +487,7 @@ if ($izvrsniTipId !== null) {
     list($params, $types, $ph) = $buildNekoristeniParams($izvrsniTipId, $idsZaNekoristene, $device);
     $sql = "SELECT id, naziv FROM meni WHERE meni_tip_id = ? AND aktivno = 1";
     if ($ph !== null) $sql .= " AND id NOT IN ($ph)";
-    if ($device > 0) $sql .= " AND (device = 0 OR device = ?)";
+    if ($device > 0) $sql .= ' AND (COALESCE(device, 0) = 0 OR COALESCE(device, 0) = ?)';
     $sql .= " ORDER BY naziv ASC";
     $stmt = $mysqli->prepare($sql);
     if ($stmt) {
@@ -505,7 +506,7 @@ if ($podmenijiTipId !== null) {
     list($params, $types, $ph) = $buildNekoristeniParams($podmenijiTipId, $idsZaNekoristene, $device);
     $sql = "SELECT id, naziv FROM meni WHERE meni_tip_id = ? AND aktivno = 1";
     if ($ph !== null) $sql .= " AND id NOT IN ($ph)";
-    if ($device > 0) $sql .= " AND (device = 0 OR device = ?)";
+    if ($device > 0) $sql .= ' AND (COALESCE(device, 0) = 0 OR COALESCE(device, 0) = ?)';
     $sql .= " ORDER BY naziv ASC";
     $stmt = $mysqli->prepare($sql);
     if ($stmt) {

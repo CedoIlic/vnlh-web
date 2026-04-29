@@ -16,6 +16,11 @@
 // Sortiranje:
 // - redoslijed (NULL na kraj)
 // - naziv (abecedno)
+//
+// GET device (opcionalno, isto kao meni_dohvat_stabla_menija.php):
+//   0 = sve stavke (default, kompatibilnost)
+//   1 = prikaz kao na desktopu: (device = 0 OR device = 1) — bez stavki samo za mobitel
+//   2 = prikaz kao na mobitelu: (device = 0 OR device = 2) — bez stavki samo za desktop (u bazi device = 1)
 // =====================================================
 
 // -----------------------------------------------------
@@ -31,6 +36,14 @@ if ($db_ret !== -1) {
     header('Content-Type: text/plain');
     echo $db_ret;
     exit;
+}
+
+$device = isset($_GET['device']) ? (int)$_GET['device'] : 0;
+if ($device < 0) {
+    $device = 0;
+}
+if ($device > 2) {
+    $device = 2;
 }
 
 // -----------------------------------------------------
@@ -50,6 +63,11 @@ $sql = "
         AND m.test = 1
         AND m.html_fajl IS NOT NULL
         AND TRIM(m.html_fajl) <> ''
+";
+if ($device > 0) {
+    $sql .= ' AND (COALESCE(m.device, 0) = 0 OR COALESCE(m.device, 0) = ' . (int) $device . ')';
+}
+$sql .= "
     ORDER BY
         (m.redoslijed IS NULL) ASC,
         m.redoslijed ASC,

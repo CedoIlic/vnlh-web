@@ -15,16 +15,18 @@
 //
 // Izlaz (JSON):
 //   drzave  – [{ id, naziv }]  dozvoljene države (sortirano po naziv)
-//   regije  – [{ id, naziv, id_drzava }]  dozvoljene regije čija je
-//             država u dozvoljenim državama (kaskada)
-//   loze    – [{ id, naziv, id_regija, id_obred }]  dozvoljene lože
-//             čija je regija u dozvoljenim regijama (kaskada)
+//   regije  – [{ id, naziv, id_drzava }]  kaskada: ako je u ograničenjima dan
+//             popis regija (tip 2), vraća se presjek s državama; ako nije dan
+//             pojedinačni popis regija, sve regije čija je id_drzava u dozvoljenim
+//             državama (inače država bez regija u JSON-u – kaskada u UI staje).
+//   loze    – [{ id, naziv, id_regija, id_obred }]  kaskada: ako je dan popis loža
+//             (tip 3), presjek s odabranim regijama; ako nije, sve lože unutar
+//             skupine dovoljenih regija.
 //   upis_izmjena   – 1 | 0
 //   brisanje_sloga – 1 | 0
 //
 // Prazni nizovi = dužnosnik nema nijednog prava za taj tip → potpuno ograničen.
-// Kaskada: regija se vraća samo ako joj je država dozvoljena;
-//          loža se vraća samo ako joj je regija dozvoljena.
+// Nadređivanje: vrijednosti moraju držati hijerarhiju (regija uz državu, loža uz regiju).
 //
 // Tablica duznosnici_ogranicenja:
 //   id_tip_ogranicenja 1 = država, 2 = regija, 3 = loža (vrijednost = ID entiteta)
@@ -139,18 +141,28 @@ if ($resDrzave) {
 }
 
 // =====================================================
-// 3) Regije – samo one čija je država u dozvoljenim državama (kaskada)
+// 3) Regije — kaskada uz države; tip 2 ograničava pojedinačno ako je zadan popis.
 // =====================================================
 $regije = [];
 $stvarneRegijeIds = [];
-if (!empty($dozvoljeneRegijeIds) && !empty($stvarneDrzaveIds)) {
-    $inRegije = implode(',', array_map('intval', $dozvoljeneRegijeIds));
+if (!empty($stvarneDrzaveIds)) {
     $inDrzaveStv = implode(',', array_map('intval', $stvarneDrzaveIds));
-    $resRegije = $mysqli->query(
-        "SELECT id, naziv, id_drzava FROM regije
-         WHERE id IN ($inRegije) AND id_drzava IN ($inDrzaveStv)
-         ORDER BY naziv ASC"
-    );
+    /*
+     * Ima pojedinačnog ograničenja na regije (tip 2): samo te regije, uz presjek s državama.
+     * Nema pojedinih regija u ograničenjima ali ima država: sve regije u tim državama
+     * (bez toga ostaje prazan niz i zaglavlja Država→Regija→Loža ne mogu nastaviti).
+     */
+    $sqlRegije =
+        !empty($dozvoljeneRegijeIds)
+            ? 'SELECT id, naziv, id_drzava FROM regije
+               WHERE id IN (' . implode(',', array_map('intval', $dozvoljeneRegijeIds)) . ")
+                 AND id_drzava IN ($inDrzaveStv)
+               ORDER BY naziv ASC"
+            : "SELECT id, naziv, id_drzava FROM regije
+               WHERE id_drzava IN ($inDrzaveStv)
+               ORDER BY naziv ASC";
+
+    $resRegije = $mysqli->query($sqlRegije);
     if ($resRegije) {
         while ($r = $resRegije->fetch_assoc()) {
             $regije[] = [
@@ -165,17 +177,26 @@ if (!empty($dozvoljeneRegijeIds) && !empty($stvarneDrzaveIds)) {
 }
 
 // =====================================================
-// 4) Lože – samo one čija je regija u dozvoljenim regijama (kaskada)
+// 4) Lože — kaskada uz regije; tip 3 ograničava pojedinačno ako je zadan popis.
 // =====================================================
 $loze = [];
-if (!empty($dozvoljeneLozeIds) && !empty($stvarneRegijeIds)) {
-    $inLoze = implode(',', array_map('intval', $dozvoljeneLozeIds));
+if (!empty($stvarneRegijeIds)) {
     $inRegijeStv = implode(',', array_map('intval', $stvarneRegijeIds));
-    $resLoze = $mysqli->query(
-        "SELECT id, naziv, id_regija, id_obred FROM loze
-         WHERE id IN ($inLoze) AND id_regija IN ($inRegijeStv)
-         ORDER BY naziv ASC"
-    );
+    /*
+     * Ima pojedinih loža (tip 3): presjek ID-jeva loža i regija iznad.
+     * Nema popisa loža: sve lože u dozvoljenim regijama.
+     */
+    $sqlLoze =
+        !empty($dozvoljeneLozeIds)
+            ? 'SELECT id, naziv, id_regija, id_obred FROM loze
+               WHERE id IN (' . implode(',', array_map('intval', $dozvoljeneLozeIds)) . ")
+                 AND id_regija IN ($inRegijeStv)
+               ORDER BY naziv ASC"
+            : "SELECT id, naziv, id_regija, id_obred FROM loze
+               WHERE id_regija IN ($inRegijeStv)
+               ORDER BY naziv ASC";
+
+    $resLoze = $mysqli->query($sqlLoze);
     if ($resLoze) {
         while ($r = $resLoze->fetch_assoc()) {
             $loze[] = [

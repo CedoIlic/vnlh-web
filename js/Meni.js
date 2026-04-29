@@ -2,7 +2,8 @@
    Meni.js
    Glavni izbornik – učitavanje menija odmah, navigacija s ref na Meni.php.
    Bez prikaza HTML fajla (hover/dblclick). Bez tipke Povratak.
-   API: meni_dohvat_stabla_menija.php?from_meni=1 – id dužnosnika iz sesije, prava iz duznosnici_prava.
+   API: meni_dohvat_stabla_menija.php?device=0 — puno stablo; razlika desktop/mobitel (meni.device 1/2) u filterMeniTreeZaViewport.
+   na uskom viewportu (<640px) ne prikazuju se stavke samo-desktop (device=1).
    Meni.php postavlja window.__VNLH_MENU_DUZNOSNIK_OK__; ako false, stablo se ne dohvaća (dužnosnik ne postoji u bazi).
    Kašnjenje hovera: sustav_varijable 116 = glavna stavka, 115 = podmeni (0-Common.js). Klik na glavni gumb ili podmeni odmah otvara bez čekanja.
    ========================================================= */
@@ -17,8 +18,56 @@
     window.vnlhLoadMeniHoverDelaysFromVar116And115(API_BASE);
   }
 
-  /** Zadnji učitani podaci menija. */
+  /** 0=sve uređaje, 1=Meni_CRUD „samo desktop”, 2=„samo mobitel”. Nepoznato → 0. */
+  function meniParsirajDeviceStupanj(n) {
+    if (!n || n.device == null || n.device === '') return 0;
+    var x = parseInt(String(n.device), 10);
+    return isNaN(x) ? 0 : x;
+  }
+
+  /**
+   * Filtrirano stablo za trenutačni prikaz: na mobitelu se ne prikazuje device===1,
+   * na desktopu ne device===2 (server šalje sve s device=0).
+   */
+  function filterMeniTreeZaViewport(tree, izvrsniTipId, isMobile) {
+    if (!tree || !tree.length) return [];
+    var out = [];
+    var i;
+    for (i = 0; i < tree.length; i++) {
+      var node = tree[i];
+      var dSt = meniParsirajDeviceStupanj(node);
+      if (isMobile) {
+        if (dSt === 1) continue;
+      } else {
+        if (dSt === 2) continue;
+      }
+      var tid = node.meni_tip_id != null ? parseInt(node.meni_tip_id, 10) : 0;
+      var html = (node.html_fajl || '').trim();
+      var isIzvrsni = izvrsniTipId != null && tid === izvrsniTipId && html !== '';
+      var copy = Object.assign({}, node);
+      copy.children = node.children && node.children.length
+        ? filterMeniTreeZaViewport(node.children, izvrsniTipId, isMobile)
+        : [];
+      if (isIzvrsni) {
+        out.push(copy);
+      } else if (copy.children && copy.children.length > 0) {
+        out.push(copy);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Pun odgovor API-ja (bez filtra uređaja) — za ponovno iscrtavanje pri promjeni širine bez novog XHR-a.
+   */
+  var lastMeniRawTree = null;
+  /** Prikazano stablo nakon filtera; izvrsniTipId kao u odgovoru servera. */
   var lastMeniData = { tree: null, izvrsniTipId: null };
+
+  /** Ista granica kao traka/hamburger (.alati-meni-test / data-meni-rezolucija): usko = mobitel. */
+  function isMeniViewportUsko() {
+    return window.matchMedia('(max-width: 640px)').matches;
+  }
 
   function clearMeniState() {
     var container = document.getElementById('meni_container');
@@ -32,12 +81,46 @@
     traka.setAttribute('data-meni-rezolucija', window.matchMedia('(max-width: 640px)').matches ? 'ushko' : 'siroko');
   }
 
+  /** Pri promjeni širine: ponovi JS filter nad raw stablom (jedan GET; device=0). */
+  var reloadMeniBucketT = null;
+  function maybeReloadMeniZaPromjenuUređaja() {
+    if (reloadMeniBucketT) {
+      clearTimeout(reloadMeniBucketT);
+      reloadMeniBucketT = null;
+    }
+    reloadMeniBucketT = setTimeout(function () {
+      reloadMeniBucketT = null;
+      if (lastMeniRawTree && lastMeniRawTree.length && lastMeniData && lastMeniData.izvrsniTipId != null) {
+        ponoviMeniPripremaIzRawStabla();
+      } else {
+        loadMeni();
+      }
+    }, 200);
+  }
+
+  function ponoviMeniPripremaIzRawStabla() {
+    if (typeof window.__VNLH_MENU_DUZNOSNIK_OK__ === 'boolean' && window.__VNLH_MENU_DUZNOSNIK_OK__ === false) return;
+    var container = document.getElementById('meni_container');
+    if (!container) return;
+    var iz = lastMeniData && lastMeniData.izvrsniTipId != null ? lastMeniData.izvrsniTipId : null;
+    if (iz == null) return;
+    var filtered = filterMeniTreeZaViewport(lastMeniRawTree, iz, isMeniViewportUsko());
+    lastMeniData.tree = filtered;
+    clearMeniState();
+    setupDropdownClose();
+    applyMeniTrakaAlign();
+    applyMeniTrakaGradient();
+    renderMeni(filtered, iz, container);
+    syncMeniTrakaRezolucija();
+  }
+
   function wireMeniTrakaRezolucija() {
     var traka = document.getElementById('traka_h_menija');
     if (!traka) return;
     var mq = window.matchMedia('(max-width: 640px)');
     function onChange() {
       syncMeniTrakaRezolucija();
+      maybeReloadMeniZaPromjenuUređaja();
     }
     if (typeof mq.addEventListener === 'function') mq.addEventListener('change', onChange);
     else if (typeof mq.addListener === 'function') mq.addListener(onChange);
@@ -409,6 +492,7 @@
     clearMeniState();
     if (typeof window.__VNLH_MENU_DUZNOSNIK_OK__ === 'boolean' && window.__VNLH_MENU_DUZNOSNIK_OK__ === false) {
       lastMeniData = { tree: null, izvrsniTipId: null };
+      lastMeniRawTree = null;
       try {
         sessionStorage.removeItem(SESSION_KEY);
       } catch (e) {}
@@ -432,18 +516,22 @@
             if (MODAL_MESSAGES[code]) window.showPorukaModal(code, replacements);
           }
         } catch (e) {}
+        lastMeniRawTree = null;
         return;
       }
       try {
         var data = JSON.parse(text);
-        var tree = Array.isArray(data) ? data : (data.tree || []);
+        var rawTree = Array.isArray(data) ? data : (data.tree || []);
+        lastMeniRawTree = rawTree;
         var izvrsniTipId = (data && data.izvrsniTipId != null) ? parseInt(data.izvrsniTipId, 10) : null;
         if (isNaN(izvrsniTipId)) izvrsniTipId = null;
-        lastMeniData = { tree: tree, izvrsniTipId: izvrsniTipId };
+        var filtered =
+          izvrsniTipId != null ? filterMeniTreeZaViewport(rawTree, izvrsniTipId, isMeniViewportUsko()) : rawTree;
+        lastMeniData = { tree: filtered, izvrsniTipId: izvrsniTipId };
         setupDropdownClose();
         applyMeniTrakaAlign();
         applyMeniTrakaGradient();
-        renderMeni(tree, izvrsniTipId, container);
+        renderMeni(filtered, izvrsniTipId, container);
         syncMeniTrakaRezolucija();
       } catch (e) {}
     };

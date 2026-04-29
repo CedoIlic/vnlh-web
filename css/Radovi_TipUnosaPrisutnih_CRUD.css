@@ -1,0 +1,218 @@
+/* Radovi_TipUnosaPrisutnih_CRUD — tipovi unosa prisustva (radovi_prisustvo_tip). */
+
+/* Stupci: R. 100px | Naziv elastičan | Boja 100px | Svi 80px | S. 80px | D. 80px */
+#tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(1),
+#tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(1) {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+#tablicaContainer .kontrola-tablica__header thead tr th:nth-child(1),
+#tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(1) {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  box-sizing: border-box;
+}
+
+#tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(3),
+#tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(3) {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+#tablicaContainer .kontrola-tablica__header thead tr th:nth-child(3),
+#tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(3) {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  box-sizing: border-box;
+}
+
+#tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(4),
+#tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(4),
+#tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(5),
+#tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(5),
+#tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(6),
+#tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(6) {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+#tablicaContainer .kontrola-tablica__header thead tr th:nth-child(4),
+#tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(4),
+#tablicaContainer .kontrola-tablica__header thead tr th:nth-child(5),
+#tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(5),
+#tablicaContainer .kontrola-tablica__header thead tr th:nth-child(6),
+#tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(6) {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  box-sizing: border-box;
+}
+
+/* Jedan vizualni red: Naziv (fleks) | Redosljed 5rem | Boja prikaza + ikona palete */
+.radovi-tip-unosa-pris-crud__red-glava {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+.radovi-tip-unosa-pris-crud__red-glava .naziv-polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.radovi-tip-unosa-pris-crud__red-glava .redosljed-polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  width: 5rem;
+}
+.radovi-tip-unosa-pris-crud__boja-wrap {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.radovi-tip-unosa-pris-crud__polje--boja {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 7rem;
+  max-width: 14rem;
+  flex: 1 1 8rem;
+}
+.radovi-tip-unosa-pris-crud__boja-display {
+  color: var(--edit_text);
+  background-color: var(--napomena_bg, #fff);
+}
+.radovi-tip-unosa-pris-crud__boja-icon-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  color: var(--label_text, inherit);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2, 0 1px 2px rgba(0, 0, 0, 0.06));
+}
+.radovi-tip-unosa-pris-crud__boja-icon-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.radovi-tip-unosa-pris-crud__boja-icon {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Modal picker (temelj uz Clanovi_Zastavice_CRUD) */
+.radovi-tip-unosa-pris-picker__modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100010;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.radovi-tip-unosa-pris-picker__modal[hidden] {
+  display: none !important;
+}
+.radovi-tip-unosa-pris-picker__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+}
+.radovi-tip-unosa-pris-picker__box {
+  position: relative;
+  z-index: 1;
+  min-width: 260px;
+  max-width: 100%;
+  padding: 1rem;
+  border-radius: var(--edit_radius);
+  border: 1px solid var(--edit_border);
+  background: var(--panel_body_bg);
+  color: var(--edit_text);
+  box-sizing: border-box;
+}
+.radovi-tip-unosa-pris-picker__label {
+  margin: 0 0 0.35rem 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.radovi-tip-unosa-pris-picker__color {
+  width: 100%;
+  height: 2.25rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--edit_border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.radovi-tip-unosa-pris-picker__alpha {
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+.radovi-tip-unosa-pris-picker__preview {
+  height: 2.5rem;
+  border: 1px solid var(--edit_border);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.radovi-tip-unosa-pris-picker__hex {
+  margin: 0 0 0.75rem 0;
+  font-family: monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+.radovi-tip-unosa-pris-picker__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.radovi-tip-unosa-pris-crud__duznosnik-red {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.radovi-tip-unosa-pris-crud__duznosnik-cb {
+  flex-shrink: 0;
+}
+.radovi-tip-unosa-pris-crud__duznosnik-label {
+  cursor: pointer;
+}
+
+@media (max-width: var(--page_breakpoint_narrow, 640px)) {
+  .radovi-tip-unosa-pris-crud__red-glava {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  .radovi-tip-unosa-pris-crud__red-glava .naziv-polje,
+  .radovi-tip-unosa-pris-crud__red-glava .redosljed-polje,
+  .radovi-tip-unosa-pris-crud__boja-wrap {
+    width: 100%;
+    max-width: none;
+  }
+  .radovi-tip-unosa-pris-crud__red-glava .redosljed-polje {
+    width: 5rem;
+    align-self: flex-start;
+  }
+  .radovi-tip-unosa-pris-crud__boja-wrap {
+    align-items: flex-end;
+  }
+}

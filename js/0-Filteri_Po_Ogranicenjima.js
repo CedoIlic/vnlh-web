@@ -107,14 +107,24 @@
         return;
       }
       _vnlhGeoXhr = null;
-      var text = (xhr.responseText || '').trim();
+      /*
+       * Odgovor mora biti JSON objekt s ključevima drzave/regije/loze. Realno povremeno:
+       * UTF-8 BOM na početku (pa charAt(0)!=='{'); PHP notice/warning ispred tijela ({…});
+       * 401/tekst ako session istekne — tada pad u prazan keš i prazni selecti (istražiti Network).
+       * Zato: ukloni BOM, pronađi prvi '{' i parsiraj od tamo.
+       */
+      var raw = xhr.responseText || '';
+      raw = raw.replace(/^\uFEFF/, '').trim();
       var obj = null;
-      if (text !== '' && text.charAt(0) === '{') {
+      var ix = raw.indexOf('{');
+      if (ix >= 0) {
         try {
-          obj = JSON.parse(text);
-        } catch (eParse) {}
+          obj = JSON.parse(raw.slice(ix));
+        } catch (eParse) {
+          obj = null;
+        }
       }
-      if (!obj) {
+      if (!obj || typeof obj !== 'object') {
         obj = { drzave: [], regije: [], loze: [], upis_izmjena: 0, brisanje_sloga: 0 };
       }
       _vnlhGeoKes.drzave = obj.drzave || [];

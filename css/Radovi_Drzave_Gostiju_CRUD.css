@@ -1,0 +1,34 @@
+/* Radovi_Drzave_Gostiju_CRUD — države prisutnih (radovi_drzave_gostiju); uzor Radovi_Tip_CRUD. */
+
+#tablicaContainer .kontrola-tablica__header table > colgroup > col:first-child,
+#tablicaContainer .kontrola-tablica__scroll table > colgroup > col:first-child {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+#tablicaContainer .kontrola-tablica__header thead tr th:first-child,
+#tablicaContainer .kontrola-tablica__scroll tbody tr td:first-child {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  box-sizing: border-box;
+}
+
+@media (max-width: var(--page_breakpoint_narrow, 640px)) {
+  .radovi-drzave-gostiju-crud__edit-body .radovi-drzave-gostiju-crud__edit-inner > div {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  .radovi-drzave-gostiju-crud__edit-body .radovi-drzave-gostiju-crud__edit-inner > div > div {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+  .radovi-drzave-gostiju-crud__edit-body .radovi-drzave-gostiju-crud__edit-inner > div > div:has(#edit_redosljed) {
+    flex: 0 0 auto;
+    width: 5rem;
+    max-width: none;
+    align-self: flex-start;
+  }
+}

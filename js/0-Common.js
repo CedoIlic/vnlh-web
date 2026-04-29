@@ -16,6 +16,15 @@
 (function () {
   'use strict';
 
+  // -------------------------------------------------------
+  var _h = location.hostname;
+  if (_h === 'localhost' || _h === '127.0.0.1' ||
+      /^192\.168\./.test(_h) || /^10\./.test(_h) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(_h)) {
+    document.body.classList.add('env-dev');
+  }
+  // -------------------------------------------------------
+
   /**
    * Označi da odlazak s dokumenta nije „zatvaranje kartice” nego unutarnja navigacija ili
    * kontrolirani redirect (npr. Login nakon 401). Inače pagehide + sendBeacon na

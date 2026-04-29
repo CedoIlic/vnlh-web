@@ -2,6 +2,7 @@
      Zapisnik_CRUD.html
      Zapisnik – naslov, panel s vertikalnim resizeom, unutar panela tab kontrola.
      Skripte: 0-Kontrole.js, 0-Common.js, 0-Filteri_Po_Ogranicenjima.js, 0-Poruke_Tekstovi.js, 0-Kontrole_Tab.js, Zapisnik_CRUD.js
+     Opcija URL: mod_upisa_zapisnika=0 (novi zapisnik, zadano) | 1 (korekcija postojećeg).
      Geo + logo u zaglavlju: isti arh. kao Clanovi_Loza_CRUD (Clanovi_Loza_CRUD.css, Loze_CRUD_slika).
      ========================================================= -->
 <!DOCTYPE html>
@@ -50,6 +51,30 @@
                         <option value="">— Odaberi ložu —</option>
                     </select>
                 </div>
+                <!-- Blok: Zaglavlje – odabir postojećeg zapisnika + PDF (funkcije kasnije); red ispod selekta Loža, poravnanje udesno. -->
+                <div class="zapisnik-crud__header-icon-actions-wrap">
+                    <button type="button" id="zapisnik_btn_odabir_postojeceg" class="zapisnik-crud__header-odabir-zapisnik-btn" disabled aria-label="Odaberi postojeći zapisnik" title="Postojeći zapisnik">
+                        <svg class="zapisnik-crud__header-odabir-zapisnik-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <line x1="10" y1="6" x2="20" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="10" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="10" y1="18" x2="20" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <polygon points="3 9 8 12 3 15" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button type="button" id="zapisnik_btn_pdf" class="zapisnik-crud__header-pdf-btn" aria-label="Generiraj PDF zapisnika" title="Generiraj PDF">
+                        <!-- stroke/fill currentColor za sklad s gumbom; tekst badge dekorativan (aria na gumbu). -->
+                        <svg class="zapisnik-crud__header-pdf-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                                  fill="none" stroke="currentColor" stroke-width="1.5"
+                                  stroke-linecap="round" stroke-linejoin="round"/>
+                            <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor"
+                                      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <rect x="5" y="14" width="14" height="6" rx="1" fill="currentColor"/>
+                            <text x="12" y="18.4" font-family="Arial, sans-serif" font-size="3.8"
+                                  font-weight="bold" fill="white" text-anchor="middle">PDF</text>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
         <div class="kontrola-panel__body zapisnik-crud__panel-body">
@@ -91,8 +116,9 @@
                                             </div>
                                         </div>
                                         <!-- Između gornjeg bloka i elipsa isti okomiti razmak kao row-gap mreže (0.75rem). -->
+                                        <!-- Ellipsis: modal multiselect loža u regiji → textarea „Lože koje su učestvovale…”. -->
                                         <div class="zapisnik-crud__tip-ellipsis-red">
-                                            <button type="button" id="zapisnik_btn_tip_ellipsis" class="zapisnik-crud__ellipsis-btn" aria-label="Više opcija tipa radova" title="Više opcija">
+                                            <button type="button" id="zapisnik_btn_tip_ellipsis" class="zapisnik-crud__ellipsis-btn" aria-label="Odabir loža učesnica radova" title="Lože učesnice radova">
                                                 <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
                                             </button>
                                         </div>
@@ -140,8 +166,105 @@
                             </div>
                         </div>
                     </div>
-                    <div class="kontrola-tab__panel" role="tabpanel" id="zapisnikKontrolaTabPanel1" aria-labelledby="zapisnikKontrolaTabKart1" hidden>
-                        <p class="mb-0 zapisnik-crud__uvod">Odjeljak Prisustvo.</p>
+                    <div class="kontrola-tab__panel zapisnik-crud__tab-panel--prisustvo" role="tabpanel" id="zapisnikKontrolaTabPanel1" aria-labelledby="zapisnikKontrolaTabKart1" hidden>
+                        <!-- Prisustvo: lijevo — edit grupa (Ime / Loža / Država) vs tablica izvor (Pretraži + lista), ovisno o Tip unosa (+ slobodan_unos); sredinom trokuti; desno Tip unosa + tablica. -->
+                        <div class="zapisnik-crud__prisustvo-wrap" role="region" aria-label="Prisustvo">
+                            <div class="zapisnik-crud__prisustvo-grid">
+                                <div id="zapisnik_prisustvo_lijevi_stupac" class="zapisnik-crud__prisustvo-col zapisnik-crud__prisustvo-col--lijevo zapisnik-crud__prisustvo-li-rezim--sam-izvor">
+                                    <!-- Edit grupa — vidljivo samo kad je odabrani tip s slobodan_unos=1. -->
+                                    <div class="zapisnik-crud__prisustvo-edit-grupa zapisnik-crud__prisustvo-form--poravnato" role="group" aria-label="Ime, loža i država">
+                                        <div class="zapisnik-crud__edit-row zapisnik-crud__prisustvo-edit-red">
+                                            <label class="kontrola-labela mb-0" for="zapisnik_prisustvo_edit_ime">Ime</label>
+                                            <input id="zapisnik_prisustvo_edit_ime" type="text" class="kontrola-edit zapisnik-crud__prisustvo-edit zapisnik-crud__prisustvo-kontrola" autocomplete="off" aria-label="Ime">
+                                        </div>
+                                        <div class="zapisnik-crud__edit-row zapisnik-crud__prisustvo-edit-red">
+                                            <label class="kontrola-labela mb-0" for="zapisnik_prisustvo_edit_loza">Loža</label>
+                                            <input id="zapisnik_prisustvo_edit_loza" type="text" class="kontrola-edit zapisnik-crud__prisustvo-edit zapisnik-crud__prisustvo-kontrola" autocomplete="off" aria-label="Loža">
+                                        </div>
+                                        <div class="zapisnik-crud__edit-row zapisnik-crud__prisustvo-edit-red">
+                                            <label class="kontrola-labela mb-0" for="zapisnik_prisustvo_select_drzava">Država</label>
+                                            <div class="kontrola-select zapisnik-crud__prisustvo-select-drzava-wrap">
+                                                <select id="zapisnik_prisustvo_select_drzava" class="zapisnik-crud__prisustvo-kontrola" aria-label="Država">
+                                                    <option value="">— Odaberi državu —</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Tablica izvor grupa — Pretraži + jednostupčana tablica (skriveno kad tip ima slobodan_unos=1). -->
+                                    <div class="zapisnik-crud__prisustvo-tablica-izvor-grupa" role="group" aria-label="Pretraga i izvorna lista">
+                                        <div class="zapisnik-crud__prisustvo-trazi-podgrupa zapisnik-crud__prisustvo-form--poravnato">
+                                        <div class="zapisnik-crud__edit-row zapisnik-crud__prisustvo-edit-red">
+                                            <label class="kontrola-labela mb-0" for="zapisnik_prisustvo_trazi">Pretraži</label>
+                                            <div class="kontrola-edit-delete zapisnik-crud__prisustvo-trazi-edit-delete">
+                                                <span class="zapisnik-crud__prisustvo-trazi-lupe" aria-hidden="true"><span class="kontrola-icon--magnifying-glass"></span></span>
+                                                <input id="zapisnik_prisustvo_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" maxlength="200" aria-label="Pretraži listu lijevo" placeholder="">
+                                                <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti pretragu"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                            </div>
+                                        </div>
+                                        </div>
+                                    <div id="zapisnik_prisustvo_tablica_lijevo" class="kontrola-tablica zapisnik-crud__prisustvo-tablica zapisnik-crud__prisustvo-tablica--stretch" aria-label="Lista prisustva lijevo">
+                                        <div class="kontrola-tablica__inner">
+                                            <div class="kontrola-tablica__header">
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="kontrola-tablica__th--no-sort">Lista</th>
+                                                        </tr>
+                                                    </thead>
+                                                </table>
+                                            </div>
+                                            <div class="kontrola-tablica__scroll-wrap">
+                                                <div class="kontrola-tablica__scroll" tabindex="0">
+                                                    <table>
+                                                        <tbody id="zapisnik_prisustvo_tbody_lijevo"><!-- dinamika naknadno --></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+                                <!-- Sredina: trokuti udesno (gornji) i ulijevo (donji); poravnanje po visini stupca. -->
+                                <div class="zapisnik-crud__prisustvo-transfer" role="toolbar" aria-label="Premještaj između liste lijevo i liste desno">
+                                    <button type="button" id="zapisnik_prisustvo_btn_udesno" class="zapisnik-crud__prisustvo-transfer-btn zapisnik-crud__prisustvo-kontrola" aria-label="Premjesti u desnu listu" title="U desnu listu">
+                                        <svg class="zapisnik-crud__prisustvo-transfer-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon fill="currentColor" points="7 6 17 12 7 18"/></svg>
+                                    </button>
+                                    <button type="button" id="zapisnik_prisustvo_btn_ulijevo" class="zapisnik-crud__prisustvo-transfer-btn zapisnik-crud__prisustvo-kontrola" aria-label="Premjesti u lijevu listu" title="U lijevu listu">
+                                        <svg class="zapisnik-crud__prisustvo-transfer-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><polygon fill="currentColor" points="17 6 17 18 7 12"/></svg>
+                                    </button>
+                                </div>
+                                <div class="zapisnik-crud__prisustvo-col zapisnik-crud__prisustvo-col--desno">
+                                    <div class="zapisnik-crud__edit-row zapisnik-crud__prisustvo-tip-red">
+                                        <label class="kontrola-labela mb-0" for="zapisnik_prisustvo_tip_unosa">Tip unosa</label>
+                                        <div class="kontrola-select zapisnik-crud__prisustvo-tip-unosa-select">
+                                            <select id="zapisnik_prisustvo_tip_unosa" class="zapisnik-crud__prisustvo-kontrola" aria-label="Tip unosa prisustva">
+                                                <option value="">— Odaberi tip —</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="zapisnik_prisustvo_tablica_desno" class="kontrola-tablica zapisnik-crud__prisustvo-tablica zapisnik-crud__prisustvo-tablica--stretch" aria-label="Lista prisustva desno">
+                                        <div class="kontrola-tablica__inner">
+                                            <div class="kontrola-tablica__header">
+                                                <table>
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="kontrola-tablica__th--no-sort">Lista</th>
+                                                        </tr>
+                                                    </thead>
+                                                </table>
+                                            </div>
+                                            <div class="kontrola-tablica__scroll-wrap">
+                                                <div class="kontrola-tablica__scroll" tabindex="0">
+                                                    <table>
+                                                        <tbody id="zapisnik_prisustvo_tbody_desno"><!-- dinamika naknadno --></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="kontrola-tab__panel" role="tabpanel" id="zapisnikKontrolaTabPanel2" aria-labelledby="zapisnikKontrolaTabKart2" hidden>
                         <p class="mb-0 zapisnik-crud__uvod">Odjeljak Dužnosnici.</p>
