@@ -1,5 +1,5 @@
 ---
-description: Obavezna pravila VNLH WEB – kreni, verzija, komentari, tablice/zaglavlja
+description: Obavezna pravila VNLH WEB – kreni, verzija, komentari, tablice/zaglavlja, Git/CLAUDE.md
 alwaysApply: true
 ---
 
@@ -101,3 +101,11 @@ Primjenjuje se na **svaki** `*.js` koji definira ili puni **tablicu** (lista stu
 - **Ne** objavljuj vjerodajnice iz `mcp.json` u chatu niti u kodu repozitorija.
 - Za upite kad MCP nije dostupan, i dalje vrijedi lokalni `mysql` / HeidiSQL / PHP — ovisno o stroju.
 - **SQL za triggere** (flagovi `ima_neprocitanih` / `ima_chat_neprocitanih`, strogo `tip = 'Poruka'` vs `tip = 'Chat poruka'`): jedan izvor u repou — **`sql/sustav_sesije_aktivne_chat_kolone_i_triggere.sql`**. Kad treba skripta korisniku, uputi na tu datoteku ili zalijepi njen sadržaj; ne uvoditi drugu paralelnu datoteku osim ako korisnik eksplicitno traži varijantu.
+
+---
+
+## 8. Git — `CLAUDE.md`
+
+- Datoteka **`CLAUDE.md`** u rootu repozitorija prati opis projekta i upute za agente (WSL skripte, baza, workflow); **drži je u gitu** kad korisnik traži spremanje ili drugdje smisleno.
+- Kad korisnik traži **„uredi git"**, **„spremi u repozitorij"** ili slično, a postoji **izmijenjen ili novi** `CLAUDE.md`: **`git add CLAUDE.md`** i uključi u commit zajedno s ostalim promjenama (osim ako korisnik izričito isključi tu datoteku).
+- Nakon dodavanja `CLAUDE.md` u prvi commit, za buduća spremanja **ne zaboravi** provjeriti `git status`: ako je `CLAUDE.md` među promjenama, uključi ga (isto pravilo kao gore).
