@@ -379,8 +379,17 @@
                                 </div>
                         </div>
                     </div>
-                    <div class="kontrola-tab__panel" role="tabpanel" id="zapisnikKontrolaTabPanel3" aria-labelledby="zapisnikKontrolaTabKart3" hidden>
-                        <p class="mb-0 zapisnik-crud__uvod">Odjeljak Zapisnik.</p>
+                    <div class="kontrola-tab__panel zapisnik-crud__tab-panel--zapisnik" role="tabpanel" id="zapisnikKontrolaTabPanel3" aria-labelledby="zapisnikKontrolaTabKart3" hidden>
+                        <div class="zapisnik-crud__zapisnik-tab" role="group" aria-label="Zapisnik radova">
+                            <div class="zapisnik-crud__zapisnik-blok zapisnik-crud__zapisnik-blok--sazetak">
+                                <label class="kontrola-labela mb-0" for="zapisnik_edit_sazetak">Sažetak</label>
+                                <textarea id="zapisnik_edit_sazetak" class="kontrola-napomena zapisnik-crud__zapisnik-textarea zapisnik-crud__zapisnik-kontrola" rows="2" spellcheck="true" aria-label="Sažetak zapisnika"></textarea>
+                            </div>
+                            <div class="zapisnik-crud__zapisnik-blok zapisnik-crud__zapisnik-blok--tekst">
+                                <label class="kontrola-labela mb-0" for="zapisnik_edit_tekst">Tekst zapisnika</label>
+                                <textarea id="zapisnik_edit_tekst" class="kontrola-napomena zapisnik-crud__zapisnik-textarea zapisnik-crud__zapisnik-kontrola" rows="4" spellcheck="true" aria-label="Tekst zapisnika"></textarea>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

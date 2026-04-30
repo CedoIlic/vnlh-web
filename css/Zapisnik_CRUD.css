@@ -262,6 +262,52 @@ body {
 }
 
 /*
+ * Tab „Zapisnik”: dva textarea kao kontrola napomena (.kontrola-napomena), ali bez resize gripa —
+ * fiksna podjela visine (prvi blok ~20 % tijela taba), višak teksta u overflow-y: auto.
+ * Panel koristi isti flex stubac kao ostali .kontrola-tab__panel (min-height: 0 na roditelju).
+ */
+.zapisnik-crud__zapisnik-tab {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  box-sizing: border-box;
+}
+
+.zapisnik-crud__zapisnik-blok {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* Cijeli prvi blok (label + polje) zauzima 20 % visine dostupnog stupca taba; drugi ostatak. */
+.zapisnik-crud__zapisnik-blok--sazetak {
+  flex: 0 0 20%;
+}
+
+.zapisnik-crud__zapisnik-blok--tekst {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Kao textarea loža učesnica: nema nativnog resizea, samo klizač; .kontrola-napomena globalno ima resize: vertical — nadjačano ovdje. */
+.zapisnik-crud__zapisnik-textarea.kontrola-napomena {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  resize: none;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/*
  * Tab „Dužnosnici”: CSS grid — u svakom retku labela + edit+ellipsis (isti redoslijed kao ZAPISNIK_DUZNOSNICI_REDOVI); align-items: center
  * za poravnanje po Y osi unutar retka. Okomita pregrada: pseudo na .kontrola-tab__tijelo (:has aktivnog panela), ne na pojedinačnim ćelijama.
  */

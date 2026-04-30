@@ -778,6 +778,14 @@
       if (elPri.id === 'zapisnik_prisustvo_tip_unosa') continue;
       if ('disabled' in elPri) elPri.disabled = !mozePrisustvo;
     }
+    /* Tab Zapisnik: Sažetak + Tekst zapisnika — kao ostatak forme ovisno o odabiru glavne lože. */
+    var zi;
+    var zapisnikTekstNodes = document.querySelectorAll('#zapisnikKontrolaTabPanel3 .zapisnik-crud__zapisnik-kontrola');
+    for (zi = 0; zi < zapisnikTekstNodes.length; zi++) {
+      var elZap = zapisnikTekstNodes[zi];
+      if (!elZap || !('disabled' in elZap)) continue;
+      elZap.disabled = !imaLozu;
+    }
     if (typeof KontroleRefreshCustomSelect === 'function') {
       try {
         KontroleRefreshCustomSelect('zapisnik_prisustvo_tip_unosa');
