@@ -34,6 +34,7 @@
 
    • KontroleInitEditDelete(root)
      Inicijalizira ponašanje edit-delete kontrola (X gumb, vidljivost).
+     Za čvor s klasom kontrola-edit-delete__input--rich-html (DIV umjesto INPUT-a): briše innerHTML, X vidljiv prema textContent.
      Traži: "function initEditDelete".
 
    • KontroleInitCustomSelect(root)
@@ -1428,7 +1429,13 @@
       if (el.dataset.hoverScrollInit === '1') return;
       el.dataset.hoverScrollInit = '1';
       el.addEventListener('mouseenter', function () {
-        if (el.disabled || (el.closest && el.closest('.kontrola-select') && el.closest('.kontrola-select').querySelector('select').disabled)) return;
+        if (
+          el.disabled ||
+          el.getAttribute('aria-disabled') === 'true' ||
+          (el.closest && el.closest('.kontrola-select') && el.closest('.kontrola-select').querySelector('select').disabled)
+        ) {
+          return;
+        }
         var scrollEl = el;
         if (el.classList.contains('kontrola-select__display')) {
           el.classList.add('kontrola-hover-scroll-active');
@@ -1469,6 +1476,15 @@
             el.scrollLeft = 0;
           }
         });
+      } else if (el.classList.contains('kontrola-edit-delete__input--rich-html')) {
+        /* DIV kao „input”: pomak pri kraju teksta (bez setSelectionRange). */
+        el.addEventListener('focus', function () {
+          if (el.scrollWidth > el.clientWidth) {
+            el.scrollLeft = el.scrollWidth;
+          } else {
+            el.scrollLeft = 0;
+          }
+        });
       }
     });
   }
@@ -1485,8 +1501,15 @@
       var input = wrap.querySelector('.kontrola-edit-delete__input');
       var clearBtn = wrap.querySelector('.kontrola-edit-delete__clear');
       if (!input || !clearBtn) return;
+      var richHtml = input.classList && input.classList.contains('kontrola-edit-delete__input--rich-html');
       function syncVisibility() {
-        var hasValue = !!(input.value && String(input.value).length);
+        var hasValue;
+        if (richHtml) {
+          var rawTc = input.textContent != null ? String(input.textContent) : '';
+          hasValue = !!(rawTc.replace(/^\s+|\s+$/g, '').length);
+        } else {
+          hasValue = !!(input.value && String(input.value).length);
+        }
         // X gumb je vidljiv samo kad ima vrijednosti, neovisno o disable stanju
         clearBtn.style.display = hasValue ? 'flex' : 'none';
       }
@@ -1508,8 +1531,11 @@
       clearBtn.tabIndex = -1;
 
       clearBtn.addEventListener('click', function () {
-        if (input.disabled || clearBtn.disabled) return;
-        input.value = '';
+        var wrapBlocking = wrap.classList.contains('kontrola-edit-delete--disabled');
+        if (wrapBlocking || clearBtn.disabled) return;
+        if (!richHtml && input.disabled) return;
+        if (richHtml) input.innerHTML = '';
+        else input.value = '';
         var ev = new Event('input', { bubbles: true });
         input.dispatchEvent(ev);
         syncVisibility();
@@ -1562,7 +1588,14 @@
       var id = lbl.getAttribute('for');
       if (!id) return;
       var target = document.getElementById(id);
-      if (target && target.disabled) {
+      if (!target) {
+        lbl.classList.remove('kontrola-labela--disabled');
+        return;
+      }
+      var wrapEd = target.closest && target.closest('.kontrola-edit-delete');
+      var wrapDis = wrapEd && wrapEd.classList.contains('kontrola-edit-delete--disabled');
+      var ariaDis = target.getAttribute && target.getAttribute('aria-disabled') === 'true';
+      if (target.disabled || ariaDis || wrapDis) {
         lbl.classList.add('kontrola-labela--disabled');
       } else {
         lbl.classList.remove('kontrola-labela--disabled');
@@ -1604,7 +1637,20 @@
       var edWrap = wrap || el;
       var input = edWrap.querySelector('.kontrola-edit-delete__input');
       var clearBtn = edWrap.querySelector('.kontrola-edit-delete__clear');
-      if (input) input.disabled = disable;
+      var richHtml = input && input.classList && input.classList.contains('kontrola-edit-delete__input--rich-html');
+      if (input) {
+        if (richHtml) {
+          if (disable) {
+            input.setAttribute('aria-disabled', 'true');
+            input.tabIndex = -1;
+          } else {
+            input.removeAttribute('aria-disabled');
+            input.tabIndex = 0;
+          }
+        } else {
+          input.disabled = disable;
+        }
+      }
       if (clearBtn) clearBtn.disabled = disable;
       if (disable) edWrap.classList.add('kontrola-edit-delete--disabled');
       else edWrap.classList.remove('kontrola-edit-delete--disabled');
@@ -1622,8 +1668,14 @@
       var label = document.querySelector('.kontrola-labela[for="' + controlId + '"]');
       if (label) {
         var t = target || document.getElementById(controlId);
-        if (t && t.disabled) label.classList.add('kontrola-labela--disabled');
-        else label.classList.remove('kontrola-labela--disabled');
+        var wrapLbl = t && t.closest && t.closest('.kontrola-edit-delete');
+        var wrapLblDis = wrapLbl && wrapLbl.classList.contains('kontrola-edit-delete--disabled');
+        var ariaDisLbl = t && t.getAttribute && t.getAttribute('aria-disabled') === 'true';
+        if ((t && t.disabled) || ariaDisLbl || wrapLblDis) {
+          label.classList.add('kontrola-labela--disabled');
+        } else {
+          label.classList.remove('kontrola-labela--disabled');
+        }
       }
     }
 
@@ -1673,7 +1725,20 @@
     scope.querySelectorAll('.kontrola-edit-delete').forEach(function (wrap) {
       var input = wrap.querySelector('.kontrola-edit-delete__input');
       var clearBtn = wrap.querySelector('.kontrola-edit-delete__clear');
-      if (input) input.disabled = disable;
+      var richHtml = input && input.classList && input.classList.contains('kontrola-edit-delete__input--rich-html');
+      if (input) {
+        if (richHtml) {
+          if (disable) {
+            input.setAttribute('aria-disabled', 'true');
+            input.tabIndex = -1;
+          } else {
+            input.removeAttribute('aria-disabled');
+            input.tabIndex = 0;
+          }
+        } else {
+          input.disabled = disable;
+        }
+      }
       if (clearBtn) clearBtn.disabled = disable;
       if (disable) wrap.classList.add('kontrola-edit-delete--disabled');
       else wrap.classList.remove('kontrola-edit-delete--disabled');
@@ -1840,7 +1905,9 @@
    * Resize: donji desni kut (širina i visina modala), vertikalna traka ispod tablice (visina tijela).
    * Pozicija i veličina se pamte u localStorage po storageKey.
    * @param {Object} options - storageKey (string), mountSelector? (string), headerText? (string), headerIcon? (HTML string ili element), getButtons(): Array<{ label, primary?, className?, onClick(tablicaApi) }>
-   * @returns {Object} { open(config), close() } - config: zaglavlje (Tablica_Zaglavlje), rows (array), getRowId?(row, index)
+   * @returns {Object} { open(config), close() } - config: zaglavlje (Tablica_Zaglavlje), rows (array), getRowId?(row, index),
+   *   rowDoubleClickLikePrimary? (boolean): dvoklik na tbody redak poziva istu akciju kao primarni gumb (npr. OK) —
+   *   prije poziva postavlja selekciju na samo taj redak (getRowId / dataset.rowId), pogodno za multi-select modal.
    */
   function ModalTablicaInit(options) {
     if (!options || !options.storageKey || typeof options.getButtons !== 'function') return null;
@@ -2059,9 +2126,12 @@
       }
 
       footerEl.innerHTML = '';
+      /* Primarni onClick (OK): opcija rowDoubleClickLikePrimary ga ponovno koristi na dvoklik retka. */
+      var primaryOnClick = null;
       var buttons = getButtons();
       if (buttons && buttons.length) {
         buttons.forEach(function (b) {
+          if (b.primary && typeof b.onClick === 'function') primaryOnClick = b.onClick;
           var btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'kontrola-btn';
@@ -2082,6 +2152,25 @@
           });
           footerEl.appendChild(btn);
         });
+      }
+
+      /* Svako open() gradi novu tablicu — ukloni stari dvoklik listener da se ne stapaju pozivi. */
+      if (tableContainer._modalTablicaRowDblClickHandler) {
+        tableContainer.removeEventListener('dblclick', tableContainer._modalTablicaRowDblClickHandler);
+        tableContainer._modalTablicaRowDblClickHandler = null;
+      }
+      if (config.rowDoubleClickLikePrimary === true && typeof primaryOnClick === 'function' && tablicaApi) {
+        tableContainer._modalTablicaRowDblClickHandler = function (ev) {
+          var tr = ev.target && ev.target.closest ? ev.target.closest('tbody tr') : null;
+          if (!tr || !tableContainer.contains(tr)) return;
+          if (tableContainer.classList.contains('kontrola-tablica--disabled')) return;
+          var rid = tr.dataset.rowId;
+          if (rid == null || String(rid).trim() === '') return;
+          ev.preventDefault();
+          tablicaApi.setSelectedRowIds([rid]);
+          primaryOnClick(tablicaApi);
+        };
+        tableContainer.addEventListener('dblclick', tableContainer._modalTablicaRowDblClickHandler);
       }
 
       /* Isti izračun kao kontrola panel tablica: body = 2*padY + head + (row*vidljivih) + extra + bar. */

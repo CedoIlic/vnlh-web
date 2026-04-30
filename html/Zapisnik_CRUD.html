@@ -266,8 +266,118 @@
                             </div>
                         </div>
                     </div>
-                    <div class="kontrola-tab__panel" role="tabpanel" id="zapisnikKontrolaTabPanel2" aria-labelledby="zapisnikKontrolaTabKart2" hidden>
-                        <p class="mb-0 zapisnik-crud__uvod">Odjeljak Dužnosnici.</p>
+                    <div class="kontrola-tab__panel zapisnik-crud__tab-panel-duznosnici" role="tabpanel" id="zapisnikKontrolaTabPanel2" aria-labelledby="zapisnikKontrolaTabKart2" hidden>
+                        <!-- Blok: Dužnosnici — CSS grid (label | edit+ellipsis po retku); okomita pregrada: ::before na .kontrola-tab__tijelo (:has ovaj panel) od vrha do dna tijela taba, preko paddinga. -->
+                        <div class="zapisnik-crud__duznosnici-lista" role="group" aria-label="Dužnosnici na radovima">
+                            <div class="zapisnik-crud__duznosnici-red-cel-label">
+                                    <label class="kontrola-labela mb-0" for="edit_casni_majstor">Časni majstor</label>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-edit">
+                                    <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
+                                        <div id="edit_casni_majstor" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Časni majstor (samo odabir, bez tipkanja)"></div>
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir časnog majstora" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                    </div>
+                                    <button type="button" id="ellipsis_casni_majstor" class="zapisnik-crud__ellipsis-btn" aria-label="Odabir časnog majstora" title="Odabir časnog majstora">
+                                        <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-label">
+                                    <label class="kontrola-labela mb-0" for="edit_prvi_nadzornik">Prvi nadzornik</label>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-edit">
+                                    <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
+                                        <div id="edit_prvi_nadzornik" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Prvi nadzornik (samo odabir, bez tipkanja)"></div>
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir prvog nadzornika" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                    </div>
+                                    <button type="button" id="ellipsis_prvi_nadzornik" class="zapisnik-crud__ellipsis-btn" aria-label="Odabir prvog nadzornika" title="Odabir prvog nadzornika">
+                                        <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-label">
+                                    <label class="kontrola-labela mb-0" for="edit_drugi_nadzornik">Drugi nadzornik</label>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-edit">
+                                    <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
+                                        <div id="edit_drugi_nadzornik" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Drugi nadzornik (samo odabir, bez tipkanja)"></div>
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir drugog nadzornika" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                    </div>
+                                    <button type="button" id="ellipsis_drugi_nadzornik" class="zapisnik-crud__ellipsis-btn" aria-label="Odabir drugog nadzornika" title="Odabir drugog nadzornika">
+                                        <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-label">
+                                    <label class="kontrola-labela mb-0" for="edit_tajnik_loze">Tajnik Lože</label>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-edit">
+                                    <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
+                                        <div id="edit_tajnik_loze" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Tajnik Lože (samo odabir, bez tipkanja)"></div>
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir tajnika Lože" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                    </div>
+                                    <button type="button" id="ellipsis_tajnik_loze" class="zapisnik-crud__ellipsis-btn" aria-label="Odabir tajnika Lože" title="Odabir tajnika Lože">
+                                        <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-label">
+                                    <label class="kontrola-labela mb-0" for="edit_govornik">Govornik</label>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-edit">
+                                    <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
+                                        <div id="edit_govornik" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Govornik (samo odabir, bez tipkanja)"></div>
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir govornika" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                    </div>
+                                    <button type="button" id="ellipsis_govornik" class="zapisnik-crud__ellipsis-btn" aria-label="Odabir govornika" title="Odabir govornika">
+                                        <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-label">
+                                    <label class="kontrola-labela mb-0" for="edit_majstor_ceremonije">Majstor ceremonije</label>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-edit">
+                                    <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
+                                        <div id="edit_majstor_ceremonije" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Majstor ceremonije (samo odabir, bez tipkanja)"></div>
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir majstora ceremonije" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                    </div>
+                                    <button type="button" id="ellipsis_majstor_ceremonije" class="zapisnik-crud__ellipsis-btn" aria-label="Odabir majstora ceremonije" title="Odabir majstora ceremonije">
+                                        <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-label">
+                                    <label class="kontrola-labela mb-0" for="edit_prvi_dakon">Prvi Đakon</label>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-edit">
+                                    <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
+                                        <div id="edit_prvi_dakon" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Prvi Đakon (samo odabir, bez tipkanja)"></div>
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir prvog Đakona" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                    </div>
+                                    <button type="button" id="ellipsis_prvi_dakon" class="zapisnik-crud__ellipsis-btn" aria-label="Odabir prvog Đakona" title="Odabir prvog Đakona">
+                                        <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-label">
+                                    <label class="kontrola-labela mb-0" for="edit_drugi_dakon">Drugi Đakon</label>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-edit">
+                                    <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
+                                        <div id="edit_drugi_dakon" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Drugi Đakon (samo odabir, bez tipkanja)"></div>
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir drugog Đakona" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                    </div>
+                                    <button type="button" id="ellipsis_drugi_dakon" class="zapisnik-crud__ellipsis-btn" aria-label="Odabir drugog Đakona" title="Odabir drugog Đakona">
+                                        <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-label">
+                                    <label class="kontrola-labela mb-0" for="edit_unutarnji_cuvar_hrama">Unutarnji čuvar hrama</label>
+                                </div>
+                                <div class="zapisnik-crud__duznosnici-red-cel-edit">
+                                    <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
+                                        <div id="edit_unutarnji_cuvar_hrama" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Unutarnji čuvar hrama (samo odabir, bez tipkanja)"></div>
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir unutarnjeg čuvara hrama" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                    </div>
+                                    <button type="button" id="ellipsis_unutarnji_cuvar_hrama" class="zapisnik-crud__ellipsis-btn" aria-label="Odabir unutarnjeg čuvara hrama" title="Odabir unutarnjeg čuvara hrama">
+                                        <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                                    </button>
+                                </div>
+                        </div>
                     </div>
                     <div class="kontrola-tab__panel" role="tabpanel" id="zapisnikKontrolaTabPanel3" aria-labelledby="zapisnikKontrolaTabKart3" hidden>
                         <p class="mb-0 zapisnik-crud__uvod">Odjeljak Zapisnik.</p>

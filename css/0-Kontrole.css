@@ -2225,6 +2225,24 @@ input.kontrola-checkbox[type="checkbox"]:disabled {
   cursor: var(--edit_cursor_disabled);
 }
 
+/* DIV umjesto INPUT-a: HTML prikaz (npr. <strong>prezime ime</strong>, ostatak) — isti omjer visine kao input. */
+.kontrola-edit-delete__input.kontrola-edit-delete__input--rich-html {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  cursor: default;
+}
+
+.kontrola-edit-delete__input.kontrola-edit-delete__input--rich-html[aria-disabled="true"] {
+  color: var(--edit_delete_text_disabled);
+  cursor: var(--edit_cursor_disabled);
+}
+
+.kontrola-edit-delete__input.kontrola-edit-delete__input--rich-html strong {
+  font-weight: 600;
+}
+
 /* Hover-scroll: dok skrolamo, ellipsis ne smije biti vidljiv */
 .kontrola-edit-delete__input.kontrola-hover-scroll-active {
   text-overflow: clip;

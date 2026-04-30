@@ -11,6 +11,7 @@
    * ModalTablicaInit (0-Kontrole): drag zaglavlja, resize panela/trake, pozicija+veličina u localStorage
    * (ključ modal_tablica_zapisnik_loze_ucesnice). Podnožje: OK (primarna, disabled dok nema označenih redova)
    * upisuje u #zapisnik_loza_ucesnici cijele retke (naziv, grad, država), odvojeno «; »; textarea je readOnly.
+   * Dvoklik na redak: isto kao OK uz selekciju samo tog retka (open.rowDoubleClickLikePrimary).
    * Nakon OK: modal se zatvori, zatim u rAF puna zamjena textarea iz snapshota + getSelectedRowIds (ne miješanje sa starim prikazom).
    * Kolekcija id-jeva zapisnikLozeUcesniceKolekcijaId držan je u syncu s OK-om; ponovno otvaranje modala
    * obnavlja oznake redaka prema kolekciji (ne parsira textarea). Odustani zatvara bez izmjena.
@@ -21,6 +22,8 @@
 
   /** Zadnji snimak redova pri otvaranju — bold HTML u ćeliji; OK puni textarea iz row[2–4] (naziv, grad, država). */
   var zapisnikModalLozeUcesniceSnapshot = null;
+  /** Snimak redova modala Dužnosnika — nakon open() ćelije dobiju HTML (<strong>prezime ime</strong>, ostatak). */
+  var zapisnikModalDuznosnikSnapshot = null;
   /** Id-jevi odabranih loža učesnica (stringovi), redoslijed kao zadnji potvrđeni OK — izvor istine za ponovno otvaranje modala. */
   var zapisnikLozeUcesniceKolekcijaId = [];
   /** Članovi s GET Clanovi_CRUD_sve_loze.php — kao `data` + clanoviLozaPrimijeniTraži u Clanovi_Loza_CRUD (filtar po poljima iz JSON-a, ne po textContent-u ćelije). */
@@ -31,16 +34,23 @@
    * • id — id člana (`radovi_radovi_*` FK).
    * • fgCss — boja teksta za taj red na prebacivanju (#rrggbb ili prazno = sistemsko), iz opcije Tipa (`data-boja-prikaza`).
    * • tipUnosaId — string vrijednosti #zapisnik_prisustvo_tip_unosa u trenutku prebacivanja (`radovi_prisustvo_tip.id` kao string); za povratak / obnovu znaka koja je opcija pripala retku (starije zapise bez polja i dalje crtamo samo uz fgCss).
-   * • prikazTekstZaClana — opcijski snimljeno „Prezime Ime · loža” u trenutku prebacivanja s liste; ako keš članova kasnije nema osobu (nova GET lista…), crtanje koristi ovaj tekst umjesto #id.
+   * • prikazTekstZaClana — opcijski snimljeno „Prezime Ime · loža” za ćeliju desne tablice Prisustva (isti kao lijeva lista).
+   * • duznosnikClanPolja — snimak { prezime, ime, loza_naziv, loza_grad, drzava_loze } pri premještaju udesno; ako novi GET zamijeni ClanoviIzvorData, modal Dužnosnika i edit i dalje koriste zarez-format (FormatPlain/Html), ne prikazTekstZaClana.
    * • slobodanUnos (+ tekstSlobPrikaz, idDrzaveGostiju) — opcija Tipa ima data-slobodan-unos=1: red nije FK na članove; id sintetički `su:N`, tekst Jedan red kao „Ime · loža · država”; id države iz #zapisnik_prisustvo_select_drzava.
    *
    * Reset: modal lože OK bez zadržavanja desnog, nova JSON lista lijevo ako nije `zadrziDesnuListu`, prazan skup loža (bez zadrži), ili pipe-greška od API-ja.
    */
   var zapisnikPrisustvoDesnoListaPoRedu = [];
+  /** Broj paralelnih GET-ova liste članova (lijevo); kad pada na 0, skida se UI blokada u tabu Prisustvo. */
+  var zapisnikPrisustvoListaLoadDepth = 0;
   /** Jedinstven sufiks za slobodan-unos redove u desnoj listi (`su` + ovaj broj u `entry.id`). */
   var zapisnikPrisustvoSlobUnosSuIdSuffix = 0;
   /** Inicijalizacija modala pri učitavanju (ModalTablicaInit). */
   var modalZapisnikLozeUcesniceApi = null;
+  /** Modal jednostrukog odabira člana za polje Dužnosnika (storageKey modal_tablica_zapisnik_duznosnik_izbor). */
+  var modalZapisnikDuznosnikIzborApi = null;
+  /** Koje polje #edit_* puni zadnji OK modala dužnosnika — referenca do close/OK. */
+  var zapisnikDuznosnikModalCiljniEditId = null;
 
   /*
    * ZAGLAVLJE TABLICE (modal, jedan stupac; u ćeliji zarezom odvojeni naziv, grad, država — id u row[1] ne iscrtava se).
@@ -57,6 +67,34 @@
    */
   var ZAGLAVLJE_MODAL_LOZE_UCESNICE = [
     { key: 'podaci', title: 'Podaci', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
+  ];
+
+  /*
+   * ZAGLAVLJE — modal „Izbor dužnosnika” (jedan stupac, članovi iz desne tablice Prisustva).
+   *
+   * key — logičko ime stupca za sort po prikazanom tekstu.
+   * title — tekst TH: „Prisutni članovi”.
+   * sortable — 1 (korisnik može sortirati po ćeliji).
+   * sortable_icon — 0 (bez posebne ikone ako zajednički CRUD tako očekuje).
+   * type — 't' (tekstualna ćelija).
+   * width — 0 (širina fleksibilna unutar tijela modala).
+   * suffix — prazno.
+   * align / row_align — L (lijevo).
+   * mobitel_prikaz — 1 (stupac se prikazuje i na užem prikazu).
+   */
+  var ZAGLAVLJE_MODAL_DUZNOSNICI_PRISUTNI = [
+    {
+      key: 'podaci',
+      title: 'Prisutni članovi',
+      sortable: 1,
+      sortable_icon: 0,
+      type: 't',
+      width: 0,
+      suffix: '',
+      align: 'L',
+      row_align: 'L',
+      mobitel_prikaz: 1
+    }
   ];
 
   /**
@@ -211,6 +249,246 @@
   /** Ellipsis kod Tip radova → modal lože učesnice (isti element kao disabled u zapisnikPostaviKontroleOvisnoLozi). */
   var bTipEllipsis = document.getElementById('zapisnik_btn_tip_ellipsis');
 
+  /*
+   * Tab Dužnosnici: parovi editId / ellipsisId — grid (labela, edit-delete + ellipsis); okomita crta na .kontrola-tab__tijelo (:has ovaj panel).
+   * Bez lože: omot edit-delete onemogućen (KontroleSetControlEnabled); s ložom: input readonly, vrijednost i data-zapisnik-clan-id iz modala „Izbor dužnosnika”; X briše tekst i ID. Ellipsis onemogućen bez lože.
+   */
+  var ZAPISNIK_DUZNOSNICI_REDOVI = [
+    { editId: 'edit_casni_majstor', ellipsisId: 'ellipsis_casni_majstor' },
+    { editId: 'edit_prvi_nadzornik', ellipsisId: 'ellipsis_prvi_nadzornik' },
+    { editId: 'edit_drugi_nadzornik', ellipsisId: 'ellipsis_drugi_nadzornik' },
+    { editId: 'edit_tajnik_loze', ellipsisId: 'ellipsis_tajnik_loze' },
+    { editId: 'edit_govornik', ellipsisId: 'ellipsis_govornik' },
+    { editId: 'edit_majstor_ceremonije', ellipsisId: 'ellipsis_majstor_ceremonije' },
+    { editId: 'edit_prvi_dakon', ellipsisId: 'ellipsis_prvi_dakon' },
+    { editId: 'edit_drugi_dakon', ellipsisId: 'ellipsis_drugi_dakon' },
+    { editId: 'edit_unutarnji_cuvar_hrama', ellipsisId: 'ellipsis_unutarnji_cuvar_hrama' }
+  ];
+
+  /** Kartica „Dužnosnici”: minimalno prisutnih u desnoj tablici čiji je tip s radovi_prisustvo_tip.duznosnik_ok = 1. */
+  var ZAPISNIK_MIN_PRISUTNIH_ZA_KARTICU_DUZNOSNICI = 5;
+
+  /**
+   * Primijeni disabled/readonly na sve redove Dužnosnika (isti obrasci kao textarea loža učesnica).
+   * @param {boolean} smijeKarticaDuznosnika — true tek kad je kartica Dužnosnici omogućena (broj dužnosničkih prisutnih u desnoj tablici).
+   */
+  function zapisnikPrimijeniDuznosniciOvisnoLozi(smijeKarticaDuznosnika) {
+    var di;
+    var ima = !!smijeKarticaDuznosnika;
+    for (di = 0; di < ZAPISNIK_DUZNOSNICI_REDOVI.length; di++) {
+      var pair = ZAPISNIK_DUZNOSNICI_REDOVI[di];
+      var editDu = document.getElementById(pair.editId);
+      var ellDu = document.getElementById(pair.ellipsisId);
+      var edWrap = editDu && editDu.closest ? editDu.closest('.kontrola-edit-delete') : null;
+      if (edWrap && typeof KontroleSetControlEnabled === 'function') {
+        KontroleSetControlEnabled(edWrap, ima);
+      } else if (editDu) {
+        /* Fallback ako struktura još nije .kontrola-edit-delete (stariji HTML). */
+        editDu.disabled = !ima;
+        editDu.readOnly = false;
+      }
+      if (editDu && ima && editDu.tagName === 'INPUT') {
+        editDu.readOnly = true;
+      }
+      if (ellDu) ellDu.disabled = !ima;
+    }
+  }
+
+  /**
+   * „Prezime Ime” iz zapisa člana (isti redoslijed kao u modalu i editu Dužnosnika).
+   * @param {{ prezime?: string, ime?: string }|null} r
+   * @returns {string}
+   */
+  function zapisnikDuznosnikSastaviPrezimeImeIzPolja(r) {
+    if (!r || typeof r !== 'object') return '';
+    var p = trimZ(r.prezime);
+    var ix = trimZ(r.ime);
+    var ime = (p + (p && ix ? ' ' : '') + ix).trim();
+    if (!ime) ime = p || ix || '';
+    return ime;
+  }
+
+  /**
+   * Jedinstveni plain tekst za sort u modalu i za usporedbe: „Prezime Ime, loža, grad, država” (prazni segmenti izostavljeni).
+   * @param {{ prezime?: string, ime?: string, loza_naziv?: string, loza_grad?: string, drzava_loze?: string }|null} r
+   * @returns {string}
+   */
+  function zapisnikDuznosnikFormatPlainClana(r) {
+    if (!r || typeof r !== 'object') return '';
+    var ime = zapisnikDuznosnikSastaviPrezimeImeIzPolja(r);
+    var dijelovi = [];
+    if (ime) dijelovi.push(ime);
+    var lz = trimZ(r.loza_naziv);
+    var lg = trimZ(r.loza_grad);
+    var dLo = trimZ(r.drzava_loze);
+    if (lz) dijelovi.push(lz);
+    if (lg) dijelovi.push(lg);
+    if (dLo) dijelovi.push(dLo);
+    return dijelovi.join(', ');
+  }
+
+  /**
+   * Je li `radovi_prisustvo_tip.id` (string u retku desne liste / value opcije) označen za UI odabira dužnosnika.
+   * Izvor: opcije #zapisnik_prisustvo_tip_unosa — data-duznosnik-ok punjen iz Radovi_TipUnosaPrisutnih_CRUD_sve.php (duznosnik_ok).
+   * @param {string} tipIdStr
+   * @returns {boolean}
+   */
+  function zapisnikDuznosnikJeTipZaDuznosnika(tipIdStr) {
+    var tid = trimZ(String(tipIdStr || ''));
+    if (!tid) return false;
+    var sel = document.getElementById('zapisnik_prisustvo_tip_unosa');
+    if (!sel || !sel.options) return false;
+    var oi;
+    for (oi = 0; oi < sel.options.length; oi++) {
+      var op = sel.options[oi];
+      if (trimZ(op.value) === tid) return op.getAttribute('data-duznosnik-ok') === '1';
+    }
+    return false;
+  }
+
+  /**
+   * Za uvjet kartice „Dužnosnici”: koliko je u desnoj listi Prisustva neslobodnih redaka čiji tip unosa ima duznosnik_ok (option data-duznosnik-ok=1).
+   * @returns {number}
+   */
+  function zapisnikPrebrojiPrisutneSDuznosnikTipom() {
+    var arr = zapisnikPrisustvoDesnoListaPoRedu || [];
+    var cnt = 0;
+    var i;
+    for (i = 0; i < arr.length; i++) {
+      var en = arr[i];
+      if (!en || en.slobodanUnos) continue;
+      var cid = en.id != null ? String(en.id) : '';
+      if (!cid || cid.indexOf('su:') === 0) continue;
+      var tipId = en.tipUnosaId != null ? trimZ(String(en.tipUnosaId)) : '';
+      if (!zapisnikDuznosnikJeTipZaDuznosnika(tipId)) continue;
+      cnt += 1;
+    }
+    return cnt;
+  }
+
+  /**
+   * Polja za zarez/HTML prikaz Dužnosnika — kopija pri premještaju udesno kad još postoji zapis u kešu članova.
+   * @param {{ prezime?: string, ime?: string, loza_naziv?: string, loza_grad?: string, drzava_loze?: string }|null} o
+   * @returns {object|null}
+   */
+  function zapisnikSnimiPoljaZaDuznosnikaIzClana(o) {
+    if (!o || typeof o !== 'object') return null;
+    return {
+      prezime: o.prezime,
+      ime: o.ime,
+      loza_naziv: o.loza_naziv,
+      loza_grad: o.loza_grad,
+      drzava_loze: o.drzava_loze
+    };
+  }
+
+  /**
+   * Za modal i edit Dužnosnika: prednost živom kešu iz GET-a; inače snimak na retku desne liste (nakon zamjene ClanoviIzvorData član može ostati samo na desnoj strani).
+   * @param {string} cid id člana
+   * @param {{ duznosnikClanPolja?: object }|null} entry red iz zapisnikPrisustvoDesnoListaPoRedu ili null
+   * @returns {{ prezime?: string, ime?: string, loza_naziv?: string, loza_grad?: string, drzava_loze?: string }|null}
+   */
+  function zapisnikPrisustvoDohvatObjektClanaZaDuznosnika(cid, entry) {
+    var oLive = zapisnikPrisustvoNadjiClanUOstavPodacimaPoId(cid);
+    if (oLive) return oLive;
+    var snap = entry && entry.duznosnikClanPolja;
+    if (snap && typeof snap === 'object') return snap;
+    return null;
+  }
+
+  /**
+   * Za modal Dužnosnika: članovi koji već imaju dodjelu u bilo kojem od devet polja ne ulaze u listu (dataset.zapisnikClanId na omotu edit-delete).
+   * @returns {Object.<string, boolean>}
+   */
+  function zapisnikDuznosnikMapaClanovaZaIskljucivanjeIzModala() {
+    var map = {};
+    var di;
+    for (di = 0; di < ZAPISNIK_DUZNOSNICI_REDOVI.length; di++) {
+      var editId = ZAPISNIK_DUZNOSNICI_REDOVI[di].editId;
+      var inp = document.getElementById(editId);
+      if (!inp || !inp.closest) continue;
+      var wrap = inp.closest('.kontrola-edit-delete');
+      var cid = wrap && wrap.dataset.zapisnikClanId ? trimZ(String(wrap.dataset.zapisnikClanId)) : '';
+      if (cid) map[cid] = true;
+    }
+    return map;
+  }
+
+  /**
+   * Formira redove za ModalTablicaInit: [plain_sort, id_člana, …opcijski polja za HTML ćelije].
+   * Kad postoji član u kešu: [plain, cid, prezime, ime, loza_naziv, loza_grad, drzava_loze] — zapisnikModalPrimijeniBoldDuznosnikUPrikazu puni <strong> na prezime+ime.
+   * Inače samo [plain, cid] — ćelija ostaje običan tekst (escape).
+   * @param {Object.<string, boolean>} excludeMap
+   * @returns {Array<Array>}
+   */
+  function zapisnikDuznosnikPripremiRedoveZaModal(excludeMap) {
+    var arr = zapisnikPrisustvoDesnoListaPoRedu || [];
+    var seen = {};
+    var out = [];
+    var i;
+    for (i = 0; i < arr.length; i++) {
+      var en = arr[i];
+      if (!en || en.slobodanUnos) continue;
+      var cid = en.id != null ? String(en.id) : '';
+      if (!cid || cid.indexOf('su:') === 0) continue;
+      if (seen[cid]) continue;
+      var tipId = en.tipUnosaId != null ? trimZ(String(en.tipUnosaId)) : '';
+      if (!zapisnikDuznosnikJeTipZaDuznosnika(tipId)) continue;
+      if (excludeMap && excludeMap[cid]) continue;
+      seen[cid] = true;
+      var o = zapisnikPrisustvoDohvatObjektClanaZaDuznosnika(cid, en);
+      var plain = o ? zapisnikDuznosnikFormatPlainClana(o) : trimZ(en.prikazTekstZaClana || '');
+      if (!plain) plain = 'ID ' + cid;
+      if (o) {
+        out.push([
+          plain,
+          cid,
+          trimZ(o.prezime),
+          trimZ(o.ime),
+          trimZ(o.loza_naziv),
+          trimZ(o.loza_grad),
+          trimZ(o.drzava_loze)
+        ]);
+      } else {
+        out.push([plain, cid]);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Otvara modal jednostrukog izbora člana za jedno polje Dužnosnika (ellipsis ili dvoklik na input).
+   * @param {string} editId npr. edit_casni_majstor
+   */
+  function zapisnikOtvoriModalDuznosnikaZaEdit(editId) {
+    if (typeof ModalTablicaInit !== 'function' || !modalZapisnikDuznosnikIzborApi) return;
+    if (!zapisnikIdOdabraneLozISelecta()) return;
+    var exclude = zapisnikDuznosnikMapaClanovaZaIskljucivanjeIzModala();
+    var rows = zapisnikDuznosnikPripremiRedoveZaModal(exclude);
+    if (!rows.length) {
+      if (typeof window.showPorukaModal === 'function') window.showPorukaModal('125');
+      return;
+    }
+    zapisnikDuznosnikModalCiljniEditId = editId;
+    zapisnikModalDuznosnikSnapshot = rows.map(function (rw) {
+      return Array.isArray(rw) ? rw.slice() : rw;
+    });
+    modalZapisnikDuznosnikIzborApi.open({
+      zaglavlje: ZAGLAVLJE_MODAL_DUZNOSNICI_PRISUTNI,
+      rows: rows,
+      multiSelect: false,
+      rowDoubleClickLikePrimary: true,
+      onSelectionChange: zapisnikModalSyncOkDisabledFromDom,
+      getRowId: function (row) {
+        return row && row.length > 1 ? String(row[1]) : '';
+      }
+    });
+    requestAnimationFrame(function () {
+      zapisnikModalPrimijeniBoldDuznosnikUPrikazu();
+      zapisnikModalSyncOkDisabledFromDom();
+    });
+  }
+
   /* Geo keš: window.vnlhGeo* u 0-Filteri_Po_Ogranicenjima.js. Kaskada: Država → Regija → Loža, bez tablice. */
 
   /**
@@ -261,9 +539,177 @@
   }
 
   /**
+   * Za kartice glavnog taba zapisnika: Podaci / Prisustvo / Dužnosnici / Zapisnik.
+   * Prisustvo je dostupno tek kad je odabrana glavna loža i barem jedna loža učesnica (`zapisnikLozeUcesniceKolekcijaId` nakon modala).
+   * Dužnosnici tek kad su u desnoj tablici Prisustva ispunjeni uvjeti (≥ ZAPISNIK_MIN_PRISUTNIH_ZA_KARTICU_DUZNOSNICI članova s tipom duznosnik_ok).
+   * @param {boolean} imaLozu — odabrana glavna loža u zaglavlju
+   * @returns {{ mozePrisustvo: boolean, mozeDuznosnici: boolean }}
+   */
+  function zapisnikIzracunajMozePrisustvoIDuznosniciZaTabove(imaLozu) {
+    var imaBarLozUces =
+      Array.isArray(zapisnikLozeUcesniceKolekcijaId) && zapisnikLozeUcesniceKolekcijaId.length > 0;
+    var mozePrisustvo = !!imaLozu && imaBarLozUces;
+    var mozeDuznosnici =
+      mozePrisustvo &&
+      zapisnikPrebrojiPrisutneSDuznosnikTipom() >= ZAPISNIK_MIN_PRISUTNIH_ZA_KARTICU_DUZNOSNICI;
+    return { mozePrisustvo: mozePrisustvo, mozeDuznosnici: mozeDuznosnici };
+  }
+
+  /**
+   * Ako je aktivna kartica ostala s klasom --aktivna ali je sada disabled (npr. promjena desne liste),
+   * vrati fokus i prikaz na tab „Podaci” (indeks 0). Koristi se nakon ažuriranja disabled stanja kartica.
+   * @param {Element|null} tabRoot #zapisnikKontrolaTab
+   */
+  function zapisnikTabVratiNaPodaciAkoAktivnaJeOnemogucena(tabRoot) {
+    if (!tabRoot) return;
+    var akt = tabRoot.querySelector('.kontrola-tab__kartica.kontrola-tab__kartica--aktivna');
+    if (!akt || !akt.disabled) return;
+    if (typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(tabRoot, 0);
+    var k0 = document.getElementById('zapisnikKontrolaTabKart0');
+    if (k0 && !k0.disabled) {
+      try {
+        k0.focus();
+      } catch (ef) {}
+    }
+  }
+
+  /**
+   * Postavlja disabled na pojedinim karticama (ne jednako za sve). Kartice 0 i 3 = imaLozu; 1 = može Prisustvo; 2 = može Dužnosnici.
+   * @param {boolean} imaLozu
+   * @param {boolean} mozePrisustvo
+   * @param {boolean} mozeDuznosnici
+   */
+  function zapisnikPrimijeniDisabledNaKarticeZapisnika(imaLozu, mozePrisustvo, mozeDuznosnici) {
+    var map = [
+      { id: 'zapisnikKontrolaTabKart0', ok: !!imaLozu },
+      { id: 'zapisnikKontrolaTabKart1', ok: !!mozePrisustvo },
+      { id: 'zapisnikKontrolaTabKart2', ok: !!mozeDuznosnici },
+      { id: 'zapisnikKontrolaTabKart3', ok: !!imaLozu }
+    ];
+    var mi;
+    for (mi = 0; mi < map.length; mi++) {
+      var btn = document.getElementById(map[mi].id);
+      if (!btn) continue;
+      if (!map[mi].ok) btn.disabled = true;
+      else btn.removeAttribute('disabled');
+    }
+  }
+
+  /**
+   * Capture na `.kontrola-tab__traka`: `0-Kontrole_Tab.js` ne preskače disabled kartice pri strelicama/Home/End.
+   * Kada bi sljedeća kartica bila disabled, pronalazi sljedeću omogućenu u istom smjeru ili odustaje (sve disabled).
+   * Ne mijenja globalni KontroleTabInit — samo Zapisnik_CRUD.
+   * @param {KeyboardEvent} ev
+   * @param {Element} tabRoot .kontrola-tab
+   */
+  function zapisnikKontrolaTabZaobilaziDisabledTipkovnica(ev, tabRoot) {
+    var key = ev.key;
+    if (key !== 'ArrowLeft' && key !== 'ArrowRight' && key !== 'Home' && key !== 'End') return;
+    var t = ev.target;
+    if (!t || !t.classList || !t.classList.contains('kontrola-tab__kartica')) return;
+    var kartice = tabRoot.querySelectorAll('.kontrola-tab__kartica');
+    var tijelo = tabRoot.querySelector('.kontrola-tab__tijelo');
+    if (!tijelo) return;
+    var paneli = tijelo.querySelectorAll('.kontrola-tab__panel');
+    var n = Math.min(kartice.length, paneli.length);
+    if (n === 0) return;
+
+    function indeksIzGumba(btn) {
+      var j;
+      var s;
+      if (btn && btn.getAttribute) {
+        s = btn.getAttribute('data-tab-index');
+        if (s != null && s !== '') {
+          var parsed = parseInt(s, 10);
+          if (!isNaN(parsed)) return parsed;
+        }
+      }
+      for (j = 0; j < kartice.length; j++) {
+        if (kartice[j] === btn) return j;
+      }
+      return 0;
+    }
+
+    var cur = indeksIzGumba(t);
+    var naiveNext = cur;
+    if (key === 'ArrowLeft') naiveNext = (cur - 1 + n) % n;
+    else if (key === 'ArrowRight') naiveNext = (cur + 1) % n;
+    else if (key === 'Home') naiveNext = 0;
+    else if (key === 'End') naiveNext = n - 1;
+
+    if (kartice[naiveNext] && !kartice[naiveNext].disabled) return;
+
+    var next = cur;
+    if (key === 'ArrowLeft' || key === 'ArrowRight') {
+      var step = key === 'ArrowRight' ? 1 : -1;
+      var tries = 0;
+      next = cur;
+      while (tries < n) {
+        next = (next + step + n) % n;
+        if (kartice[next] && !kartice[next].disabled) break;
+        tries += 1;
+      }
+      if (tries >= n || next === cur) {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        return;
+      }
+    } else if (key === 'Home') {
+      next = -1;
+      var hi;
+      for (hi = 0; hi < n; hi++) {
+        if (kartice[hi] && !kartice[hi].disabled) {
+          next = hi;
+          break;
+        }
+      }
+      if (next < 0) {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        return;
+      }
+    } else if (key === 'End') {
+      next = -1;
+      var ei;
+      for (ei = n - 1; ei >= 0; ei--) {
+        if (kartice[ei] && !kartice[ei].disabled) {
+          next = ei;
+          break;
+        }
+      }
+      if (next < 0) {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        return;
+      }
+    }
+
+    if (next === cur) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      return;
+    }
+
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    if (typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(tabRoot, next);
+    if (kartice[next]) {
+      try {
+        kartice[next].focus();
+      } catch (eFc) {}
+    }
+    setTimeout(function () {
+      zapisnikScheduleMinVisinuResiza();
+    }, 0);
+  }
+
+  /**
    * Dok nije odabrana loža: tab (kartice), polja u prvom tabu, Upis / Izbriši su disabled. Povratak ostaje aktivan.
    * Prava zastavice: vnlhPrimijeniPravaCrud i dalje upravlja vidljivošću (hidden); ovdje samo disabled za vidljive gumbe.
-   * Upis i PDF: vidi zapisnikMozePrihvatUpisPdf / zapisnikPrimijeniUvjeteUpisPdfGumba. Ikona „postojeći zapisnik”: disabled dok nema lože. Kartica Prisustvo: sve kontrole u #zapisnikKontrolaTabPanel1 (uključ. tablice) kad nema lože. Izbriši: disabled kad nema lože, samo u modu korekcije vidljiv (mod_upisa_zapisnika=1) i uz brisanje_sloga.
+   * Upis i PDF: vidi zapisnikMozePrihvatUpisPdf / zapisnikPrimijeniUvjeteUpisPdfGumba. Ikona „postojeći zapisnik”: disabled dok nema lože.
+   * Kartica „Prisustvo”: disabled dok nema barem jednu ložu učesnicu (modal). Kartica „Dužnosnici”: disabled dok u desnoj tablici Prisustva nema dovoljno članova s tipom duznosnik_ok.
+   * Kontrole u #zapisnikKontrolaTabPanel1 (uključ. tablice) slave isti uvjet kao kartica Prisustvo. Tab Dužnosnici: ZAPISNIK_DUZNOSNICI_REDOVI tek kad je kartica Dužnosnici smislena.
+   * Izbriši: disabled kad nema lože, samo u modu korekcije vidljiv (mod_upisa_zapisnika=1) i uz brisanje_sloga.
    * Min. visina vanjskog panela s trakom: data-resize-min-px postavlja zapisnikScheduleMinVisinuResiza (sadržaj + 12px u tabu).
    * @param {string} [idLozaZaFormu] — ako zadan (npr. iz change na #select_loza), ima ložu se računa iz toga bez oslanjanja na .value koji u custom selectu u istome event tick-u još može nedostati.
    */
@@ -272,21 +718,15 @@
       typeof idLozaZaFormu !== 'undefined'
         ? trimZ(idLozaZaFormu !== null ? String(idLozaZaFormu) : '') !== ''
         : !!zapisnikIdOdabraneLozISelecta();
+    var stanjeTabova = zapisnikIzracunajMozePrisustvoIDuznosniciZaTabove(imaLozu);
+    var mozePrisustvo = stanjeTabova.mozePrisustvo;
+    var mozeDuznosnici = stanjeTabova.mozeDuznosnici;
     var tabRoot = document.getElementById('zapisnikKontrolaTab');
     if (tabRoot) {
       /* Vizual: Zapisnik_CRUD.css .zapisnik-crud__tab--onemogucen (sjene, boje labela, ugniježdeni panel). */
       tabRoot.classList.toggle('zapisnik-crud__tab--onemogucen', !imaLozu);
-      var kartice = tabRoot.querySelectorAll('.kontrola-tab__kartica');
-      var a;
-      for (a = 0; a < kartice.length; a++) {
-        var karta = kartice[a];
-        /* Za <button>: removeAttribute pouzdaniji od disabled=false u nekim okruženjima kod ponovnog uključivanja. */
-        if (!imaLozu) {
-          karta.disabled = true;
-        } else {
-          karta.removeAttribute('disabled');
-        }
-      }
+      zapisnikPrimijeniDisabledNaKarticeZapisnika(imaLozu, mozePrisustvo, mozeDuznosnici);
+      zapisnikTabVratiNaPodaciAkoAktivnaJeOnemogucena(tabRoot);
     }
     var inpD = document.getElementById('zapisnik_datum_radova');
     if (inpD) inpD.disabled = !imaLozu;
@@ -326,6 +766,8 @@
       var cb = document.getElementById(ovrCbIds[oi]);
       if (cb) cb.disabled = !imaLozu;
     }
+    /* Dužnosnici: svi redovi iz ZAPISNIK_DUZNOSNICI_REDOVI — aktivni tek kad je tab Dužnosnici dopušten brojem prisutnih dužnosničkih tipova. */
+    zapisnikPrimijeniDuznosniciOvisnoLozi(mozeDuznosnici);
     /* Kartica Prisustvo: selekt / edita / razmjena / dvije jednostupčane tablice.
      * #zapisnik_prisustvo_tip_unosa se ne dira ovdje — disabled + label sinkron s brojem redaka u lijevom tbodyu (zapisnikPrisustvoPrimijeliRasporedLijevoIStanje). */
     var pk;
@@ -334,7 +776,7 @@
       var elPri = prisNodes[pk];
       if (!elPri) continue;
       if (elPri.id === 'zapisnik_prisustvo_tip_unosa') continue;
-      if ('disabled' in elPri) elPri.disabled = !imaLozu;
+      if ('disabled' in elPri) elPri.disabled = !mozePrisustvo;
     }
     if (typeof KontroleRefreshCustomSelect === 'function') {
       try {
@@ -879,7 +1321,7 @@
   }
 
   /**
-   * Tip prisustva: na option data-slobodan-unos (slobodan unos) i data-svi-clanovi-obedijncije (ispunjava se cijela obedijencija iz baze).
+   * Tip prisustva: na option data-slobodan-unos, data-svi-clanovi-obedijncije, data-duznosnik-ok (tab Dužnosnici — filtriranje desne liste u modalu), data-boja-prikaza.
    */
   function puniSelectTipUnosaPrisustvaZapisnik() {
     puniSelectIdNazivPrisustvaZapisnik({
@@ -893,6 +1335,10 @@
         var svc = row && row.svi_clanovi_obedijncije;
         var sviOb = svc === 1 || svc === true || svc === '1';
         optH.setAttribute('data-svi-clanovi-obedijncije', sviOb ? '1' : '0');
+        /* Odabir dužnosnika u tabu Dužnosnici: članovi u desnoj tablici samo ako je red tipa s radovi_prisustvo_tip.duznosnik_ok=1. */
+        var duOk = row && row.duznosnik_ok;
+        var dzOk = duOk === 1 || duOk === true || duOk === '1';
+        optH.setAttribute('data-duznosnik-ok', dzOk ? '1' : '0');
         /* Boja teksta članova u desnoj tablici nakon prebacivanja iz lijeve (radovi_prisustvo_tip.boja_prikaza). */
         var bp =
           row && row.boja_prikaza !== undefined && row.boja_prikaza !== null ? String(row.boja_prikaza).trim() : '';
@@ -949,13 +1395,17 @@
   /**
    * Lijevo prisustvo: #zapisnik_prisustvo_lijevi_stupac klase --sam-edit | --sam-izvor ovisno o Tip unosa (`data-slobodan-unos`).
    * Iznimka: u desnoj tablici odabran je red člana (tip na retku bez slobodan_unos) dok je na selectu odabran Tip s slobodnim unosom → privremeno sam-izvor (Pretraži + lijeva tablica) radi povrata ulijevo.
-   * Obje liste (lijevo i desno): aktivne ako je odabran Tip; uz to treba ili odabrana loža (klasično punjenje) ili opcija Tipa s
-   *               data-svi-clanovi-obedijncije=1 (punjenje bez modala Lože učesnice).
+   * Obje liste (lijevo i desno): aktivne ako je odabran Tip i ako je kontekst Prisustva dopušten (glavna loža + barem jedna loža učesnica iz modala — isto kao kartica „Prisustvo”).
+   * Unutar toga: klasična lista, opcija Tipa s data-svi-clanovi-obedijncije=1 ili slobodan unos (isti rezultat kao prije uz dodatak modalnog uvjeta).
    * Lijevo→desno / desno→lijevo: samo kad je izvorna lista u režimu (nije slobodan unos s tri polja).
    * Tip unosa (#zapisnik_prisustvo_tip_unosa) + labela: disabled kad je lijevi tbody bez <tr>; iznimka ako je aktivna opcija Tipa s „slobodan unos” (lista lijevo namjerno prazna, unos je u tri polja).
+   * @param {boolean} _legacyImaLozu zanemaren — stanje se uvijek čita iz selekta lože i zapisnikLozeUcesniceKolekcijaId (radi jednakih poziva iz starijih mjesta).
    */
-  function zapisnikPrisustvoPrimijeliRasporedLijevoIStanje(imaLozu, rasporediVisinu) {
-    imaLozu = !!imaLozu;
+  function zapisnikPrisustvoPrimijeliRasporedLijevoIStanje(_legacyImaLozu, rasporediVisinu) {
+    var imaSelLozu = !!zapisnikIdOdabraneLozISelecta();
+    var imaBarLozUces =
+      Array.isArray(zapisnikLozeUcesniceKolekcijaId) && zapisnikLozeUcesniceKolekcijaId.length > 0;
+    var kontekstPrisustvoOmogucen = imaSelLozu && imaBarLozUces;
     var lj = document.getElementById('zapisnik_prisustvo_lijevi_stupac');
     var selTipEl = document.getElementById('zapisnik_prisustvo_tip_unosa');
     var tipVal = selTipEl ? trimZ(selTipEl.value) : '';
@@ -982,7 +1432,8 @@
 
     var tabLijevo = document.getElementById('zapisnik_prisustvo_tablica_lijevo');
     var tabDesno = document.getElementById('zapisnik_prisustvo_tablica_desno');
-    var izvorListeEnabled = hasTip && (sviClanoviObedijncije || imaLozu || slobUnosJedan);
+    /* Liste: isti kontekst kao kartica Prisustvo + odabran Tip (tip bez vrijednosti → sve zamrznuto). */
+    var izvorListeEnabled = kontekstPrisustvoOmogucen && hasTip;
     if (tabLijevo && tabLijevo.classList) {
       tabLijevo.classList.toggle('kontrola-tablica--disabled', !izvorListeEnabled);
     }
@@ -1078,25 +1529,19 @@
   }
 
   /**
-   * Jedan lowercase niz za pretragu kao u Clanovi_Loza_CRUD `clanoviLozaPrimijeniTraži` (Clanovi_Loza_CRUD.js ~863–879),
-   * dodano: loža naziv / grad / država kad je više učesnica (jedna ćelija ipak sama ne sadrži šifru stupnja itd.).
-   * @param {object} r red Clanovi_CRUD_sve_loze.json
+   * Pretraga u tabu Prisustvo: samo tekst koji odgovara ćeliji liste (`zapisnikPrisustvoFormatTekstRetkaIzvor` —
+   * prezime + ime + naziv lože ako postoji), lowercase i spojeno razmacima da podudaranje ne ovisi o znaku «·» u prikazu.
+   * Ne uključuje šifru, stupanj, grad države lože itd. — to se u jednostupanjskoj ćeliji ne prikazuje.
+   * @param {object} r red iz Clanovi_CRUD_sve_loze.json ili minimalnog Clanovi_CRUD_prisustvo_svi_obedijencija.php
    */
   function zapisnikPrisustvoHaystackZaTrazenjeKaoClanoviLoza(r) {
     if (!r || typeof r !== 'object') return '';
-    var sif = r.sifra != null ? String(r.sifra) : '';
-    var st = r.stupanj_show != null ? String(r.stupanj_show) : '';
-    var stNum = r.stupanj != null ? String(r.stupanj) : '';
-    var vu = r.upisano != null ? String(r.upisano) : '';
-    var spolTxt = (r.spol === 1 || r.spol === '1') ? 'ženski' : 'muški';
-    var hay =
-      ((r.prezime || '') + ' ' + (r.ime || '') + ' ' + st + ' ' + stNum + ' ' + sif + ' ' + vu + ' ' + spolTxt).toLowerCase();
+    var p = trimZ(r.prezime);
+    var ix = trimZ(r.ime);
+    var ime = (p + (p && ix ? ' ' : '') + ix).trim();
+    if (!ime) ime = p || ix || '';
     var lz = trimZ(r.loza_naziv || '');
-    var lg = trimZ(r.loza_grad || '');
-    var dLo = trimZ(r.drzava_loze || '');
-    if (lz !== '') hay += ' ' + lz.toLowerCase();
-    if (lg !== '') hay += ' ' + lg.toLowerCase();
-    if (dLo !== '') hay += ' ' + dLo.toLowerCase();
+    var hay = (ime + (lz ? ' ' + lz : '')).trim().toLowerCase();
     return hay;
   }
 
@@ -1519,12 +1964,11 @@
 
   /**
    * Gumbi L↔D: u režimu slobodnog unosa (data-slobodan-unos=1 na Tipu) gumb udesno kad su Ime, Loža i Država ispunjeni; inače klasično (lista lijevo + selekcija).
-   * Temeljni „smije li se koristiti zamjena”: tip + ili loža u zaglavlju ili sve obedijncije opcija ili slobodan unos.
+   * Premještaj je moguć samo kad je kontekst isti kao za karticu Prisustvo: glavna loža + barem jedna loža učesnica (`zapisnikLozeUcesniceKolekcijaId`) i odabran Tip.
    */
   function zapisnikPrisustvoAzurirajGumbovePremjestaja() {
     var bUde = document.getElementById('zapisnik_prisustvo_btn_udesno');
     var bUli = document.getElementById('zapisnik_prisustvo_btn_ulijevo');
-    var imaLozuHdr = !!zapisnikIdOdabraneLozISelecta();
     var selTipEl = document.getElementById('zapisnik_prisustvo_tip_unosa');
     var tipVal = selTipEl ? trimZ(selTipEl.value) : '';
     var hasTip = !!tipVal;
@@ -1533,9 +1977,11 @@
       var opT = selTipEl.options[selTipEl.selectedIndex];
       slobUnosJedan = !!(opT && opT.getAttribute('data-slobodan-unos') === '1');
     }
-    var xferOk =
-      hasTip &&
-      (slobUnosJedan || imaLozuHdr || zapisnikPrisustvoJeTipUnosaSviClanoviObedijncije());
+    var mozePrisustvoXfer =
+      !!zapisnikIdOdabraneLozISelecta() &&
+      Array.isArray(zapisnikLozeUcesniceKolekcijaId) &&
+      zapisnikLozeUcesniceKolekcijaId.length > 0;
+    var xferOk = mozePrisustvoXfer && hasTip;
     var selL = zapisnikPrisustvoJeSelekcijaNaLijevojZaPremjestaj();
     var selD = zapisnikPrisustvoJeSelekcijaNaDesnojZaPremjestaj();
     var udeMozda = xferOk && (slobUnosJedan ? zapisnikPrisustvoSlobPoljaKompletZaUdesno() : !!selL);
@@ -1577,7 +2023,7 @@
       zapisnikPrisustvoIzgradiDesnuTbodyIzListe();
       zapisnikPrisustvoOcistiPoljaSlobUnosaZaNovuOsobu();
       zapisnikPrisustvoAzurirajGumbovePremjestaja();
-      zapisnikPrisustvoPrimijeliRasporedLijevoIStanje(!!zapisnikIdOdabraneLozISelecta(), false);
+      zapisnikPostaviKontroleOvisnoLozi();
       return;
     }
 
@@ -1602,11 +2048,13 @@
       id: cid,
       fgCss: fg,
       tipUnosaId: tipUnosaIdZaRed,
-      prikazTekstZaClana: tekstZaCl
+      prikazTekstZaClana: tekstZaCl,
+      duznosnikClanPolja: zapisnikSnimiPoljaZaDuznosnikaIzClana(oZaPrikaz)
     });
     zapisnikPrisustvoIzgradiDesnuTbodyIzListe();
     zapisnikPrisustvoOsvjeziLijevoTbodyIzCacheBezPremjestenih();
     zapisnikPrisustvoAzurirajGumbovePremjestaja();
+    zapisnikPostaviKontroleOvisnoLozi();
   }
 
   function zapisnikPrisustvoKlikPremjestULijevo() {
@@ -1628,7 +2076,7 @@
     zapisnikPrisustvoIzgradiDesnuTbodyIzListe();
     zapisnikPrisustvoOsvjeziLijevoTbodyIzCacheBezPremjestenih();
     zapisnikPrisustvoAzurirajGumbovePremjestaja();
-    zapisnikPrisustvoPrimijeliRasporedLijevoIStanje(!!zapisnikIdOdabraneLozISelecta(), false);
+    zapisnikPostaviKontroleOvisnoLozi();
   }
 
   function zapisnikPrisustvoInitGumbovePremjesaja() {
@@ -1765,6 +2213,35 @@
   }
 
   /**
+   * Vizualna blokada taba Prisustvo tijekom async GET-a liste članova: sve osim selecta Tip unosa i njegove labele (pointer-events + lagani vizualni „waiting”).
+   * @param {boolean} blok — true na početku učitavanja, false nakon obrade odgovora
+   */
+  function zapisnikPrisustvoPrimijeniUITijekomUcitavanjeListe(blok) {
+    var wrap = document.querySelector('#zapisnikKontrolaTabPanel1 .zapisnik-crud__prisustvo-wrap');
+    if (!wrap) return;
+    if (blok) {
+      wrap.classList.add('zapisnik-crud__prisustvo-wrap--lista-loading');
+      wrap.setAttribute('aria-busy', 'true');
+    } else {
+      wrap.classList.remove('zapisnik-crud__prisustvo-wrap--lista-loading');
+      wrap.removeAttribute('aria-busy');
+    }
+  }
+
+  /** Učitavanje liste (XHR): zapocni + dubina — blokada ostaje dok ima neriješenih zahtjeva (više brzih promjena Tipa). */
+  function zapisnikPrisustvoZapocniUcitavanjeListeZaTip() {
+    zapisnikPrisustvoListaLoadDepth += 1;
+    if (zapisnikPrisustvoListaLoadDepth === 1) zapisnikPrisustvoPrimijeniUITijekomUcitavanjeListe(true);
+  }
+
+  /** Poziva se iz obrade odgovora nakon što je lista primijenjena u DOM (uvijek uparen sa Zapocni kad je bio XHR). */
+  function zapisnikPrisustvoZavrsiUcitavanjeListeZaTip() {
+    if (zapisnikPrisustvoListaLoadDepth <= 0) return;
+    zapisnikPrisustvoListaLoadDepth -= 1;
+    if (zapisnikPrisustvoListaLoadDepth === 0) zapisnikPrisustvoPrimijeniUITijekomUcitavanjeListe(false);
+  }
+
+  /**
    * Zajedničko parsiranje odgovora za listu članova (lijevo): JSON niz kao Clanovi_CRUD_sve_loze ili pipe-kod za showPorukaModal.
    * @param {{ zadrziDesnuListu?: boolean }} [opts]
    *   zadrziDesnuListu — ako true (npr. promjena Tipa unosa bez gubitka premještenih članova), ne poziva Reset desne liste nakon valjanog JSON-a (pipe-greška i dalje resetira).
@@ -1778,7 +2255,8 @@
       zapisnikPrisustvoClanoviIzvorData = [];
       zapisnikPrisustvoNapuniLijevoTbodyIzNizaClanova([]);
       zapisnikPrisustvoPrimijeniFilterLijeveListe();
-      zapisnikPrisustvoPrimijeliRasporedLijevoIStanje(!!zapisnikIdOdabraneLozISelecta(), false);
+      zapisnikPostaviKontroleOvisnoLozi();
+      zapisnikPrisustvoZavrsiUcitavanjeListeZaTip();
       var parsed = parseResponseCode(t);
       if (parsed && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[parsed.code] && typeof window.showPorukaModal === 'function') {
         window.showPorukaModal(parsed.code, parsed.replacements);
@@ -1805,7 +2283,8 @@
     zapisnikPrisustvoClanoviIzvorData = nab;
     zapisnikPrisustvoNapuniLijevoTbodyIzNizaClanova(zapisnikPrisustvoListaZaLijevoBezPremjestenih());
     zapisnikPrisustvoPrimijeniFilterLijeveListe();
-    zapisnikPrisustvoPrimijeliRasporedLijevoIStanje(!!zapisnikIdOdabraneLozISelecta(), false);
+    zapisnikPostaviKontroleOvisnoLozi();
+    zapisnikPrisustvoZavrsiUcitavanjeListeZaTip();
     if (typeof callback === 'function') callback();
   }
 
@@ -1824,6 +2303,7 @@
     }
 
     if (zapisnikPrisustvoJeTipUnosaSviClanoviObedijncije()) {
+      zapisnikPrisustvoZapocniUcitavanjeListeZaTip();
       var xhrSvi = new XMLHttpRequest();
       xhrSvi.open('GET', getApiUrl('Clanovi_CRUD_prisustvo_svi_obedijencija.php'), true);
       xhrSvi.onreadystatechange = function () {
@@ -1853,10 +2333,11 @@
       zapisnikPrisustvoClanoviIzvorData = [];
       zapisnikPrisustvoNapuniLijevoTbodyIzNizaClanova([]);
       zapisnikPrisustvoPrimijeniFilterLijeveListe();
-      zapisnikPrisustvoPrimijeliRasporedLijevoIStanje(!!zapisnikIdOdabraneLozISelecta(), false);
+      zapisnikPostaviKontroleOvisnoLozi();
       if (typeof callback === 'function') callback();
       return;
     }
+    zapisnikPrisustvoZapocniUcitavanjeListeZaTip();
     var xhr = new XMLHttpRequest();
     var qs = idList.join(',');
     xhr.open('GET', getApiUrl('Clanovi_CRUD_sve_loze.php') + '?id_loza=' + encodeURIComponent(qs), true);
@@ -1940,6 +2421,66 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  /**
+   * HTML za prikaz člana u modalu Dužnosnika i u rich edit-delete polju: samo prezime i ime u <strong>, ostatak običnim tekstom (zarez + razmak kao u plain liniji).
+   * @param {{ prezime?: string, ime?: string, loza_naziv?: string, loza_grad?: string, drzava_loze?: string }|null} r
+   * @returns {string}
+   */
+  function zapisnikDuznosnikFormatHtmlClana(r) {
+    if (!r || typeof r !== 'object') return '';
+    var ime = zapisnikDuznosnikSastaviPrezimeImeIzPolja(r);
+    var lz = trimZ(r.loza_naziv);
+    var lg = trimZ(r.loza_grad);
+    var dLo = trimZ(r.drzava_loze);
+    var ostatak = [];
+    if (lz) ostatak.push(zapisnikEscapeHtml(lz));
+    if (lg) ostatak.push(zapisnikEscapeHtml(lg));
+    if (dLo) ostatak.push(zapisnikEscapeHtml(dLo));
+    var tail = ostatak.join(', ');
+    if (ime && tail) return '<strong>' + zapisnikEscapeHtml(ime) + '</strong>, ' + tail;
+    if (ime) return '<strong>' + zapisnikEscapeHtml(ime) + '</strong>';
+    return tail;
+  }
+
+  /**
+   * Jedna ćelija modala Dužnosnika: ako je red proširen s podacima člana (≥7 elemenata), HTML kao u edit polju; inače samo escape plain teksta iz row[0].
+   * @param {Array} row
+   * @returns {string}
+   */
+  function zapisnikModalHtmlZaCelijuDuznosnik(row) {
+    if (!row || row.length < 2) return '';
+    if (row.length >= 7) {
+      var fake = {
+        prezime: row[2],
+        ime: row[3],
+        loza_naziv: row[4],
+        loza_grad: row[5],
+        drzava_loze: row[6]
+      };
+      return zapisnikDuznosnikFormatHtmlClana(fake);
+    }
+    return zapisnikEscapeHtml(row[0]);
+  }
+
+  /** Nakon KontroleTablica plain teksta u modalu Dužnosnika, zamijeni innerHTML (bold prezime ime). */
+  function zapisnikModalPrimijeniBoldDuznosnikUPrikazu() {
+    var rows = zapisnikModalDuznosnikSnapshot;
+    if (!rows || !rows.length) return;
+    var tbody = document.querySelector('.modal-tablica.modal-tablica--open .kontrola-tablica__scroll tbody');
+    if (!tbody) return;
+    var trs = tbody.querySelectorAll('tr');
+    var ri;
+    for (ri = 0; ri < trs.length; ri++) {
+      var tr = trs[ri];
+      var ix = parseInt(tr.dataset.rowIndex, 10);
+      if (isNaN(ix)) ix = ri;
+      if (ix < 0 || ix >= rows.length) continue;
+      var inner = tr.querySelector('td .kontrola-tablica__cell-inner');
+      if (!inner) continue;
+      inner.innerHTML = zapisnikModalHtmlZaCelijuDuznosnik(rows[ix]);
+    }
   }
 
   /**
@@ -2126,6 +2667,8 @@
         selectedRowIds: preIds,
         /* Nakon što se footer iscrtaju, rAF iz setSelectedRowIds postavlja disabled na OK-u. */
         onSelectionChange: zapisnikModalSyncOkDisabledFromDom,
+        /* Dvoklik na redak: isto kao OK uz selekciju samo tog retka (ModalTablicaInit + 0-Kontrole.js). */
+        rowDoubleClickLikePrimary: true,
         getRowId: function (row) {
           return row && row.length > 2 ? row[1] : '';
         }
@@ -2163,6 +2706,8 @@
               requestAnimationFrame(function () {
                 zapisnikModalUpisiReadonlyTextareaUcesnice(zapisnikLozeUcesniceKolekcijaId, kopijaSnapshota);
                 zapisnikPrimijeniUvjeteUpisPdfGumba();
+                /* Kartica Prisustvo i Dužnosnici ovise o kolekciji — osvježi prije async GET-a liste članova. */
+                zapisnikPostaviKontroleOvisnoLozi();
                 /* Izvorna lista prisustva: članovi svih odabranih loža iz modala. */
                 zapisnikPrisustvoOsvjeziIzvornuListuClanova();
               });
@@ -2179,6 +2724,66 @@
         ];
       }
     });
+    modalZapisnikDuznosnikIzborApi = ModalTablicaInit({
+      storageKey: 'zapisnik_duznosnik_izbor',
+      headerText: 'Izbor dužnosnika',
+      getButtons: function () {
+        return [
+          {
+            label: 'OK',
+            primary: true,
+            onClick: function (tablicaApi) {
+              var ids =
+                tablicaApi && typeof tablicaApi.getSelectedRowIds === 'function'
+                  ? tablicaApi.getSelectedRowIds()
+                  : [];
+              if (!ids.length) return;
+              var cid = String(ids[0]);
+              var editId = zapisnikDuznosnikModalCiljniEditId;
+              var inp = editId ? document.getElementById(editId) : null;
+              if (!inp) {
+                zapisnikDuznosnikModalCiljniEditId = null;
+                if (modalZapisnikDuznosnikIzborApi) modalZapisnikDuznosnikIzborApi.close();
+                return;
+              }
+              var arrF = zapisnikPrisustvoDesnoListaPoRedu || [];
+              var enSel = null;
+              var jf;
+              for (jf = 0; jf < arrF.length; jf++) {
+                var enCand = arrF[jf];
+                if (enCand && String(enCand.id) === cid) {
+                  enSel = enCand;
+                  break;
+                }
+              }
+              var oOk = zapisnikPrisustvoDohvatObjektClanaZaDuznosnika(cid, enSel);
+              var htmlPrikaz = '';
+              if (oOk) htmlPrikaz = zapisnikDuznosnikFormatHtmlClana(oOk);
+              if (!htmlPrikaz) {
+                var plainFb = enSel && enSel.prikazTekstZaClana ? trimZ(enSel.prikazTekstZaClana) : '';
+                if (!plainFb) plainFb = 'ID ' + cid;
+                htmlPrikaz = zapisnikEscapeHtml(plainFb);
+              }
+              inp.innerHTML = htmlPrikaz;
+              inp.dispatchEvent(new Event('input', { bubbles: true }));
+              inp.dispatchEvent(new Event('change', { bubbles: true }));
+              var wrapOk = inp.closest('.kontrola-edit-delete');
+              if (wrapOk) wrapOk.dataset.zapisnikClanId = cid;
+              zapisnikDuznosnikModalCiljniEditId = null;
+              if (modalZapisnikDuznosnikIzborApi) modalZapisnikDuznosnikIzborApi.close();
+            }
+          },
+          {
+            label: 'Odustani',
+            className: 'kontrola-btn--crud-povratak',
+            onClick: function () {
+              zapisnikDuznosnikModalCiljniEditId = null;
+              if (modalZapisnikDuznosnikIzborApi) modalZapisnikDuznosnikIzborApi.close();
+            }
+          }
+        ];
+      }
+    });
   }
 
   function onReady() {
@@ -2187,6 +2792,17 @@
       KontroleTabInit(root);
     }
     if (root) {
+      var trakaZap = root.querySelector('.kontrola-tab__traka');
+      if (trakaZap) {
+        /* Capture prije bubble listenera u 0-Kontrole_Tab.js: preskoči disabled kartice pri strelicama/Home/End. */
+        trakaZap.addEventListener(
+          'keydown',
+          function (evKb) {
+            zapisnikKontrolaTabZaobilaziDisabledTipkovnica(evKb, root);
+          },
+          true
+        );
+      }
       /* Tab promjena: sadržaj se mijenja (drugi tab) → ponovno izračunaj min. visinu za traku. */
       root.addEventListener('click', function (ev) {
         if (ev.target && ev.target.closest && ev.target.closest('.kontrola-tab__kartica')) {
@@ -2320,6 +2936,54 @@
         zapisnikOtvoriModalLozeUcesnice();
       });
     }
+    /* Dvoklik na readonly textarea loža učesnica = isto što i ellipsis (modal odabira loža). */
+    var taLozaUces = document.getElementById('zapisnik_loza_ucesnici');
+    if (taLozaUces && bTipEllipsis) {
+      taLozaUces.addEventListener('dblclick', function (ev) {
+        if (taLozaUces.disabled || bTipEllipsis.disabled) return;
+        ev.preventDefault();
+        bTipEllipsis.click();
+      });
+    }
+
+    /* Tab Dužnosnici: modal jednostrukog izbora; edit-delete (X briše i ID); dvoklik na input = ellipsis. */
+    (function zapisnikInitDuznosniciModalIUrediBrisanje() {
+      var panelDuz = document.getElementById('zapisnikKontrolaTabPanel2');
+      if (panelDuz) {
+        panelDuz.addEventListener('kontrole-edit-delete-clear', function (ev) {
+          var wrap = ev.target && ev.target.closest ? ev.target.closest('.zapisnik-crud__duznosnici-edit-delete') : null;
+          if (!wrap) return;
+          delete wrap.dataset.zapisnikClanId;
+        });
+      }
+      var ei;
+      for (ei = 0; ei < ZAPISNIK_DUZNOSNICI_REDOVI.length; ei++) {
+        (function (cfg) {
+          var ellBtn = document.getElementById(cfg.ellipsisId);
+          if (ellBtn) {
+            ellBtn.addEventListener('click', function () {
+              if (ellBtn.disabled) return;
+              zapisnikOtvoriModalDuznosnikaZaEdit(cfg.editId);
+            });
+          }
+          var inpDuz = document.getElementById(cfg.editId);
+          if (inpDuz) {
+            inpDuz.addEventListener('dblclick', function (ev) {
+              var wrapIn = inpDuz.closest && inpDuz.closest('.kontrola-edit-delete');
+              var wrapDis = wrapIn && wrapIn.classList.contains('kontrola-edit-delete--disabled');
+              var ariaDis = inpDuz.getAttribute && inpDuz.getAttribute('aria-disabled') === 'true';
+              if (inpDuz.disabled || ariaDis || wrapDis) return;
+              ev.preventDefault();
+              var eb = document.getElementById(cfg.ellipsisId);
+              if (eb && !eb.disabled) eb.click();
+            });
+          }
+        })(ZAPISNIK_DUZNOSNICI_REDOVI[ei]);
+      }
+      if (typeof KontroleInitEditDelete === 'function') {
+        KontroleInitEditDelete(document.getElementById('zapisnikKontrolaTabPanel2') || document);
+      }
+    })();
 
     if (typeof ResizeObserver !== 'undefined') {
       var kH = document.querySelector('.clanovi-loza-crud__tablica-header-kontrole');

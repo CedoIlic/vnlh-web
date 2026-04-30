@@ -139,6 +139,33 @@ body {
 }
 
 /*
+ * Dužnosnici (aktivan tab): jedna okomita pregrada na .kontrola-tab__tijelo — od gornjeg ruba tijela (uz horizontalnu granicu ispod kartica,
+ * preko paddinga tijela) do donjeg ruba tijela. Pozicioniranje lijeva ivica u skladu s prvim stupcem mreže (30 %) + column-gap (calc).
+ * :has() — bez ovog panela crta se ne crta; lista ostaje iznad (::before z-index 0, lista z-index 1).
+ */
+.zapisnik-crud__tab .kontrola-tab__tijelo:has(#zapisnikKontrolaTabPanel2:not([hidden])) {
+  position: relative;
+  --zapisnik_duznosnici_col_gap: 0.75rem;
+}
+.zapisnik-crud__tab .kontrola-tab__tijelo:has(#zapisnikKontrolaTabPanel2:not([hidden]))::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--tab_kontrola_border_w, 1px);
+  background-color: var(--tab_kontrola_border);
+  /*
+   * Lijevi rub prvog stupca liste u odnosu na padding box tijela: pad-x + 30 % dostupne širine sadržaja (širina tijela − lijevi/desni padding − jedan column-gap).
+   */
+  left: calc(
+    var(--tab_kontrola_body_padding_x)
+    + (100% - 2 * var(--tab_kontrola_body_padding_x) - var(--zapisnik_duznosnici_col_gap)) * 0.3
+  );
+}
+
+/*
  * Zapisnik: u naslovu aktivne kartice zamjena bg / fg (0-Kontrole_Tab: aktivna = podloga kao tijelo, tekst naslijeđen s trake).
  * Ovdje: pozadina = bivši prednji plan (boja teksta trake), tekst = bivša pozadina plohe tijela – samo kad kartica nije disabled.
  */
@@ -147,6 +174,28 @@ body {
   color: var(--tab_kontrola_body_bg);
   -webkit-text-fill-color: var(--tab_kontrola_body_bg);
   border-color: var(--tab_kontrola_header_text);
+}
+
+/*
+ * Disabled kartica (sva četiri kad nema lože, ili pojedinačno Prisustvo / Dužnosnici): naslov = isti token kao .kontrola-labela--disabled (0-Kontrole.css → --label_text_disabled).
+ * Bez dodatnog opacity na gumbu (izbjegava dvostruko prigušenje); okvir/pozadina kao ostale disabled kontrole (--edit_*).
+ */
+.zapisnik-crud__tab .kontrola-tab__kartica:disabled {
+  opacity: 1;
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+  cursor: not-allowed;
+}
+
+/* Aktivna ali disabled (rubni slučaj): bez invertiranih boja aktivne kartice; tekst ostaje na tokenu labele. */
+.zapisnik-crud__tab .kontrola-tab__kartica--aktivna:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  border-color: var(--edit_border_disabled);
 }
 
 /*
@@ -167,23 +216,6 @@ body {
   --tab_kontrola_kartica_bg: var(--edit_bg_disabled);
   --tab_kontrola_body_bg: var(--edit_bg_disabled);
   --tab_kontrola_body_text: var(--label_text_disabled);
-}
-
-/* Kartice: bez dvostrukog opacity prigušenja; boje kao ostale disabled tipke. */
-.zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .kontrola-tab__kartica:disabled {
-  opacity: 1;
-  color: var(--label_text_disabled);
-  -webkit-text-fill-color: var(--label_text_disabled);
-  background: var(--edit_bg_disabled);
-  border-color: var(--edit_border_disabled);
-  cursor: not-allowed;
-}
-
-/* Aktivna kartica u disabled grupi i dalje spaja s tijelom (isti tokeni kao traka i tijelo). */
-.zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .kontrola-tab__kartica--aktivna:disabled {
-  background: var(--edit_bg_disabled);
-  color: var(--label_text_disabled);
-  -webkit-text-fill-color: var(--label_text_disabled);
 }
 
 /* Ugniježdeni paneli (Opći podaci, Ovjera zapisnika) kad nema lože: varijable panela kao disabled. */
@@ -227,6 +259,64 @@ body {
 .zapisnik-crud__uvod {
   color: var(--tab_kontrola_body_text);
   font: inherit;
+}
+
+/*
+ * Tab „Dužnosnici”: CSS grid — u svakom retku labela + edit+ellipsis (isti redoslijed kao ZAPISNIK_DUZNOSNICI_REDOVI); align-items: center
+ * za poravnanje po Y osi unutar retka. Okomita pregrada: pseudo na .kontrola-tab__tijelo (:has aktivnog panela), ne na pojedinačnim ćelijama.
+ */
+.zapisnik-crud__duznosnici-lista {
+  --zapisnik_duznosnici_col_gap: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 30%) minmax(0, 1fr);
+  column-gap: var(--zapisnik_duznosnici_col_gap);
+  row-gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+.zapisnik-crud__duznosnici-red-cel-label {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.zapisnik-crud__duznosnici-red-cel-label .kontrola-labela {
+  display: block;
+  margin-bottom: 0;
+  line-height: 1.25;
+}
+.zapisnik-crud__duznosnici-red-cel-edit {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* Edit-delete + ellipsis: fleksiranje kao prije na samom inputu. */
+.zapisnik-crud__duznosnici-red-cel-edit .zapisnik-crud__duznosnici-edit-delete.kontrola-edit-delete {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* Panel lista puni visinu tijela taba kao prije. */
+#zapisnikKontrolaTabPanel2 .zapisnik-crud__duznosnici-lista {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+@media (max-width: 600px) {
+  .zapisnik-crud__tab .kontrola-tab__tijelo:has(#zapisnikKontrolaTabPanel2:not([hidden]))::before {
+    display: none;
+  }
+  .zapisnik-crud__duznosnici-lista {
+    grid-template-columns: 1fr;
+    row-gap: 0.35rem;
+    column-gap: 0;
+  }
 }
 
 /* Ugniježdeni panel u tabu: fiksna visina sadržaja, bez resize trake. */
@@ -310,7 +400,7 @@ body {
   width: 2.25rem;
   height: 2.25rem;
   padding: 0;
-  border: 1px solid var(--edit_border, #ced4da);
+  border: var(--tab_kontrola_border_w, 1px) solid var(--edit_border, #ced4da);
   border-radius: var(--edit_radius, 6px);
   background: var(--panel_body_bg, #fff);
   color: var(--label_text, inherit);
@@ -319,7 +409,7 @@ body {
   align-items: center;
   justify-content: center;
   box-shadow: var(--kontrole_sjena_slaba_2, 0 1px 2px rgba(0, 0, 0, 0.06));
-  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+  transition: box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 .zapisnik-crud__ellipsis-btn:hover:not(:disabled) {
   background: var(--c-gray-100, #eee);
@@ -328,10 +418,17 @@ body {
 .zapisnik-crud__ellipsis-btn:active:not(:disabled) {
   box-shadow: inset 0 2px 4px var(--c-shadow-30, rgba(0, 0, 0, 0.12));
 }
+.zapisnik-crud__ellipsis-btn:focus-visible {
+  outline: 2px solid var(--edit_focus_ring, #0d6efd);
+  outline-offset: 2px;
+}
+/* Bez dvostruke prigušenosti (opacity): isti rječnik kao ostale disabled kontrole / ikone u zaglavlju zapisnika. */
 .zapisnik-crud__ellipsis-btn:disabled {
-  opacity: 0.6;
+  color: var(--label_text_disabled);
   cursor: not-allowed;
   box-shadow: var(--edit_focus_shadow_disabled, none);
+  border-color: var(--edit_border_disabled);
+  background: var(--edit_bg_disabled);
 }
 .zapisnik-crud__ellipsis-btn .kontrola-icon--ellipsis-horizontal {
   width: 1.25rem;
@@ -556,6 +653,34 @@ body {
   flex: 1 1 auto;
   min-width: 0;
   width: auto;
+}
+
+/*
+ * Async GET liste članova (promjena Tipa, modal loža…): sve na tabu Prisustvo osim „Tip unosa” + labele ne prima klikove (pointer-events),
+ * blago prigušen vizual; tip-red ostaje aktivan (pointer-events: auto na podstablu). cursor: wait na mreži dok se čeka odgovor.
+ */
+.zapisnik-crud__prisustvo-wrap.zapisnik-crud__prisustvo-wrap--lista-loading .zapisnik-crud__prisustvo-grid > .zapisnik-crud__prisustvo-col--lijevo,
+.zapisnik-crud__prisustvo-wrap.zapisnik-crud__prisustvo-wrap--lista-loading .zapisnik-crud__prisustvo-transfer {
+  pointer-events: none;
+  opacity: 0.68;
+}
+
+.zapisnik-crud__prisustvo-wrap.zapisnik-crud__prisustvo-wrap--lista-loading .zapisnik-crud__prisustvo-col--desno > #zapisnik_prisustvo_tablica_desno {
+  pointer-events: none;
+  opacity: 0.68;
+}
+
+.zapisnik-crud__prisustvo-wrap.zapisnik-crud__prisustvo-wrap--lista-loading .zapisnik-crud__prisustvo-grid {
+  cursor: wait;
+}
+
+.zapisnik-crud__prisustvo-wrap.zapisnik-crud__prisustvo-wrap--lista-loading .zapisnik-crud__prisustvo-tip-red {
+  cursor: default;
+}
+
+.zapisnik-crud__prisustvo-wrap.zapisnik-crud__prisustvo-wrap--lista-loading .zapisnik-crud__prisustvo-tip-red,
+.zapisnik-crud__prisustvo-wrap.zapisnik-crud__prisustvo-wrap--lista-loading .zapisnik-crud__prisustvo-tip-red * {
+  pointer-events: auto;
 }
 
 /*

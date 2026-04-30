@@ -1,5 +1,5 @@
 ---
-description: Obavezna pravila VNLH WEB – kreni, verzija, komentari, tablice/zaglavlja, Git/CLAUDE.md
+description: Obavezna pravila VNLH WEB – kreni, verzija, 0-Kontrole/0-Common uz dozvolu, komentari, tablice, Git/CLAUDE.md
 alwaysApply: true
 ---
 
@@ -109,3 +109,11 @@ Primjenjuje se na **svaki** `*.js` koji definira ili puni **tablicu** (lista stu
 - Datoteka **`CLAUDE.md`** u rootu repozitorija prati opis projekta i upute za agente (WSL skripte, baza, workflow); **drži je u gitu** kad korisnik traži spremanje ili drugdje smisleno.
 - Kad korisnik traži **„uredi git"**, **„spremi u repozitorij"** ili slično, a postoji **izmijenjen ili novi** `CLAUDE.md`: **`git add CLAUDE.md`** i uključi u commit zajedno s ostalim promjenama (osim ako korisnik izričito isključi tu datoteku).
 - Nakon dodavanja `CLAUDE.md` u prvi commit, za buduća spremanja **ne zaboravi** provjeriti `git status`: ako je `CLAUDE.md` među promjenama, uključi ga (isto pravilo kao gore).
+
+---
+
+## 9. `0-Kontrole` i `0-Common` — samo uz eksplicitnu dozvolu
+
+- Prije bilo kakvih **izmjena u kodu ili CSS-u** datoteka čije ime **počinje** s **`0-Kontrole`** (npr. `0-Kontrole.js`, `0-Kontrole.css`, `0-Kontrole_Tab.js`, `0-Kontrole_Tab.css`, …) ili s **`0-Common`** (npr. `0-Common.js`, `0-Common.css`, …) agent **mora pitati korisnika** i dobiti **izričitu suglasnost** u tom chatu (npr. odgovor „da”, „smiješ”, „kreni” uz navedenu datoteku).
+- **„Kreni”** na samom zadatku **ne znači** automatski dozvolu za `0-Kontrole` / `0-Common` — ako zadatak zahtijeva diranje tih datoteka, **posebno pitaj** ili traži da korisnik to spomene u poruci.
+- **Izuzeće:** ako korisnik **sam u poruci** napiše da smiješ mijenjati konkretnu datotelu ili cijeli taj sloj za predmetni zadatak, smatra se danom dozvola za te izmjene u tom kontekstu.
