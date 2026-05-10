@@ -1,3 +1,10 @@
+# ─── Jedina zamjena za paljenje/gašenje javne blokade održavanja ───
+# PALI (blokiraj sve osim pravila dolje — localhost, maintenance.html …): UKLONI „#“ s REDA koji počinje „SetEnvIf“.
+# GAŠENJE javne blokade: dodaj ponovno jedan „#“ SAMO ISPRED TE LINIJE „SetEnvIf“ (bez diranja pravila dolje).
+<IfModule mod_setenvif.c>
+#SetEnvIf Request_URI ".*" VNLH_MAINT=1
+</IfModule>
+
 # Ulaz: prvo prijava (php/Login.php); index.php = početna nakon prijave; index.html → index.php.
 DirectoryIndex php/Login.php
 
@@ -17,6 +24,14 @@ Options -Indexes
     # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 </IfModule>
 
+# Stranica održavanja: bez keša u pregledniku (nakon gašenja maint-a korisnik ne bi smio vidjeti stari HTML za zalogaj „Natrag”).
+<Files "maintenance.html">
+    <IfModule mod_headers.c>
+        Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header always set Pragma "no-cache"
+    </IfModule>
+</Files>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
@@ -31,6 +46,27 @@ Options -Indexes
     RewriteCond %{HTTP_HOST} !^127\.0\.0\.1$ [NC]
     # RewriteCond %{HTTP_HOST} !trycloudflare\.com$ [NC]
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # --- Održavanje (MAINT): uključeno ako je POSTAVLJENA varijabla VNLH_MAINT (SetEnvIf na početku fajla).
+    # Ne treba bazu — šalje korisnika na jedinstvenu stranicu održavanja.
+    # Vanjski redirect (302): preglednik inače kešira odgovor pod PRVOTNIM URL-om (npr. php/Login.php) i po gašenju
+    # maint-a još prikazuje stari HTML dok ne Ctrl+Shift+R; s redirectom keš vrijedi za /vnlh/maintenance.html, ne za Login.php.
+    # Za https://digital.hr/vnlh/... vrijedi REQUEST_URI s prefiksom /vnlh/ (document root = public_html).
+    # Istim uvjetima kao HTTPS redirect iznad — localhost i 127.0.0.1 ne ulaze u maint (prilagodi ako dev okruženje ima drugi Host).
+    # .well-known: izuzimanje ako ACME ili hosting koristi /vnlh/.well-known/ ili /.well-known/ ispod dokument roota.
+    #
+    # Whitelist (REMOTE_ADDR — tvoj javni ISP IP kad si na produkciji): odkomentiraj sljedeći RewriteCond i u zagradi dodaj jedan
+    # ili više IP-ova u obliku ( ^a\.b\.c\.d$ |^w\.x\.y\.z$ ) — sve znakove točaka escapati kao \.
+    #
+    RewriteCond %{ENV:VNLH_MAINT} =1
+    RewriteCond %{HTTP_HOST} !^localhost$ [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1$
+    RewriteCond %{REQUEST_URI} !/maintenance\.html$
+    RewriteCond %{REQUEST_URI} !^/.well-known/
+    RewriteCond %{REQUEST_URI} !^/vnlh/\.well-known/
+    # Whitelist kad testirate jedan ili više IP-ova na produkciji (zadnji blok uvjeta prije pravila dolje mora ispuniti se za blokadu):
+    # RewriteCond %{REMOTE_ADDR} !(^203\.0\.113\.79$|^198\.51\.100\.42$)
+    RewriteRule .* /vnlh/maintenance.html [R=302,L]
 
     # Stari bookmarki / linkovi na html/*.php → php/ (PHP je samo u php/; html/ je samo .html)
     RewriteRule ^html/([^/]+\.php)$ php/$1 [L,R=301]
