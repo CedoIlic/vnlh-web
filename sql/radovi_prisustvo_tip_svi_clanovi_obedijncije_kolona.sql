@@ -1,5 +1,6 @@
 -- Jednokratno na postojećoj bazi: dodaje svi_clanovi_obedijncije nakon slobodan_unos (prije boja_prikaza).
 -- 1 = u izvornu listu uključeni svi članovi obedijencije (Zapisnik / prisustvo).
+-- Zašto je u imenu stupca „obedijncije” umjesto „obedijencije”: vidi blok „ODLUKA” u db-schema/vnlh/radovi_prisustvo_tip.sql.
 
 ALTER TABLE `radovi_prisustvo_tip`
   ADD COLUMN `svi_clanovi_obedijncije` smallint(6) NOT NULL DEFAULT 0
