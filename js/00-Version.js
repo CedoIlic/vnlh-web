@@ -12,7 +12,7 @@
 // 1. Lokalno (Razvoj=1): klik na "V x.x.x" u naslovu → unesi novu verziju → OK.
 // 2. Distribucija: postavi VNLH_RAZVOJ=0, ažuriraj VNLH_VERZIJA i ?v= u HTML-ima.
 // =====================================================
-window.VNLH_VERZIJA = "1.0.177";
+window.VNLH_VERZIJA = "1.0.180";
 window.VNLH_RAZVOJ = 0;
 
 (function () {
