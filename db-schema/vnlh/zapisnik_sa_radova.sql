@@ -1,0 +1,26 @@
+-- Zapisi zapisnika s radova (matična tablica). Pomoćne: zapisnik_sa_radova_loze_ucesnice, _prisutni, _duznosnici.
+CREATE TABLE `zapisnik_sa_radova` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Primarni ključ zapisa; ostale tablice se vežu stupcem id_zapisnika ili logički na ovaj id.',
+  `id_domacin` int(11) unsigned NOT NULL COMMENT 'Loža domaćin radova (veza na loze.id).',
+  `id_obred` int(11) unsigned NOT NULL COMMENT 'Obred u kojem loža radi (veza na obredi.id).',
+  `id_stupanj` int(11) unsigned NOT NULL COMMENT 'Stupanj radova (veza na stupnjevi.id).',
+  `id_tip_radova` int(11) unsigned NOT NULL COMMENT 'Tip radova (veza na radovi_tip.id), ne mijenja se sa stupnjem.',
+  `datum_radova` date DEFAULT NULL COMMENT 'Datum održavanja radova; NULL ako datum još nije unesen.',
+  `ovjera_prije_casni` smallint(6) NOT NULL DEFAULT 0 COMMENT 'Čekboks potvrde časnog majstora prije prihvaćanja na radovima (0/1).',
+  `ovjera_prije_inspektor` smallint(6) NOT NULL DEFAULT 0 COMMENT 'Čekboks potvrde nadležnog inspektora prije prihvaćanja na radovima (0/1).',
+  `ovjera_poslije_casni` smallint(6) NOT NULL DEFAULT 0 COMMENT 'Čekboks potvrde časnog majstora nakon prihvaćanja na radovima (0/1).',
+  `ovjera_poslije_tajnik` smallint(6) NOT NULL DEFAULT 0 COMMENT 'Čekboks potvrde tajnika nakon prihvaćanja na radovima (0/1).',
+  `ovjera_poslije_govornik` smallint(6) NOT NULL DEFAULT 0 COMMENT 'Čekboks potvrde govornika nakon prihvaćanja na radovima (0/1).',
+  `sazetak` text DEFAULT NULL COMMENT 'Sažetak (kratki pregled) sadržaja zapisnika; puni tekst u stupcu zapisnik.',
+  `zapisnik` text DEFAULT NULL COMMENT 'Puni tekst zapisnika.',
+  PRIMARY KEY (`id`),
+  FULLTEXT KEY `ft_zapisnik_sa_radova_sazetak` (`sazetak`),
+  KEY `fk_zsr_domacin_loze` (`id_domacin`),
+  KEY `fk_zsr_obredi` (`id_obred`),
+  KEY `fk_zsr_stupnjevi` (`id_stupanj`),
+  KEY `fk_zsr_radovi_tip` (`id_tip_radova`),
+  CONSTRAINT `fk_zsr_domacin_loze` FOREIGN KEY (`id_domacin`) REFERENCES `loze` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_zsr_obredi` FOREIGN KEY (`id_obred`) REFERENCES `obredi` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_zsr_radovi_tip` FOREIGN KEY (`id_tip_radova`) REFERENCES `radovi_tip` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_zsr_stupnjevi` FOREIGN KEY (`id_stupanj`) REFERENCES `stupnjevi` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

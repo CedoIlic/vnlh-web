@@ -86,7 +86,7 @@
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="zapisnikKontrolaTabKart3" aria-selected="false" aria-controls="zapisnikKontrolaTabPanel3" data-tab-index="3" tabindex="-1">Zapisnik</button>
                 </div>
                 <div class="kontrola-tab__tijelo" role="presentation">
-                    <div class="kontrola-tab__panel" role="tabpanel" id="zapisnikKontrolaTabPanel0" aria-labelledby="zapisnikKontrolaTabKart0">
+                    <div class="kontrola-tab__panel zapisnik-crud__tab-panel--bez-selekcije-sadrzaja" role="tabpanel" id="zapisnikKontrolaTabPanel0" aria-labelledby="zapisnikKontrolaTabKart0">
                         <div class="kontrola-panel zapisnik-crud__podpanel-opci-radovi zapisnik-crud__podpanel--fiksna mb-0" id="zapisnikPodpanelOpiRadovi">
                             <div class="kontrola-panel__header zapisnik-crud__podpanel-opci-radovi-header">Opći podaci o radovima</div>
                             <div class="kontrola-panel__body zapisnik-crud__podpanel-opci-radovi-body">
@@ -131,7 +131,7 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Dvije kolone s okomitom graničnikom; čekboxi: JS zapisnikPostaviKontroleOvisnoLozi. -->
+                        <!-- Dvije kolone s okomitom graničnikom; logika čekboxova: zapisnikPrimijeniStanjeOvjereZapisnika. -->
                         <div class="kontrola-panel zapisnik-crud__podpanel-ovjera zapisnik-crud__podpanel--fiksna zapisnik-crud__podpanel-ispod mb-0" id="zapisnikPodpanelOvjeraZapisnika" role="region" aria-labelledby="zapisnikPodpanelOvjeraZapisnikaHeader">
                             <div class="kontrola-panel__header zapisnik-crud__podpanel-ovjera-header" id="zapisnikPodpanelOvjeraZapisnikaHeader">Ovjera zapisnika</div>
                             <div class="kontrola-panel__body zapisnik-crud__podpanel-ovjera-body">
@@ -143,7 +143,8 @@
                                             <label class="kontrola-labela mb-0" for="zapisnik_cb_ovjera_prije_casni_majstor">Časni majstor</label>
                                         </div>
                                         <div class="zapisnik-crud__ovjera-cb-red">
-                                            <input type="checkbox" id="zapisnik_cb_ovjera_prije_odg_inspektor" class="kontrola-checkbox" value="1" aria-label="Odgovorni inspektor, ovjera prije usvajanja na radovima">
+                                            <!-- Stanje checked/unchecked dolazi s druge forme; na ovoj je red zaključan (klasa --samoprikaz u JS-u). -->
+                                            <input type="checkbox" id="zapisnik_cb_ovjera_prije_odg_inspektor" class="kontrola-checkbox" value="1" aria-label="Odgovorni inspektor (stanje s druge forme, ovdje se ne mijenja klikom)">
                                             <label class="kontrola-labela mb-0" for="zapisnik_cb_ovjera_prije_odg_inspektor">Odgovorni Inspektor</label>
                                         </div>
                                     </div>
@@ -166,7 +167,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="kontrola-tab__panel zapisnik-crud__tab-panel--prisustvo" role="tabpanel" id="zapisnikKontrolaTabPanel1" aria-labelledby="zapisnikKontrolaTabKart1" hidden>
+                    <div class="kontrola-tab__panel zapisnik-crud__tab-panel--prisustvo zapisnik-crud__tab-panel--bez-selekcije-sadrzaja" role="tabpanel" id="zapisnikKontrolaTabPanel1" aria-labelledby="zapisnikKontrolaTabKart1" hidden>
                         <!-- Prisustvo: lijevo — edit grupa (Ime / Loža / Država) vs tablica izvor (Pretraži + lista), ovisno o Tip unosa (+ slobodan_unos); sredinom trokuti; desno Tip unosa + tablica. -->
                         <div class="zapisnik-crud__prisustvo-wrap" role="region" aria-label="Prisustvo">
                             <div class="zapisnik-crud__prisustvo-grid">
@@ -266,7 +267,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="kontrola-tab__panel zapisnik-crud__tab-panel-duznosnici" role="tabpanel" id="zapisnikKontrolaTabPanel2" aria-labelledby="zapisnikKontrolaTabKart2" hidden>
+                    <div class="kontrola-tab__panel zapisnik-crud__tab-panel-duznosnici zapisnik-crud__tab-panel--bez-selekcije-sadrzaja" role="tabpanel" id="zapisnikKontrolaTabPanel2" aria-labelledby="zapisnikKontrolaTabKart2" hidden>
                         <!-- Blok: Dužnosnici — CSS grid (label | edit+ellipsis po retku); okomita pregrada: ::before na .kontrola-tab__tijelo (:has ovaj panel) od vrha do dna tijela taba, preko paddinga. -->
                         <div class="zapisnik-crud__duznosnici-lista" role="group" aria-label="Dužnosnici na radovima">
                             <div class="zapisnik-crud__duznosnici-red-cel-label">

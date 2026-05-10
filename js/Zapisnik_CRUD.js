@@ -703,11 +703,65 @@
     }, 0);
   }
 
+  /** Id-jevi čekboxova „Ovjera nakon usvajanja na radovima” (desna kolona u panelu Ovjera zapisnika). */
+  var ZAPISNIK_OVJERA_NAKON_CB_IDS = [
+    'zapisnik_cb_ovjera_nakon_casni_majstor',
+    'zapisnik_cb_ovjera_nakon_tajnik',
+    'zapisnik_cb_ovjera_nakon_govornik'
+  ];
+
+  /**
+   * Čekbox u redu Ovjere: bez HTML disabled — zaključan red koristi .zapisnik-crud__ovjera-cb-red--samoprikaz (vidljivo checked/unchecked).
+   * @param {HTMLInputElement|null} cbEl
+   * @param {boolean} samoPrikaz true = nije klikabilan (ni labela)
+   */
+  function zapisnikPostaviOvjeraRedSamoprikaz(cbEl, samoPrikaz) {
+    if (!cbEl || cbEl.type !== 'checkbox') return;
+    var red = cbEl.closest && cbEl.closest('.zapisnik-crud__ovjera-cb-red');
+    cbEl.disabled = false;
+    if (samoPrikaz) {
+      if (red) red.classList.add('zapisnik-crud__ovjera-cb-red--samoprikaz');
+      cbEl.tabIndex = -1;
+    } else {
+      if (red) red.classList.remove('zapisnik-crud__ovjera-cb-red--samoprikaz');
+      cbEl.removeAttribute('tabindex');
+    }
+  }
+
+  /**
+   * Panel „Ovjera zapisnika” (#zapisnikPodpanelOvjeraZapisnika):
+   * • #zapisnik_cb_ovjera_prije_odg_inspektor — uvijek samo prikaz (stanje postavlja druga forma / kasnije sinkron); .checked se ovdje ne dira.
+   * • #zapisnik_cb_ovjera_prije_casni_majstor — interaktivan samo uz imaLozu; inače samo prikaz.
+   * • Desna kolona — interaktivna samo ako imaLozu i oba lijeva čekboxa checked; inače samo prikaz i bez oznake desno.
+   * @param {boolean} imaLozu
+   */
+  function zapisnikPrimijeniStanjeOvjereZapisnika(imaLozu) {
+    var cbPrijeCm = document.getElementById('zapisnik_cb_ovjera_prije_casni_majstor');
+    var cbPrijeInsp = document.getElementById('zapisnik_cb_ovjera_prije_odg_inspektor');
+    zapisnikPostaviOvjeraRedSamoprikaz(cbPrijeInsp, true);
+    var obaPrijeNaJedan =
+      !!(cbPrijeCm && cbPrijeCm.checked && cbPrijeInsp && cbPrijeInsp.checked);
+    var mozeDesnuKolonu = !!imaLozu && obaPrijeNaJedan;
+    zapisnikPostaviOvjeraRedSamoprikaz(cbPrijeCm, !imaLozu);
+    var ix;
+    for (ix = 0; ix < ZAPISNIK_OVJERA_NAKON_CB_IDS.length; ix++) {
+      var cbN = document.getElementById(ZAPISNIK_OVJERA_NAKON_CB_IDS[ix]);
+      if (!cbN) continue;
+      if (!mozeDesnuKolonu) {
+        cbN.checked = false;
+        zapisnikPostaviOvjeraRedSamoprikaz(cbN, true);
+      } else {
+        zapisnikPostaviOvjeraRedSamoprikaz(cbN, false);
+      }
+    }
+  }
+
   /**
    * Dok nije odabrana loža: tab (kartice), polja u prvom tabu, Upis / Izbriši su disabled. Povratak ostaje aktivan.
    * Prava zastavice: vnlhPrimijeniPravaCrud i dalje upravlja vidljivošću (hidden); ovdje samo disabled za vidljive gumbe.
    * Upis i PDF: vidi zapisnikMozePrihvatUpisPdf / zapisnikPrimijeniUvjeteUpisPdfGumba. Ikona „postojeći zapisnik”: disabled dok nema lože.
    * Kartica „Prisustvo”: disabled dok nema barem jednu ložu učesnicu (modal). Kartica „Dužnosnici”: disabled dok u desnoj tablici Prisustva nema dovoljno članova s tipom duznosnik_ok.
+   * Ovjera zapisnika: čekboxovi bez HTML disabled — zaključani redovi .zapisnik-crud__ovjera-cb-red--samoprikaz (vidljivo checked). Inspektor (prije) samo prikaz stanja s druge forme; Časni majstor (prije) interaktivan uz ložu; desna kolona interaktivna samo ako ima ložu i oba lijeva čekboxa uključena (inače pražnjenje desno).
    * Kontrole u #zapisnikKontrolaTabPanel1 (uključ. tablice) slave isti uvjet kao kartica Prisustvo. Tab Dužnosnici: ZAPISNIK_DUZNOSNICI_REDOVI tek kad je kartica Dužnosnici smislena.
    * Izbriši: disabled kad nema lože, samo u modu korekcije vidljiv (mod_upisa_zapisnika=1) i uz brisanje_sloga.
    * Min. visina vanjskog panela s trakom: data-resize-min-px postavlja zapisnikScheduleMinVisinuResiza (sadržaj + 12px u tabu).
@@ -754,18 +808,8 @@
     if (bTipEllipsis) bTipEllipsis.disabled = !imaLozu;
     /* Ikona liste + play u zaglavlju (#zapisnik_btn_odabir_postojeceg): smisao tek uz kontekst lože. */
     if (btnOdabirPostojecegZapisnik) btnOdabirPostojecegZapisnik.disabled = !imaLozu;
-    /* Ovjera zapisnika: čekboxi u drugom ugniježdenom panelu. */
-    var ovrCbIds = [
-      'zapisnik_cb_ovjera_prije_casni_majstor',
-      'zapisnik_cb_ovjera_prije_odg_inspektor',
-      'zapisnik_cb_ovjera_nakon_casni_majstor',
-      'zapisnik_cb_ovjera_nakon_tajnik',
-      'zapisnik_cb_ovjera_nakon_govornik'
-    ];
-    for (var oi = 0; oi < ovrCbIds.length; oi++) {
-      var cb = document.getElementById(ovrCbIds[oi]);
-      if (cb) cb.disabled = !imaLozu;
-    }
+    /* Ovjera zapisnika: posebna pravila — zapisnikPrimijeniStanjeOvjereZapisnika. */
+    zapisnikPrimijeniStanjeOvjereZapisnika(imaLozu);
     /* Dužnosnici: svi redovi iz ZAPISNIK_DUZNOSNICI_REDOVI — aktivni tek kad je tab Dužnosnici dopušten brojem prisutnih dužnosničkih tipova. */
     zapisnikPrimijeniDuznosniciOvisnoLozi(mozeDuznosnici);
     /* Kartica Prisustvo: selekt / edita / razmjena / dvije jednostupčane tablice.
@@ -2794,11 +2838,38 @@
     });
   }
 
+  /**
+   * Omot .zapisnik-crud__wrap (sadrži cijeli panel) i naslov .naslov-forme: sprječava HTML5 drag-and-drop (ispust datoteke u prozor).
+   */
+  function zapisnikOnemoguciDragDropNaPanelu() {
+    var wrap = document.querySelector('.zapisnik-crud__wrap');
+    var naslov = document.querySelector('.naslov-forme');
+    var roots = [];
+    if (wrap) roots.push(wrap);
+    if (naslov) roots.push(naslov);
+    var ri;
+    for (ri = 0; ri < roots.length; ri++) {
+      (function (root) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function (evtName) {
+          root.addEventListener(
+            evtName,
+            function (ev) {
+              ev.preventDefault();
+              ev.stopPropagation();
+            },
+            false
+          );
+        });
+      })(roots[ri]);
+    }
+  }
+
   function onReady() {
     var root = document.getElementById('zapisnikKontrolaTab');
     if (typeof KontroleTabInit === 'function') {
       KontroleTabInit(root);
     }
+    zapisnikOnemoguciDragDropNaPanelu();
     if (root) {
       var trakaZap = root.querySelector('.kontrola-tab__traka');
       if (trakaZap) {
@@ -2925,6 +2996,14 @@
     if (selStupanjRad) selStupanjRad.addEventListener('change', zapisnikPrimijeniUvjeteUpisPdfGumba);
     var selTipRad = document.getElementById('zapisnik_select_tip_radova');
     if (selTipRad) selTipRad.addEventListener('change', zapisnikPrimijeniUvjeteUpisPdfGumba);
+
+    /* Ovjera prije: Časni majstor mijenja dostupnost desne kolone (Inspektor ostaje zaključan na uključeno). */
+    var cbOvjeraPrijeCm = document.getElementById('zapisnik_cb_ovjera_prije_casni_majstor');
+    if (cbOvjeraPrijeCm) {
+      cbOvjeraPrijeCm.addEventListener('change', function () {
+        zapisnikPrimijeniStanjeOvjereZapisnika(!!zapisnikIdOdabraneLozISelecta());
+      });
+    }
 
     if (selectRegija) selectRegija.disabled = true;
     if (selectLoza) selectLoza.disabled = true;

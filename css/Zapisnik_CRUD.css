@@ -18,6 +18,38 @@ body {
   flex-direction: column;
 }
 
+/* #zapisnikPanel i omot (.zapisnik-crud__wrap): bez povlačenja čvorova iz UI-a; HTML5 drop datoteka blokira JS u Zapisnik_CRUD.js (uklj. naslov .naslov-forme). */
+#zapisnikPanel,
+.zapisnik-crud__wrap {
+  -webkit-user-drag: none;
+}
+
+/* Naslov iznad panela (isti HTML kao ostale CRUD stranice — ovaj CSS učitava samo Zapisnik). */
+.naslov-forme {
+  -webkit-user-drag: none;
+}
+
+/*
+ * Prva tri tab-panela (Podaci, Prisustvo, Dužnosnici): bez označavanja teksta mišem po sadržaju (labele, ćelije, kartice).
+ * Četvrti tab „Zapisnik” nema ovu klasu — textarea ostaju normalno selektabilni u cijelosti.
+ * Izuzeci ispod: kontrole za unos (uključ. contenteditable u .kontrola-edit-delete).
+ */
+.zapisnik-crud__tab-panel--bez-selekcije-sadrzaja {
+  -webkit-user-select: none;
+  user-select: none;
+  -moz-user-select: none;
+}
+
+.zapisnik-crud__tab-panel--bez-selekcije-sadrzaja input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']):not([type='file']):not([type='hidden']),
+.zapisnik-crud__tab-panel--bez-selekcije-sadrzaja textarea,
+.zapisnik-crud__tab-panel--bez-selekcije-sadrzaja select,
+.zapisnik-crud__tab-panel--bez-selekcije-sadrzaja .kontrola-edit-delete__input,
+.zapisnik-crud__tab-panel--bez-selekcije-sadrzaja option {
+  -webkit-user-select: text;
+  user-select: text;
+  -moz-user-select: text;
+}
+
 /*
  * Vanjski panel: min-height:0 – u flexu (jedino dijete u .zapisnik-crud__wrap) inače „min-content” = cijela forma
  * i postavljanje visine s trakom (inline height) ne smanjuje stvaran okvir. Donju granicu trake: data-resize-min-px u HTML
@@ -550,6 +582,18 @@ body {
 }
 .zapisnik-crud__ovjera-cb-red .kontrola-labela {
   cursor: pointer;
+}
+/*
+ * Ovjera: čekbox nije HTML disabled (checked/unchecked ostaje čitljiv kao kod aktivne kontrole),
+ * ali cijeli red ne prima klik — stanje mijenja druga forma ili uvjeti u JS-u (npr. inspektor, zaključana desna kolona).
+ */
+.zapisnik-crud__ovjera-cb-red--samoprikaz {
+  pointer-events: none;
+  cursor: default;
+  user-select: none;
+}
+.zapisnik-crud__ovjera-cb-red--samoprikaz .kontrola-labela {
+  cursor: default;
 }
 @media (max-width: 600px) {
   .zapisnik-crud__ovjera-dvije-kolone {

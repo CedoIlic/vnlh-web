@@ -2286,6 +2286,13 @@
       var target = e.target;
       if (!target || !target.matches || !target.matches('input.kontrola-checkbox[type=\"checkbox\"]')) return;
       if (target.disabled) return;
+      /* Zapisnik Ovjera: red .zapisnik-crud__ovjera-cb-red--samoprikaz — izgled aktivnog čekboxa, bez mijene mišem/tipkom. */
+      if (target.closest && target.closest('.zapisnik-crud__ovjera-cb-red--samoprikaz')) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+        }
+        return;
+      }
       if (e.key === 'Enter') {
         e.preventDefault();
         target.checked = !target.checked;
