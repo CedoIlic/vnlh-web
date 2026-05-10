@@ -1,7 +1,7 @@
 CREATE TABLE `e_maili` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_clanovi` int(11) DEFAULT NULL,
-  `id_email_tip` int(11) DEFAULT NULL,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `id_clanovi` int(11) unsigned DEFAULT NULL,
+  `id_email_tip` int(11) unsigned DEFAULT NULL,
   `email` varchar(100) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `ix_emaili_id_clanovi` (`id_clanovi`),

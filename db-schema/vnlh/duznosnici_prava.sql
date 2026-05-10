@@ -1,7 +1,7 @@
 CREATE TABLE `duznosnici_prava` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `duznost` int(11) NOT NULL,
-  `pravo` int(11) NOT NULL,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `duznost` int(11) unsigned NOT NULL,
+  `pravo` int(11) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_duznosnici_prava_duznost_pravo` (`duznost`,`pravo`),
   KEY `fk_duznosnici_prava_meni` (`pravo`),

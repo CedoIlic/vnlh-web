@@ -1,6 +1,6 @@
 CREATE TABLE `sustav_sesije_aktivne` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Jedinstveni identifikator sloga; interno razlikovanje zapisa.',
-  `id_korisnik` int(11) NOT NULL COMMENT 'Identifikator korisnika kojem sesija pripada; koristi se za dohvat sesija korisnika.',
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `id_korisnik` int(11) unsigned NOT NULL,
   `session_id` varchar(128) NOT NULL COMMENT 'Jedinstveni identifikator sesije; služi za identifikaciju konkretnog login-a/browsera/uređaja.',
   `login_vrijeme` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Vrijeme otvaranja sesije (login); služi za evidenciju trajanja sesije.',
   `zadnja_aktivnost` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Vrijeme zadnje aktivnosti; ažurira se pri radu i koristi za timeout.',
@@ -12,7 +12,7 @@ CREATE TABLE `sustav_sesije_aktivne` (
   `ima_neprocitanih` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Flag nepročitanih poruka (0=nema, 1=ima). Postavlja 0-Poruke_posalji (1 pri slanju), 0-Poruke_poruke i 0-Poruke_brisi (0 kad nema nepročitanih), Login (inicijalno). Polling čita samo ovaj flag umjesto COUNT(*) na tablici poruka.',
   `ima_chat_neprocitanih` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = postoji nepročitana Chat poruka (tip=Chat poruka, status=Novo, brisano=0) za id_korisnik ove sesije kao primatelja.',
   `chat_modal_otvoren` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = chat modal otvoren (poruke_chat_modal_status.php akcija=otvori). 0 = zatvoreno (zatvori ili slanje koje zatvara modal).',
-  `chat_modal_sugovornik_id` int(11) NOT NULL DEFAULT 0 COMMENT 'sustav_korisnici.id_korisnik sugovornika u otvorenom chat modalu; 0 ako modal nije otvoren.',
+  `chat_modal_sugovornik_id` int(11) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_sustav_sesije_aktivne_session_id` (`session_id`),
   KEY `ix_sustav_sesije_aktivne_id_korisnik` (`id_korisnik`),

@@ -1,8 +1,8 @@
 CREATE TABLE `sustav_sesije_poruke` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'PK – jedinstveni identifikator poruke',
-  `id_razgovor` int(11) NOT NULL DEFAULT 0 COMMENT 'FK razgovor – grupira poruke u tijek komunikacije',
-  `id_posiljatelj` int(11) NOT NULL COMMENT 'FK korisnik – tko šalje poruku',
-  `id_primatelj` int(11) NOT NULL COMMENT 'FK korisnik – tko prima poruku',
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `id_razgovor` int(11) unsigned NOT NULL DEFAULT 0,
+  `id_posiljatelj` int(11) unsigned NOT NULL,
+  `id_primatelj` int(11) unsigned NOT NULL,
   `session_id_posiljatelj` varchar(128) DEFAULT NULL COMMENT 'Sesija iz koje je poruka poslana (korisnik može imati više sesija)',
   `session_id_primatelj` varchar(128) DEFAULT NULL COMMENT 'Sesija kojoj je poruka usmjerena (točna sesija primatelja)',
   `poruka` text NOT NULL COMMENT 'Tekst poruke – sadržaj vidljiv u prozoru razgovora',

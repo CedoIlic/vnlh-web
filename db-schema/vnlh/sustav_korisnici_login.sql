@@ -1,5 +1,5 @@
 CREATE TABLE `sustav_korisnici_login` (
-  `id_korisnik` int(11) NOT NULL,
+  `id_korisnik` int(11) unsigned NOT NULL,
   `login` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `pass` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `pass_status` smallint(6) DEFAULT NULL COMMENT 'Status lozinke: 0 ok, 1 obavezna promjena lozinke, 2 Korisnik je blokiran',

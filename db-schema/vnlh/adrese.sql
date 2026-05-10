@@ -1,8 +1,8 @@
 CREATE TABLE `adrese` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_clanovi` int(11) DEFAULT NULL,
-  `id_adrese_tip` int(11) DEFAULT NULL,
-  `id_drzave_adrese` int(11) DEFAULT NULL,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `id_clanovi` int(11) unsigned DEFAULT NULL,
+  `id_adrese_tip` int(11) unsigned DEFAULT NULL,
+  `id_drzave_adrese` int(11) unsigned DEFAULT NULL,
   `adresa_1` varchar(50) NOT NULL DEFAULT '',
   `adresa_2` varchar(50) NOT NULL DEFAULT '',
   `grad` varchar(50) NOT NULL DEFAULT '',

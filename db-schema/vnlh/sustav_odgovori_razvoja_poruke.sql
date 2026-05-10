@@ -1,7 +1,7 @@
 CREATE TABLE `sustav_odgovori_razvoja_poruke` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `redosljed` tinyint(4) NOT NULL DEFAULT 0 COMMENT 'Redosljed prikaza i primjene podataka (0–255)',
-  `boja` int(11) DEFAULT NULL COMMENT 'FK na Sustav_Odgovori_Razvoja_Boje.id; NULL ako nije vezano',
+  `boja` int(11) unsigned DEFAULT NULL,
   `kod` tinyint(4) NOT NULL DEFAULT 0,
   `tekst` varchar(250) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),

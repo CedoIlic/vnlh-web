@@ -1,6 +1,6 @@
 CREATE TABLE `stupnjevi` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_obred` int(11) NOT NULL,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `id_obred` int(11) unsigned NOT NULL,
   `stupanj` int(11) NOT NULL DEFAULT 0,
   `naziv` varchar(50) NOT NULL DEFAULT '',
   `slika` longblob DEFAULT NULL,

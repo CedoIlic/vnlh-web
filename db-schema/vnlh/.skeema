@@ -7,6 +7,7 @@ schema=vnlh
 flavor=mariadb:10.4
 host=172.26.0.1
 port=3306
+# Lokalna XAMPP baza vnlh — Skeema koristi ovog MySQL korisnika (CLAUDE.md).
 user=skeema
 
 [production]

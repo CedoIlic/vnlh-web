@@ -1,7 +1,7 @@
 CREATE TABLE `telefoni` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_clanovi` int(11) DEFAULT NULL,
-  `id_telefoni_tip` int(11) DEFAULT NULL,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `id_clanovi` int(11) unsigned DEFAULT NULL,
+  `id_telefoni_tip` int(11) unsigned DEFAULT NULL,
   `telefon` varchar(30) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `ix_telefoni_id_clanovi` (`id_clanovi`),

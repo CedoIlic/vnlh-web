@@ -1,6 +1,6 @@
 CREATE TABLE `loze_tip` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_obred` int(11) NOT NULL,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `id_obred` int(11) unsigned NOT NULL,
   `naziv` varchar(50) NOT NULL,
   `redosljed` int(11) NOT NULL DEFAULT 0,
   `id_pozivatelja` int(11) NOT NULL DEFAULT 0,

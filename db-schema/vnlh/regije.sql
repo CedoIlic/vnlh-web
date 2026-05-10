@@ -1,6 +1,6 @@
 CREATE TABLE `regije` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `id_drzava` int(11) NOT NULL,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `id_drzava` int(11) unsigned NOT NULL,
   `naziv` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_regije_drzava_naziv` (`id_drzava`,`naziv`),

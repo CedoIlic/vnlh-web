@@ -1,5 +1,5 @@
 CREATE TABLE `sustav_varijable` (
-  `id` int(11) NOT NULL,
+  `id` int(11) unsigned NOT NULL,
   `varijabla` varchar(200) NOT NULL,
   `Naziv` varchar(200) NOT NULL,
   `opis` varchar(2048) DEFAULT NULL,
