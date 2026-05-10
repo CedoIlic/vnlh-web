@@ -326,6 +326,8 @@
         if (selectSpol) selectSpol.value = (found.spol === 1 || found.spol === '1') ? '1' : '0';
         var editDatumRodjenja = document.getElementById('edit_datum_rodjenja');
         if (editDatumRodjenja) { editDatumRodjenja.value = found.datum_rodjenja != null ? found.datum_rodjenja : ''; syncDatumEmptyClass(editDatumRodjenja); }
+        var editOib = document.getElementById('edit_oib');
+        if (editOib) editOib.value = found.oib != null ? found.oib : '';
         var editDatumInicijacije = document.getElementById('edit_datum_inicijacije');
         if (editDatumInicijacije) { editDatumInicijacije.value = found.datum_inicijacije != null ? found.datum_inicijacije : ''; syncDatumEmptyClass(editDatumInicijacije); }
         if (selectPorijeklo) selectPorijeklo.value = (found.porijeklo != null && found.porijeklo !== '') ? String(found.porijeklo) : '';
