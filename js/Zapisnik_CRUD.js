@@ -57,6 +57,16 @@
   var modalZapisnikDuznosnikIzborApi = null;
   /** Koje polje #edit_* puni zadnji OK modala dužnosnika — referenca do close/OK. */
   var zapisnikDuznosnikModalCiljniEditId = null;
+  /** Podaci tabova Eseji: 5 redova [{ autor, naslov, tekst }]. */
+  var zapisnikEsejiData = [
+    { autor: '', naslov: '', tekst: '' },
+    { autor: '', naslov: '', tekst: '' },
+    { autor: '', naslov: '', tekst: '' },
+    { autor: '', naslov: '', tekst: '' },
+    { autor: '', naslov: '', tekst: '' }
+  ];
+  /** Indeks retka koji je trenutno otvoren u modalu za tekst eseja (-1 = zatvoren). */
+  var zapisnikEsejModalTrenutniRed = -1;
 
   /*
    * ZAGLAVLJE TABLICE (modal, jedan stupac; u ćeliji zarezom odvojeni naziv, grad, država — id u row[1] ne iscrtava se).
@@ -589,7 +599,8 @@
       { id: 'zapisnikKontrolaTabKart0', ok: !!imaLozu },
       { id: 'zapisnikKontrolaTabKart1', ok: !!mozePrisustvo },
       { id: 'zapisnikKontrolaTabKart2', ok: !!mozeDuznosnici },
-      { id: 'zapisnikKontrolaTabKart3', ok: !!imaLozu }
+      { id: 'zapisnikKontrolaTabKart3', ok: !!imaLozu },
+      { id: 'zapisnikKontrolaTabKart4', ok: !!imaLozu }
     ];
     var mi;
     for (mi = 0; mi < map.length; mi++) {
@@ -852,6 +863,13 @@
       var elZap = zapisnikTekstNodes[zi];
       if (!elZap || !('disabled' in elZap)) continue;
       elZap.disabled = !imaLozu;
+    }
+    var esejiNodes = document.querySelectorAll('#zapisnikKontrolaTabPanel4 .zapisnik-crud__eseji-kontrola');
+    var ei;
+    for (ei = 0; ei < esejiNodes.length; ei++) {
+      var elEsej = esejiNodes[ei];
+      if (!elEsej || !('disabled' in elEsej)) continue;
+      elEsej.disabled = !imaLozu;
     }
     if (typeof KontroleRefreshCustomSelect === 'function') {
       try {
@@ -2404,6 +2422,11 @@
     var idList = [];
     var seen = {};
     var k;
+    /* Domaćin uvijek u listi — može biti jedini učesnik ako modal nije korišten. */
+    if (zapisnikLozeDomacinId) {
+      var domN = parseInt(String(zapisnikLozeDomacinId), 10);
+      if (!isNaN(domN) && domN > 0) { seen[String(domN)] = true; idList.push(domN); }
+    }
     for (k = 0; k < rawIds.length; k++) {
       var n = parseInt(String(rawIds[k]), 10);
       if (isNaN(n) || n <= 0) continue;
@@ -2728,6 +2751,7 @@
       }
     }
     ta.value = segmenti.join('; ');
+    zapisnikPrisustvoOsvjeziIzvornuListuClanova();
   }
 
   /** Kratka kopija snapshota za OK (primjerak prije close) da redovi ostanu konzistentni izboru. */
@@ -3008,7 +3032,11 @@
       zapisnik:      taT ? trimZ(taT.value) || null : null,
       loze_ucesnice: lozeIds,
       prisutni:      prisutni,
-      duznosnici:    duznosnici
+      duznosnici:    duznosnici,
+      eseji:         zapisnikEsejiData.map(function (d) {
+        return { autor: trimZ(d.autor) || null, naslov: trimZ(d.naslov) || null, tekst: trimZ(d.tekst) || null };
+      }),
+      eseji_sazetak: (function () { var el = document.getElementById('zapisnik_eseji_sazetak'); return el ? trimZ(el.value) || null : null; }())
     };
   }
 
@@ -3043,6 +3071,35 @@
     if (taS) taS.value = '';
     var taT = document.getElementById('zapisnik_edit_tekst');
     if (taT) taT.value = '';
+
+    /* Eseji */
+    var esejCont = document.getElementById('zapisnikEsejiTablica');
+    var esejTbody = esejCont ? esejCont.querySelector('.kontrola-tablica__scroll tbody') : null;
+    for (var esi = 0; esi < zapisnikEsejiData.length; esi++) {
+      zapisnikEsejiData[esi] = { autor: '', naslov: '', tekst: '' };
+      if (esejTbody) {
+        var esejTr = esejTbody.querySelector('tr[data-esej-red="' + esi + '"]');
+        if (esejTr) {
+          var esejSpA = esejTr.querySelector('td:first-child .kontrola-tablica__cell-inner');
+          var esejSpN = esejTr.querySelector('td:nth-child(2) .kontrola-tablica__cell-inner');
+          if (esejSpA) esejSpA.textContent = '';
+          if (esejSpN) esejSpN.textContent = '';
+        }
+      }
+    }
+    var esejTaSaz = document.getElementById('zapisnik_eseji_sazetak');
+    if (esejTaSaz) esejTaSaz.value = '';
+    /* Osvježi ikone (sve prazne → ellipsis samo u redu 0, trash skriven svugdje) */
+    (function () {
+      if (!esejTbody) return;
+      var esejRows = esejTbody.querySelectorAll('tr[data-esej-red]');
+      for (var er = 0; er < esejRows.length; er++) {
+        var eBtnEl = esejRows[er].querySelector('.zapisnik-crud__eseji-btn--elipsis');
+        var eBtnBr = esejRows[er].querySelector('.zapisnik-crud__eseji-btn--brisanje');
+        if (eBtnEl) eBtnEl.hidden = (er !== 0);
+        if (eBtnBr) eBtnBr.hidden = true;
+      }
+    }());
 
     /* Dužnosnici editi */
     for (var di = 0; di < ZAPISNIK_DUZNOSNICI_ENUM_MAP.length; di++) {
@@ -3438,4 +3495,187 @@
       window.location.href = new URL('Meni.php', window.location.href).href;
     });
   })();
+
+  /* ============================================================
+   * Tab „Eseji": KontroleTablica (3 kol.), ellipsis modal, sažetak
+   * ============================================================ */
+  (function zapisnikInitEseji() {
+    var container = document.getElementById('zapisnikEsejiTablica');
+    if (!container || typeof KontroleTablica !== 'function') return;
+
+    var esejiZaglavlje = [
+      { key: 'autor',  title: 'Autor',       SQL_Naziv: '', sortable: 0, sortable_icon: 0, type: 't', width: -25, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
+      { key: 'naslov', title: 'Naslov eseja', SQL_Naziv: '', sortable: 0, sortable_icon: 0, type: 't', width: 0,   suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
+      { key: 'akcije', title: '',             SQL_Naziv: '', sortable: 0, sortable_icon: 0, type: 't', width: 86,  suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
+    ];
+
+    KontroleTablica(container, {
+      getBrojKolona: 3,
+      headerColumns: esejiZaglavlje,
+      data: []
+    });
+
+    var tbody = container.querySelector('.kontrola-tablica__scroll tbody');
+    if (!tbody) return;
+
+    /* Gradi 5 fiksnih redaka u tbody. */
+    var bi;
+    for (bi = 0; bi < zapisnikEsejiData.length; bi++) {
+      (function (i) {
+        var tr = document.createElement('tr');
+        tr.setAttribute('data-esej-red', String(i));
+
+        var tdA = document.createElement('td');
+        var dA = document.createElement('div');
+        dA.className = 'kontrola-tablica__cell-inner';
+        dA.setAttribute('tabindex', '0');
+        tdA.appendChild(dA);
+        tr.appendChild(tdA);
+
+        var tdN = document.createElement('td');
+        var dN = document.createElement('div');
+        dN.className = 'kontrola-tablica__cell-inner';
+        dN.setAttribute('tabindex', '0');
+        tdN.appendChild(dN);
+        tr.appendChild(tdN);
+
+        var tdAk = document.createElement('td');
+        var akcije = document.createElement('div');
+        akcije.className = 'zapisnik-crud__eseji-akcije';
+
+        var btnEl = document.createElement('button');
+        btnEl.type = 'button';
+        btnEl.className = 'zapisnik-crud__eseji-btn zapisnik-crud__eseji-btn--elipsis zapisnik-crud__eseji-kontrola';
+        btnEl.setAttribute('aria-label', 'Uredi esej ' + (i + 1));
+        var spEl = document.createElement('span');
+        spEl.className = 'kontrola-icon--ellipsis-horizontal';
+        spEl.setAttribute('aria-hidden', 'true');
+        btnEl.appendChild(spEl);
+        if (i !== 0) btnEl.hidden = true;
+
+        var btnBr = document.createElement('button');
+        btnBr.type = 'button';
+        btnBr.className = 'zapisnik-crud__eseji-btn zapisnik-crud__eseji-btn--brisanje zapisnik-crud__eseji-kontrola';
+        btnBr.setAttribute('aria-label', 'Obriši esej ' + (i + 1));
+        btnBr.hidden = true;
+        var spBr = document.createElement('span');
+        spBr.className = 'kontrola-icon--trash';
+        spBr.setAttribute('aria-hidden', 'true');
+        btnBr.appendChild(spBr);
+
+        akcije.appendChild(btnEl);
+        akcije.appendChild(btnBr);
+        tdAk.appendChild(akcije);
+        tr.appendChild(tdAk);
+
+        tbody.appendChild(tr);
+      }(bi));
+    }
+
+    if (typeof CommonCRUD !== 'undefined' && typeof CommonCRUD.primijeniTablicaZaglavlje === 'function') {
+      CommonCRUD.primijeniTablicaZaglavlje(container, esejiZaglavlje);
+    }
+
+    function esejRedPopunjen(i) {
+      var d = zapisnikEsejiData[i];
+      return !!(d && (trimZ(d.autor) || trimZ(d.naslov)));
+    }
+
+    /** Ažurira ikone: ellipsis — vidljiv na popunjenim redovima i prvom praznom; trash — vidljiv samo na popunjenim redovima. */
+    function esejAzurirajIkone() {
+      var rows = tbody.querySelectorAll('tr[data-esej-red]');
+      var prviPrazan = -1;
+      var ri;
+      for (ri = 0; ri < rows.length; ri++) {
+        if (!esejRedPopunjen(ri) && prviPrazan === -1) prviPrazan = ri;
+      }
+      for (ri = 0; ri < rows.length; ri++) {
+        var tr = rows[ri];
+        var popunjen = esejRedPopunjen(ri);
+        var btnEl = tr.querySelector('.zapisnik-crud__eseji-btn--elipsis');
+        var btnBr = tr.querySelector('.zapisnik-crud__eseji-btn--brisanje');
+        if (btnEl) btnEl.hidden = (!popunjen && ri !== prviPrazan);
+        if (btnBr) btnBr.hidden = !popunjen;
+      }
+    }
+
+    /** Upiše tekst u cell-inner divove retka i. */
+    function esejAzurirajCelije(i) {
+      var tr = tbody.querySelector('tr[data-esej-red="' + i + '"]');
+      if (!tr) return;
+      var d = zapisnikEsejiData[i];
+      var cellA = tr.querySelector('td:first-child .kontrola-tablica__cell-inner');
+      var cellN = tr.querySelector('td:nth-child(2) .kontrola-tablica__cell-inner');
+      if (cellA) cellA.textContent = trimZ(d.autor)  || '';
+      if (cellN) cellN.textContent = trimZ(d.naslov) || '';
+    }
+
+    function esejOtvoriModal(i) {
+      var modal = document.getElementById('zapisnikEsejTekstModal');
+      var inpA  = document.getElementById('zapisnikEsejModalAutor');
+      var inpN  = document.getElementById('zapisnikEsejModalNaslov');
+      var ta    = document.getElementById('zapisnikEsejModalTekst');
+      if (!modal || !inpA || !inpN || !ta) return;
+      zapisnikEsejModalTrenutniRed = i;
+      var d = zapisnikEsejiData[i];
+      inpA.value = d.autor || '';
+      inpN.value = d.naslov || '';
+      ta.value   = d.tekst  || '';
+      modal.hidden = false;
+      try { inpA.focus(); } catch (ef) {}
+    }
+
+    function esejZatvoriModal() {
+      var modal = document.getElementById('zapisnikEsejTekstModal');
+      if (modal) modal.hidden = true;
+      zapisnikEsejModalTrenutniRed = -1;
+    }
+
+    /* Handleri za gumbe u redovima tablice. */
+    var rows = tbody.querySelectorAll('tr[data-esej-red]');
+    var ri;
+    for (ri = 0; ri < rows.length; ri++) {
+      (function (idx) {
+        var tr    = rows[idx];
+        var btnEl = tr.querySelector('.zapisnik-crud__eseji-btn--elipsis');
+        var btnBr = tr.querySelector('.zapisnik-crud__eseji-btn--brisanje');
+        if (btnEl) btnEl.addEventListener('click', function (e) { e.stopPropagation(); esejOtvoriModal(idx); });
+        if (btnBr) btnBr.addEventListener('click', function (e) {
+          e.stopPropagation();
+          zapisnikEsejiData[idx] = { autor: '', naslov: '', tekst: '' };
+          esejAzurirajCelije(idx);
+          esejAzurirajIkone();
+        });
+      }(ri));
+    }
+
+    /* Modal handleri */
+    var modalOk       = document.getElementById('zapisnikEsejModalOk');
+    var modalOdustani = document.getElementById('zapisnikEsejModalOdustani');
+    var modalBackdrop = document.querySelector('#zapisnikEsejTekstModal .zapisnik-crud__esej-modal-backdrop');
+
+    if (modalOk) modalOk.addEventListener('click', function () {
+      var i = zapisnikEsejModalTrenutniRed;
+      if (i >= 0) {
+        var inpA = document.getElementById('zapisnikEsejModalAutor');
+        var inpN = document.getElementById('zapisnikEsejModalNaslov');
+        var ta   = document.getElementById('zapisnikEsejModalTekst');
+        zapisnikEsejiData[i].autor  = inpA ? trimZ(inpA.value) : '';
+        zapisnikEsejiData[i].naslov = inpN ? trimZ(inpN.value) : '';
+        zapisnikEsejiData[i].tekst  = ta   ? ta.value : '';
+        esejAzurirajCelije(i);
+        esejAzurirajIkone();
+      }
+      esejZatvoriModal();
+    });
+    if (modalOdustani) modalOdustani.addEventListener('click', esejZatvoriModal);
+    if (modalBackdrop) modalBackdrop.addEventListener('click', esejZatvoriModal);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        var modal = document.getElementById('zapisnikEsejTekstModal');
+        if (modal && !modal.hidden) esejZatvoriModal();
+      }
+    });
+  }());
+
 })();

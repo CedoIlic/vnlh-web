@@ -85,6 +85,7 @@
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="zapisnikKontrolaTabKart1" aria-selected="false" aria-controls="zapisnikKontrolaTabPanel1" data-tab-index="1" tabindex="-1">Prisustvo</button>
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="zapisnikKontrolaTabKart2" aria-selected="false" aria-controls="zapisnikKontrolaTabPanel2" data-tab-index="2" tabindex="-1">Dužnosnici</button>
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="zapisnikKontrolaTabKart3" aria-selected="false" aria-controls="zapisnikKontrolaTabPanel3" data-tab-index="3" tabindex="-1">Zapisnik</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="zapisnikKontrolaTabKart4" aria-selected="false" aria-controls="zapisnikKontrolaTabPanel4" data-tab-index="4" tabindex="-1">Eseji</button>
                 </div>
                 <div class="kontrola-tab__tijelo" role="presentation">
                     <div class="kontrola-tab__panel zapisnik-crud__tab-panel--bez-selekcije-sadrzaja" role="tabpanel" id="zapisnikKontrolaTabPanel0" aria-labelledby="zapisnikKontrolaTabKart0">
@@ -388,6 +389,15 @@
                             </div>
                         </div>
                     </div>
+                    <div class="kontrola-tab__panel zapisnik-crud__tab-panel--eseji" role="tabpanel" id="zapisnikKontrolaTabPanel4" aria-labelledby="zapisnikKontrolaTabKart4" hidden>
+                        <div class="zapisnik-crud__eseji-wrap" role="group" aria-label="Eseji">
+                            <div id="zapisnikEsejiTablica" class="kontrola-tablica zapisnik-crud__eseji-tablica"></div>
+                            <div class="zapisnik-crud__eseji-sazetak-blok">
+                                <label class="kontrola-labela mb-0" for="zapisnik_eseji_sazetak">Sažetak rada</label>
+                                <textarea id="zapisnik_eseji_sazetak" class="kontrola-napomena zapisnik-crud__eseji-sazetak zapisnik-crud__eseji-kontrola" rows="3" spellcheck="true" aria-label="Sažetak rada"></textarea>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -399,6 +409,22 @@
             <div class="zapisnik-crud__footer-right">
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
             </div>
+        </div>
+    </div>
+</div>
+<!-- Modal za unos/uređivanje eseja -->
+<div id="zapisnikEsejTekstModal" class="zapisnik-crud__esej-modal" role="dialog" aria-label="Unos eseja" aria-modal="true" hidden>
+    <div class="zapisnik-crud__esej-modal-backdrop"></div>
+    <div class="zapisnik-crud__esej-modal-box">
+        <label class="kontrola-labela mb-0" for="zapisnikEsejModalAutor">Autor</label>
+        <input type="text" id="zapisnikEsejModalAutor" class="kontrola-edit" placeholder="Autor..." maxlength="255" autocomplete="off">
+        <label class="kontrola-labela mb-0" for="zapisnikEsejModalNaslov">Naslov eseja</label>
+        <input type="text" id="zapisnikEsejModalNaslov" class="kontrola-edit" placeholder="Naslov eseja..." maxlength="512" autocomplete="off">
+        <label class="kontrola-labela mb-0" for="zapisnikEsejModalTekst">Tekst eseja</label>
+        <textarea id="zapisnikEsejModalTekst" class="kontrola-napomena zapisnik-crud__esej-modal-textarea" rows="6" spellcheck="true" placeholder="Tekst eseja..."></textarea>
+        <div class="zapisnik-crud__esej-modal-akcije">
+            <button type="button" id="zapisnikEsejModalOk" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">U redu</span></span></span></button>
+            <button type="button" id="zapisnikEsejModalOdustani" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
         </div>
     </div>
 </div>

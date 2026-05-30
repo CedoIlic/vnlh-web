@@ -896,3 +896,142 @@ body {
 
 /* --- Blok: Modal „Lože učesnice radova” — bold samo ime lože (JS innerHTML na <strong>); tijelo ćelije bez globalnog font-weight. --- */
 
+/* ============================================================
+   Tab „Eseji”
+   ============================================================ */
+
+.zapisnik-crud__eseji-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-sizing: border-box;
+}
+
+
+.zapisnik-crud__eseji-akcije {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.zapisnik-crud__eseji-btn[hidden] {
+  display: none !important;
+}
+
+.zapisnik-crud__eseji-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.025rem;
+  height: 2.025rem;
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  color: var(--edit_text);
+  cursor: pointer;
+  box-shadow: var(--button_outer_shadow);
+}
+
+.zapisnik-crud__eseji-btn:disabled {
+  color: var(--label_text_disabled);
+  border-color: var(--label_text_disabled);
+  background: var(--edit_bg);
+  cursor: default;
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  .zapisnik-crud__eseji-btn:hover:not(:disabled) {
+    border-color: var(--edit_border_focus);
+    background: var(--edit_bg_hover, var(--c-gray-100));
+    box-shadow: var(--edit_focus_shadow);
+  }
+}
+
+.zapisnik-crud__eseji-sazetak-blok {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.zapisnik-crud__eseji-sazetak.kontrola-napomena {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  resize: none;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Modal za tekst eseja */
+.zapisnik-crud__esej-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  color: var(--text);
+}
+
+.zapisnik-crud__esej-modal[hidden] {
+  display: none;
+}
+
+.zapisnik-crud__esej-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.zapisnik-crud__esej-modal-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--edit_bg);
+  color: var(--edit_text);
+  border-radius: var(--edit_radius, 8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+  width: min(560px, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  min-width: 0;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+}
+
+.zapisnik-crud__esej-modal-naslov {
+  margin: 0;
+  font-weight: 700;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  color: var(--edit_text);
+}
+
+.zapisnik-crud__esej-modal-textarea.kontrola-napomena {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.zapisnik-crud__esej-modal-akcije {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
