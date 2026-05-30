@@ -1,0 +1,244 @@
+/* Zapisnik_Boje_U_Listi_CRUD – edit panel, boja prikaz (fg), color picker modal */
+
+.zapisnik-boje-u-listi-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.zapisnik-boje-u-listi-crud__edit-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.zapisnik-boje-u-listi-crud__edit-row--naziv-id-boja {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 1rem;
+}
+
+.zapisnik-boje-u-listi-crud__edit-row__boja-wrap {
+  flex: 1 1 200px;
+  min-width: 200px;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+@media (min-width: calc(var(--page_breakpoint_narrow, 640px) + 1px)) {
+  .zapisnik-boje-u-listi-crud__edit-row__boja-wrap {
+    flex: 0 0 auto;
+    width: calc(150px + 0.5rem + 2.25rem);
+    min-width: 0;
+  }
+}
+
+.zapisnik-boje-u-listi-crud__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.zapisnik-boje-u-listi-crud__cell--naziv {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.zapisnik-boje-u-listi-crud__cell--id {
+  flex: 0 0 auto;
+}
+
+.zapisnik-boje-u-listi-crud__id-edit {
+  width: 60px;
+  box-sizing: border-box;
+}
+
+.zapisnik-boje-u-listi-crud__edit-row__boja-wrap .zapisnik-boje-u-listi-crud__cell--boja {
+  flex: 1;
+  min-width: 0;
+}
+
+.zapisnik-boje-u-listi-crud__boja-display {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  cursor: default;
+  background-color: var(--napomena_bg, #fff);
+  text-align: center;
+  font-weight: 700;
+}
+
+.zapisnik-boje-u-listi-crud__cell--icon {
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
+
+.zapisnik-boje-u-listi-crud__boja-icon-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  color: var(--edit_text);
+  cursor: pointer;
+  box-shadow: var(--button_outer_shadow);
+}
+
+.zapisnik-boje-u-listi-crud__boja-icon-btn:disabled {
+  color: var(--label_text_disabled);
+  border-color: var(--label_text_disabled);
+  background: var(--edit_bg);
+  cursor: default;
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+@media (hover: hover) {
+  .zapisnik-boje-u-listi-crud__boja-icon-btn:hover:not(:disabled) {
+    border-color: var(--edit_border_focus);
+    background: var(--edit_bg_hover, var(--c-gray-100));
+    box-shadow: var(--edit_focus_shadow);
+  }
+}
+.zapisnik-boje-u-listi-crud__boja-icon-btn:active:not(:disabled) {
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+.zapisnik-boje-u-listi-crud__boja-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.zapisnik-boje-u-listi-crud__opis {
+  resize: vertical;
+  min-height: calc(2 * 1.5em + 2 * var(--napomena_padding_y, 8px));
+}
+
+@media (max-width: var(--page_breakpoint_narrow, 640px)) {
+  .zapisnik-boje-u-listi-crud__opis {
+    overflow: hidden;
+    resize: none;
+    min-height: calc(2 * 1.5em + 2 * var(--napomena_padding_y, 8px));
+  }
+}
+
+.zapisnik-boje-u-listi-crud__edit-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.zapisnik-boje-u-listi-crud__footer-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.zapisnik-boje-u-listi-crud__footer-right {
+  margin-left: auto;
+}
+
+/* Modal za odabir boje */
+.zapisnik-boje-u-listi-crud__picker-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  color: var(--text);
+}
+
+.zapisnik-boje-u-listi-crud__picker-modal[hidden] {
+  display: none;
+}
+
+.zapisnik-boje-u-listi-crud__picker-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.zapisnik-boje-u-listi-crud__picker-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--edit_bg);
+  color: var(--edit_text);
+  border-radius: var(--edit_radius, 8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+  width: min(338px, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  min-width: 0;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+}
+
+.zapisnik-boje-u-listi-crud__picker-label {
+  margin: 0;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: 700;
+  color: var(--edit_text);
+}
+
+.zapisnik-boje-u-listi-crud__picker-color {
+  width: 100%;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.zapisnik-boje-u-listi-crud__picker-alpha {
+  width: 100%;
+}
+
+/* Pregled: tekst u odabranoj boji na neutralnoj podlozi */
+.zapisnik-boje-u-listi-crud__picker-preview {
+  width: 100%;
+  height: 2.5rem;
+  border: 1px solid var(--edit_border);
+  border-radius: 4px;
+  background: var(--napomena_bg, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: 700;
+}
+
+.zapisnik-boje-u-listi-crud__picker-hex {
+  margin: 0;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  color: var(--edit_text);
+}
+
+.zapisnik-boje-u-listi-crud__picker-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
