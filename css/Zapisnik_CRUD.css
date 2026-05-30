@@ -583,6 +583,16 @@ body {
 .zapisnik-crud__ovjera-cb-red .kontrola-labela {
   cursor: pointer;
 }
+.zapisnik-crud__ovjera-korisnik-span {
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  color: var(--label_text);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.zapisnik-crud__ovjera-cb-red--samoprikaz .zapisnik-crud__ovjera-korisnik-span {
+  color: var(--c-red-500);
+}
 /*
  * Ovjera: čekbox nije HTML disabled (checked/unchecked ostaje čitljiv kao kod aktivne kontrole),
  * ali cijeli red ne prima klik — stanje mijenja druga forma ili uvjeti u JS-u (npr. inspektor, zaključana desna kolona).
@@ -594,6 +604,7 @@ body {
 }
 .zapisnik-crud__ovjera-cb-red--samoprikaz .kontrola-labela {
   cursor: default;
+  color: var(--c-red-500);
 }
 @media (max-width: 600px) {
   .zapisnik-crud__ovjera-dvije-kolone {
