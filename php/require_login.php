@@ -158,7 +158,8 @@ if (isset($_SESSION['last_activity']) && ($now - (int) $_SESSION['last_activity'
  * uključi šablon u glavnu HTML stranicu da ne treba zaseban PHP.
  */
 $scriptBase = basename($_SERVER['SCRIPT_NAME'] ?? '');
-if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !== 'test.php' && $scriptBase !== '0-Obrada_Slike.php' && $scriptBase !== '0-Poruke.php' && $scriptBase !== '0-Chat.php') {
+/* html_router.php: generički router servira stranice po ?page=X; provjeru dopuštenja obavlja sam router koristeći $_GET['page']. */
+if ($scriptBase !== 'Meni.php' && $scriptBase !== 'index.php' && $scriptBase !== 'test.php' && $scriptBase !== '0-Obrada_Slike.php' && $scriptBase !== '0-Poruke.php' && $scriptBase !== '0-Chat.php' && $scriptBase !== 'html_router.php') {
     $allowed = isset($_SESSION['vnlh_meni_dopustene']) && is_array($_SESSION['vnlh_meni_dopustene'])
         ? $_SESSION['vnlh_meni_dopustene'] : [];
     $wantHtml = preg_replace('/\.php$/i', '.html', $scriptBase);

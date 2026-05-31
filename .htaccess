@@ -68,6 +68,11 @@ Options -Indexes
     # RewriteCond %{REMOTE_ADDR} !(^203\.0\.113\.79$|^198\.51\.100\.42$)
     RewriteRule .* /vnlh/maintenance.html [R=302,L]
 
+    # Generički router: php/X.php → html_router.php?page=X kad X.php ne postoji a html/X.html postoji.
+    # Pokriva nove stranice bez individualnog PHP wrappera; html_router.php provjerava postoji li html/X.html.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^php/([A-Za-z0-9_-]+)\.php$ php/html_router.php?page=$1 [L,QSA,NC]
+
     # Stari bookmarki / linkovi na html/*.php → php/ (PHP je samo u php/; html/ je samo .html)
     RewriteRule ^html/([^/]+\.php)$ php/$1 [L,R=301]
 
