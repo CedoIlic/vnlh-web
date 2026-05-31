@@ -1,0 +1,355 @@
+/* =========================================================
+   Esej_CRUD.css
+   Vanjski panel: min. visina resiza (data-resize-min-px) računa Esej_CRUD.js.
+   Traka: 0-Kontrole.js, data-resize-max-vh="full" = bez stropa.
+   Učitati nakon 0-Common, 0-Kontrole, 0-Kontrole_Tab, Clanovi_Loza_CRUD.
+   ========================================================= */
+
+body {
+  --esej_crud_ostatak_vh: calc(100dvh - 5rem);
+}
+
+.esej-crud__wrap {
+  box-sizing: border-box;
+  min-height: var(--esej_crud_ostatak_vh);
+  display: flex;
+  flex-direction: column;
+}
+
+#esejPanel,
+.esej-crud__wrap {
+  -webkit-user-drag: none;
+}
+
+.naslov-forme {
+  -webkit-user-drag: none;
+}
+
+/* Panel: flex stubac, zauzima ostatak visine ispod naslova. */
+.esej-crud__panel.kontrola-panel {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Zaglavlje (geo-blok + logo). */
+.esej-crud__panel-header.clanovi-loza-crud__tablica-header {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* --- Ikone u zaglavlju: odabir postojećeg + PDF --- */
+.esej-crud__panel-header .clanovi-loza-crud__tablica-header-kontrole > .esej-crud__header-icon-actions-wrap {
+  grid-column: 2;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.esej-crud__header-odabir-esej-btn,
+.esej-crud__header-pdf-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  color: var(--label_text, #1d1d1f);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2, 0 1px 2px rgba(0, 0, 0, 0.06));
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.esej-crud__header-odabir-esej-btn:hover:not(:disabled),
+.esej-crud__header-pdf-btn:hover:not(:disabled) {
+  background: var(--c-gray-100, #eee);
+  box-shadow: var(--kontrole_sjena_slaba_1, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+.esej-crud__header-odabir-esej-btn:active:not(:disabled),
+.esej-crud__header-pdf-btn:active:not(:disabled) {
+  box-shadow: inset 0 2px 4px var(--c-shadow-30, rgba(0, 0, 0, 0.12));
+}
+
+.esej-crud__header-odabir-esej-btn:focus-visible,
+.esej-crud__header-pdf-btn:focus-visible {
+  outline: 2px solid var(--edit_focus_ring, #0d6efd);
+  outline-offset: 2px;
+}
+
+.esej-crud__header-odabir-esej-btn:disabled,
+.esej-crud__header-pdf-btn:disabled {
+  color: var(--label_text_disabled);
+  cursor: not-allowed;
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+
+.esej-crud__header-odabir-esej-icon,
+.esej-crud__header-pdf-icon {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.esej-crud__header-pdf-btn:disabled .esej-crud__header-pdf-icon text {
+  fill: var(--label_text);
+}
+
+/* Tijelo: min-height:0 + overflow da flex lanac smije suziti vanjski panel. */
+.esej-crud__panel .kontrola-panel__body.esej-crud__panel-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Tab: kartice s proporcionalnom širinom, orijentacija L. */
+.esej-crud__tab.kontrola-tab {
+  --tab_kontrola_kartice_sirina_mod: 1;
+  --tab_kontrola_kartice_tekst_orient: left;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.esej-crud__tab .kontrola-tab__traka {
+  flex-shrink: 0;
+}
+
+/* Tijelo taba: skrol kad je panel nizak (resize). */
+.esej-crud__tab .kontrola-tab__tijelo {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Aktivna kartica: inverzija boja (kao u Zapisnik_CRUD). */
+.esej-crud__tab .kontrola-tab__kartica--aktivna:not(:disabled) {
+  background: var(--tab_kontrola_header_text);
+  color: var(--tab_kontrola_body_bg);
+  -webkit-text-fill-color: var(--tab_kontrola_body_bg);
+  border-color: var(--tab_kontrola_header_text);
+}
+
+/* Disabled kartica. */
+.esej-crud__tab .kontrola-tab__kartica:disabled {
+  opacity: 1;
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+  cursor: not-allowed;
+}
+
+.esej-crud__tab .kontrola-tab__kartica--aktivna:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  border-color: var(--edit_border_disabled);
+}
+
+/* Cijeli tab onemogućen (bez odabrane lože). */
+.esej-crud__tab.kontrola-tab.esej-crud__tab--onemogucen {
+  --tab_kontrola_sjena: var(--edit_focus_shadow_disabled);
+  --tab_kontrola_border: var(--edit_border_disabled);
+  --tab_kontrola_bg: var(--edit_bg_disabled);
+  --tab_kontrola_header_bg: var(--edit_bg_disabled);
+  --tab_kontrola_header_text: var(--label_text_disabled);
+  --tab_kontrola_header_border_bottom: 1px solid var(--edit_border_disabled);
+  --tab_kontrola_kartica_bg: var(--edit_bg_disabled);
+  --tab_kontrola_body_bg: var(--edit_bg_disabled);
+  --tab_kontrola_body_text: var(--label_text_disabled);
+}
+
+
+/* Disabled tab: labele i kontrole u tijelu taba dobivaju disabled izgled. */
+.esej-crud__tab.esej-crud__tab--onemogucen .kontrola-tab__tijelo .kontrola-labela {
+  color: var(--label_text_disabled);
+}
+
+/* Aktivan panel: raste u flex stubcu (skrol u tijelu taba). */
+.esej-crud__tab .kontrola-tab__panel:not([hidden]) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.esej-crud__tab .kontrola-tab__panel {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* --- Tab „Opći podaci": dvostupčana mreža --- */
+
+.esej-crud__opci-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+@media (max-width: 600px) {
+  .esej-crud__opci-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.esej-crud__opci-kol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.esej-crud__opci-kol--desno {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.esej-crud__polje-stog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.esej-crud__polje-stog--raste {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.esej-crud__autor-red {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.esej-crud__autor-edit-delete {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.esej-crud__ellipsis-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  color: var(--label_text, inherit);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2, 0 1px 2px rgba(0, 0, 0, 0.06));
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.esej-crud__ellipsis-btn:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--label_text_disabled);
+  border-color: var(--edit_border_disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (hover: hover) {
+  .esej-crud__ellipsis-btn:hover:not(:disabled) {
+    background: var(--c-gray-100, #eee);
+    box-shadow: var(--kontrole_sjena_slaba_1, 0 1px 3px rgba(0, 0, 0, 0.1));
+  }
+}
+
+.esej-crud__cb-red {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.esej-crud__opci-kljucne.kontrola-napomena {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  box-sizing: border-box;
+  resize: none;
+  overflow-y: auto;
+}
+
+/* --- Tab „Esej": Sadržaj (po uzoru na tab Zapisnik u Zapisnik_CRUD) --- */
+
+.esej-crud__esej-tab {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-sizing: border-box;
+}
+
+.esej-crud__esej-blok {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+}
+
+/* Sadržaj eseja: ostatak dostupne visine. */
+.esej-crud__esej-blok--sadrzaj {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Textarea: nema nativnog resizea, klizač; širi se s blokom. */
+.esej-crud__esej-textarea.kontrola-napomena {
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  resize: none;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* --- Podnožje: CRUD tipke --- */
+
+.esej-crud__edit-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.esej-crud__footer-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.esej-crud__footer-right {
+  margin-left: auto;
+}

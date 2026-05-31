@@ -1,0 +1,160 @@
+<!-- =========================================================
+     Esej_CRUD.html
+     Eseji – geo-blok (Država / Regija / Loža), logo lože, ikone (odabir + PDF), tab kontrola s dva taba
+     (Opći podaci | Esej), CRUD podnožje. Skripte: 0-Kontrole.js, 0-Common.js,
+     0-Filteri_Po_Ogranicenjima.js, 0-Poruke_Tekstovi.js, 0-Kontrole_Tab.js, Esej_CRUD.js.
+     URL param: mod_upisa_eseja=0 (novi, zadano) | 1 (izmjena postojećeg).
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <script>window.VNLH_TEKUCI_KORISNIK=__VNLH_TEKUCI_KORISNIK__;</script>
+    <meta charset="UTF-8">
+    <title>Eseji</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole_Tab.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/Clanovi_Loza_CRUD.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/Esej_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Eseji</h2></div>
+<div class="page-container esej-crud__wrap">
+    <div class="kontrola-panel kontrola-panel--traka-desktop kontrola-panel--resize-y esej-crud__panel mb-3" data-resize-max-vh="full" data-resize-min-px="400" id="esejPanel">
+        <!-- Logo + Država / Regija / Loža (kao zaglavlje tablice u Clanovi_Loza_CRUD; CSS: .clanovi-loza-crud__tablica-header-*). -->
+        <div class="kontrola-panel__header clanovi-loza-crud__tablica-header esej-crud__panel-header" role="group" aria-label="Zaglavlje eseja">
+            <div class="clanovi-loza-crud__tablica-header-logo-wrap" aria-hidden="true">
+                <div class="clanovi-loza-crud__tablica-header-logo-frame">
+                    <img id="clanovi_loza_tablica_logo" class="clanovi-loza-crud__tablica-header-logo-img" alt="" decoding="async" hidden src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                </div>
+            </div>
+            <div class="clanovi-loza-crud__tablica-header-kontrole">
+                <label class="kontrola-labela mb-0" for="select_drzava">Država</label>
+                <div class="kontrola-select clanovi-loza-crud__header-select-drzava">
+                    <select id="select_drzava" aria-label="Odaberi državu">
+                        <option value="">— Odaberi državu —</option>
+                    </select>
+                </div>
+                <label class="kontrola-labela mb-0" for="select_regija">Regija</label>
+                <div class="kontrola-select">
+                    <select id="select_regija" aria-label="Odaberi regiju" disabled>
+                        <option value="">— Odaberi regiju —</option>
+                    </select>
+                </div>
+                <label class="kontrola-labela mb-0" for="select_loza">Loža</label>
+                <div class="kontrola-select">
+                    <select id="select_loza" aria-label="Odaberi ložu" disabled>
+                        <option value="">— Odaberi ložu —</option>
+                    </select>
+                </div>
+                <!-- Ikone: odabir postojećeg eseja + PDF; red ispod selekta Loža, poravnanje udesno. -->
+                <div class="esej-crud__header-icon-actions-wrap">
+                    <button type="button" id="esej_btn_odabir_postojeceg" class="esej-crud__header-odabir-esej-btn" disabled aria-label="Odaberi postojeći esej" title="Postojeći esej">
+                        <svg class="esej-crud__header-odabir-esej-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <line x1="10" y1="6" x2="20" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="10" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <line x1="10" y1="18" x2="20" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <polygon points="3 9 8 12 3 15" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button type="button" id="esej_btn_pdf" class="esej-crud__header-pdf-btn" disabled aria-label="Generiraj PDF eseja" title="Generiraj PDF">
+                        <svg class="esej-crud__header-pdf-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                                  fill="none" stroke="currentColor" stroke-width="1.5"
+                                  stroke-linecap="round" stroke-linejoin="round"/>
+                            <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor"
+                                      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <rect x="5" y="14" width="14" height="6" rx="1" fill="currentColor"/>
+                            <text x="12" y="18.4" font-family="Arial, sans-serif" font-size="3.8"
+                                  font-weight="bold" fill="white" text-anchor="middle">PDF</text>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__body esej-crud__panel-body">
+            <div class="kontrola-tab kontrola-tab--kartice-sirina-proporcija esej-crud__tab" id="esejKontrolaTab" role="tablist" aria-label="Kartice eseja">
+                <div class="kontrola-tab__traka" role="presentation">
+                    <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="esejKontrolaTabKart0" aria-selected="true" aria-controls="esejKontrolaTabPanel0" data-tab-index="0" disabled>Opći podaci</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="esejKontrolaTabKart1" aria-selected="false" aria-controls="esejKontrolaTabPanel1" data-tab-index="1" tabindex="-1" disabled>Esej</button>
+                </div>
+                <div class="kontrola-tab__tijelo" role="presentation">
+                    <!-- Tab 0: Opći podaci — lijeva kolona (Autor, Stupanj, Javno dostupan, Upisao) + desna (Ključne riječi). -->
+                    <div class="kontrola-tab__panel esej-crud__tab-panel--opci-podaci" role="tabpanel" id="esejKontrolaTabPanel0" aria-labelledby="esejKontrolaTabKart0">
+                        <div class="esej-crud__opci-grid">
+                            <!-- Lijeva kolona -->
+                            <div class="esej-crud__opci-kol esej-crud__opci-kol--lijevo">
+                                <div class="esej-crud__polje-stog">
+                                    <label class="kontrola-labela mb-0" for="esej_autor">Autor eseja</label>
+                                    <div class="esej-crud__autor-red">
+                                        <div class="kontrola-edit-delete esej-crud__autor-edit-delete">
+                                            <div id="esej_autor" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Autor eseja (samo odabir, bez tipkanja)"></div>
+                                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir autora" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                        </div>
+                                        <button type="button" id="esej_btn_autor_ellipsis" class="esej-crud__ellipsis-btn esej-crud__opci-kontrola" aria-label="Odabir autora" title="Odabir autora" disabled>
+                                            <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="esej-crud__polje-stog">
+                                    <label class="kontrola-labela mb-0" for="esej_select_stupanj">Esej je namjenjen stupnju</label>
+                                    <div class="kontrola-select">
+                                        <select id="esej_select_stupanj" class="esej-crud__opci-kontrola" aria-label="Stupanj eseja" disabled>
+                                            <option value="">— Odaberi stupanj —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="esej-crud__cb-red">
+                                    <input type="checkbox" id="esej_javno_dostupan" class="kontrola-checkbox esej-crud__opci-kontrola" value="1" disabled>
+                                    <label class="kontrola-labela mb-0" for="esej_javno_dostupan">Esej je javno dostupan</label>
+                                </div>
+                                <div class="esej-crud__polje-stog">
+                                    <label class="kontrola-labela mb-0" for="esej_upisao">Esej je upisao</label>
+                                    <input id="esej_upisao" type="text" class="kontrola-edit esej-crud__opci-kontrola" readonly aria-label="Esej je upisao">
+                                </div>
+                            </div>
+                            <!-- Desna kolona: Ključne riječi (premješteno s taba Esej) -->
+                            <div class="esej-crud__opci-kol esej-crud__opci-kol--desno">
+                                <div class="esej-crud__polje-stog esej-crud__polje-stog--raste">
+                                    <label class="kontrola-labela mb-0" for="esej_kljucne_rijeci">Ključne riječi</label>
+                                    <textarea id="esej_kljucne_rijeci" class="kontrola-napomena esej-crud__opci-kljucne esej-crud__opci-kontrola" rows="4" spellcheck="true" aria-label="Ključne riječi eseja" disabled></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Tab 1: Esej — samo Sadržaj eseja. -->
+                    <div class="kontrola-tab__panel esej-crud__tab-panel--esej" role="tabpanel" id="esejKontrolaTabPanel1" aria-labelledby="esejKontrolaTabKart1" hidden>
+                        <div class="esej-crud__esej-tab" role="group" aria-label="Sadržaj eseja">
+                            <div class="esej-crud__esej-blok esej-crud__esej-blok--sadrzaj">
+                                <label class="kontrola-labela mb-0" for="esej_sadrzaj">Sadržaj eseja</label>
+                                <textarea id="esej_sadrzaj" class="kontrola-napomena esej-crud__esej-textarea esej-crud__esej-kontrola" rows="4" spellcheck="true" aria-label="Sadržaj eseja" disabled></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer esej-crud__edit-footer">
+            <div class="esej-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="esej-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Filteri_Po_Ogranicenjima.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole_Tab.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/Esej_CRUD.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>

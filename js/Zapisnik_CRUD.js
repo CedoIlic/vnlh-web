@@ -1496,9 +1496,7 @@
    */
   function zapisnikPrisustvoPrimijeliRasporedLijevoIStanje(_legacyImaLozu, rasporediVisinu) {
     var imaSelLozu = !!zapisnikIdOdabraneLozISelecta();
-    var imaBarLozUces =
-      Array.isArray(zapisnikLozeUcesniceKolekcijaId) && zapisnikLozeUcesniceKolekcijaId.length > 0;
-    var kontekstPrisustvoOmogucen = imaSelLozu && imaBarLozUces;
+    var kontekstPrisustvoOmogucen = imaSelLozu;
     var lj = document.getElementById('zapisnik_prisustvo_lijevi_stupac');
     var selTipEl = document.getElementById('zapisnik_prisustvo_tip_unosa');
     var tipVal = selTipEl ? trimZ(selTipEl.value) : '';
