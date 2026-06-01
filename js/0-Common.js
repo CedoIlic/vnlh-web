@@ -523,16 +523,24 @@
           el.appendChild(wrapper);
         }
 
-        var a = document.createElement('a');
+        var a = document.createElement('button');
+        a.type = 'button';
         a.className = 'naslov-forme__odjava';
-        a.href = vnlhLogoutUrl();
         a.setAttribute('aria-label', 'Odjava');
         a.title = 'Odjava';
-        /* Lucide „log-out” (maska u 0-Common.css) – usklađeno s chat/mail u naslovu forme. */
-        var span = document.createElement('span');
-        span.className = 'naslov-forme__logout-icon';
-        span.setAttribute('aria-hidden', 'true');
-        a.appendChild(span);
+        var ns = 'http://www.w3.org/2000/svg';
+        var svgEl = document.createElementNS(ns, 'svg');
+        svgEl.setAttribute('class', 'naslov-forme__logout-icon');
+        svgEl.setAttribute('width', '22'); svgEl.setAttribute('height', '22');
+        svgEl.setAttribute('viewBox', '0 0 24 24'); svgEl.setAttribute('fill', 'none');
+        svgEl.setAttribute('stroke', 'currentColor'); svgEl.setAttribute('stroke-width', '2');
+        svgEl.setAttribute('stroke-linecap', 'round'); svgEl.setAttribute('stroke-linejoin', 'round');
+        svgEl.setAttribute('aria-hidden', 'true');
+        var p1 = document.createElementNS(ns, 'path'); p1.setAttribute('d', 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'); svgEl.appendChild(p1);
+        var p2 = document.createElementNS(ns, 'path'); p2.setAttribute('d', 'M16 17l5-5-5-5'); svgEl.appendChild(p2);
+        var p3 = document.createElementNS(ns, 'path'); p3.setAttribute('d', 'M21 12H9'); svgEl.appendChild(p3);
+        a.appendChild(svgEl);
+        a.addEventListener('click', function () { window.location.href = vnlhLogoutUrl(); });
         wrapper.appendChild(a);
       }
     } catch (e) {}

@@ -18,6 +18,7 @@
   padding: var(--naslov_forme_padding_y) var(--naslov_forme_padding_x);
   text-align: center;
   box-shadow: var(--naslov_forme_box_shadow);
+  color-scheme: only light;
 }
 
 /* Badge verzije (.vnlh-verzija-badge) premješten u 0-Common.css — jedino mjesto za sve forme */

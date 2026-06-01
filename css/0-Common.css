@@ -860,11 +860,13 @@ body {
   border-radius: 8px;
   color: var(--naslov_forme_text);
   opacity: 0.92;
-  text-decoration: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   transition: opacity 0.15s ease, background-color 0.15s ease;
   z-index: 2;
   box-sizing: border-box;
-  filter: drop-shadow(3px 3px 6px var(--c-text-shadow-75, rgba(0, 0, 0, 0.75)));
 }
 .naslov-forme__odjava:hover {
   opacity: 1;
@@ -875,20 +877,11 @@ body {
   outline-offset: 2px;
 }
 
-/* Lucide „log-out” (https://lucide.dev/icons/log-out) – ista maska/stroke 2 kao mail u 0-Poruke.css; samo u .naslov-forme__odjava (0-Common.js). */
+/* Lucide „log-out” – inline SVG (stroke=”currentColor”), isti pristup kao chat ikona. */
 .naslov-forme__logout-icon {
-  display: inline-block;
-  width: 22px;
-  height: 22px;
-  background-color: currentColor;
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/%3E%3Cpolyline points='16 17 21 12 16 7'/%3E%3Cline x1='21' x2='9' y1='12' y2='12'/%3E%3C/svg%3E");
-  mask-size: 22px 22px;
-  mask-position: center;
-  mask-repeat: no-repeat;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/%3E%3Cpolyline points='16 17 21 12 16 7'/%3E%3Cline x1='21' x2='9' y1='12' y2='12'/%3E%3C/svg%3E");
-  -webkit-mask-size: 22px 22px;
-  -webkit-mask-position: center;
-  -webkit-mask-repeat: no-repeat;
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(3px 3px 6px var(--c-text-shadow-75, rgba(0, 0, 0, 0.75)));
 }
 
 /* =========================================================
