@@ -21,18 +21,19 @@
 }
 
 .zapisnik-boje-u-listi-crud__edit-row__boja-wrap {
-  flex: 1 1 200px;
-  min-width: 200px;
+  flex: 1 1 280px;
+  min-width: 280px;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   align-items: flex-end;
 }
 
 @media (min-width: calc(var(--page_breakpoint_narrow, 640px) + 1px)) {
   .zapisnik-boje-u-listi-crud__edit-row__boja-wrap {
-    flex: 0 0 auto;
-    width: calc(150px + 0.5rem + 2.25rem);
+    flex: 1 1 auto;
     min-width: 0;
+    flex-wrap: nowrap;
   }
 }
 
@@ -58,19 +59,23 @@
 }
 
 .zapisnik-boje-u-listi-crud__edit-row__boja-wrap .zapisnik-boje-u-listi-crud__cell--boja {
-  flex: 1;
+  flex: 1 1 100px;
   min-width: 0;
 }
 
 .zapisnik-boje-u-listi-crud__boja-display {
-  width: 100%;
-  box-sizing: border-box;
-  font-family: var(--font_family);
-  font-size: var(--font_size);
-  cursor: default;
-  background-color: var(--napomena_bg, #fff);
   text-align: center;
-  font-weight: 700;
+}
+
+/* Edit-delete wrapper za boja polja: zauzima punu širinu ćelije. */
+.zapisnik-boje-u-listi-crud__boja-edit-delete {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Boja podloge: prikazuje se kao backgroundColor retka. */
+.zapisnik-boje-u-listi-crud__boja-display--bg {
+  color: var(--edit_text);
 }
 
 .zapisnik-boje-u-listi-crud__cell--icon {

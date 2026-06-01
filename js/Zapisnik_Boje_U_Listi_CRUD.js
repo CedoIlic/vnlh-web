@@ -77,17 +77,29 @@
     return 'rgba(0,0,0,1)';
   }
 
-  /** Prikazuje odabranu boju kao boju teksta (fg) u polju prikaza. */
+  /** Prikazuje odabranu boju kao FG ili BG ovisno o CSS klasi prikaz elementa. */
   function applyBojaToDisplay(displayEl, storageVal) {
     if (!displayEl) return;
+    var isBg = displayEl.classList && displayEl.classList.contains('zapisnik-boje-u-listi-crud__boja-display--bg');
     if (!storageVal || trim(storageVal) === '') {
       displayEl.value = '';
-      displayEl.style.color = '';
+      if (isBg) displayEl.style.backgroundColor = '';
+      else displayEl.style.color = '';
       return;
     }
     var parsed = bojaFromStorage(storageVal);
     displayEl.value = storageVal;
-    displayEl.style.color = hexAlphaToRgba(parsed.hex, parsed.alpha);
+    if (isBg) displayEl.style.backgroundColor = hexAlphaToRgba(parsed.hex, parsed.alpha);
+    else displayEl.style.color = hexAlphaToRgba(parsed.hex, parsed.alpha);
+    displayEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function normalizeBojaInput(raw) {
+    var s = (raw || '').replace(/^\s+|\s+$/g, '').replace(/^#/, '').toUpperCase();
+    if (/^[0-9A-F]{8}$/.test(s)) return '#' + s;
+    if (/^[0-9A-F]{6}$/.test(s)) return '#' + s + 'FF';
+    if (/^[0-9A-F]{3}$/.test(s)) return '#' + s[0]+s[0]+s[1]+s[1]+s[2]+s[2] + 'FF';
+    return null;
   }
 
   function clearControlsFromSelection() {
@@ -95,10 +107,12 @@
     var nazivEl = document.getElementById('naziv_edit');
     var opisEl  = document.getElementById('opis_edit');
     var bojaDisplay = document.getElementById('boja_display');
+    var bojaPodlogeDisplay = document.getElementById('boja_bg_display');
     if (idEl) idEl.value = '';
     if (nazivEl) { nazivEl.value = ''; nazivEl.dispatchEvent(new Event('input', { bubbles: true })); }
     if (opisEl) opisEl.value = '';
     if (bojaDisplay) applyBojaToDisplay(bojaDisplay, '');
+    if (bojaPodlogeDisplay) applyBojaToDisplay(bojaPodlogeDisplay, '');
     resizeOpisToContent();
   }
 
@@ -133,10 +147,12 @@
         var nazivEl = document.getElementById('naziv_edit');
         var opisEl  = document.getElementById('opis_edit');
         var bojaDisplay = document.getElementById('boja_display');
+        var bojaPodlogeDisplay2 = document.getElementById('boja_bg_display');
         if (idEl) idEl.value = String(row[0] != null ? row[0] : '');
         if (nazivEl) { nazivEl.value = row[1] != null ? String(row[1]) : ''; nazivEl.dispatchEvent(new Event('input', { bubbles: true })); }
         if (opisEl) opisEl.value = (raw && raw.opis != null) ? String(raw.opis) : '';
         if (bojaDisplay) applyBojaToDisplay(bojaDisplay, (raw && raw.boja != null) ? String(raw.boja) : '');
+        if (bojaPodlogeDisplay2) applyBojaToDisplay(bojaPodlogeDisplay2, (raw && raw.boja_bg != null) ? String(raw.boja_bg) : '');
         break;
       }
       requestAnimationFrame(resizeOpisToContent);
@@ -188,6 +204,10 @@
       if (bojaPickerBtn) bojaPickerBtn.disabled = !(nazivVal !== '');
       var labelBoja = document.querySelector('.kontrola-labela[for="boja_display"]');
       if (labelBoja) labelBoja.classList.toggle('kontrola-labela--disabled', !(nazivVal !== ''));
+      var bojaPodlogePickerBtn = document.getElementById('boja_bg_picker_btn');
+      if (bojaPodlogePickerBtn) bojaPodlogePickerBtn.disabled = !(nazivVal !== '');
+      var labelBojaPodloge = document.querySelector('.kontrola-labela[for="boja_bg_display"]');
+      if (labelBojaPodloge) labelBojaPodloge.classList.toggle('kontrola-labela--disabled', !(nazivVal !== ''));
       if (typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
     }
 
@@ -220,8 +240,7 @@
   })();
 
   (function () {
-    var bojaDisplay  = document.getElementById('boja_display');
-    var pickerBtn    = document.getElementById('boja_picker_btn');
+    var _pickerTarget = null;
     var modal        = document.getElementById('boja_picker_modal');
     var pickerColor  = document.getElementById('boja_picker_color');
     var pickerAlpha  = document.getElementById('boja_picker_alpha');
@@ -230,9 +249,11 @@
     var pickerCancel = document.getElementById('boja_picker_cancel');
     var pickerPreview = document.getElementById('boja_picker_preview');
 
-    function openPicker() {
-      var current = (bojaDisplay && bojaDisplay.value) ? bojaDisplay.value.trim() : '';
-      var parsed = bojaFromStorage(current);
+    function openPicker(targetDisplay) {
+      _pickerTarget = targetDisplay;
+      var val = targetDisplay && targetDisplay.value ? targetDisplay.value.trim() : '';
+      var normalized = normalizeBojaInput(val);
+      var parsed = bojaFromStorage(normalized || val || '');
       if (pickerColor) pickerColor.value = parsed.hex;
       if (pickerAlpha) pickerAlpha.value = String(parsed.alpha);
       updatePickerHex(); updatePickerPreview();
@@ -242,6 +263,7 @@
 
     function closePicker() {
       if (modal) { modal.hidden = true; modal.setAttribute('hidden', ''); }
+      _pickerTarget = null;
     }
 
     function updatePickerHex() {
@@ -256,22 +278,71 @@
       var hex = pickerColor ? pickerColor.value : '#000000';
       var a   = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
       if (isNaN(a)) a = 255;
-      pickerPreview.style.color = hexAlphaToRgba(hex, a);
+      var rgba = hexAlphaToRgba(hex, a);
+      var isBg = _pickerTarget && _pickerTarget.classList && _pickerTarget.classList.contains('zapisnik-boje-u-listi-crud__boja-display--bg');
+      if (isBg) { pickerPreview.style.backgroundColor = rgba; pickerPreview.style.color = ''; }
+      else       { pickerPreview.style.color = rgba; pickerPreview.style.backgroundColor = ''; }
     }
 
     function applyFromPicker() {
-      var hex = pickerColor ? pickerColor.value : '#000000';
-      var a   = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
-      if (isNaN(a)) a = 255;
-      if (bojaDisplay) applyBojaToDisplay(bojaDisplay, bojaToStorage(hex, a));
+      if (_pickerTarget) {
+        var hex = pickerColor ? pickerColor.value : '#000000';
+        var a   = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
+        if (isNaN(a)) a = 255;
+        applyBojaToDisplay(_pickerTarget, bojaToStorage(hex, a));
+      }
       closePicker();
     }
 
-    if (pickerBtn) pickerBtn.addEventListener('click', openPicker);
+    function attachBojaInputHandlers(displayEl) {
+      if (!displayEl) return;
+      displayEl.addEventListener('input', function () {
+        var normalized = normalizeBojaInput(this.value);
+        if (normalized) applyBojaToDisplay(displayEl, normalized);
+        else {
+          var isBg2 = displayEl.classList && displayEl.classList.contains('zapisnik-boje-u-listi-crud__boja-display--bg');
+          if (isBg2) displayEl.style.backgroundColor = ''; else displayEl.style.color = '';
+        }
+      });
+      displayEl.addEventListener('blur', function () {
+        var normalized = normalizeBojaInput(this.value);
+        if (normalized) { this.value = normalized; applyBojaToDisplay(displayEl, normalized); }
+      });
+    }
+
+    var bojaDisplay       = document.getElementById('boja_display');
+    var bojaPodlogeDisp3  = document.getElementById('boja_bg_display');
+    var pickerBtn         = document.getElementById('boja_picker_btn');
+    var pickerBtnPodloge  = document.getElementById('boja_bg_picker_btn');
+
+    if (pickerBtn)        pickerBtn.addEventListener('click', function () { openPicker(bojaDisplay); });
+    if (pickerBtnPodloge) pickerBtnPodloge.addEventListener('click', function () { openPicker(bojaPodlogeDisp3); });
+    attachBojaInputHandlers(bojaDisplay);
+    attachBojaInputHandlers(bojaPodlogeDisp3);
+
+    /* Inicijaliziraj edit-delete (X gumb) za oba polja boje. */
+    function initBojaEditDelete(displayEl) {
+      if (!displayEl) return;
+      var wrap = displayEl.closest('.kontrola-edit-delete');
+      if (!wrap) return;
+      if (typeof KontroleInitEditDelete === 'function') KontroleInitEditDelete(wrap);
+      wrap.addEventListener('kontrole-edit-delete-clear', function () {
+        applyBojaToDisplay(displayEl, '');
+        displayEl.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    }
+    initBojaEditDelete(bojaDisplay);
+    initBojaEditDelete(bojaPodlogeDisp3);
+
     if (pickerColor) pickerColor.addEventListener('input', function () { updatePickerHex(); updatePickerPreview(); });
     if (pickerAlpha) pickerAlpha.addEventListener('input', function () { updatePickerHex(); updatePickerPreview(); });
     if (pickerOk)     pickerOk.addEventListener('click', applyFromPicker);
     if (pickerCancel) pickerCancel.addEventListener('click', closePicker);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal && !modal.hidden) closePicker();
+    });
+    var backdrop = modal ? modal.querySelector('.zapisnik-boje-u-listi-crud__picker-backdrop') : null;
+    if (backdrop) backdrop.addEventListener('click', closePicker);
   })();
 
   (function () {
@@ -289,12 +360,14 @@
       var nazivVal = nazivEl ? trim(nazivEl.value) : '';
       var opisVal  = opisEl ? trim(opisEl.value) : '';
       var bojaVal  = bojaDisplay ? trim(bojaDisplay.value) : '';
+      var bojaPodlogeDisp = document.getElementById('boja_bg_display');
+      var bojaPodlogeVal  = bojaPodlogeDisp ? trim(bojaPodlogeDisp.value) : '';
       if (nazivVal === '') return;
       var jeIzmjena = this.classList.contains('kontrola-btn--crud-izmjeni');
       if (jeIzmjena) {
         var id = getSelectedRowId();
         if (id == null) return;
-        bojeUpdate(id, nazivVal, opisVal, bojaVal, function (res) {
+        bojeUpdate(id, nazivVal, opisVal, bojaVal, bojaPodlogeVal, function (res) {
           if (res === 'OK') {
             if (typeof window.showPorukaModal === 'function') window.showPorukaModal('004', [], function () {
               if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
@@ -314,7 +387,7 @@
         }
         var data = tablicaApi ? tablicaApi.getData() : [];
         for (var i = 0; i < (data || []).length; i++) { if (data[i][0] == n) { if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['118'] && typeof window.showPorukaModal === 'function') window.showPorukaModal('118', []); return; } }
-        bojeAdd(n, nazivVal, opisVal, bojaVal, function (res) {
+        bojeAdd(n, nazivVal, opisVal, bojaVal, bojaPodlogeVal, function (res) {
           if (res === 'OK') {
             osvjeziTablicu();
             if (typeof window.showPorukaModal === 'function') window.showPorukaModal('001', [], function () {
@@ -397,7 +470,8 @@
             var naziv = r.naziv != null ? String(r.naziv) : '';
             var opis  = r.opis  != null ? String(r.opis)  : null;
             var boja  = r.boja  != null ? String(r.boja)  : '';
-            bojeRawData.push({ id: id, naziv: naziv, opis: opis, boja: boja });
+            var boja_bg = r.boja_bg != null ? String(r.boja_bg) : null;
+            bojeRawData.push({ id: id, naziv: naziv, opis: opis, boja: boja, boja_bg: boja_bg });
             rows.push([id, naziv, boja]);
           }
         }
@@ -420,7 +494,7 @@
     primijeniBojaNaTablicu(rows);
   }
 
-  /** Boja se primjenjuje kao FG (color) na sve ćelije retka. */
+  /** Primjenjuje boja (fg) i boja_bg (bg) na sve ćelije retka tablice. */
   function primijeniBojaNaTablicu(rows) {
     try {
       var container = document.getElementById('tablicaContainer');
@@ -429,24 +503,26 @@
       if (!tbody || !Array.isArray(rows)) return;
       var trs = tbody.querySelectorAll('tr');
       for (var i = 0; i < trs.length && i < rows.length; i++) {
-        var bojaVal = rows[i][BOJA_COL_INDEX];
-        var rgba = (bojaVal != null && trim(String(bojaVal)) !== '')
-          ? hexAlphaToRgba(bojaFromStorage(String(bojaVal)).hex, bojaFromStorage(String(bojaVal)).alpha)
-          : '';
+        var raw = bojeRawData[i] || {};
+        var fgVal = raw.boja  ? trim(String(raw.boja))    : '';
+        var bgVal = raw.boja_bg ? trim(String(raw.boja_bg)) : '';
+        var rgbaFg = fgVal ? hexAlphaToRgba(bojaFromStorage(fgVal).hex, bojaFromStorage(fgVal).alpha) : '';
+        var rgbaBg = bgVal ? hexAlphaToRgba(bojaFromStorage(bgVal).hex, bojaFromStorage(bgVal).alpha) : '';
         var cells = trs[i].cells;
         for (var c = 0; c < cells.length; c++) {
-          cells[c].style.color = rgba;
+          cells[c].style.color           = rgbaFg;
+          cells[c].style.backgroundColor = rgbaBg;
         }
       }
     } catch (e) {}
   }
 
-  function bojeAdd(id, naziv, opis, boja, callback) {
-    postFormData(API_BASE + 'Zapisnik_Boje_U_Listi_CRUD_upis.php', { id: String(id), naziv: naziv, opis: opis, boja: boja }, callback);
+  function bojeAdd(id, naziv, opis, boja, boja_bg, callback) {
+    postFormData(API_BASE + 'Zapisnik_Boje_U_Listi_CRUD_upis.php', { id: String(id), naziv: naziv, opis: opis, boja: boja, boja_bg: boja_bg }, callback);
   }
 
-  function bojeUpdate(id, naziv, opis, boja, callback) {
-    postFormData(API_BASE + 'Zapisnik_Boje_U_Listi_CRUD_izmjena.php', { id: String(id), naziv: naziv, opis: opis, boja: boja }, callback);
+  function bojeUpdate(id, naziv, opis, boja, boja_bg, callback) {
+    postFormData(API_BASE + 'Zapisnik_Boje_U_Listi_CRUD_izmjena.php', { id: String(id), naziv: naziv, opis: opis, boja: boja, boja_bg: boja_bg }, callback);
   }
 
   function bojeDelete(id, callback) {

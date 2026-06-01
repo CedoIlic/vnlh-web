@@ -1253,84 +1253,25 @@
 
   function puniSelectStupanjRadovaZapisnikOdmah() {
     var sel = document.getElementById('zapisnik_select_stupanj_radova');
+    var idLozaZaZahtjev = zapisnikIdOdabraneLozISelecta();
     if (!sel) return;
-
-    function resetSamoPrazanSelect() {
+    if (!idLozaZaZahtjev) {
       while (sel.firstChild) sel.removeChild(sel.firstChild);
       var opt0 = document.createElement('option');
       opt0.value = '';
       opt0.textContent = '— Odaberi stupanj —';
       sel.appendChild(opt0);
       if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('zapisnik_select_stupanj_radova');
-    }
-
-    var idLozaZaZahtjev = zapisnikIdOdabraneLozISelecta();
-    if (!idLozaZaZahtjev) {
-      resetSamoPrazanSelect();
       zapisnikScheduleMinVisinuResiza();
       return;
     }
-
-    var stupUrl = zapisnikStupnjeviUrlZaIdLozu(idLozaZaZahtjev);
-    if (!stupUrl) {
-      resetSamoPrazanSelect();
-      zapisnikScheduleMinVisinuResiza();
-      return;
-    }
-
-    var xhrS = new XMLHttpRequest();
-    xhrS.open('GET', stupUrl, true);
-    xhrS.onreadystatechange = function () {
-      if (xhrS.readyState !== 4) return;
-      if (zapisnikIdOdabraneLozISelecta() !== idLozaZaZahtjev) {
-        return;
-      }
-      if (xhrS.status < 200 || xhrS.status >= 300) {
-        return;
-      }
-      var textS = (xhrS.responseText || '').replace(/^\uFEFF/, '').trim();
-      if (textS === '105' || textS.indexOf('200,') === 0) {
-        resetSamoPrazanSelect();
-        zapisnikScheduleMinVisinuResiza();
-        return;
-      }
-      var arrSt = [];
-      if (textS !== '') {
-        if (textS.charAt(0) === '[') {
-          try {
-            arrSt = JSON.parse(textS);
-          } catch (eS) {}
-        } else {
-          try {
-            var parsed = JSON.parse(textS);
-            if (Array.isArray(parsed)) {
-              arrSt = parsed;
-            }
-          } catch (e2) {}
-        }
-      }
-      if (!Array.isArray(arrSt)) {
-        arrSt = [];
-      }
-      var niz = arrSt && arrSt.length ? arrSt : [];
-      while (sel.firstChild) sel.removeChild(sel.firstChild);
-      var opt0b = document.createElement('option');
-      opt0b.value = '';
-      opt0b.textContent = '— Odaberi stupanj —';
-      sel.appendChild(opt0b);
-      var j;
-      for (j = 0; j < niz.length; j++) {
-        var o = niz[j];
-        var opt = document.createElement('option');
-        opt.value = o.id != null ? String(o.id) : '';
-        opt.textContent = (o.stupanj != null ? String(o.stupanj) + '\u00B0, ' : '') + (o.naziv != null ? o.naziv : '');
-        if (o.stupanj != null) opt.dataset.stupanj = String(o.stupanj);
-        sel.appendChild(opt);
-      }
-      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('zapisnik_select_stupanj_radova');
-      zapisnikScheduleMinVisinuResiza();
-    };
-    xhrS.send();
+    if (typeof vnlhPuniSelectStupanjNadleznosti !== 'function') return;
+    vnlhPuniSelectStupanjNadleznosti(sel, idLozaZaZahtjev, {
+      getApiUrl:     getApiUrl,
+      kontrolaId:    'zapisnik_select_stupanj_radova',
+      getRaceIdLoza: zapisnikIdOdabraneLozISelecta,
+      onComplete:    function () { zapisnikScheduleMinVisinuResiza(); }
+    });
   }
 
   /**

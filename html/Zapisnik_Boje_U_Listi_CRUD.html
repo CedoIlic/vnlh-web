@@ -2,7 +2,7 @@
 <html lang="hr">
 <head>
     <meta charset="UTF-8">
-    <title>Boja naslova eseja i zapisnika u listi</title>
+    <title>Boje eseji, zapisnici, lista</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
     <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="../css/Zapisnik_Boje_U_Listi_CRUD.css?v=__VNLH_ASSET_V__">
 </head>
 <body>
-<div class="naslov-forme"><h2>Boja naslova eseja i zapisnika u listi</h2></div>
+<div class="naslov-forme"><h2>Boje eseji, zapisnici, lista</h2></div>
 <div class="page-container">
     <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
         <div class="kontrola-panel__body">
@@ -35,10 +35,27 @@
                 <div class="zapisnik-boje-u-listi-crud__edit-row__boja-wrap">
                     <div class="zapisnik-boje-u-listi-crud__cell zapisnik-boje-u-listi-crud__cell--boja">
                         <label class="kontrola-labela mb-0" for="boja_display">Boja teksta</label>
-                        <input id="boja_display" type="text" class="kontrola-edit zapisnik-boje-u-listi-crud__boja-display" readonly aria-label="Odabrana boja teksta">
+                        <div class="kontrola-edit-delete zapisnik-boje-u-listi-crud__boja-edit-delete">
+                            <input id="boja_display" type="text" class="kontrola-edit-delete__input zapisnik-boje-u-listi-crud__boja-display" placeholder="#RRGGBBAA" maxlength="9" spellcheck="false" aria-label="Boja teksta (#RRGGBBAA)">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši boju teksta"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                        </div>
                     </div>
                     <div class="zapisnik-boje-u-listi-crud__cell zapisnik-boje-u-listi-crud__cell--icon">
-                        <button type="button" id="boja_picker_btn" class="zapisnik-boje-u-listi-crud__boja-icon-btn" aria-label="Odaberi boju">
+                        <button type="button" id="boja_picker_btn" class="zapisnik-boje-u-listi-crud__boja-icon-btn" aria-label="Odaberi boju teksta">
+                            <svg class="zapisnik-boje-u-listi-crud__boja-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.38 3.39a15.995 15.995 0 0 0 4.769-4.769 3.39 3.39 0 0 0-3.39-3.39 15.995 15.995 0 0 0-4.77 4.77 3.39 3.39 0 0 0 3.39 3.39z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="zapisnik-boje-u-listi-crud__cell zapisnik-boje-u-listi-crud__cell--boja">
+                        <label class="kontrola-labela mb-0" for="boja_bg_display">Boja podloge</label>
+                        <div class="kontrola-edit-delete zapisnik-boje-u-listi-crud__boja-edit-delete">
+                            <input id="boja_bg_display" type="text" class="kontrola-edit-delete__input zapisnik-boje-u-listi-crud__boja-display zapisnik-boje-u-listi-crud__boja-display--bg" placeholder="#RRGGBBAA" maxlength="9" spellcheck="false" aria-label="Boja podloge (#RRGGBBAA)">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši boju podloge"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                        </div>
+                    </div>
+                    <div class="zapisnik-boje-u-listi-crud__cell zapisnik-boje-u-listi-crud__cell--icon">
+                        <button type="button" id="boja_bg_picker_btn" class="zapisnik-boje-u-listi-crud__boja-icon-btn" aria-label="Odaberi boju podloge">
                             <svg class="zapisnik-boje-u-listi-crud__boja-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.38 3.39a15.995 15.995 0 0 0 4.769-4.769 3.39 3.39 0 0 0-3.39-3.39 15.995 15.995 0 0 0-4.77 4.77 3.39 3.39 0 0 0 3.39 3.39z"/>
                             </svg>

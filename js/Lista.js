@@ -68,6 +68,19 @@
   var _listaThumbBatchLoading = false;
   var _listaThumbBatchGen = 0;
   var _listaNavLockUntil = 0;
+  var _listaKandidatBojaFg = '';
+  var _listaKandidatBojaBg = '';
+
+  function listaBojaToStyle(c) {
+    var s = String(c || '').trim().replace(/^#/, '');
+    if (s.length === 8) {
+      var r = parseInt(s.slice(0,2),16), g = parseInt(s.slice(2,4),16),
+          b = parseInt(s.slice(4,6),16), a = parseInt(s.slice(6,8),16) / 255;
+      if (!isNaN(r+g+b+a)) return 'rgba('+r+','+g+','+b+','+a.toFixed(3)+')';
+    }
+    if (s.length === 6) return '#'+s;
+    return '';
+  }
 
   function listaTrimApiText(s) {
     return s != null ? String(s).replace(/^\s+|\s+$/g, '') : '';
@@ -996,7 +1009,10 @@
         var td = document.createElement('td');
         if ((col.mobitel_prikaz || 1) === 0) td.classList.add('lista-tablica__col--mob-hide');
         td.style.textAlign = col.align === 'r' ? 'right' : (col.align === 'c' ? 'center' : 'left');
-        if (row.kandidat) td.style.color = 'var(--c-gray-300)';
+        if (row.kandidat) {
+          td.style.color           = _listaKandidatBojaFg || 'var(--c-gray-300)';
+          td.style.backgroundColor = _listaKandidatBojaBg || 'var(--c-green-500)';
+        }
         if (col.type === 'img' || col.type === 'logo') {
           td.className = 'lista-tablica__cell--img';
           var img = document.createElement('img');
@@ -1061,7 +1077,6 @@
           td.className = 'lista-tablica__cell--stupanj';
           if (row.kandidat) {
             td.textContent = 'K';
-            td.style.backgroundColor = 'var(--c-green-500)';
           } else {
             var v1 = row[col.field] != null ? String(row[col.field]) : '';
             td.textContent = v1 ? v1 + '\u00B0' : '';
@@ -1956,6 +1971,27 @@
     postaviVidljivihRedova(getBrojRedaka());
 
     ucitajPravaGeoLista();
+
+    (function () {
+      var xhrBoje = new XMLHttpRequest();
+      xhrBoje.open('GET', API_BASE + 'Zapisnik_Boje_U_Listi_CRUD_sve.php', true);
+      xhrBoje.onreadystatechange = function () {
+        if (xhrBoje.readyState !== 4 || xhrBoje.status !== 200) return;
+        try {
+          var arr = JSON.parse(xhrBoje.responseText || '');
+          if (Array.isArray(arr)) {
+            for (var i = 0; i < arr.length; i++) {
+              if (parseInt(arr[i].id, 10) === 20) {
+                _listaKandidatBojaFg = listaBojaToStyle(arr[i].boja   || '') || '';
+                _listaKandidatBojaBg = listaBojaToStyle(arr[i].boja_bg || '') || '';
+                break;
+              }
+            }
+          }
+        } catch (e) {}
+      };
+      xhrBoje.send();
+    }());
 
     trenutnaStranica = 1;
     injectMobStyles();

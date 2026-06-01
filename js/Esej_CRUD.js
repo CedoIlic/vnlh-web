@@ -244,60 +244,31 @@
   }
 
   function puniSelectStupanjEsejaOdmah() {
-    var sel = document.getElementById('esej_select_stupanj');
-    if (!sel) return;
-
-    function resetStupanj() {
-      while (sel.firstChild) sel.removeChild(sel.firstChild);
-      var opt0 = document.createElement('option');
-      opt0.value = '';
-      opt0.textContent = '— Odaberi stupanj —';
-      sel.appendChild(opt0);
-      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('esej_select_stupanj');
-    }
-
+    var sel    = document.getElementById('esej_select_stupanj');
     var idLoza = esejIdOdabraneLozISelecta();
-    if (!idLoza) { resetStupanj(); return; }
-
-    var url = getApiUrl('Stupnjevi_CRUD_sve.php') + '?id_loza=' + encodeURIComponent(idLoza);
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      /* Ignorirati odgovor ako se loža promijenila za vrijeme zahtjeva. */
-      if (esejIdOdabraneLozISelecta() !== idLoza) return;
-      if (xhr.status < 200 || xhr.status >= 300) { resetStupanj(); return; }
-      var text = (xhr.responseText || '').replace(/^﻿/, '').trim();
-      /* Tekstualne greške servera (nisu JSON). */
-      if (text === '105' || text.indexOf('200,') === 0) { resetStupanj(); return; }
-      var arr = [];
-      try { arr = JSON.parse(text); } catch (ep) {}
-      if (!Array.isArray(arr)) arr = [];
+    if (!sel) return;
+    if (!idLoza) {
+      /* Loža nije odabrana — reset na placeholder. */
       while (sel.firstChild) sel.removeChild(sel.firstChild);
       var opt0 = document.createElement('option');
       opt0.value = '';
       opt0.textContent = '— Odaberi stupanj —';
       sel.appendChild(opt0);
-      var j;
-      for (j = 0; j < arr.length; j++) {
-        var o = arr[j];
-        var opt = document.createElement('option');
-        opt.value = o.id != null ? String(o.id) : '';
-        opt.textContent = (o.stupanj != null ? String(o.stupanj) + '°, ' : '') + (o.naziv != null ? o.naziv : '');
-        if (o.stupanj != null) opt.dataset.stupanj = String(o.stupanj);
-        sel.appendChild(opt);
-      }
-      if (arr.length === 1 && arr[0].id != null) sel.value = String(arr[0].id);
-      if (_esejPendingStupanj) {
-        sel.value = _esejPendingStupanj;
-        _esejPendingStupanj = null;
-        if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('esej_select_stupanj');
+      if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('esej_select_stupanj'); } catch (e) {} }
+      return;
+    }
+    var currentPending = _esejPendingStupanj;
+    if (typeof vnlhPuniSelectStupanjNadleznosti !== 'function') return;
+    vnlhPuniSelectStupanjNadleznosti(sel, idLoza, {
+      getApiUrl:      getApiUrl,
+      kontrolaId:     'esej_select_stupanj',
+      pendingValue:   currentPending,
+      getRaceIdLoza:  esejIdOdabraneLozISelecta,
+      onComplete: function () {
+        if (currentPending) _esejPendingStupanj = null;
         esejProvedeUvjeteForma();
-        return;
       }
-      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('esej_select_stupanj');
-    };
-    xhr.send();
+    });
   }
 
   function ucitajPravaGeo(callback) {
@@ -846,11 +817,28 @@
       cel.className = 'kontrola-tablica__cell-inner';
       cel.setAttribute('tabindex', '0');
       cel.textContent = _esejModalListaFormatRed(row);
-      /* Boja retka: tuđi javni esej → fg id=11; vlastiti javni esej → fg id=10. */
-      var bojaFg = null;
-      if (row.ista_loza !== 1 && row.boja_javno_11) bojaFg = row.boja_javno_11;
-      else if (row.javno_dostupan && row.boja_javno)  bojaFg = row.boja_javno;
-      if (bojaFg) { var bFg = String(bojaFg).trim(); cel.style.color = bFg.length === 9 ? bFg.substring(0, 7) : bFg; }
+      /* Boja retka: tuđi javni esej → id=11; vlastiti javni esej → id=10.
+         Ako boja nije definirana ostaje '' → primjenjuje se CSS default iz tokena. */
+      var bojaFg = null, bojaBg = null;
+      if (row.ista_loza !== 1) {
+        bojaFg = row.boja_javno_11    || null;
+        bojaBg = row.boja_javno_11_bg || null;
+      } else if (+row.javno_dostupan === 1) {
+        bojaFg = row.boja_javno    || null;
+        bojaBg = row.boja_javno_bg || null;
+      }
+      function bojaToStyle(c) {
+        var s = String(c || '').trim().replace(/^#/, '');
+        if (s.length === 8) {
+          var r = parseInt(s.slice(0,2),16), g = parseInt(s.slice(2,4),16),
+              b = parseInt(s.slice(4,6),16), a = parseInt(s.slice(6,8),16) / 255;
+          if (!isNaN(r+g+b+a)) return 'rgba('+r+','+g+','+b+','+a.toFixed(3)+')';
+        }
+        if (s.length === 6) return '#'+s;
+        return '';
+      }
+      cel.style.color = bojaFg ? bojaToStyle(bojaFg) : '';
+      tr.style.backgroundColor = bojaBg ? bojaToStyle(bojaBg) : '';
 
       var btn = document.createElement('button');
       btn.type = 'button';
