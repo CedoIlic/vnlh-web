@@ -31,6 +31,7 @@ $base_sql = "
         e.kljucne_rijeci,
         e.esej,
         e.javno_dostupan,
+        (SELECT zb.boja FROM zapisnik_boje_u_listi zb WHERE zb.id = 10 LIMIT 1) AS boja_javno,
         e.upisao,
         e.vrijeme_upisa,
         a.prezime       AS autor_prezime,

@@ -317,9 +317,6 @@
       _esejPravaUpisIzmjena = ui;
       _esejPravaBrisanjeSloga = bs;
       if (typeof vnlhPrimijeniPravaCrud === 'function') vnlhPrimijeniPravaCrud(ui, bs);
-      /* Gumb za odabir postojećeg eseja: uvijek dostupan čim se geo podaci učitaju. */
-      var btnOdabirEl = document.getElementById('esej_btn_odabir_postojeceg');
-      if (btnOdabirEl) { btnOdabirEl.disabled = false; }
       esejNakonPravaPrimijeniModSkriviIzbrisiAkoNovUpis();
       esejProvedeUvjeteForma();
       if (drz.length === 1 && selectDrzava) {
@@ -834,6 +831,11 @@
       cel.className = 'kontrola-tablica__cell-inner';
       cel.setAttribute('tabindex', '0');
       cel.textContent = _esejModalListaFormatRed(row);
+      if (row.javno_dostupan && row.boja_javno) {
+        /* Boja iz zapisnik_boje_u_listi id=10; strip alpha ako je 8-digit hex (#RRGGBBAA → #RRGGBB). */
+        var boja = String(row.boja_javno).trim();
+        cel.style.color = boja.length === 9 ? boja.substring(0, 7) : boja;
+      }
 
       var btn = document.createElement('button');
       btn.type = 'button';
@@ -1039,7 +1041,13 @@
         var uIme = [rowData.upisao_prezime, rowData.upisao_ime].filter(Boolean).join(' ');
         var uDat = '';
         if (rowData.vrijeme_upisa) {
-          try { uDat = new Date(rowData.vrijeme_upisa).toLocaleDateString('hr-HR'); } catch (ed) {}
+          try {
+            var dObj = new Date(rowData.vrijeme_upisa);
+            var hh = String(dObj.getHours()).padStart(2, '0');
+            var mm = String(dObj.getMinutes()).padStart(2, '0');
+            var ss = String(dObj.getSeconds()).padStart(2, '0');
+            uDat = dObj.toLocaleDateString('hr-HR') + ' - ' + hh + ':' + mm + ':' + ss;
+          } catch (ed) {}
         }
         inpUpisao.value = uIme ? (uDat ? uIme + ', ' + uDat : uIme) : uDat;
       }
@@ -1356,7 +1364,9 @@
       }
     }
 
-    /* PDF ikona: disable bez lože. Ikona "odabir postojećeg" uvijek dostupna (geo učitan). */
+    /* Ikone u zaglavlju: disable/enable zajedno s tabovima. */
+    var btnOdabir = document.getElementById('esej_btn_odabir_postojeceg');
+    if (btnOdabir) btnOdabir.disabled = !imaLozu;
     var btnPdf = document.getElementById('esej_btn_pdf');
     if (btnPdf) btnPdf.disabled = !imaLozu;
 
@@ -1648,6 +1658,11 @@
   function esejOcistiFormu() {
     esejTrenutniId = null;
     esejAutorClanId = null;
+    /* Postavi na tab 0 (Opći podaci). */
+    var tabRoot = document.getElementById('esejKontrolaTab');
+    if (tabRoot && typeof kontrolaTabPostaviAktivni === 'function') {
+      kontrolaTabPostaviAktivni(tabRoot, 0);
+    }
     /* Vrati na mod 0 (novi upis) i ažuriraj footer. */
     window.mod_upisa_eseja = 0;
     esejPrimijeniFooterPremaModuUpisa();
