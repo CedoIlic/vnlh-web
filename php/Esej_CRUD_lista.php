@@ -1,0 +1,78 @@
+<?php
+/**
+ * Esej_CRUD_lista.php — paginirana lista eseji za odabir/editiranje.
+ * GET offset (default 0), limit (default 50), trazi (opcionalno).
+ * Pretraga: ime/prezime autora, naslov_eseja, stupanj (numerički), kljucne_rijeci.
+ * Sort: vrijeme_upisa DESC (najnoviji na vrhu).
+ * Izlaz (JSON): niz objekata s poljima potrebnim za prikaz i učitavanje u formu.
+ */
+require_once __DIR__ . '/require_login_api.php';
+
+$db_ret = require_once __DIR__ . '/00_db.php';
+if ($db_ret !== -1) { header('Content-Type: text/plain'); echo $db_ret; exit; }
+
+header('Content-Type: application/json; charset=utf-8');
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+$trazi   = isset($_GET['trazi'])   ? trim((string)$_GET['trazi']) : '';
+$offset  = isset($_GET['offset'])  ? max(0, (int)$_GET['offset']) : 0;
+$id_loza = isset($_GET['id_loza']) ? (int)$_GET['id_loza'] : 0;
+$limit   = 50;
+
+if ($id_loza <= 0) { echo '[]'; exit; }
+
+$base_sql = "
+    SELECT
+        e.id,
+        e.loza          AS id_loza,
+        e.autor         AS id_autor,
+        e.stupanj       AS id_stupanj,
+        e.naslov_eseja,
+        e.kljucne_rijeci,
+        e.esej,
+        e.javno_dostupan,
+        e.upisao,
+        e.vrijeme_upisa,
+        a.prezime       AS autor_prezime,
+        a.ime           AS autor_ime,
+        s.stupanj       AS stupanj_broj,
+        u.prezime       AS upisao_prezime,
+        u.ime           AS upisao_ime,
+        l.id_regija,
+        l.id_drzava
+    FROM eseji e
+    LEFT JOIN clanovi  a  ON a.id  = e.autor
+    LEFT JOIN stupnjevi s ON s.id  = e.stupanj
+    LEFT JOIN clanovi  u  ON u.id  = e.upisao
+    LEFT JOIN loze     l  ON l.id  = e.loza
+    WHERE e.loza = ?
+";
+
+try {
+    if ($trazi !== '') {
+        $q   = '%' . $trazi . '%';
+        $sql = $base_sql
+             . " AND (a.prezime LIKE ? OR a.ime LIKE ? OR e.naslov_eseja LIKE ?"
+             . "   OR CAST(s.stupanj AS CHAR) LIKE ? OR e.kljucne_rijeci LIKE ?)"
+             . " ORDER BY e.vrijeme_upisa DESC LIMIT ? OFFSET ?";
+        $stmt = $mysqli->prepare($sql);
+        $stmt->bind_param('isssssii', $id_loza, $q, $q, $q, $q, $q, $limit, $offset);
+    } else {
+        $sql  = $base_sql . " ORDER BY e.vrijeme_upisa DESC LIMIT ? OFFSET ?";
+        $stmt = $mysqli->prepare($sql);
+        $stmt->bind_param('iii', $id_loza, $limit, $offset);
+    }
+
+    $stmt->execute();
+    $res  = $stmt->get_result();
+    $rows = [];
+    while ($row = $res->fetch_assoc()) {
+        $rows[] = $row;
+    }
+    $stmt->close();
+    $mysqli->close();
+    echo json_encode($rows, JSON_UNESCAPED_UNICODE);
+} catch (mysqli_sql_exception $e) {
+    $mysqli->close();
+    echo '[]';
+}

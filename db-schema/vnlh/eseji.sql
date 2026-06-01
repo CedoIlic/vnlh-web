@@ -3,6 +3,7 @@ CREATE TABLE `eseji` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `loza` int(11) unsigned NOT NULL COMMENT 'ID lože kojoj pripada esej',
   `autor` int(11) unsigned NOT NULL COMMENT 'ID autora eseja',
+  `naslov_eseja` varchar(250) DEFAULT NULL COMMENT 'Naslov eseja',
   `stupanj` int(11) unsigned NOT NULL COMMENT 'Stupanj kojem je esej namjenjen',
   `kljucne_rijeci` text DEFAULT NULL COMMENT 'Izbor ključnih riječi iz sadržaja eseja',
   `esej` text DEFAULT NULL COMMENT 'Tekst eseja',

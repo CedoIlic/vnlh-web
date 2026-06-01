@@ -25,6 +25,28 @@ body {
   -webkit-user-drag: none;
 }
 
+/* Zabrana selekcije sadržaja (labele, naslovi tabova, editi) — textarea/input ostaju selektabilni. */
+.naslov-forme,
+.esej-crud__panel-header,
+.esej-crud__tab .kontrola-tab__traka,
+.esej-crud__tab .kontrola-tab__tijelo {
+  -webkit-user-select: none;
+  user-select: none;
+  -moz-user-select: none;
+}
+
+.esej-crud__tab .kontrola-tab__tijelo input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='image']):not([type='file']):not([type='hidden']),
+.esej-crud__tab .kontrola-tab__tijelo textarea,
+.esej-crud__tab .kontrola-tab__tijelo select,
+.esej-crud__tab .kontrola-tab__tijelo .kontrola-edit-delete__input,
+.esej-crud__tab .kontrola-tab__tijelo option,
+.esej-crud__panel-header select,
+.esej-crud__panel-header option {
+  -webkit-user-select: text;
+  user-select: text;
+  -moz-user-select: text;
+}
+
 /* Panel: flex stubac, zauzima ostatak visine ispod naslova. */
 .esej-crud__panel.kontrola-panel {
   flex: 1 1 auto;
@@ -93,6 +115,7 @@ body {
 
 .esej-crud__header-odabir-esej-btn:disabled,
 .esej-crud__header-pdf-btn:disabled {
+  background: var(--edit_bg_disabled);
   color: var(--label_text_disabled);
   cursor: not-allowed;
   box-shadow: var(--edit_focus_shadow_disabled, none);
@@ -289,12 +312,6 @@ body {
 }
 
 .esej-crud__opci-kljucne.kontrola-napomena {
-  width: 100%;
-  min-width: 0;
-  flex: 1 1 auto;
-  min-height: 0;
-  box-sizing: border-box;
-  resize: none;
   overflow-y: auto;
 }
 
@@ -323,15 +340,94 @@ body {
   min-height: 0;
 }
 
-/* Textarea: nema nativnog resizea, klizač; širi se s blokom. */
+/* Contenteditable div: klizač. */
 .esej-crud__esej-textarea.kontrola-napomena {
-  width: 100%;
-  min-width: 0;
-  flex: 1 1 auto;
-  min-height: 0;
-  resize: none;
   overflow-y: auto;
-  box-sizing: border-box;
+}
+
+/* Contenteditable: obostrano poravnanje, uvlaka 1 cm na svakom odlomku,
+   razmak između odlomaka 20% više od razmaka između redova. */
+.esej-crud__esej-textarea[contenteditable] {
+  cursor: text;
+  /* Direktan tekst (prvi odlomak prije Entera) */
+  text-align: justify;
+  text-indent: 1cm;
+  line-height: 1.5;
+}
+
+.esej-crud__esej-textarea[contenteditable] > div,
+.esej-crud__esej-textarea[contenteditable] > p {
+  text-align: justify;
+  text-indent: 1cm;
+  line-height: 1.5;
+  margin: 0 0 calc(1.5em * 0.24) 0; /* razmak između odlomaka */
+}
+
+.esej-crud__esej-textarea[contenteditable] > div:last-child,
+.esej-crud__esej-textarea[contenteditable] > p:last-child {
+  margin-bottom: 0;
+}
+
+.esej-crud__esej-textarea[contenteditable="false"] {
+  cursor: default;
+}
+
+/* --- Scrollbar textarea/contenteditable kontroli — isti tokeni kao tablice --- */
+
+@supports not selector(::-webkit-scrollbar) {
+  .esej-crud__opci-kljucne,
+  .esej-crud__esej-textarea {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+
+.esej-crud__opci-kljucne::-webkit-scrollbar,
+.esej-crud__esej-textarea::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara);
+  background: var(--tablica_scroll_bg);
+}
+
+.esej-crud__opci-kljucne::-webkit-scrollbar-thumb,
+.esej-crud__esej-textarea::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac);
+  border-radius: 6px;
+}
+
+.esej-crud__opci-kljucne::-webkit-scrollbar-thumb:hover,
+.esej-crud__esej-textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, var(--tablica_scroll_klizac));
+}
+
+/* Strelice gore/dolje — isti CSS kao kontrola-tablica__scroll. */
+.esej-crud__opci-kljucne::-webkit-scrollbar-button:single-button,
+.esej-crud__esej-textarea::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara);
+  background: transparent;
+}
+
+.esej-crud__opci-kljucne::-webkit-scrollbar-button:single-button:vertical:decrement,
+.esej-crud__esej-textarea::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac) transparent;
+}
+
+.esej-crud__opci-kljucne::-webkit-scrollbar-button:single-button:vertical:increment,
+.esej-crud__esej-textarea::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac) transparent transparent transparent;
+}
+
+.esej-crud__opci-kljucne::-webkit-scrollbar-track-piece:vertical:start,
+.esej-crud__esej-textarea::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+
+.esej-crud__opci-kljucne::-webkit-scrollbar-track-piece:vertical:end,
+.esej-crud__esej-textarea::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
 }
 
 /* --- Podnožje: CRUD tipke --- */
@@ -352,4 +448,219 @@ body {
 
 .esej-crud__footer-right {
   margin-left: auto;
+}
+
+/* ============================================================
+   Modal za odabir autora eseja — gradi na modal-tablica CSS klasama;
+   ovdje samo dodatci specifični za search red i resize kut na desktopu.
+   ============================================================ */
+
+/* Resize kut: skriva custom element na desktopu — koristi se native resize: both iz modal-tablica__dialog.
+   Na mobu 0-Kontrole.css prikazuje custom kut (isti kao uzorni modal). */
+
+/* Header: naslov + search red u stupcu; naslov je draggable, search red nije. */
+.esej-crud__modal-autor .modal-tablica__header,
+.esej-crud__modal-lista .modal-tablica__header {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  cursor: default;
+}
+
+.esej-crud__modal-autor-naslov {
+  cursor: move;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Search red: Pretraži label + edit-delete sa lupom. */
+.esej-crud__modal-autor-trazi-red {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: default;
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: auto;
+}
+
+.esej-crud__modal-autor-trazi-red .kontrola-labela {
+  flex-shrink: 0;
+}
+
+.esej-crud__modal-autor-trazi-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.esej-crud__modal-autor-trazi-lupa {
+  display: flex;
+  align-items: center;
+  padding: 0 0.25rem 0 0.5rem;
+  color: var(--label_text);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* --- Scrol-omot: wrapper koji daje border-radius i clips scrollbar --- */
+
+.esej-crud__scrol-omot {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--napomena_border);
+  border-radius: var(--napomena_radius);
+  background: var(--napomena_bg);
+  overflow: hidden;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+/* Flex sizing wrapperima preuzet od kontrola. */
+.esej-crud__opci-kljucne-omot {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.esej-crud__sadrzaj-omot {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Fokus unutar wrappera: border i sjena na wrapperuu, ne na kontroli. */
+.esej-crud__scrol-omot:focus-within {
+  border-color: var(--napomena_border_focus, var(--edit_border_focus));
+  box-shadow: var(--edit_focus_shadow);
+}
+
+/* Kontrole unutar wrappera: bez vlastitog border-radiusa i bordera (wrapper to preuzima). */
+.esej-crud__scrol-omot .kontrola-napomena {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  box-sizing: border-box;
+  resize: none;
+}
+
+/* Tablica popunjava preostali prostor u tijelu modala. */
+.esej-crud__modal-autor-tablica.kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.esej-crud__modal-autor-tablica .kontrola-tablica__inner {
+  min-height: 0;
+}
+
+.esej-crud__modal-autor-tablica .kontrola-tablica__scroll-wrap,
+.esej-crud__modal-lista-tablica .kontrola-tablica__scroll-wrap {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow: hidden;
+}
+
+/* Lista modal dijeli header/body/tablica CSS s autor modalom;
+   jedino dodatno: šira inicijalna veličina i redak s malim ellipsisom. */
+.esej-crud__modal-lista-tablica.kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.esej-crud__modal-lista-tablica .kontrola-tablica__inner {
+  min-height: 0;
+}
+
+/* Redak tablice: tekst + mali ellipsis gumb poravnat desno. */
+.esej-crud__lista-red-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.esej-crud__lista-red-inner .kontrola-tablica__cell-inner {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Mali ellipsis gumb — manji od standardnog da stane u visinu retka tablice. */
+.esej-crud__lista-elipsis-btn {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  color: var(--edit_text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.esej-crud__lista-elipsis-btn[hidden] {
+  display: none !important;
+}
+
+@media (hover: hover) {
+  .esej-crud__lista-elipsis-btn:hover {
+    opacity: 1;
+    border-color: var(--edit_border_focus);
+    background: var(--edit_bg_hover, var(--c-gray-100));
+  }
+}
+
+/* Popup: ključne riječi eseja */
+.esej-crud__kljucne-popup {
+  position: fixed;
+  z-index: 10200;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel_body_bg, #fff);
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius, 6px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  max-width: 320px;
+  min-width: 160px;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  color: var(--text);
+}
+
+.esej-crud__kljucne-popup[hidden] {
+  display: none !important;
+}
+
+.esej-crud__kljucne-popup-naslov {
+  padding: 0.4rem 0.75rem 0.3rem;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid var(--edit_border);
+}
+
+.esej-crud__kljucne-popup-tekst {
+  padding: 0.5rem 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.esej-crud__kljucne-popup-footer {
+  padding: 0.3rem 0.5rem 0.4rem;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--edit_border);
 }

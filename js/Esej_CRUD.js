@@ -37,6 +37,12 @@
   var esejTrenutniId = null;
   /** ID odabranog autora (clanovi.id); null ako nije odabran. */
   var esejAutorClanId = null;
+  /** Pravo upisa/izmjene iz geo/prava odgovora (1 = smije, 0 = ne smije); koristi esejProvedeUvjeteForma. */
+  var _esejPravaUpisIzmjena = 0;
+  /** Pravo brisanja iz geo/prava odgovora; koristi se kod učitavanja eseja za edit. */
+  var _esejPravaBrisanjeSloga = 0;
+  /** ID stupnja koji treba postaviti u select nakon što puniSelectStupanjEseja dovrši XHR (učitavanje eseja). */
+  var _esejPendingStupanj = null;
 
   /* ============================================================
    * Mod upisa: 0 = novi esej, 1 = izmjena postojećeg
@@ -280,6 +286,13 @@
         sel.appendChild(opt);
       }
       if (arr.length === 1 && arr[0].id != null) sel.value = String(arr[0].id);
+      if (_esejPendingStupanj) {
+        sel.value = _esejPendingStupanj;
+        _esejPendingStupanj = null;
+        if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('esej_select_stupanj');
+        esejProvedeUvjeteForma();
+        return;
+      }
       if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('esej_select_stupanj');
     };
     xhr.send();
@@ -301,9 +314,14 @@
       popuniSelectIzKeša(selectDrzava, drz, '— Odaberi državu —', 'select_drzava');
       var ui = g.upis_izmjena != null ? parseInt(g.upis_izmjena, 10) : 0;
       var bs = g.brisanje_sloga != null ? parseInt(g.brisanje_sloga, 10) : 0;
+      _esejPravaUpisIzmjena = ui;
+      _esejPravaBrisanjeSloga = bs;
       if (typeof vnlhPrimijeniPravaCrud === 'function') vnlhPrimijeniPravaCrud(ui, bs);
+      /* Gumb za odabir postojećeg eseja: uvijek dostupan čim se geo podaci učitaju. */
+      var btnOdabirEl = document.getElementById('esej_btn_odabir_postojeceg');
+      if (btnOdabirEl) { btnOdabirEl.disabled = false; }
       esejNakonPravaPrimijeniModSkriviIzbrisiAkoNovUpis();
-      esejPrimijeniUvjeteUpisGumba();
+      esejProvedeUvjeteForma();
       if (drz.length === 1 && selectDrzava) {
         selectDrzava.value = String(drz[0].id);
         selectDrzava.disabled = true;
@@ -414,10 +432,872 @@
     if (k0 && !k0.disabled) { try { k0.focus(); } catch (ef) {} }
   }
 
-  function esejPrimijeniUvjeteUpisGumba(imaLozuParam) {
-    var imaLozu = typeof imaLozuParam !== 'undefined' ? !!imaLozuParam : !!esejIdOdabraneLozISelecta();
+  /* ============================================================
+   * Modal za odabir autora eseja
+   * ============================================================ */
+
+  /** Svi članovi lože dohvaćeni za trenutno otvoreni modal (izvor za pretragu). */
+  var _esejModalAutorSviClanovi = [];
+  /** Debounce timer za pretragu unutar modala. */
+  var _esejModalAutorFilterT = null;
+  var ESEJ_MODAL_AUTOR_DEBOUNCE_MS = 200;
+
+  function esejModalAutorFormatTekst(r) {
+    if (!r || typeof r !== 'object') return '';
+    var p = trimZ(r.prezime);
+    var ix = trimZ(r.ime);
+    return (p + (p && ix ? ' ' : '') + ix).trim() || '';
+  }
+
+  function esejModalAutorHaystack(r) {
+    return esejModalAutorFormatTekst(r).toLowerCase();
+  }
+
+  function esejModalAutorNapuniTbody(arr) {
+    var tbody = document.getElementById('esej_modal_autor_tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    var a = arr || [];
+    for (var ri = 0; ri < a.length; ri++) {
+      var o = a[ri];
+      if (!o || o.id == null) continue;
+      var tr = document.createElement('tr');
+      tr.dataset.rowId = String(o.id);
+      tr.hidden = false;
+      var td = document.createElement('td');
+      var cel = document.createElement('div');
+      cel.className = 'kontrola-tablica__cell-inner';
+      cel.setAttribute('tabindex', '0');
+      cel.textContent = esejModalAutorFormatTekst(o);
+      td.appendChild(cel);
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }
+  }
+
+  function esejModalAutorPrimijeniFilter() {
+    var inp = document.getElementById('esej_modal_autor_trazi');
+    var q = inp ? trimZ(inp.value).toLowerCase() : '';
+    var tbody = document.getElementById('esej_modal_autor_tbody');
+    if (!tbody) return;
+    var trs = tbody.querySelectorAll('tr');
+    var ti;
+    for (ti = 0; ti < trs.length; ti++) {
+      var tr = trs[ti];
+      if (!q) {
+        tr.hidden = false;
+      } else {
+        var rowId = tr.dataset.rowId;
+        var found = false;
+        var src = _esejModalAutorSviClanovi;
+        var ci;
+        for (ci = 0; ci < src.length; ci++) {
+          if (src[ci] && String(src[ci].id) === rowId) {
+            found = esejModalAutorHaystack(src[ci]).indexOf(q) >= 0;
+            break;
+          }
+        }
+        if (!found && tr.classList.contains('tablica-row-selected')) {
+          tr.classList.remove('tablica-row-selected');
+          esejModalAutorAzurirajOk();
+        }
+        tr.hidden = !found;
+      }
+    }
+  }
+
+  function esejModalAutorAzurirajOk() {
+    var tbody = document.getElementById('esej_modal_autor_tbody');
+    var btnOk = document.getElementById('esej_modal_autor_ok');
+    if (!btnOk) return;
+    var hasSel = tbody ? !!tbody.querySelector('tr.tablica-row-selected:not([hidden])') : false;
+    btnOk.disabled = !hasSel;
+  }
+
+  function esejModalAutorOtvori() {
+    var idLoza = esejIdOdabraneLozISelecta();
+    if (!idLoza) return;
+    var root = document.getElementById('esejModalAutor');
+    if (!root) return;
+
+    /* Postavi poziciju i veličinu (localStorage ili default centrirano). */
+    var dialog = root.querySelector('.modal-tablica__dialog');
+    if (dialog) {
+      var stored = _esejModalAutorGetStorage();
+      if (stored) {
+        dialog.style.left   = stored.left + 'px';
+        dialog.style.top    = stored.top  + 'px';
+        dialog.style.width  = Math.max(_ESEJ_MODAL_AUTOR_MIN_W, stored.width)  + 'px';
+        dialog.style.height = Math.max(_ESEJ_MODAL_AUTOR_MIN_H, stored.height) + 'px';
+      } else {
+        var vw = window.innerWidth  || 800;
+        var vh = window.innerHeight || 600;
+        dialog.style.width  = _ESEJ_MODAL_AUTOR_DEFAULT_W + 'px';
+        dialog.style.height = _ESEJ_MODAL_AUTOR_DEFAULT_H + 'px';
+        dialog.style.left   = Math.max(0, (vw - _ESEJ_MODAL_AUTOR_DEFAULT_W) / 2) + 'px';
+        dialog.style.top    = Math.max(0, (vh - _ESEJ_MODAL_AUTOR_DEFAULT_H) / 2) + 'px';
+      }
+    }
+
+    root.classList.add('modal-tablica--open');
+    root.setAttribute('aria-hidden', 'false');
+
+    var url = getApiUrl('Clanovi_CRUD_sve_loze.php') + '?id_loza=' + encodeURIComponent(idLoza);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      var arr = [];
+      if (xhr.status >= 200 && xhr.status < 300) {
+        var text = (xhr.responseText || '').replace(/^﻿/, '').trim();
+        if (text.charAt(0) === '[') { try { arr = JSON.parse(text); } catch (ep) {} }
+        if (!Array.isArray(arr)) arr = [];
+      }
+      arr.sort(function (a, b) { return esejModalAutorFormatTekst(a).localeCompare(esejModalAutorFormatTekst(b), undefined, { sensitivity: 'base' }); });
+      _esejModalAutorSviClanovi = arr;
+      esejModalAutorNapuniTbody(arr);
+      /* Resetiraj pretragu. */
+      var inp = document.getElementById('esej_modal_autor_trazi');
+      if (inp) inp.value = '';
+      /* Predselekcija prethodno odabranog člana. */
+      if (esejAutorClanId) {
+        var tbody = document.getElementById('esej_modal_autor_tbody');
+        var prethodni = tbody ? tbody.querySelector('tr[data-row-id="' + esejAutorClanId + '"]') : null;
+        if (prethodni && !prethodni.hidden) prethodni.classList.add('tablica-row-selected');
+      }
+      esejModalAutorAzurirajOk();
+      setTimeout(function () {
+        if (inp) try { inp.focus(); } catch (ef) {}
+      }, 0);
+    };
+    xhr.send();
+  }
+
+  function esejModalAutorZatvori() {
+    var root = document.getElementById('esejModalAutor');
+    if (!root) return;
+    /* Spremi poziciju i veličinu. */
+    var dialog = root.querySelector('.modal-tablica__dialog');
+    if (dialog) {
+      var left = parseFloat(dialog.style.left);
+      var top  = parseFloat(dialog.style.top);
+      var w    = dialog.offsetWidth  || parseFloat(dialog.style.width)  || 0;
+      var h    = dialog.offsetHeight || parseFloat(dialog.style.height) || 0;
+      if (!isNaN(left) && !isNaN(top) && w >= _ESEJ_MODAL_AUTOR_MIN_W && h >= _ESEJ_MODAL_AUTOR_MIN_H) {
+        _esejModalAutorSetStorage(left, top, w, h);
+      }
+    }
+    root.classList.remove('modal-tablica--open');
+    root.setAttribute('aria-hidden', 'true');
+    var btn = document.getElementById('esej_btn_autor_ellipsis');
+    if (btn) try { btn.focus(); } catch (ef) {}
+  }
+
+  function esejModalAutorPotvrdiOdabir() {
+    var tbody = document.getElementById('esej_modal_autor_tbody');
+    if (!tbody) return;
+    var selTr = tbody.querySelector('tr.tablica-row-selected:not([hidden])');
+    if (!selTr) return;
+    var cid = selTr.dataset.rowId;
+    if (!cid) return;
+    /* Pronađi podatke člana i popuni edit-delete polje. */
+    var member = null;
+    var ci;
+    for (ci = 0; ci < _esejModalAutorSviClanovi.length; ci++) {
+      if (String(_esejModalAutorSviClanovi[ci].id) === cid) { member = _esejModalAutorSviClanovi[ci]; break; }
+    }
+    var tekst = member ? esejModalAutorFormatTekst(member) : 'ID ' + cid;
+    var autorDiv = document.getElementById('esej_autor');
+    var autorWrap = autorDiv ? autorDiv.closest('.esej-crud__autor-edit-delete') : null;
+    if (autorDiv) {
+      autorDiv.textContent = tekst;
+      autorDiv.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (autorWrap) autorWrap.dataset.esejClanId = cid;
+    esejAutorClanId = cid;
+    esejModalAutorZatvori();
+    esejProvedeUvjeteForma();
+  }
+
+  var _ESEJ_MODAL_AUTOR_STORAGE_KEY = 'esej_crud_autor_modal';
+  var _ESEJ_MODAL_AUTOR_DEFAULT_W = 480;
+  var _ESEJ_MODAL_AUTOR_DEFAULT_H = 420;
+  var _ESEJ_MODAL_AUTOR_MIN_W = _ESEJ_MODAL_AUTOR_DEFAULT_W;
+  var _ESEJ_MODAL_AUTOR_MIN_H = _ESEJ_MODAL_AUTOR_DEFAULT_H;
+  var _esejModalAutorInterakcijeInit = false;
+
+  function _esejModalAutorGetStorage() {
+    try {
+      var raw = localStorage.getItem(_ESEJ_MODAL_AUTOR_STORAGE_KEY);
+      if (!raw) return null;
+      var o = JSON.parse(raw);
+      if (o && typeof o.left === 'number' && typeof o.top === 'number' && typeof o.width === 'number' && typeof o.height === 'number') return o;
+    } catch (e) {}
+    return null;
+  }
+
+  function _esejModalAutorSetStorage(left, top, w, h) {
+    try { localStorage.setItem(_ESEJ_MODAL_AUTOR_STORAGE_KEY, JSON.stringify({ left: left, top: top, width: w, height: h })); } catch (e) {}
+  }
+
+  function _esejModalAutorInitInterakcije() {
+    if (_esejModalAutorInterakcijeInit) return;
+    _esejModalAutorInterakcijeInit = true;
+
+    var root = document.getElementById('esejModalAutor');
+    var dialog = root ? root.querySelector('.modal-tablica__dialog') : null;
+    var header = root ? root.querySelector('.modal-tablica__header') : null;
+    var corner = document.getElementById('esej_modal_autor_resize_corner');
+    var bar    = document.getElementById('esej_modal_autor_resize_bar');
+    if (!root || !dialog) return;
+
+    /* Drag samo po naslovu (ne na search redu unutar headera). */
+    var naslov = root ? root.querySelector('.esej-crud__modal-autor-naslov') : null;
+    if (naslov) {
+      naslov.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var left0 = parseFloat(dialog.style.left) || 0;
+        var top0  = parseFloat(dialog.style.top)  || 0;
+        var x0 = e.clientX; var y0 = e.clientY;
+        function move(ev) {
+          dialog.style.left = (left0 + ev.clientX - x0) + 'px';
+          dialog.style.top  = (top0  + ev.clientY - y0) + 'px';
+        }
+        function stop() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); }
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', stop);
+        e.preventDefault();
+      });
+    }
+
+    /* Resize traka (visina). */
+    if (bar) {
+      bar.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var h0 = dialog.offsetHeight; var y0 = e.clientY;
+        function move(ev) {
+          dialog.style.height = Math.max(_ESEJ_MODAL_AUTOR_MIN_H, h0 + ev.clientY - y0) + 'px';
+        }
+        function stop() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); }
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', stop);
+        e.preventDefault();
+      });
+    }
+
+    /* Pretraga — debounce. */
+    var traziInp = document.getElementById('esej_modal_autor_trazi');
+    if (traziInp) {
+      traziInp.addEventListener('input', function () {
+        if (_esejModalAutorFilterT) clearTimeout(_esejModalAutorFilterT);
+        _esejModalAutorFilterT = setTimeout(function () { _esejModalAutorFilterT = null; esejModalAutorPrimijeniFilter(); }, ESEJ_MODAL_AUTOR_DEBOUNCE_MS);
+      });
+    }
+    if (traziInp && typeof KontroleInitEditDelete === 'function') {
+      var traziWrap = traziInp.closest('.kontrola-edit-delete');
+      if (traziWrap) {
+        KontroleInitEditDelete(traziWrap);
+        traziWrap.addEventListener('kontrole-edit-delete-clear', function () { esejModalAutorPrimijeniFilter(); });
+      }
+    }
+
+    /* Klik i dvoklik na red. */
+    var scroll = document.getElementById('esej_modal_autor_scroll');
+    if (scroll) {
+      scroll.addEventListener('click', function (ev) {
+        var tr = ev.target && ev.target.closest ? ev.target.closest('tbody tr') : null;
+        if (!tr || tr.hidden) return;
+        var tbody = document.getElementById('esej_modal_autor_tbody');
+        if (tbody) { var sve = tbody.querySelectorAll('tr'); for (var si = 0; si < sve.length; si++) sve[si].classList.remove('tablica-row-selected'); }
+        tr.classList.add('tablica-row-selected');
+        esejModalAutorAzurirajOk();
+        try { scroll.focus({ preventScroll: true }); } catch (ef) {}
+      });
+      scroll.addEventListener('dblclick', function (ev) {
+        var tr = ev.target && ev.target.closest ? ev.target.closest('tbody tr') : null;
+        if (!tr || tr.hidden || !tr.classList.contains('tablica-row-selected')) return;
+        esejModalAutorPotvrdiOdabir();
+      });
+    }
+
+    /* OK / Odustani / overlay / Escape. */
+    var btnOk = document.getElementById('esej_modal_autor_ok');
+    var btnCancel = document.getElementById('esej_modal_autor_cancel');
+    var overlay = root ? root.querySelector('.modal-tablica__overlay') : null;
+    if (btnOk)    btnOk.addEventListener('click', esejModalAutorPotvrdiOdabir);
+    if (btnCancel) btnCancel.addEventListener('click', esejModalAutorZatvori);
+    if (overlay)  overlay.addEventListener('click', esejModalAutorZatvori);
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Escape') return;
+      var r = document.getElementById('esejModalAutor');
+      if (r && r.classList.contains('modal-tablica--open')) esejModalAutorZatvori();
+    });
+
+    /* Izračun minimalne visine: ista formula kao ModalTablicaInit ali s 5 vidljivih redaka
+       + visina search reda u zaglavlju. Postavljamo na dialog.style.minHeight da native
+       resize: both ne dozvoli smanjivanje ispod tog limita. */
+    (function () {
+      function tok(name, def) {
+        var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name).trim());
+        return isNaN(v) ? def : v;
+      }
+      var padY       = tok('--modal_tablica_body_padding_y',  16);
+      var headH      = tok('--tablica_head_h',                42);
+      var rowH       = tok('--tablica_row_h',                 40);
+      var extra      = tok('--tablica_extra',                  1);
+      var barH       = tok('--panel_resize_bar_height',       28);
+      var headerPadY = tok('--modal_tablica_header_padding_y', 12);
+      var footerPadY = tok('--modal_tablica_footer_padding_y', 12);
+      var btnH       = tok('--button_height',                 36);
+      var titleH     = 20;
+      var searchRowH = 42;
+      var gap        = 8;
+      var headerMin  = headerPadY * 2 + titleH + gap + searchRowH;
+      var bodyMin    = padY + headH + (rowH * 5) + extra + padY + barH;
+      var footerMin  = footerPadY * 2 + btnH;
+      var minH = Math.max(240, Math.ceil(headerMin + bodyMin + footerMin));
+      _ESEJ_MODAL_AUTOR_MIN_H = minH;
+      if (dialog) dialog.style.minHeight = minH + 'px';
+    }());
+
+    /* Ellipsis gumb. */
+    var btnEllipsis = document.getElementById('esej_btn_autor_ellipsis');
+    if (btnEllipsis) {
+      btnEllipsis.addEventListener('click', function () {
+        if (btnEllipsis.disabled) return;
+        esejModalAutorOtvori();
+      });
+    }
+  }
+
+  /* ============================================================
+   * Lista modal: odabir postojećeg eseja za editiranje
+   * ============================================================ */
+
+  var _esejModalListaData        = [];     // svi učitani redci
+  var _esejModalListaOffset      = 0;
+  var _esejModalListaIsLoading   = false;
+  var _esejModalListaHasMore     = true;
+  var _esejModalListaTrazi       = '';
+  var _ESEJ_MODAL_LISTA_LIMIT    = 50;
+  var _ESEJ_MODAL_LISTA_DEBOUNCE = 300;
+  var _esejModalListaFilterT     = null;
+  var _esejModalListaInitDone    = false;
+  var _ESEJ_MODAL_LISTA_KEY      = 'esej_crud_lista_modal';
+  var _ESEJ_MODAL_LISTA_DEF_W    = 600;
+  var _ESEJ_MODAL_LISTA_DEF_H    = 500;
+  var _ESEJ_MODAL_LISTA_MIN_W    = 600;
+  var _ESEJ_MODAL_LISTA_MIN_H    = 500;
+
+  /* Popup: ključne riječi */
+  var _esejKljucneHideT    = null;
+  var _esejKljucneAktivniId = null;
+
+  function _esejModalListaGetStorage() {
+    try {
+      var raw = localStorage.getItem(_ESEJ_MODAL_LISTA_KEY);
+      if (!raw) return null;
+      var o = JSON.parse(raw);
+      if (o && typeof o.left === 'number' && typeof o.top === 'number') return o;
+    } catch (e) {}
+    return null;
+  }
+  function _esejModalListaSetStorage(left, top, w, h) {
+    try { localStorage.setItem(_ESEJ_MODAL_LISTA_KEY, JSON.stringify({ left: left, top: top, width: w, height: h })); } catch (e) {}
+  }
+
+  function _esejModalListaFormatRed(row) {
+    var parts = [];
+    var naslov = row.naslov_eseja ? String(row.naslov_eseja).trim() : '';
+    if (naslov) parts.push(naslov);
+    var autor = [row.autor_prezime, row.autor_ime].filter(Boolean).join(' ');
+    if (autor) parts.push(autor);
+    if (row.stupanj_broj != null) parts.push(String(row.stupanj_broj) + '°');
+    return parts.join(', ');
+  }
+
+  function _esejModalListaDodajRedove(arr) {
+    var tbody = document.getElementById('esej_modal_lista_tbody');
+    if (!tbody) return;
+    var i;
+    for (i = 0; i < arr.length; i++) {
+      var row = arr[i];
+      if (!row || row.id == null) continue;
+      var tr = document.createElement('tr');
+      tr.dataset.esejListaId = String(row.id);
+
+      var td = document.createElement('td');
+      var wrap = document.createElement('div');
+      wrap.className = 'esej-crud__lista-red-inner';
+
+      var cel = document.createElement('div');
+      cel.className = 'kontrola-tablica__cell-inner';
+      cel.setAttribute('tabindex', '0');
+      cel.textContent = _esejModalListaFormatRed(row);
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'esej-crud__lista-elipsis-btn';
+      btn.setAttribute('aria-label', 'Ključne riječi');
+      btn.dataset.esejListaId = String(row.id);
+      var spEl = document.createElement('span');
+      spEl.className = 'kontrola-icon--ellipsis-horizontal';
+      spEl.setAttribute('aria-hidden', 'true');
+      btn.appendChild(spEl);
+
+      wrap.appendChild(cel);
+      wrap.appendChild(btn);
+      td.appendChild(wrap);
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }
+  }
+
+  function _esejModalListaUcitajRedove(append) {
+    if (_esejModalListaIsLoading) return;
+    _esejModalListaIsLoading = true;
+    var idLoza = esejIdOdabraneLozISelecta();
+    var url = getApiUrl('Esej_CRUD_lista.php')
+      + '?id_loza=' + encodeURIComponent(idLoza)
+      + '&offset='  + encodeURIComponent(_esejModalListaOffset)
+      + '&limit='   + _ESEJ_MODAL_LISTA_LIMIT;
+    if (_esejModalListaTrazi) url += '&trazi=' + encodeURIComponent(_esejModalListaTrazi);
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      _esejModalListaIsLoading = false;
+      var arr = [];
+      if (xhr.status >= 200 && xhr.status < 300) {
+        var text = (xhr.responseText || '').replace(/^﻿/, '').trim();
+        if (text.charAt(0) === '[') { try { arr = JSON.parse(text); } catch (ep) {} }
+        if (!Array.isArray(arr)) arr = [];
+      }
+      _esejModalListaHasMore = arr.length >= _ESEJ_MODAL_LISTA_LIMIT;
+      if (!append) {
+        _esejModalListaData = arr;
+        var tbody = document.getElementById('esej_modal_lista_tbody');
+        if (tbody) tbody.innerHTML = '';
+      } else {
+        _esejModalListaData = _esejModalListaData.concat(arr);
+      }
+      _esejModalListaDodajRedove(arr);
+    };
+    xhr.send();
+  }
+
+  function esejModalListaOtvori() {
+    var root = document.getElementById('esejModalLista');
+    if (!root) return;
+    _esejModalListaInitInterakcije();
+    var dialog = root.querySelector('.modal-tablica__dialog');
+    if (dialog) {
+      var stored = _esejModalListaGetStorage();
+      if (stored) {
+        dialog.style.left   = stored.left + 'px';
+        dialog.style.top    = stored.top  + 'px';
+        dialog.style.width  = Math.max(_ESEJ_MODAL_LISTA_MIN_W, stored.width)  + 'px';
+        dialog.style.height = Math.max(_ESEJ_MODAL_LISTA_MIN_H, stored.height) + 'px';
+      } else {
+        var vw = window.innerWidth || 800;
+        var vh = window.innerHeight || 600;
+        dialog.style.width  = _ESEJ_MODAL_LISTA_DEF_W + 'px';
+        dialog.style.height = _ESEJ_MODAL_LISTA_DEF_H + 'px';
+        dialog.style.left   = Math.max(0, (vw - _ESEJ_MODAL_LISTA_DEF_W) / 2) + 'px';
+        dialog.style.top    = Math.max(0, (vh - _ESEJ_MODAL_LISTA_DEF_H) / 2) + 'px';
+      }
+    }
+    /* Reset i učitaj prvu stranicu. */
+    _esejModalListaOffset  = 0;
+    _esejModalListaTrazi   = '';
+    _esejModalListaHasMore = true;
+    var traziInp = document.getElementById('esej_modal_lista_trazi');
+    if (traziInp) traziInp.value = '';
+    root.classList.add('modal-tablica--open');
+    root.setAttribute('aria-hidden', 'false');
+    _esejModalListaUcitajRedove(false);
+    setTimeout(function () { if (traziInp) try { traziInp.focus(); } catch (ef) {} }, 0);
+  }
+
+  function esejModalListaZatvori() {
+    var root = document.getElementById('esejModalLista');
+    if (!root) return;
+    var dialog = root.querySelector('.modal-tablica__dialog');
+    if (dialog) {
+      var left = parseFloat(dialog.style.left);
+      var top  = parseFloat(dialog.style.top);
+      var w    = dialog.offsetWidth  || parseFloat(dialog.style.width)  || 0;
+      var h    = dialog.offsetHeight || parseFloat(dialog.style.height) || 0;
+      if (!isNaN(left) && !isNaN(top) && w >= _ESEJ_MODAL_LISTA_MIN_W && h >= _ESEJ_MODAL_LISTA_MIN_H) {
+        _esejModalListaSetStorage(left, top, w, h);
+      }
+    }
+    /* Počisti tablicu da se pri ponovnom otvaranju ne prikaže stari sadržaj. */
+    var tbody = document.getElementById('esej_modal_lista_tbody');
+    if (tbody) tbody.innerHTML = '';
+    _esejModalListaData = [];
+    root.classList.remove('modal-tablica--open');
+    root.setAttribute('aria-hidden', 'true');
+    _esejKljucnePopupSakrij();
+    var btn = document.getElementById('esej_btn_odabir_postojeceg');
+    if (btn) try { btn.focus(); } catch (ef) {}
+  }
+
+  /* --- Popup: ključne riječi --- */
+
+  function _esejKljucnePopupPokazi(kljucneRijeci, targetBtn) {
+    if (_esejKljucneHideT) { clearTimeout(_esejKljucneHideT); _esejKljucneHideT = null; }
+    var popup = document.getElementById('esejKljucnePopup');
+    if (!popup) return;
+    var tekst = document.getElementById('esej_kljucne_popup_tekst');
+    if (tekst) tekst.textContent = kljucneRijeci || '—';
+    popup.hidden = false;
+    /* Pozicija: lijevo od gumba, ili desno ako nema mjesta. */
+    popup.style.left = '-9999px';
+    popup.style.top  = '-9999px';
+    var pw  = popup.offsetWidth  || 280;
+    var ph  = popup.offsetHeight || 120;
+    var rect = targetBtn.getBoundingClientRect();
+    var vw = window.innerWidth  || 800;
+    var vh = window.innerHeight || 600;
+    var left = rect.left - pw - 6;
+    if (left < 4) left = rect.right + 6;
+    if (left + pw > vw - 4) left = vw - pw - 4;
+    var top = rect.top;
+    if (top + ph > vh - 4) top = vh - ph - 4;
+    if (top < 4) top = 4;
+    popup.style.left = left + 'px';
+    popup.style.top  = top  + 'px';
+  }
+
+  function _esejKljucnePopupSakrij() {
+    var popup = document.getElementById('esejKljucnePopup');
+    if (popup) popup.hidden = true;
+    _esejKljucneAktivniId = null;
+  }
+
+  function _esejKljucneNadjiRedak(esejListaId) {
+    var i;
+    for (i = 0; i < _esejModalListaData.length; i++) {
+      if (String(_esejModalListaData[i].id) === String(esejListaId)) return _esejModalListaData[i];
+    }
+    return null;
+  }
+
+  /* --- Učitavanje eseja u formu --- */
+
+  function _esejFormaImaPodatke() {
+    if (esejAutorClanId) return true;
+    if (esejTrenutniId) return true;
+    var inpNaslov = document.getElementById('esej_naslov_eseja');
+    if (inpNaslov && trimZ(inpNaslov.value)) return true;
+    if (trimZ(esejSadrzajGetTekst() || '')) return true;
+    return false;
+  }
+
+  function _esejUcitajZaEdit(rowData) {
+    if (!rowData) return;
+    /* 1. Clear + postavi edit mod. */
+    esejOcistiFormu();
+    window.mod_upisa_eseja = 1;
+    esejTrenutniId = String(rowData.id);
+    esejPrimijeniFooterPremaModuUpisa();
+    /* Un-hide Izbriši ako prava dozvoljavaju. */
+    var bBr = document.getElementById('btnIzbrisi');
+    if (bBr && _esejPravaBrisanjeSloga > 0) { bBr.hidden = false; bBr.style.removeProperty('display'); }
+
+    /* 2. Geo kaskada → loža → enable kontrola → učitaj polja. */
+    var idDrzava = String(rowData.id_drzava || '');
+    var idRegija = String(rowData.id_regija || '');
+    var idLoza   = String(rowData.id_loza   || '');
+
+    function _ucitajPolja() {
+      /* Autor */
+      esejAutorClanId = String(rowData.id_autor || '');
+      var autorDiv  = document.getElementById('esej_autor');
+      var autorWrap = autorDiv ? autorDiv.closest('.esej-crud__autor-edit-delete') : null;
+      if (autorDiv) {
+        autorDiv.textContent = [rowData.autor_prezime, rowData.autor_ime].filter(Boolean).join(' ');
+        autorDiv.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      if (autorWrap && esejAutorClanId) autorWrap.dataset.esejClanId = esejAutorClanId;
+
+      /* Naslov */
+      var inpNaslov = document.getElementById('esej_naslov_eseja');
+      if (inpNaslov) inpNaslov.value = esejNaslovSreduji(rowData.naslov_eseja || '');
+
+      /* Stupanj — pending jer XHR mora završiti (async). */
+      _esejPendingStupanj = String(rowData.id_stupanj || '');
+
+      /* Javno dostupan */
+      var cbJavno = document.getElementById('esej_javno_dostupan');
+      if (cbJavno) cbJavno.checked = !!(parseInt(rowData.javno_dostupan, 10));
+
+      /* Upisao (RO display) */
+      var inpUpisao = document.getElementById('esej_upisao');
+      if (inpUpisao) {
+        var uIme = [rowData.upisao_prezime, rowData.upisao_ime].filter(Boolean).join(' ');
+        var uDat = '';
+        if (rowData.vrijeme_upisa) {
+          try { uDat = new Date(rowData.vrijeme_upisa).toLocaleDateString('hr-HR'); } catch (ed) {}
+        }
+        inpUpisao.value = uIme ? (uDat ? uIme + ', ' + uDat : uIme) : uDat;
+      }
+
+      /* Ključne riječi */
+      var taKl = document.getElementById('esej_kljucne_rijeci');
+      if (taKl) taKl.value = rowData.kljucne_rijeci || '';
+
+      /* Sadržaj */
+      esejSadrzajSetTekst(rowData.esej || '');
+
+      esejProvedeUvjeteForma();
+    }
+
+    if (selectDrzava && idDrzava) {
+      selectDrzava.value = idDrzava;
+      setAutoLockedClass(selectDrzava, false);
+      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_drzava');
+    }
+    popuniRegijeIzKeša(idDrzava, function () {
+      if (selectRegija && idRegija) {
+        selectRegija.value = idRegija;
+        if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_regija');
+      }
+      popuniLozeIzKeša(idRegija, function () {
+        if (selectLoza && idLoza) {
+          selectLoza.value = idLoza;
+          setAutoLockedClass(selectLoza, false);
+          if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_loza');
+        }
+        esejUpdateHeaderLogo(idLoza);
+        esejSyncHeaderLogoSize();
+        esejPostaviKontroleOvisnoLozi(idLoza);
+        _ucitajPolja();
+      });
+    });
+  }
+
+  /* --- Inicijalizacija lista modal interakcija (jednom) --- */
+
+  function _esejModalListaInitInterakcije() {
+    if (_esejModalListaInitDone) return;
+    _esejModalListaInitDone = true;
+
+    var root   = document.getElementById('esejModalLista');
+    var dialog = root ? root.querySelector('.modal-tablica__dialog') : null;
+    var naslov = root ? root.querySelector('.esej-crud__modal-autor-naslov') : null;
+    var bar    = document.getElementById('esej_modal_lista_resize_bar');
+    var corner = document.getElementById('esej_modal_lista_resize_corner');
+    if (!root || !dialog) return;
+
+    /* Drag. */
+    if (naslov) {
+      naslov.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var l0 = parseFloat(dialog.style.left) || 0;
+        var t0 = parseFloat(dialog.style.top)  || 0;
+        var x0 = e.clientX; var y0 = e.clientY;
+        function mv(ev) { dialog.style.left = (l0 + ev.clientX - x0) + 'px'; dialog.style.top = (t0 + ev.clientY - y0) + 'px'; }
+        function st() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', st); }
+        document.addEventListener('mousemove', mv); document.addEventListener('mouseup', st);
+        e.preventDefault();
+      });
+    }
+    /* Resize bar. */
+    if (bar) {
+      bar.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var h0 = dialog.offsetHeight; var y0 = e.clientY;
+        function mv(ev) { dialog.style.height = Math.max(_ESEJ_MODAL_LISTA_MIN_H, h0 + ev.clientY - y0) + 'px'; }
+        function st() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', st); }
+        document.addEventListener('mousemove', mv); document.addEventListener('mouseup', st);
+        e.preventDefault();
+      });
+    }
+
+    /* Pretraga — debounce. */
+    var traziInp = document.getElementById('esej_modal_lista_trazi');
+    if (traziInp) {
+      traziInp.addEventListener('input', function () {
+        if (_esejModalListaFilterT) clearTimeout(_esejModalListaFilterT);
+        _esejModalListaFilterT = setTimeout(function () {
+          _esejModalListaFilterT = null;
+          _esejModalListaTrazi  = trimZ(traziInp.value);
+          _esejModalListaOffset = 0;
+          _esejModalListaHasMore = true;
+          _esejModalListaUcitajRedove(false);
+        }, _ESEJ_MODAL_LISTA_DEBOUNCE);
+      });
+      if (typeof KontroleInitEditDelete === 'function') {
+        var tw = traziInp.closest('.kontrola-edit-delete');
+        if (tw) {
+          KontroleInitEditDelete(tw);
+          tw.addEventListener('kontrole-edit-delete-clear', function () {
+            _esejModalListaTrazi  = '';
+            _esejModalListaOffset = 0;
+            _esejModalListaHasMore = true;
+            _esejModalListaUcitajRedove(false);
+          });
+        }
+      }
+    }
+
+    /* Infinite scroll. */
+    var scroll = document.getElementById('esej_modal_lista_scroll');
+    if (scroll) {
+      scroll.addEventListener('scroll', function () {
+        if (_esejModalListaIsLoading || !_esejModalListaHasMore) return;
+        if (scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 100) {
+          _esejModalListaOffset += _ESEJ_MODAL_LISTA_LIMIT;
+          _esejModalListaUcitajRedove(true);
+        }
+      });
+
+      /* Klik na redak → odabir eseja. */
+      scroll.addEventListener('click', function (ev) {
+        /* Klik na ellipsis — popup, ne selekcija. */
+        var btn = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+        if (btn) return;
+
+        var tr = ev.target && ev.target.closest ? ev.target.closest('tbody tr') : null;
+        if (!tr) return;
+        var esejId = tr.dataset.esejListaId;
+        if (!esejId) return;
+        var rowData = _esejKljucneNadjiRedak(esejId);
+        if (!rowData) return;
+
+        esejModalListaZatvori();
+        if (_esejFormaImaPodatke()) {
+          if (typeof window.showPorukaModal === 'function') {
+            window.showPorukaModal('028', [], function (odg) {
+              if (odg === 'OK') _esejUcitajZaEdit(rowData);
+            });
+          } else {
+            _esejUcitajZaEdit(rowData);
+          }
+        } else {
+          _esejUcitajZaEdit(rowData);
+        }
+      });
+
+      /* Ellipsis hover/klik → popup ključne riječi. */
+      scroll.addEventListener('mouseover', function (ev) {
+        var btn = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+        if (!btn) return;
+        if (_esejKljucneHideT) { clearTimeout(_esejKljucneHideT); _esejKljucneHideT = null; }
+        var esejId = btn.dataset.esejListaId;
+        if (_esejKljucneAktivniId === esejId) return;
+        _esejKljucneAktivniId = esejId;
+        var row = _esejKljucneNadjiRedak(esejId);
+        _esejKljucnePopupPokazi(row ? row.kljucne_rijeci : '', btn);
+      });
+      scroll.addEventListener('click', function (ev) {
+        var btn = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+        if (!btn) return;
+        if (_esejKljucneHideT) { clearTimeout(_esejKljucneHideT); _esejKljucneHideT = null; }
+        var esejId = btn.dataset.esejListaId;
+        _esejKljucneAktivniId = esejId;
+        var row = _esejKljucneNadjiRedak(esejId);
+        _esejKljucnePopupPokazi(row ? row.kljucne_rijeci : '', btn);
+        ev.stopPropagation();
+      });
+      scroll.addEventListener('mouseout', function (ev) {
+        var btn = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+        if (!btn) return;
+        _esejKljucneHideT = setTimeout(function () { _esejKljucneHideT = null; _esejKljucnePopupSakrij(); }, 300);
+      });
+    }
+
+    /* Popup: mouseover/out i hover-back. */
+    var popup = document.getElementById('esejKljucnePopup');
+    if (popup) {
+      popup.addEventListener('mouseover', function () {
+        if (_esejKljucneHideT) { clearTimeout(_esejKljucneHideT); _esejKljucneHideT = null; }
+      });
+      popup.addEventListener('mouseout', function () {
+        _esejKljucneHideT = setTimeout(function () { _esejKljucneHideT = null; _esejKljucnePopupSakrij(); }, 300);
+      });
+    }
+    var popupIzlaz = document.getElementById('esej_kljucne_popup_izlaz');
+    if (popupIzlaz) popupIzlaz.addEventListener('click', _esejKljucnePopupSakrij);
+
+    /* Klik van popupa → sakrij. */
+    document.addEventListener('click', function (ev) {
+      var pop = document.getElementById('esejKljucnePopup');
+      if (!pop || pop.hidden) return;
+      if (pop.contains(ev.target)) return;
+      var scr = document.getElementById('esej_modal_lista_scroll');
+      if (scr && scr.contains(ev.target)) return;
+      _esejKljucnePopupSakrij();
+    });
+
+    /* Zatvori modal. */
+    var btnZatvori = document.getElementById('esej_modal_lista_zatvori');
+    var overlay = root.querySelector('.modal-tablica__overlay');
+    if (btnZatvori) btnZatvori.addEventListener('click', esejModalListaZatvori);
+    if (overlay) overlay.addEventListener('click', esejModalListaZatvori);
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Escape') return;
+      if (root.classList.contains('modal-tablica--open')) esejModalListaZatvori();
+    });
+
+    /* Odabir postojećeg gumb u zaglavlju forme. */
+    var btnOdabir = document.getElementById('esej_btn_odabir_postojeceg');
+    if (btnOdabir) btnOdabir.addEventListener('click', function () {
+      if (btnOdabir.disabled) return;
+      esejModalListaOtvori();
+    });
+
+    /* Izračun min visine (isti tokeni kao modal autora). */
+    (function () {
+      function tok(n, d) { var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n).trim()); return isNaN(v) ? d : v; }
+      var padY = tok('--modal_tablica_body_padding_y', 16);
+      var headH = tok('--tablica_head_h', 42);
+      var rowH  = tok('--tablica_row_h', 40);
+      var barH  = tok('--panel_resize_bar_height', 28);
+      var headerPadY = tok('--modal_tablica_header_padding_y', 12);
+      var footerPadY = tok('--modal_tablica_footer_padding_y', 12);
+      var btnH  = tok('--button_height', 36);
+      var minH  = Math.max(400, Math.ceil(headerPadY * 2 + 62 + padY + headH + rowH * 5 + padY + barH + footerPadY * 2 + btnH));
+      _ESEJ_MODAL_LISTA_MIN_H = minH;
+      if (dialog) dialog.style.minHeight = minH + 'px';
+    }());
+  }
+
+  /**
+   * Evaluira uvjete za Upis/Izmjeni (vidljivost) i PDF (disabled).
+   * Upis/Izmjeni: vidljiv samo kad su loža + autor + naslov + stupanj postavljeni.
+   * PDF: enabled samo kad su loža + autor + naslov + stupanj + sadržaj postavljeni.
+   */
+  function esejProvedeUvjeteForma() {
+    var imaLozu   = !!esejIdOdabraneLozISelecta();
+    var imaAutor  = !!esejAutorClanId;
+    var naslovEl  = document.getElementById('esej_naslov_eseja');
+    var imaNaslov = naslovEl ? !!trimZ(naslovEl.value) : false;
+    var stupanjEl = document.getElementById('esej_select_stupanj');
+    var imaStupanj = stupanjEl ? !!trimZ(stupanjEl.value) : false;
+    var imaSadrzaj = !!trimZ(esejSadrzajGetTekst() || '');
+
+    var mozUpis = imaLozu && imaAutor && imaNaslov && imaStupanj;
+    var mozPdf  = mozUpis && imaSadrzaj;
+
+    /* Upis/Izmjeni: hidden dok nisu sva obavezna polja; prava moraju dozvoljavati upis. */
     var bUpis = document.getElementById('btnUpisi');
-    if (bUpis && !bUpis.hidden) bUpis.disabled = !imaLozu;
+    if (bUpis && _esejPravaUpisIzmjena > 0) {
+      bUpis.hidden = !mozUpis;
+      if (mozUpis) {
+        bUpis.style.removeProperty('display');
+        bUpis.disabled = false;
+      } else {
+        bUpis.style.display = 'none';
+        bUpis.disabled = true;
+      }
+    }
+
+    /* PDF: disable/enable prema svim obaveznim poljima + sadržaj. */
+    var btnPdf = document.getElementById('esej_btn_pdf');
+    if (btnPdf) btnPdf.disabled = !mozPdf;
   }
 
   /**
@@ -463,17 +1343,20 @@
       }
     }
 
-    /* Tab Esej: textarea kontrole. */
+    /* Tab Esej: kontrole (textarea → disabled; contenteditable → contentEditable). */
     var esejNodes = document.querySelectorAll('#esejKontrolaTabPanel1 .esej-crud__esej-kontrola');
     var ei;
     for (ei = 0; ei < esejNodes.length; ei++) {
       var elE = esejNodes[ei];
-      if (elE && 'disabled' in elE) elE.disabled = !imaLozu;
+      if (!elE) continue;
+      if ('disabled' in elE) {
+        elE.disabled = !imaLozu;
+      } else if (elE.hasAttribute('contenteditable')) {
+        elE.contentEditable = imaLozu ? 'true' : 'false';
+      }
     }
 
-    /* Ikone u zaglavlju. */
-    var btnOdabir = document.getElementById('esej_btn_odabir_postojeceg');
-    if (btnOdabir) btnOdabir.disabled = !imaLozu;
+    /* PDF ikona: disable bez lože. Ikona "odabir postojećeg" uvijek dostupna (geo učitan). */
     var btnPdf = document.getElementById('esej_btn_pdf');
     if (btnPdf) btnPdf.disabled = !imaLozu;
 
@@ -483,7 +1366,7 @@
       if (tabBody) KontroleSyncLabelsDisabledState(tabBody);
     }
 
-    esejPrimijeniUvjeteUpisGumba(imaLozu);
+    esejProvedeUvjeteForma(imaLozu);
     var bBr = document.getElementById('btnIzbrisi');
     if (bBr && !bBr.hidden) bBr.disabled = !imaLozu;
   }
@@ -652,6 +1535,78 @@
    * HTTP pomoćna funkcija
    * ============================================================ */
 
+  /**
+   * Izvuče tekst iz contenteditable diva.
+   * Koristi innerText koji između blok-elemenata (div, p) umeće \n,
+   * pa se paragrafna struktura čuva bez ručnog iteriranja.
+   */
+  function esejSadrzajGetTekst() {
+    var el = document.getElementById('esej_sadrzaj');
+    if (!el) return null;
+    if (el.tagName === 'TEXTAREA') return trimZ(el.value) || null;
+    var raw = (typeof el.innerText !== 'undefined' ? el.innerText : el.textContent) || '';
+    raw = raw.replace(/\r\n/g, '\n').trim();
+    return raw || null;
+  }
+
+  /**
+   * Učita tekst u contenteditable div; svaki redak (odlomak) postaje <p> element
+   * pa CSS primjenjuje uvlaku i razmak između odlomaka.
+   */
+  function esejSadrzajSetTekst(tekst) {
+    var el = document.getElementById('esej_sadrzaj');
+    if (!el) return;
+    if (el.tagName === 'TEXTAREA') { el.value = tekst || ''; return; }
+    el.innerHTML = '';
+    if (!tekst) return;
+    var paragraphs = String(tekst).split(/\n+/);
+    var pi;
+    for (pi = 0; pi < paragraphs.length; pi++) {
+      var pText = paragraphs[pi].trim();
+      if (!pText) continue;
+      var p = document.createElement('p');
+      p.textContent = pText;
+      el.appendChild(p);
+    }
+  }
+
+  /**
+   * Pretvara string u title case: početak svake riječi veliko, ostalo malo.
+   * Tri zasebna prolaza: (1) početak stringa, (2) iza bijelog razmaka, (3) iza navodnika.
+   * Tri prolaza rješavaju problem kad je navodnik na samom početku — jedan prolaz s (^|...)
+   * bi pojeo navodnik kao “karakter za verzalu” a slovo iza ostalo malo.
+   */
+  /**
+   * Primjeni pravila naslova na gubitak fokusa:
+   *  – Riječ u potpunom VERZALU (npr. “HELLO”) → kurent (“hello”)
+   *  – Sredina riječi s velikim slovom (npr. “hEllo”, “HELLo”) → malo (“hello”, “Hello”)
+   *  – Inicijal + mala (npr. “Hello”) → ostaje nepromijenjeno
+   *  – Ne forsira veliko slovo: korisnik sam bira hoće li na početku malo ili veliko.
+   */
+  function esejNaslovSreduji(s) {
+    var str = s ? String(s) : String();
+    if (!str.length) return str;
+    var result = String();
+    var i = 0;
+    while (i < str.length) {
+      /* Skupi separator (razmaci + navodnici) */
+      var sep = String();
+      while (i < str.length && /[\s”’«»‚‛””„‟’’]/.test(str[i])) { sep += str[i]; i++; }
+      result += sep;
+      /* Skupi riječ */
+      var word = String();
+      while (i < str.length && !/[\s”’«»‚‛””„‟’’]/.test(str[i])) { word += str[i]; i++; }
+      if (!word.length) continue;
+      /* Cijeli VERZAL → kurent; inače prvi znak ostaje, ostatak na malo */
+      if (word === word.toUpperCase() && word !== word.toLowerCase()) {
+        result += word.toLowerCase();
+      } else {
+        result += word[0] + word.slice(1).toLowerCase();
+      }
+    }
+    return result;
+  }
+
   function esejPostJson(url, data, cb) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', url, true);
@@ -669,6 +1624,7 @@
 
   function esejSakupiPayload() {
     var idLoza     = esejIdOdabraneLozISelecta();
+    var inpNaslov  = document.getElementById('esej_naslov_eseja');
     var selSt      = document.getElementById('esej_select_stupanj');
     var cbJavno    = document.getElementById('esej_javno_dostupan');
     var taKljucne  = document.getElementById('esej_kljucne_rijeci');
@@ -677,10 +1633,11 @@
     return {
       id_loza:        idLoza ? parseInt(idLoza, 10) : null,
       id_autor:       esejAutorClanId ? parseInt(esejAutorClanId, 10) : null,
+      naslov_eseja:   inpNaslov ? trimZ(inpNaslov.value) || null : null,
       id_stupanj:     selSt && trimZ(selSt.value) ? parseInt(selSt.value, 10) : null,
       javno_dostupan: cbJavno && cbJavno.checked ? 1 : 0,
       kljucne_rijeci: taKljucne ? trimZ(taKljucne.value) || null : null,
-      esej:           taSadrzaj ? trimZ(taSadrzaj.value) || null : null
+      esej:           esejSadrzajGetTekst()
     };
   }
 
@@ -691,6 +1648,10 @@
   function esejOcistiFormu() {
     esejTrenutniId = null;
     esejAutorClanId = null;
+    /* Vrati na mod 0 (novi upis) i ažuriraj footer. */
+    window.mod_upisa_eseja = 0;
+    esejPrimijeniFooterPremaModuUpisa();
+    esejNakonPravaPrimijeniModSkriviIzbrisiAkoNovUpis();
 
     /* Autor edit-delete */
     var autorDiv = document.getElementById('esej_autor');
@@ -710,15 +1671,69 @@
     var inpUpisao = document.getElementById('esej_upisao');
     if (inpUpisao) inpUpisao.value = '';
 
+    /* Naslov eseja */
+    var inpNaslov = document.getElementById('esej_naslov_eseja');
+    if (inpNaslov) inpNaslov.value = '';
+
     /* Ključne riječi i Sadržaj */
     var taKljucne = document.getElementById('esej_kljucne_rijeci');
-    var taSadrzaj = document.getElementById('esej_sadrzaj');
     if (taKljucne) taKljucne.value = '';
-    if (taSadrzaj) taSadrzaj.value = '';
+    esejSadrzajSetTekst('');
+    esejProvedeUvjeteForma();
+  }
+
+  function esejOnemoguciDragDropNaPanelu() {
+    var roots = [];
+    var wrap = document.querySelector('.esej-crud__wrap');
+    var naslov = document.querySelector('.naslov-forme');
+    if (wrap) roots.push(wrap);
+    if (naslov) roots.push(naslov);
+    var ri;
+    for (ri = 0; ri < roots.length; ri++) {
+      (function (root) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function (evtName) {
+          root.addEventListener(evtName, function (ev) { ev.preventDefault(); ev.stopPropagation(); }, false);
+        });
+      })(roots[ri]);
+    }
+  }
+
+  /* ============================================================
+   * Geo promjena: snapshot + potvrda ako forma ima podatke
+   * ============================================================ */
+
+  /** Snimak vrijednosti geo selekta neposredno prije promjene (za Cancel → vraćanje). */
+  var _esejGeoSnapshot = { drzava: '', regija: '', loza: '' };
+
+  function _esejGeoSnimiSnapshot() {
+    _esejGeoSnapshot.drzava = selectDrzava ? selectDrzava.value : '';
+    _esejGeoSnapshot.regija = selectRegija ? selectRegija.value : '';
+    _esejGeoSnapshot.loza   = selectLoza   ? selectLoza.value   : '';
+  }
+
+  function _esejGeoVratiSnapshot() {
+    if (selectDrzava) { selectDrzava.value = _esejGeoSnapshot.drzava; if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('select_drzava'); } catch (e) {} } }
+    if (selectRegija) { selectRegija.value = _esejGeoSnapshot.regija; if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('select_regija'); } catch (e) {} } }
+    if (selectLoza)   { selectLoza.value   = _esejGeoSnapshot.loza;   if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('select_loza');   } catch (e) {} } }
+  }
+
+  /**
+   * Ako forma ima podatke, prikaži 028 pa pozovi onOk/onCancel.
+   * Inače odmah pozovi onOk.
+   */
+  function _esejGeoObradaPromjene(onOk, onCancel) {
+    if (!_esejFormaImaPodatke()) { onOk(); return; }
+    if (typeof window.showPorukaModal !== 'function') { esejOcistiFormu(); onOk(); return; }
+    window.showPorukaModal('028', [], function (odg) {
+      if (odg !== 'OK') { if (onCancel) onCancel(); return; }
+      esejOcistiFormu();
+      onOk();
+    });
   }
 
   function onReady() {
     esejPrimijeniFooterPremaModuUpisa();
+    esejOnemoguciDragDropNaPanelu();
 
     var tabRoot = document.getElementById('esejKontrolaTab');
     if (tabRoot) {
@@ -731,17 +1746,30 @@
       });
     }
 
+    /* Snapshot geo vrijednosti prije svake potencijalne promjene. */
+    var geoKontrole = document.querySelector('.esej-crud__panel-header .clanovi-loza-crud__tablica-header-kontrole');
+    if (geoKontrole) geoKontrole.addEventListener('mousedown', _esejGeoSnimiSnapshot, true);
+    if (selectDrzava) selectDrzava.addEventListener('focus', _esejGeoSnimiSnapshot);
+    if (selectRegija) selectRegija.addEventListener('focus', _esejGeoSnimiSnapshot);
+    if (selectLoza)   selectLoza.addEventListener('focus',   _esejGeoSnimiSnapshot);
+
     if (selectDrzava) {
-      selectDrzava.addEventListener('change', function () {
+      selectDrzava.addEventListener('change', function (ev) {
         var idD = trimZ(selectDrzava.value);
-        popuniRegijeIzKeša(idD, function () {});
+        _esejGeoObradaPromjene(
+          function () { popuniRegijeIzKeša(idD, function () {}); },
+          function () { _esejGeoVratiSnapshot(); }
+        );
       });
     }
 
     if (selectRegija) {
-      selectRegija.addEventListener('change', function () {
+      selectRegija.addEventListener('change', function (ev) {
         var idR = trimZ(selectRegija.value);
-        popuniLozeIzKeša(idR, function () {});
+        _esejGeoObradaPromjene(
+          function () { popuniLozeIzKeša(idR, function () {}); },
+          function () { _esejGeoVratiSnapshot(); }
+        );
       });
     }
 
@@ -754,22 +1782,82 @@
           esejOsvjeziLoziGrupeIFormu(idLoza);
         }
         var idOdmah = esejVrijednostSelektaZaLoz(selEl);
-        if (idOdmah) { promijeniLozuUOsvjezi(idOdmah); return; }
-        queueMicrotask(function () { promijeniLozuUOsvjezi(esejVrijednostSelektaZaLoz(selEl)); });
+        var getIdLoza = idOdmah
+          ? function (cb) { cb(idOdmah); }
+          : function (cb) { queueMicrotask(function () { cb(esejVrijednostSelektaZaLoz(selEl)); }); };
+        getIdLoza(function (idLoza) {
+          _esejGeoObradaPromjene(
+            function () { promijeniLozuUOsvjezi(idLoza); },
+            function () { _esejGeoVratiSnapshot(); }
+          );
+        });
       });
     }
 
-    /* Autor: inicijalizacija edit-delete + handler za brisanje odabira. */
-    if (typeof KontroleInitEditDelete === 'function') {
-      KontroleInitEditDelete(document.getElementById('esejKontrolaTabPanel0') || document);
+    /* Autor: inicijalizacija edit-delete + handler za brisanje odabira.
+       Listener direktno na wrappu (obrazac svih CRUD formi) — ne na parent panelu
+       jer bi bubbled event mogao doseći globalnih handlere i obrisati formu. */
+    var autorWrapEl = document.querySelector('.esej-crud__autor-edit-delete');
+    if (autorWrapEl) {
+      if (typeof KontroleInitEditDelete === 'function') {
+        KontroleInitEditDelete(autorWrapEl);
+      }
+      autorWrapEl.addEventListener('kontrole-edit-delete-clear', function (ev) {
+        ev.stopPropagation();
+        esejOcistiFormu();
+      });
     }
-    var autorPanel = document.getElementById('esejKontrolaTabPanel0');
-    if (autorPanel) {
-      autorPanel.addEventListener('kontrole-edit-delete-clear', function (ev) {
-        var wrap = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__autor-edit-delete') : null;
-        if (!wrap) return;
-        esejAutorClanId = null;
-        delete wrap.dataset.esejClanId;
+
+    /* Inicijalizacija modala za odabir autora i liste eseji. */
+    _esejModalAutorInitInterakcije();
+    _esejModalListaInitInterakcije();
+
+    /* Validacija uvjeta forme: pratimo promjene relevantnih polja. */
+    var naslovInp = document.getElementById('esej_naslov_eseja');
+    if (naslovInp) {
+      var _naslovPasted = false;
+
+      /* Paste: označi flag — transformacija se odgađa do blur-a. */
+      naslovInp.addEventListener('paste', function () { _naslovPasted = true; });
+
+      /* Tipkanje: u sredini riječi → odmah na malo; početak → korisnik bira. */
+      naslovInp.addEventListener('input', function () {
+        if (_naslovPasted) { _naslovPasted = false; esejProvedeUvjeteForma(); return; }
+        var pos = naslovInp.selectionStart;
+        var val = naslovInp.value;
+        if (pos > 0) {
+          var ci = pos - 1;
+          var ch = val[ci];
+          /* Provjeri je li znak velik i nije na početku riječi */
+          if (ch !== ch.toLowerCase()) {
+            var prev = ci > 0 ? val[ci - 1] : '';
+            var naPocetkuRijeci = ci === 0 || /[\s"'«»‚‛""„‟'']/.test(prev);
+            if (!naPocetkuRijeci) {
+              naslovInp.value = val.substring(0, ci) + ch.toLowerCase() + val.substring(ci + 1);
+              try { naslovInp.setSelectionRange(pos, pos); } catch (eS) {}
+            }
+          }
+        }
+        esejProvedeUvjeteForma();
+      });
+
+      /* Blur: VERZAL → kurent, sredina → malo (pokriva paste i edge-caseove). */
+      naslovInp.addEventListener('blur', function () {
+        var val = esejNaslovSreduji(naslovInp.value);
+        if (val !== naslovInp.value) naslovInp.value = val;
+        esejProvedeUvjeteForma();
+      });
+    }
+    var stupanjSel = document.getElementById('esej_select_stupanj');
+    if (stupanjSel) stupanjSel.addEventListener('change', esejProvedeUvjeteForma);
+    var sadrzajTa = document.getElementById('esej_sadrzaj');
+    if (sadrzajTa) {
+      sadrzajTa.addEventListener('input', esejProvedeUvjeteForma);
+      /* Paste: ulijepiti samo plain tekst bez HTML formatiranja. */
+      sadrzajTa.addEventListener('paste', function (e) {
+        e.preventDefault();
+        var tekst = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
+        if (tekst) document.execCommand('insertText', false, tekst);
       });
     }
 
@@ -864,19 +1952,14 @@
     if (btnIzbrisi) {
       btnIzbrisi.addEventListener('click', function () {
         if (!esejTrenutniId) return;
-        if (typeof window.showPorukaModal !== 'function') return;
-        window.showPorukaModal('126', [], function (odgovor) {
-          if (odgovor !== 'OK') return;
-          btnIzbrisi.disabled = true;
-          esejPostJson(getApiUrl('Esej_CRUD_brisanje.php'), { id: esejTrenutniId }, function (res, status) {
-            btnIzbrisi.disabled = false;
+        btnIzbrisi.disabled = true;
+        esejPostJson(getApiUrl('Esej_CRUD_brisanje.php'), { id: esejTrenutniId }, function (res, status) {
+          btnIzbrisi.disabled = false;
             if (status >= 200 && status < 300 && res === 'OK') {
               if (typeof window.showPorukaModal === 'function') {
-                window.showPorukaModal('003', [], function () {
-                  window.location.href = new URL('Meni.php', window.location.href).href;
-                });
+                window.showPorukaModal('003', [], function () { esejOcistiFormu(); });
               } else {
-                window.location.href = new URL('Meni.php', window.location.href).href;
+                esejOcistiFormu();
               }
             } else {
               var p = typeof parseResponseCode === 'function' ? parseResponseCode(res) : null;
@@ -885,7 +1968,6 @@
                 window.showPorukaModal(typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[kod] ? kod : '200', p ? p.replacements || [] : [res]);
               }
             }
-          });
         });
       });
     }

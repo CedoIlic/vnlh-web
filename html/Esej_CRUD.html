@@ -28,7 +28,7 @@
         <div class="kontrola-panel__header clanovi-loza-crud__tablica-header esej-crud__panel-header" role="group" aria-label="Zaglavlje eseja">
             <div class="clanovi-loza-crud__tablica-header-logo-wrap" aria-hidden="true">
                 <div class="clanovi-loza-crud__tablica-header-logo-frame">
-                    <img id="clanovi_loza_tablica_logo" class="clanovi-loza-crud__tablica-header-logo-img" alt="" decoding="async" hidden src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                    <img id="clanovi_loza_tablica_logo" class="clanovi-loza-crud__tablica-header-logo-img" alt="" decoding="async" draggable="false" hidden src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
                 </div>
             </div>
             <div class="clanovi-loza-crud__tablica-header-kontrole">
@@ -100,6 +100,10 @@
                                     </div>
                                 </div>
                                 <div class="esej-crud__polje-stog">
+                                    <label class="kontrola-labela mb-0" for="esej_naslov_eseja">Naslov eseja</label>
+                                    <input id="esej_naslov_eseja" type="text" class="kontrola-edit esej-crud__opci-kontrola" maxlength="250" autocomplete="off" aria-label="Naslov eseja" disabled>
+                                </div>
+                                <div class="esej-crud__polje-stog">
                                     <label class="kontrola-labela mb-0" for="esej_select_stupanj">Esej je namjenjen stupnju</label>
                                     <div class="kontrola-select">
                                         <select id="esej_select_stupanj" class="esej-crud__opci-kontrola" aria-label="Stupanj eseja" disabled>
@@ -120,7 +124,9 @@
                             <div class="esej-crud__opci-kol esej-crud__opci-kol--desno">
                                 <div class="esej-crud__polje-stog esej-crud__polje-stog--raste">
                                     <label class="kontrola-labela mb-0" for="esej_kljucne_rijeci">Ključne riječi</label>
-                                    <textarea id="esej_kljucne_rijeci" class="kontrola-napomena esej-crud__opci-kljucne esej-crud__opci-kontrola" rows="4" spellcheck="true" aria-label="Ključne riječi eseja" disabled></textarea>
+                                    <div class="esej-crud__scrol-omot esej-crud__opci-kljucne-omot">
+                                        <textarea id="esej_kljucne_rijeci" class="kontrola-napomena esej-crud__opci-kljucne esej-crud__opci-kontrola" rows="4" spellcheck="true" aria-label="Ključne riječi eseja" disabled></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -130,7 +136,9 @@
                         <div class="esej-crud__esej-tab" role="group" aria-label="Sadržaj eseja">
                             <div class="esej-crud__esej-blok esej-crud__esej-blok--sadrzaj">
                                 <label class="kontrola-labela mb-0" for="esej_sadrzaj">Sadržaj eseja</label>
-                                <textarea id="esej_sadrzaj" class="kontrola-napomena esej-crud__esej-textarea esej-crud__esej-kontrola" rows="4" spellcheck="true" aria-label="Sadržaj eseja" disabled></textarea>
+                                <div class="esej-crud__scrol-omot esej-crud__sadrzaj-omot">
+                                    <div id="esej_sadrzaj" class="kontrola-napomena esej-crud__esej-textarea esej-crud__esej-kontrola" contenteditable="false" role="textbox" aria-multiline="true" aria-label="Sadržaj eseja" spellcheck="true"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -146,6 +154,91 @@
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
             </div>
         </div>
+    </div>
+</div>
+<!-- Modal za odabir autora eseja (modal-tablica uzorak: drag zaglavlja, resize traka + kut, localStorage pozicija/veličina) -->
+<div id="esejModalAutor" class="modal-tablica esej-crud__modal-autor" role="dialog" aria-label="Odaberi autora rada" aria-modal="true" aria-hidden="true">
+    <div class="modal-tablica__overlay"></div>
+    <div class="modal-tablica__dialog">
+        <div class="modal-tablica__header esej-crud__modal-autor-header">
+            <div class="esej-crud__modal-autor-naslov">Odaberi autora rada</div>
+            <div class="esej-crud__modal-autor-trazi-red">
+                <label class="kontrola-labela mb-0" for="esej_modal_autor_trazi">Pretraži</label>
+                <div class="kontrola-edit-delete esej-crud__modal-autor-trazi-wrap">
+                    <span class="esej-crud__modal-autor-trazi-lupa" aria-hidden="true"><span class="kontrola-icon--magnifying-glass"></span></span>
+                    <input id="esej_modal_autor_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" maxlength="200" placeholder="">
+                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti pretragu"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-tablica__body esej-crud__modal-autor-body">
+            <div class="modal-tablica__body-table-wrap">
+                <div id="esej_modal_autor_tablica" class="kontrola-tablica tablica--podaci-h-linije esej-crud__modal-autor-tablica" aria-label="Članovi lože">
+                    <div class="kontrola-tablica__inner">
+                        <div class="kontrola-tablica__header">
+                            <table><thead><tr><th class="kontrola-tablica__th--no-sort">Članovi lože</th></tr></thead></table>
+                        </div>
+                        <div class="kontrola-tablica__scroll-wrap">
+                            <div class="kontrola-tablica__scroll" tabindex="0" id="esej_modal_autor_scroll">
+                                <table><tbody id="esej_modal_autor_tbody"></tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="kontrola-panel__resize-bar" id="esej_modal_autor_resize_bar"></div>
+        </div>
+        <div class="modal-tablica__footer">
+            <button type="button" id="esej_modal_autor_ok" class="kontrola-btn kontrola-btn--primary" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">U redu</span></span></span></button>
+            <button type="button" id="esej_modal_autor_cancel" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
+        </div>
+        <div class="modal-tablica__resize-corner esej-crud__modal-autor-resize-corner" id="esej_modal_autor_resize_corner"></div>
+    </div>
+</div>
+<!-- Modal: lista eseji za odabir/editiranje -->
+<div id="esejModalLista" class="modal-tablica esej-crud__modal-lista" role="dialog" aria-label="Odaberi esej za editiranje" aria-modal="true" aria-hidden="true">
+    <div class="modal-tablica__overlay"></div>
+    <div class="modal-tablica__dialog">
+        <div class="modal-tablica__header esej-crud__modal-autor-header">
+            <div class="esej-crud__modal-autor-naslov">Odaberi esej za editiranje</div>
+            <div class="esej-crud__modal-autor-trazi-red">
+                <label class="kontrola-labela mb-0" for="esej_modal_lista_trazi">Pretraži</label>
+                <div class="kontrola-edit-delete esej-crud__modal-autor-trazi-wrap">
+                    <span class="esej-crud__modal-autor-trazi-lupa" aria-hidden="true"><span class="kontrola-icon--magnifying-glass"></span></span>
+                    <input id="esej_modal_lista_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" maxlength="200" placeholder="">
+                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti pretragu"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-tablica__body esej-crud__modal-autor-body">
+            <div class="modal-tablica__body-table-wrap">
+                <div id="esej_modal_lista_tablica" class="kontrola-tablica tablica--podaci-h-linije esej-crud__modal-lista-tablica" aria-label="Eseji">
+                    <div class="kontrola-tablica__inner">
+                        <div class="kontrola-tablica__header">
+                            <table><thead><tr><th class="kontrola-tablica__th--no-sort">Eseji</th></tr></thead></table>
+                        </div>
+                        <div class="kontrola-tablica__scroll-wrap">
+                            <div class="kontrola-tablica__scroll" tabindex="0" id="esej_modal_lista_scroll">
+                                <table><tbody id="esej_modal_lista_tbody"></tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="kontrola-panel__resize-bar" id="esej_modal_lista_resize_bar"></div>
+        </div>
+        <div class="modal-tablica__footer">
+            <button type="button" id="esej_modal_lista_zatvori" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Zatvori</span></span></span></button>
+        </div>
+        <div class="modal-tablica__resize-corner esej-crud__modal-autor-resize-corner" id="esej_modal_lista_resize_corner"></div>
+    </div>
+</div>
+<!-- Popup: ključne riječi eseja (hover/klik na elipsis u retku) -->
+<div id="esejKljucnePopup" class="esej-crud__kljucne-popup" hidden>
+    <div class="esej-crud__kljucne-popup-naslov">Ključne riječi</div>
+    <div class="esej-crud__kljucne-popup-tekst" id="esej_kljucne_popup_tekst"></div>
+    <div class="esej-crud__kljucne-popup-footer">
+        <button type="button" id="esej_kljucne_popup_izlaz" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izlaz</span></span></span></button>
     </div>
 </div>
 <script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
