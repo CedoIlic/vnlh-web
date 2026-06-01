@@ -88,10 +88,10 @@
                             <!-- Lijeva kolona -->
                             <div class="esej-crud__opci-kol esej-crud__opci-kol--lijevo">
                                 <div class="esej-crud__polje-stog">
-                                    <label class="kontrola-labela mb-0" for="esej_autor">Autor eseja</label>
+                                    <label id="esej_autor_label" class="kontrola-labela mb-0">Autor eseja</label>
                                     <div class="esej-crud__autor-red">
                                         <div class="kontrola-edit-delete esej-crud__autor-edit-delete">
-                                            <div id="esej_autor" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-label="Autor eseja (samo odabir, bez tipkanja)"></div>
+                                            <div id="esej_autor" class="kontrola-edit-delete__input kontrola-edit-delete__input--rich-html" tabindex="0" role="textbox" contenteditable="false" aria-readonly="true" aria-labelledby="esej_autor_label"></div>
                                             <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši odabir autora" title="Obriši odabir"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
                                         </div>
                                         <button type="button" id="esej_btn_autor_ellipsis" class="esej-crud__ellipsis-btn esej-crud__opci-kontrola" aria-label="Odabir autora" title="Odabir autora" disabled>
@@ -135,9 +135,9 @@
                     <div class="kontrola-tab__panel esej-crud__tab-panel--esej" role="tabpanel" id="esejKontrolaTabPanel1" aria-labelledby="esejKontrolaTabKart1" hidden>
                         <div class="esej-crud__esej-tab" role="group" aria-label="Sadržaj eseja">
                             <div class="esej-crud__esej-blok esej-crud__esej-blok--sadrzaj">
-                                <label class="kontrola-labela mb-0" for="esej_sadrzaj">Sadržaj eseja</label>
+                                <label id="esej_sadrzaj_label" class="kontrola-labela mb-0">Sadržaj eseja</label>
                                 <div class="esej-crud__scrol-omot esej-crud__sadrzaj-omot">
-                                    <div id="esej_sadrzaj" class="kontrola-napomena esej-crud__esej-textarea esej-crud__esej-kontrola" contenteditable="false" role="textbox" aria-multiline="true" aria-label="Sadržaj eseja" spellcheck="true"></div>
+                                    <div id="esej_sadrzaj" class="kontrola-napomena esej-crud__esej-textarea esej-crud__esej-kontrola" contenteditable="false" role="textbox" aria-multiline="true" aria-labelledby="esej_sadrzaj_label" spellcheck="true"></div>
                                 </div>
                             </div>
                         </div>
@@ -207,6 +207,17 @@
                     <span class="esej-crud__modal-autor-trazi-lupa" aria-hidden="true"><span class="kontrola-icon--magnifying-glass"></span></span>
                     <input id="esej_modal_lista_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" maxlength="200" placeholder="">
                     <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti pretragu"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                </div>
+            </div>
+            <div class="esej-crud__modal-lista-legenda">
+                <label class="kontrola-labela mb-0">Legenda</label>
+                <div class="esej-crud__modal-lista-legenda-red">
+                    <span class="esej-crud__modal-lista-legenda-kv" id="esej_modal_lista_leg_kv1"></span>
+                    <label class="kontrola-labela mb-0">Esej je postavljen kao javan.</label>
+                </div>
+                <div class="esej-crud__modal-lista-legenda-red">
+                    <span class="esej-crud__modal-lista-legenda-kv" id="esej_modal_lista_leg_kv2"></span>
+                    <label class="kontrola-labela mb-0">Esej druge lože koji je javno dostupan.</label>
                 </div>
             </div>
         </div>

@@ -39,6 +39,8 @@
   var esejAutorClanId = null;
   /** Pravo upisa/izmjene iz geo/prava odgovora (1 = smije, 0 = ne smije); koristi esejProvedeUvjeteForma. */
   var _esejPravaUpisIzmjena = 0;
+  /** true kad je učitan tuđi (javni) esej — sve kontrole RO, tipke skrivene. */
+  var _esejReadOnlyMode = false;
   /** Pravo brisanja iz geo/prava odgovora; koristi se kod učitavanja eseja za edit. */
   var _esejPravaBrisanjeSloga = 0;
   /** ID stupnja koji treba postaviti u select nakon što puniSelectStupanjEseja dovrši XHR (učitavanje eseja). */
@@ -771,6 +773,7 @@
    * Lista modal: odabir postojećeg eseja za editiranje
    * ============================================================ */
 
+  var _esejModalListaBojeCache   = { kv1: null, kv2: null }; // cache boja legende
   var _esejModalListaData        = [];     // svi učitani redci
   var _esejModalListaOffset      = 0;
   var _esejModalListaIsLoading   = false;
@@ -782,9 +785,9 @@
   var _esejModalListaInitDone    = false;
   var _ESEJ_MODAL_LISTA_KEY      = 'esej_crud_lista_modal';
   var _ESEJ_MODAL_LISTA_DEF_W    = 600;
-  var _ESEJ_MODAL_LISTA_DEF_H    = 500;
+  var _ESEJ_MODAL_LISTA_DEF_H    = 560;
   var _ESEJ_MODAL_LISTA_MIN_W    = 600;
-  var _ESEJ_MODAL_LISTA_MIN_H    = 500;
+  var _ESEJ_MODAL_LISTA_MIN_H    = 560;
 
   /* Popup: ključne riječi */
   var _esejKljucneHideT    = null;
@@ -803,6 +806,14 @@
     try { localStorage.setItem(_ESEJ_MODAL_LISTA_KEY, JSON.stringify({ left: left, top: top, width: w, height: h })); } catch (e) {}
   }
 
+  function _esejModalListaPrimijeniLegendBoje() {
+    var kv1 = document.getElementById('esej_modal_lista_leg_kv1');
+    var kv2 = document.getElementById('esej_modal_lista_leg_kv2');
+    function strip(b) { var s = String(b || '').trim(); return s.length === 9 ? s.substring(0, 7) : s; }
+    if (kv1 && _esejModalListaBojeCache.kv1) kv1.style.backgroundColor = strip(_esejModalListaBojeCache.kv1);
+    if (kv2 && _esejModalListaBojeCache.kv2) kv2.style.backgroundColor = strip(_esejModalListaBojeCache.kv2);
+  }
+
   function _esejModalListaFormatRed(row) {
     var parts = [];
     var naslov = row.naslov_eseja ? String(row.naslov_eseja).trim() : '';
@@ -810,6 +821,10 @@
     var autor = [row.autor_prezime, row.autor_ime].filter(Boolean).join(' ');
     if (autor) parts.push(autor);
     if (row.stupanj_broj != null) parts.push(String(row.stupanj_broj) + '°');
+    if (row.ista_loza !== 1) {
+      var lozaInfo = [row.loza_naziv, row.loza_grad].filter(Boolean).join(', ');
+      if (lozaInfo) parts.push(lozaInfo);
+    }
     return parts.join(', ');
   }
 
@@ -831,11 +846,11 @@
       cel.className = 'kontrola-tablica__cell-inner';
       cel.setAttribute('tabindex', '0');
       cel.textContent = _esejModalListaFormatRed(row);
-      if (row.javno_dostupan && row.boja_javno) {
-        /* Boja iz zapisnik_boje_u_listi id=10; strip alpha ako je 8-digit hex (#RRGGBBAA → #RRGGBB). */
-        var boja = String(row.boja_javno).trim();
-        cel.style.color = boja.length === 9 ? boja.substring(0, 7) : boja;
-      }
+      /* Boja retka: tuđi javni esej → fg id=11; vlastiti javni esej → fg id=10. */
+      var bojaFg = null;
+      if (row.ista_loza !== 1 && row.boja_javno_11) bojaFg = row.boja_javno_11;
+      else if (row.javno_dostupan && row.boja_javno)  bojaFg = row.boja_javno;
+      if (bojaFg) { var bFg = String(bojaFg).trim(); cel.style.color = bFg.length === 9 ? bFg.substring(0, 7) : bFg; }
 
       var btn = document.createElement('button');
       btn.type = 'button';
@@ -876,6 +891,12 @@
         if (!Array.isArray(arr)) arr = [];
       }
       _esejModalListaHasMore = arr.length >= _ESEJ_MODAL_LISTA_LIMIT;
+      /* Cachirati boje legende iz prvog raspoloživog retka. */
+      if (arr.length > 0) {
+        if (arr[0].boja_javno)    _esejModalListaBojeCache.kv1 = arr[0].boja_javno;
+        if (arr[0].boja_javno_11) _esejModalListaBojeCache.kv2 = arr[0].boja_javno_11;
+        _esejModalListaPrimijeniLegendBoje();
+      }
       if (!append) {
         _esejModalListaData = arr;
         var tbody = document.getElementById('esej_modal_lista_tbody');
@@ -917,6 +938,7 @@
     if (traziInp) traziInp.value = '';
     root.classList.add('modal-tablica--open');
     root.setAttribute('aria-hidden', 'false');
+    _esejModalListaPrimijeniLegendBoje();
     _esejModalListaUcitajRedove(false);
     setTimeout(function () { if (traziInp) try { traziInp.focus(); } catch (ef) {} }, 0);
   }
@@ -999,19 +1021,76 @@
 
   function _esejUcitajZaEdit(rowData) {
     if (!rowData) return;
-    /* 1. Clear + postavi edit mod. */
-    esejOcistiFormu();
-    window.mod_upisa_eseja = 1;
-    esejTrenutniId = String(rowData.id);
-    esejPrimijeniFooterPremaModuUpisa();
-    /* Un-hide Izbriši ako prava dozvoljavaju. */
-    var bBr = document.getElementById('btnIzbrisi');
-    if (bBr && _esejPravaBrisanjeSloga > 0) { bBr.hidden = false; bBr.style.removeProperty('display'); }
+    var isIstaLoza = rowData.ista_loza === 1;
+    /* 1. Clear + postavi mod (edit ili RO za tuđi esej). */
+    esejOcistiFormu();  /* resetira _esejReadOnlyMode = false */
+    if (isIstaLoza) {
+      window.mod_upisa_eseja = 1;
+      esejTrenutniId = String(rowData.id);
+      esejPrimijeniFooterPremaModuUpisa();
+      var bBr = document.getElementById('btnIzbrisi');
+      if (bBr && _esejPravaBrisanjeSloga > 0) { bBr.hidden = false; bBr.style.removeProperty('display'); }
+    } else {
+      /* Tuđi javni esej: RO mod — samo pregled; geo grupa ostaje nedotaknuta. */
+      _esejReadOnlyMode = true;
+      window.mod_upisa_eseja = 0;
+      esejTrenutniId = null;
+      esejPrimijeniFooterPremaModuUpisa();
+    }
 
-    /* 2. Geo kaskada → loža → enable kontrola → učitaj polja. */
+    /* 2. Za tuđi esej: geo grupa ostaje nedotaknuta — samo popuni polja i primjeni RO. */
+    if (!isIstaLoza) {
+      _ucitajPoljaRO();
+      esejModalListaZatvori();
+      return;
+    }
+
+    /* 2b. Vlastiti esej: geo kaskada → loža → enable kontrola → učitaj polja. */
     var idDrzava = String(rowData.id_drzava || '');
     var idRegija = String(rowData.id_regija || '');
     var idLoza   = String(rowData.id_loza   || '');
+
+    function _ucitajPoljaRO() {
+      /* Tuđi esej: popuni polja bez geo kaskade, zatim primjeni RO. */
+      var autorDiv  = document.getElementById('esej_autor');
+      var autorWrap = autorDiv ? autorDiv.closest('.esej-crud__autor-edit-delete') : null;
+      esejAutorClanId = String(rowData.id_autor || '');
+      if (autorDiv) { autorDiv.textContent = [rowData.autor_prezime, rowData.autor_ime].filter(Boolean).join(' '); autorDiv.dispatchEvent(new Event('input', { bubbles: true })); }
+      if (autorWrap && esejAutorClanId) autorWrap.dataset.esejClanId = esejAutorClanId;
+
+      var inpNaslov = document.getElementById('esej_naslov_eseja');
+      if (inpNaslov) inpNaslov.value = esejNaslovSreduji(rowData.naslov_eseja || '');
+
+      /* Stupanj: popuni select s jednom opcijom iz podataka tuđeg eseja. */
+      var selSt = document.getElementById('esej_select_stupanj');
+      if (selSt && rowData.id_stupanj) {
+        while (selSt.firstChild) selSt.removeChild(selSt.firstChild);
+        var optSt = document.createElement('option');
+        optSt.value = String(rowData.id_stupanj);
+        var stTxt = rowData.stupanj_broj != null ? String(rowData.stupanj_broj) + '°' : '';
+        if (rowData.stupanj_naziv) stTxt += (stTxt ? ', ' : '') + rowData.stupanj_naziv;
+        optSt.textContent = stTxt || String(rowData.id_stupanj);
+        selSt.appendChild(optSt);
+        selSt.value = String(rowData.id_stupanj);
+        if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('esej_select_stupanj'); } catch (e) {} }
+      }
+
+      var cbJavno = document.getElementById('esej_javno_dostupan');
+      if (cbJavno) cbJavno.checked = !!(parseInt(rowData.javno_dostupan, 10));
+
+      var inpUpisao = document.getElementById('esej_upisao');
+      if (inpUpisao) {
+        var uIme2 = [rowData.upisao_prezime, rowData.upisao_ime].filter(Boolean).join(' ');
+        var uDat2 = '';
+        if (rowData.vrijeme_upisa) { try { var dO2 = new Date(rowData.vrijeme_upisa); uDat2 = dO2.toLocaleDateString('hr-HR') + ' - ' + String(dO2.getHours()).padStart(2,'0') + ':' + String(dO2.getMinutes()).padStart(2,'0') + ':' + String(dO2.getSeconds()).padStart(2,'0'); } catch(ed){} }
+        inpUpisao.value = uIme2 ? (uDat2 ? uIme2 + ', ' + uDat2 : uIme2) : uDat2;
+      }
+
+      var taKl2 = document.getElementById('esej_kljucne_rijeci');
+      if (taKl2) taKl2.value = rowData.kljucne_rijeci || '';
+      esejSadrzajSetTekst(rowData.esej || '');
+      _esejPrimijeniReadOnly();
+    }
 
     function _ucitajPolja() {
       /* Autor */
@@ -1267,10 +1346,71 @@
       var headerPadY = tok('--modal_tablica_header_padding_y', 12);
       var footerPadY = tok('--modal_tablica_footer_padding_y', 12);
       var btnH  = tok('--button_height', 36);
-      var minH  = Math.max(400, Math.ceil(headerPadY * 2 + 62 + padY + headH + rowH * 5 + padY + barH + footerPadY * 2 + btnH));
+      /* 150 = procjena visine header sadržaja: naslov(20) + gap(8) + pretraži(34) + legenda(~88) */
+      var minH  = Math.max(400, Math.ceil(headerPadY * 2 + 150 + padY + headH + rowH * 5 + padY + barH + footerPadY * 2 + btnH));
       _ESEJ_MODAL_LISTA_MIN_H = minH;
       if (dialog) dialog.style.minHeight = minH + 'px';
     }());
+  }
+
+  /**
+   * Primjeni RO ograničenja za tuđi javni esej:
+   *  – Opci/esej kontrole: disabled (ne mogu se mijenjati)
+   *  – Autor: samo ellipsis gumb disabled; X (clear) ostaje AKTIVAN — jedini povratak na init stanje
+   *  – Geo selekti: disabled (samo prikaz konteksta)
+   *  – Tipke Upis/Izmjeni/Izbriši/PDF: skrivene / disabled
+   *  – Labele: ostaju normalne boje (nema KontroleSyncLabelsDisabledState)
+   */
+  function _esejPrimijeniReadOnly() {
+    var oi, ei;
+    /* Opci kontrole:
+       – esej_upisao: uvijek readonly, ne diraj
+       – text inputi: readonly (izgleda enabled, vrijednost vidljiva, ne može se tipkati)
+       – select: pointer-events na wrapperuu (izgleda enabled, vrijednost vidljiva, dropdown ne radi)
+       – checkbox: pointer-events inline (stanje vidljivo, ne može se kliknuti)
+       – textarea: readonly
+       – Autor ellipsis: disabled (jedini koji ostaje funkcionalno disabled) */
+    var opciNodes = document.querySelectorAll('#esejKontrolaTabPanel0 .esej-crud__opci-kontrola');
+    for (oi = 0; oi < opciNodes.length; oi++) {
+      var elO = opciNodes[oi];
+      if (!elO || elO.id === 'esej_upisao') continue;
+      if (elO.tagName === 'INPUT' && elO.type !== 'checkbox') {
+        elO.readOnly = true;
+      } else if (elO.tagName === 'TEXTAREA') {
+        elO.readOnly = true;
+      } else if (elO.tagName === 'SELECT') {
+        var selWrap = elO.closest('.kontrola-select');
+        if (selWrap) selWrap.classList.add('esej-crud__kontrola-ro');
+        else { elO.style.pointerEvents = 'none'; elO.style.cursor = 'default'; }
+      } else if (elO.tagName === 'INPUT' && elO.type === 'checkbox') {
+        elO.style.pointerEvents = 'none'; elO.style.cursor = 'default';
+        var cbLbl = elO.id ? document.querySelector('label[for="' + elO.id + '"]') : null;
+        if (cbLbl) { cbLbl.style.pointerEvents = 'none'; cbLbl.style.cursor = 'default'; }
+      } else if ('disabled' in elO) {
+        elO.disabled = true;
+      }
+    }
+    /* Autor ellipsis: disabled; X ostaje aktivan. */
+    var btnAutorEll = document.getElementById('esej_btn_autor_ellipsis');
+    if (btnAutorEll) btnAutorEll.disabled = true;
+    /* Esej tab kontrole. */
+    var esejNodes = document.querySelectorAll('#esejKontrolaTabPanel1 .esej-crud__esej-kontrola');
+    for (ei = 0; ei < esejNodes.length; ei++) {
+      var el = esejNodes[ei];
+      if (!el) continue;
+      if (el.tagName === 'TEXTAREA') { el.readOnly = true; }
+      else if (el.hasAttribute('contenteditable')) { el.contentEditable = 'false'; }
+      else if ('disabled' in el) { el.disabled = true; }
+    }
+    /* Geo selekti se NE diraju — ostaju enabled za normalnu upotrebu. */
+    /* Tipke: skrivene. */
+    var bUpis = document.getElementById('btnUpisi');
+    if (bUpis) { bUpis.hidden = true; bUpis.style.display = 'none'; bUpis.disabled = true; }
+    var bBr = document.getElementById('btnIzbrisi');
+    if (bBr)   { bBr.hidden = true; bBr.style.display = 'none'; }
+    var btnPdf = document.getElementById('esej_btn_pdf');
+    if (btnPdf) btnPdf.disabled = true;
+    /* Labele NE sinkroniziramo — ostaju normalne boje (vizualni RO, ne disabled izgled). */
   }
 
   /**
@@ -1279,6 +1419,7 @@
    * PDF: enabled samo kad su loža + autor + naslov + stupanj + sadržaj postavljeni.
    */
   function esejProvedeUvjeteForma() {
+    if (_esejReadOnlyMode) { _esejPrimijeniReadOnly(); return; }
     var imaLozu   = !!esejIdOdabraneLozISelecta();
     var imaAutor  = !!esejAutorClanId;
     var naslovEl  = document.getElementById('esej_naslov_eseja');
@@ -1376,6 +1517,7 @@
       if (tabBody) KontroleSyncLabelsDisabledState(tabBody);
     }
 
+    if (_esejReadOnlyMode) { _esejPrimijeniReadOnly(); return; }
     esejProvedeUvjeteForma(imaLozu);
     var bBr = document.getElementById('btnIzbrisi');
     if (bBr && !bBr.hidden) bBr.disabled = !imaLozu;
@@ -1547,16 +1689,32 @@
 
   /**
    * Izvuče tekst iz contenteditable diva.
-   * Koristi innerText koji između blok-elemenata (div, p) umeće \n,
-   * pa se paragrafna struktura čuva bez ručnog iteriranja.
+   * Radi na skrivenom tabu (ne koristi innerText koji zahtijeva layout).
+   * Klon + zamjena <br> s \n čuva prijelome koje Chrome piše kao <br>
+   * unutar <div> pri execCommand('insertText') s \n u tekstu.
    */
   function esejSadrzajGetTekst() {
     var el = document.getElementById('esej_sadrzaj');
     if (!el) return null;
     if (el.tagName === 'TEXTAREA') return trimZ(el.value) || null;
-    var raw = (typeof el.innerText !== 'undefined' ? el.innerText : el.textContent) || '';
-    raw = raw.replace(/\r\n/g, '\n').trim();
-    return raw || null;
+    /* Klon da ne diramo live DOM. */
+    var clone = el.cloneNode(true);
+    /* Zamijeni <br> s text node '\n' da textContent sačuva prijelom. */
+    var brs = clone.querySelectorAll('br');
+    var bi;
+    for (bi = 0; bi < brs.length; bi++) {
+      var br = brs[bi];
+      br.parentNode.insertBefore(document.createTextNode('\n'), br);
+      br.parentNode.removeChild(br);
+    }
+    var parts = [];
+    var i, n, t;
+    for (i = 0; i < clone.childNodes.length; i++) {
+      n = clone.childNodes[i];
+      t = (n.textContent || '').trim();
+      if (t) parts.push(t);
+    }
+    return parts.join('\n') || null;
   }
 
   /**
@@ -1658,6 +1816,7 @@
   function esejOcistiFormu() {
     esejTrenutniId = null;
     esejAutorClanId = null;
+    _esejReadOnlyMode = false;
     /* Postavi na tab 0 (Opći podaci). */
     var tabRoot = document.getElementById('esejKontrolaTab');
     if (tabRoot && typeof kontrolaTabPostaviAktivni === 'function') {
@@ -1694,6 +1853,37 @@
     var taKljucne = document.getElementById('esej_kljucne_rijeci');
     if (taKljucne) taKljucne.value = '';
     esejSadrzajSetTekst('');
+    /* Re-enable forme bez stupanj XHR-a (izbjegava race condition s _ucitajPolja). */
+    (function () {
+      var imaLCur = !!esejIdOdabraneLozISelecta();
+      var oi, ei;
+      var opN = document.querySelectorAll('#esejKontrolaTabPanel0 .esej-crud__opci-kontrola');
+      for (oi = 0; oi < opN.length; oi++) {
+        var elOC = opN[oi]; if (!elOC) continue;
+        if ('disabled' in elOC) elOC.disabled = !imaLCur;
+        if ('readOnly' in elOC && elOC.id !== 'esej_upisao') elOC.readOnly = false;
+        elOC.style.removeProperty('pointer-events');
+        elOC.style.removeProperty('cursor');
+        if (elOC.tagName === 'INPUT' && elOC.type === 'checkbox' && elOC.id) {
+          var lbl = document.querySelector('label[for="' + elOC.id + '"]');
+          if (lbl) { lbl.style.removeProperty('pointer-events'); lbl.style.removeProperty('cursor'); }
+        }
+        /* Ukloni RO klasu s custom select wrappera. */
+        var sw = elOC.tagName === 'SELECT' ? elOC.closest('.kontrola-select') : null;
+        if (sw) sw.classList.remove('esej-crud__kontrola-ro');
+      }
+      var esN = document.querySelectorAll('#esejKontrolaTabPanel1 .esej-crud__esej-kontrola');
+      for (ei = 0; ei < esN.length; ei++) {
+        var elE = esN[ei]; if (!elE) continue;
+        if ('disabled' in elE) elE.disabled = !imaLCur;
+        if ('readOnly' in elE) elE.readOnly = false;
+        else if (elE.hasAttribute('contenteditable')) elE.contentEditable = imaLCur ? 'true' : 'false';
+      }
+      var btnEll = document.getElementById('esej_btn_autor_ellipsis');
+      if (btnEll) btnEll.disabled = !imaLCur;
+      esejSyncGeoLabels();
+      esejScheduleMinVisinuResiza();
+    }());
     esejProvedeUvjeteForma();
   }
 
@@ -1872,7 +2062,11 @@
       sadrzajTa.addEventListener('paste', function (e) {
         e.preventDefault();
         var tekst = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
-        if (tekst) document.execCommand('insertText', false, tekst);
+        if (tekst) {
+          document.execCommand('insertText', false, tekst);
+          /* execCommand ne okida input pouzdano u svim browserima — reevaluiraj uvjete za tipke. */
+          setTimeout(esejProvedeUvjeteForma, 0);
+        }
       });
     }
 

@@ -372,6 +372,13 @@ body {
   cursor: default;
 }
 
+/* Kontrole u RO modu tuđeg eseja: izgledaju enabled, imaju vrijednost, ne mogu se mijenjati */
+.esej-crud__kontrola-ro,
+.esej-crud__kontrola-ro .kontrola-select__display {
+  pointer-events: none;
+  cursor: default;
+}
+
 /* --- Scrollbar textarea/contenteditable kontroli — isti tokeni kao tablice --- */
 
 @supports not selector(::-webkit-scrollbar) {
@@ -563,6 +570,36 @@ body {
   flex: 1 1 0% !important;
   min-height: 0 !important;
   overflow: hidden;
+}
+
+/* Legenda ispod Pretraži seta u listi modalu */
+.esej-crud__modal-lista-legenda {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.4rem var(--modal_tablica_header_padding_x, 1rem) 0;
+  border-bottom: 1px solid var(--modal_tablica_header_border_bottom, transparent);
+}
+
+.esej-crud__modal-lista-legenda-red {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-left: 5mm;
+}
+
+.esej-crud__modal-lista-legenda-red .kontrola-labela {
+  font-weight: 400;
+}
+
+.esej-crud__modal-lista-legenda-kv {
+  display: inline-block;
+  flex-shrink: 0;
+  height: 1em;
+  width: 2em;
+  border: 1px solid var(--text, currentColor);
+  box-sizing: border-box;
 }
 
 /* Lista modal dijeli header/body/tablica CSS s autor modalom;
