@@ -135,6 +135,41 @@
     return s == null ? '' : String(s).replace(/^\s+|\s+$/g, '');
   }
 
+  function zapisnikTekstGetTekst() {
+    var el = document.getElementById('zapisnik_edit_tekst');
+    if (!el) return null;
+    if (el.tagName === 'TEXTAREA') return trimZ(el.value) || null;
+    var clone = el.cloneNode(true);
+    var brs = clone.querySelectorAll('br');
+    var bi;
+    for (bi = 0; bi < brs.length; bi++) {
+      brs[bi].parentNode.insertBefore(document.createTextNode('\n'), brs[bi]);
+      brs[bi].parentNode.removeChild(brs[bi]);
+    }
+    var parts = [];
+    for (var i = 0; i < clone.childNodes.length; i++) {
+      var t = (clone.childNodes[i].textContent || '').trim();
+      if (t) parts.push(t);
+    }
+    return parts.join('\n') || null;
+  }
+
+  function zapisnikTekstSetTekst(tekst) {
+    var el = document.getElementById('zapisnik_edit_tekst');
+    if (!el) return;
+    if (el.tagName === 'TEXTAREA') { el.value = tekst || ''; return; }
+    el.innerHTML = '';
+    if (!tekst) return;
+    var paragraphs = String(tekst).split(/\n+/);
+    for (var pi = 0; pi < paragraphs.length; pi++) {
+      var pText = paragraphs[pi].trim();
+      if (!pText) continue;
+      var p = document.createElement('p');
+      p.textContent = pText;
+      el.appendChild(p);
+    }
+  }
+
   /* Zaglavlje (#select_drzava … #select_loza) — rana referenca za očitanje ID-a lože od selectedOptions bez „temporalnog” problema. */
   var selectDrzava = document.getElementById('select_drzava');
   var selectRegija = document.getElementById('select_regija');
@@ -820,6 +855,8 @@
     }
     var inpD = document.getElementById('zapisnik_datum_radova');
     if (inpD) inpD.disabled = !imaLozu;
+    var btnOdustani = document.getElementById('zapisnik_datum_btn_odustani');
+    if (btnOdustani) btnOdustani.disabled = !imaLozu;
     var selS = document.getElementById('zapisnik_select_stupanj_radova');
     if (selS) {
       selS.disabled = !imaLozu;
@@ -863,8 +900,12 @@
     var zapisnikTekstNodes = document.querySelectorAll('#zapisnikKontrolaTabPanel3 .zapisnik-crud__zapisnik-kontrola');
     for (zi = 0; zi < zapisnikTekstNodes.length; zi++) {
       var elZap = zapisnikTekstNodes[zi];
-      if (!elZap || !('disabled' in elZap)) continue;
-      elZap.disabled = !imaLozu;
+      if (!elZap) continue;
+      if ('disabled' in elZap) {
+        elZap.disabled = !imaLozu;
+      } else if (elZap.hasAttribute('contenteditable')) {
+        elZap.setAttribute('contenteditable', imaLozu ? 'true' : 'false');
+      }
     }
     var esejiNodes = document.querySelectorAll('#zapisnikKontrolaTabPanel4 .zapisnik-crud__eseji-kontrola');
     var ei;
@@ -2974,7 +3015,7 @@
       ovjera_poslije_govornik:    cbVal(cbNakonGv),
       ovjera_poslije_govornik_id: cbId(cbNakonGv),
       sazetak:       taS ? trimZ(taS.value) || null : null,
-      zapisnik:      taT ? trimZ(taT.value) || null : null,
+      zapisnik:      trimZ(zapisnikTekstGetTekst() || '') || null,
       loze_ucesnice: lozeIds,
       prisutni:      prisutni,
       duznosnici:    duznosnici,
@@ -3014,8 +3055,7 @@
     /* Sažetak i tekst zapisnika */
     var taS = document.getElementById('zapisnik_edit_sazetak');
     if (taS) taS.value = '';
-    var taT = document.getElementById('zapisnik_edit_tekst');
-    if (taT) taT.value = '';
+    zapisnikTekstSetTekst('');
 
     /* Eseji */
     var esejCont = document.getElementById('zapisnikEsejiTablica');
@@ -3213,6 +3253,24 @@
       inpDatumRadova.addEventListener('input', function () {
         syncZapisnikDatumRadovaEmptyClass(inpDatumRadova);
         zapisnikPrimijeniUvjeteUpisPdfGumba();
+      });
+    }
+    var btnDatumOdustani = document.getElementById('zapisnik_datum_btn_odustani');
+    if (btnDatumOdustani) {
+      btnDatumOdustani.addEventListener('click', function () {
+        zapisnikOcistiSvuFormu();
+        zapisnikPrimijeniFooterPremaModuUpisa();
+        var tabRoot = document.getElementById('zapisnikKontrolaTab');
+        if (tabRoot && typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(tabRoot, 0);
+      });
+    }
+
+    var zapisnikTekstEl = document.getElementById('zapisnik_edit_tekst');
+    if (zapisnikTekstEl && zapisnikTekstEl.hasAttribute('contenteditable')) {
+      zapisnikTekstEl.addEventListener('paste', function (e) {
+        e.preventDefault();
+        var tekst = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
+        if (tekst) document.execCommand('insertText', false, tekst);
       });
     }
 
@@ -3532,17 +3590,11 @@
 
         /* Loze ucesnice. */
         zapisnikLozeDomacinId = idLoza;
-        var g = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
-        var allLoze = g.loze || [];
-        var domLoza = null;
-        var li;
-        for (li = 0; li < allLoze.length; li++) {
-          if (String(allLoze[li].id) === idLoza) { domLoza = allLoze[li]; break; }
-        }
-        if (domLoza) {
-          var sortTxtDom = [domLoza.naziv, domLoza.grad, domLoza.drzava_naziv].filter(Boolean).join(', ');
-          zapisnikLozeDomacinRow = [sortTxtDom, String(domLoza.id), domLoza.naziv || '', domLoza.grad || '', domLoza.drzava_naziv || ''];
-        }
+        var domNaziv = trimZ(data.domacin_naziv || '');
+        var domGrad  = trimZ(data.domacin_grad  || '');
+        var domDrzava = trimZ(data.domacin_drzava_naziv || '');
+        var sortTxtDom = [domNaziv, domGrad, domDrzava].filter(Boolean).join(', ');
+        zapisnikLozeDomacinRow = [sortTxtDom, idLoza, domNaziv, domGrad, domDrzava];
         var snimak = [];
         var guestIds = [];
         var uces = data.loze_ucesnice || [];
@@ -3588,8 +3640,7 @@
         /* Sažetak i tekst. */
         var taS = document.getElementById('zapisnik_edit_sazetak');
         if (taS) taS.value = data.sazetak || '';
-        var taT = document.getElementById('zapisnik_edit_tekst');
-        if (taT) taT.value = data.zapisnik || '';
+        zapisnikTekstSetTekst(data.zapisnik || '');
 
         /* Prisustvo — desna lista se puni u callbacku XHR-a za listu članova (lijevo),
            jer taj XHR inače briše desnu tablicu kad završi. */

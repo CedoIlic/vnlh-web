@@ -97,7 +97,10 @@
                                     <!-- r1c1: label iznad kontrole (lijevi stupac ~60%) -->
                                     <div class="zapisnik-crud__polje-stog zapisnik-crud__polje-datum" role="group" aria-label="Datum radova">
                                         <label class="kontrola-labela mb-0" for="zapisnik_datum_radova">Datum radova</label>
-                                        <input id="zapisnik_datum_radova" type="date" class="kontrola-edit" aria-label="Datum radova">
+                                        <div class="kontrola-edit-delete zapisnik-crud__datum-edit-delete">
+                                            <input id="zapisnik_datum_radova" type="date" class="kontrola-edit-delete__input" aria-label="Datum radova">
+                                            <button type="button" id="zapisnik_datum_btn_odustani" class="kontrola-edit-delete__clear" aria-label="Odustani i očisti formu" title="Odustani"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                        </div>
                                     </div>
                                     <!-- r1c2: stupanj -->
                                     <div class="zapisnik-crud__polje-stog zapisnik-crud__polje-stupanj" role="group" aria-label="Stupanj radova">
@@ -385,8 +388,8 @@
                                 <textarea id="zapisnik_edit_sazetak" class="kontrola-napomena zapisnik-crud__zapisnik-textarea zapisnik-crud__zapisnik-kontrola" rows="2" spellcheck="true" aria-label="Sažetak zapisnika"></textarea>
                             </div>
                             <div class="zapisnik-crud__zapisnik-blok zapisnik-crud__zapisnik-blok--tekst">
-                                <label class="kontrola-labela mb-0" for="zapisnik_edit_tekst">Tekst zapisnika</label>
-                                <textarea id="zapisnik_edit_tekst" class="kontrola-napomena zapisnik-crud__zapisnik-textarea zapisnik-crud__zapisnik-kontrola" rows="4" spellcheck="true" aria-label="Tekst zapisnika"></textarea>
+                                <label class="kontrola-labela mb-0" id="zapisnik_edit_tekst_label">Tekst zapisnika</label>
+                                <div id="zapisnik_edit_tekst" class="kontrola-napomena zapisnik-crud__zapisnik-textarea zapisnik-crud__zapisnik-kontrola" contenteditable="false" role="textbox" aria-multiline="true" aria-labelledby="zapisnik_edit_tekst_label" spellcheck="true"></div>
                             </div>
                         </div>
                     </div>

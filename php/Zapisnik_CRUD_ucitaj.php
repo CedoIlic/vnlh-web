@@ -13,10 +13,14 @@ if ($id <= 0) { echo 'null'; exit; }
 try {
     $stmt = $mysqli->prepare("
         SELECT zsr.*,
-               l.id_regija AS domacin_id_regija,
-               l.id_drzava AS domacin_id_drzava
+               l.id_regija  AS domacin_id_regija,
+               l.id_drzava  AS domacin_id_drzava,
+               l.naziv      AS domacin_naziv,
+               l.grad       AS domacin_grad,
+               COALESCE(d.naziv, '') AS domacin_drzava_naziv
         FROM zapisnik_sa_radova zsr
-        LEFT JOIN loze l ON l.id = zsr.id_domacin
+        LEFT JOIN loze   l ON l.id  = zsr.id_domacin
+        LEFT JOIN drzave d ON d.id  = l.id_drzava
         WHERE zsr.id = ?
         LIMIT 1
     ");

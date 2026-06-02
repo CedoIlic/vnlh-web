@@ -339,6 +339,28 @@ body {
   box-sizing: border-box;
 }
 
+/* Contenteditable: obostrano poravnanje, uvlaka 1 cm, razmak između odlomaka. */
+.zapisnik-crud__zapisnik-textarea[contenteditable] {
+  cursor: text;
+  text-align: justify;
+  text-indent: 1cm;
+  line-height: 1.5;
+}
+.zapisnik-crud__zapisnik-textarea[contenteditable] > div,
+.zapisnik-crud__zapisnik-textarea[contenteditable] > p {
+  text-align: justify;
+  text-indent: 1cm;
+  line-height: 1.5;
+  margin: 0 0 calc(1.5em * 0.24) 0;
+}
+.zapisnik-crud__zapisnik-textarea[contenteditable] > div:last-child,
+.zapisnik-crud__zapisnik-textarea[contenteditable] > p:last-child {
+  margin-bottom: 0;
+}
+.zapisnik-crud__zapisnik-textarea[contenteditable="false"] {
+  cursor: default;
+}
+
 /*
  * Tab „Dužnosnici”: CSS grid — u svakom retku labela + edit+ellipsis (isti redoslijed kao ZAPISNIK_DUZNOSNICI_REDOVI); align-items: center
  * za poravnanje po Y osi unutar retka. Okomita pregrada: pseudo na .kontrola-tab__tijelo (:has aktivnog panela), ne na pojedinačnim ćelijama.
@@ -437,12 +459,18 @@ body {
   min-width: 0;
   box-sizing: border-box;
 }
-/* Datum: input ograničen u širinu unutar lijevog stupca. */
-.zapisnik-crud__polje-datum .kontrola-edit[type="date"] {
-  flex: 0 1 auto;
-  max-width: 12.5rem;
-  min-width: 0;
+/* Datum: wrapper ograničen u širinu; input se proteže do granice (ostalo je X gumb). */
+.zapisnik-crud__datum-edit-delete {
   align-self: flex-start;
+  max-width: 14.5rem;
+  min-width: 0;
+}
+.zapisnik-crud__datum-edit-delete .kontrola-edit-delete__input[type="date"] {
+  min-width: 0;
+}
+/* X gumb uvijek vidljiv — KontroleInit inače ga skriva kad je input prazan. */
+.zapisnik-crud__datum-edit-delete .kontrola-edit-delete__clear {
+  display: flex !important;
 }
 .zapisnik-crud__polje-stupanj .zapisnik-crud__select-stupanj-wrap,
 .zapisnik-crud__polje-tip .zapisnik-crud__select-tip-wrap {
