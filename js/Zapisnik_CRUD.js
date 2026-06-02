@@ -2027,8 +2027,7 @@
     }
     var mozePrisustvoXfer =
       !!zapisnikIdOdabraneLozISelecta() &&
-      Array.isArray(zapisnikLozeUcesniceKolekcijaId) &&
-      zapisnikLozeUcesniceKolekcijaId.length > 0;
+      (!!zapisnikLozeDomacinId || (Array.isArray(zapisnikLozeUcesniceKolekcijaId) && zapisnikLozeUcesniceKolekcijaId.length > 0));
     var xferOk = mozePrisustvoXfer && hasTip;
     var selL = zapisnikPrisustvoJeSelekcijaNaLijevojZaPremjestaj();
     var selD = zapisnikPrisustvoJeSelekcijaNaDesnojZaPremjestaj();
@@ -3055,7 +3054,9 @@
       if (wrapEl) delete wrapEl.dataset.zapisnikClanId;
     }
 
-    /* Prisustvo — desna lista */
+    /* Prisustvo — tip unosa + desna lista */
+    var selTipUnosa = document.getElementById('zapisnik_prisustvo_tip_unosa');
+    if (selTipUnosa) { selTipUnosa.value = ''; if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('zapisnik_prisustvo_tip_unosa'); }
     zapisnikPrisustvoDesnoListaPoRedu = [];
     zapisnikPrisustvoIzgradiDesnuTbodyIzListe();
 
@@ -3194,6 +3195,8 @@
     var selTipPrisustvo = document.getElementById('zapisnik_prisustvo_tip_unosa');
     if (selTipPrisustvo) {
       selTipPrisustvo.addEventListener('change', function () {
+        /* Promjena tipa poništava selekciju desne tablice — korisnik počinje novi unos. */
+        zapisnikPrisustvoOcistiSelekcijuDesnogTbodyja();
         zapisnikPrisustvoPrimijeliRasporedLijevoIStanje(!!zapisnikIdOdabraneLozISelecta(), true);
         /* Lijevo osvježiti prema novom tipu / GET-u; desna lista ostaje (premještaji + tip po retku za povratak). */
         zapisnikPrisustvoOsvjeziIzvornuListuClanova(undefined, { zadrziDesnuListu: true });
@@ -3553,7 +3556,31 @@
         }
         zapisnikLozeUcesniceKolekcijaId = guestIds;
         zapisnikModalLozeUcesniceSnapshot = snimak;
-        zapisnikModalUpisiReadonlyTextareaUcesnice(guestIds, snimak);
+
+        /* Textarea učesnica — isti izračun kao zapisnikModalUpisiReadonlyTextareaUcesnice
+           ali bez internog poziva zapisnikPrisustvoOsvjeziIzvornuListuClanova (koristimo vlastiti callback). */
+        (function () {
+          var ta = document.getElementById('zapisnik_loza_ucesnici');
+          if (!ta) return;
+          var seg = [];
+          if (zapisnikLozeDomacinRow) {
+            var sd = zapisnikModalFormatJednaLozaZaTextarea(zapisnikLozeDomacinRow);
+            if (sd) seg.push(sd);
+          }
+          var byId = {};
+          var si;
+          for (si = 0; si < snimak.length; si++) {
+            var sr = snimak[si];
+            if (sr && sr.length >= 5 && sr[1] != null) byId[String(sr[1])] = sr;
+          }
+          for (si = 0; si < guestIds.length; si++) {
+            var rw = byId[String(guestIds[si])];
+            if (!rw) continue;
+            var sg = zapisnikModalFormatJednaLozaZaTextarea(rw);
+            if (sg) seg.push(sg);
+          }
+          ta.value = seg.join('; ');
+        }());
 
         /* Ovjera čekboxovi. */
         _primijenjiOvjeruZaUcitavanje(data);
@@ -3564,8 +3591,36 @@
         var taT = document.getElementById('zapisnik_edit_tekst');
         if (taT) taT.value = data.zapisnik || '';
 
-        /* Prisustvo — desna lista. */
-        _primijenjiPrisustvoZaUcitavanje(data.prisutni || []);
+        /* Prisustvo — desna lista se puni u callbacku XHR-a za listu članova (lijevo),
+           jer taj XHR inače briše desnu tablicu kad završi. */
+        var prisutniData = data.prisutni || [];
+        zapisnikPrisustvoOsvjeziIzvornuListuClanova(function () {
+          _primijenjiPrisustvoZaUcitavanje(prisutniData);
+
+          /* 1. Ukloni iz lijeve tablice sve koji su već u desnoj. */
+          zapisnikPrisustvoOsvjeziLijevoTbodyIzCacheBezPremjestenih();
+
+          /* 2. Postavi tip unosa na tip prvog retka u desnoj + selektiraj taj redak. */
+          var prviEntry = zapisnikPrisustvoDesnoListaPoRedu[0];
+          if (prviEntry) {
+            var selTipU = document.getElementById('zapisnik_prisustvo_tip_unosa');
+            if (selTipU && prviEntry.tipUnosaId) {
+              selTipU.value = String(prviEntry.tipUnosaId);
+              if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('zapisnik_prisustvo_tip_unosa');
+              selTipU.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            var tbodyD = document.getElementById('zapisnik_prisustvo_tbody_desno');
+            if (tbodyD) {
+              var trs = tbodyD.querySelectorAll('tr');
+              for (var ti = 0; ti < trs.length; ti++) trs[ti].classList.remove('tablica-row-selected');
+              if (trs[0]) {
+                trs[0].classList.add('tablica-row-selected');
+                zapisnikPrisustvoAzurirajVidljivostHasSelectedDesno();
+                zapisnikPrisustvoAzurirajGumbovePremjestaja();
+              }
+            }
+          }
+        });
 
         /* Dužnosnici. */
         _primijeniDuznosniciZaUcitavanje(data.duznosnici || []);
