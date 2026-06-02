@@ -21,7 +21,8 @@ try {
     $stmt->close();
     echo 'OK';
 } catch (mysqli_sql_exception $e) {
-    echo '200,' . $e->getCode();
+    $sqlCode = $e->getCode();
+    echo ($sqlCode === 1451 ? '106' : '200') . ',' . $sqlCode;
 }
 
 $mysqli->close();

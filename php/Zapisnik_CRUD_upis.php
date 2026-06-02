@@ -126,6 +126,19 @@ try {
         $stmt->close();
     }
 
+    // INSERT zapisnik_sa_radova_eseji
+    $eseji = isset($d['eseji']) && is_array($d['eseji']) ? $d['eseji'] : [];
+    if ($eseji) {
+        $stmt = $mysqli->prepare("INSERT INTO zapisnik_sa_radova_eseji (id_radova, id_eseja) VALUES (?, ?)");
+        foreach ($eseji as $esej) {
+            $idEseja = isset($esej['id_eseja']) && $esej['id_eseja'] !== null ? (int)$esej['id_eseja'] : 0;
+            if (!$idEseja) continue;
+            $stmt->bind_param('ii', $id_zapisnika, $idEseja);
+            $stmt->execute();
+        }
+        $stmt->close();
+    }
+
     $mysqli->commit();
     echo $id_zapisnika;
 

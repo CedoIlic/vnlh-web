@@ -139,6 +139,22 @@ try {
         $stmt->close();
     }
 
+    // Obnovi eseji: DELETE + INSERT
+    $stmt = $mysqli->prepare("DELETE FROM zapisnik_sa_radova_eseji WHERE id_radova = ?");
+    $stmt->bind_param('i', $id); $stmt->execute(); $stmt->close();
+
+    $eseji = isset($d['eseji']) && is_array($d['eseji']) ? $d['eseji'] : [];
+    if ($eseji) {
+        $stmt = $mysqli->prepare("INSERT INTO zapisnik_sa_radova_eseji (id_radova, id_eseja) VALUES (?, ?)");
+        foreach ($eseji as $esej) {
+            $idEseja = isset($esej['id_eseja']) && $esej['id_eseja'] !== null ? (int)$esej['id_eseja'] : 0;
+            if (!$idEseja) continue;
+            $stmt->bind_param('ii', $id, $idEseja);
+            $stmt->execute();
+        }
+        $stmt->close();
+    }
+
     $mysqli->commit();
     echo 'OK';
 

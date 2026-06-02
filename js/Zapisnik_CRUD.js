@@ -28,6 +28,10 @@
   var zapisnikLozeUcesniceKolekcijaId = [];
   /** ID trenutno učitanog/upisanog zapisnika (mod 1); null u modu 0. */
   var zapisnikTrenutniId = null;
+  /** ID stupnja koji treba odabrati nakon što async GET stupnjeva završi (postavlja ucitavanje snimljenog). */
+  var _pendingStupanjId = null;
+  /** Ažurira prikaz svih redaka Eseji tablice; postavlja zapisnikInitEseji. */
+  var _zapisnikEsejiAzurirajFn = null;
   /** Row podataka lože domaćina [sortTekst, id, naziv, grad, drzava] — uvijek na vrhu textarea, ne pojavljuje se u modalu. */
   var zapisnikLozeDomacinRow = null;
   /** ID (string) lože domaćina — uvijek první u kolekciji. */
@@ -57,16 +61,14 @@
   var modalZapisnikDuznosnikIzborApi = null;
   /** Koje polje #edit_* puni zadnji OK modala dužnosnika — referenca do close/OK. */
   var zapisnikDuznosnikModalCiljniEditId = null;
-  /** Podaci tabova Eseji: 5 redova [{ autor, naslov, tekst }]. */
+  /** Podaci tabova Eseji: 5 redova [{ autor, naslov, id_eseja }]. */
   var zapisnikEsejiData = [
-    { autor: '', naslov: '', tekst: '' },
-    { autor: '', naslov: '', tekst: '' },
-    { autor: '', naslov: '', tekst: '' },
-    { autor: '', naslov: '', tekst: '' },
-    { autor: '', naslov: '', tekst: '' }
+    { autor: '', naslov: '', id_eseja: null, kljucne_rijeci: '', datum_upisa: '' },
+    { autor: '', naslov: '', id_eseja: null, kljucne_rijeci: '', datum_upisa: '' },
+    { autor: '', naslov: '', id_eseja: null, kljucne_rijeci: '', datum_upisa: '' },
+    { autor: '', naslov: '', id_eseja: null, kljucne_rijeci: '', datum_upisa: '' },
+    { autor: '', naslov: '', id_eseja: null, kljucne_rijeci: '', datum_upisa: '' }
   ];
-  /** Indeks retka koji je trenutno otvoren u modalu za tekst eseja (-1 = zatvoren). */
-  var zapisnikEsejModalTrenutniRed = -1;
 
   /*
    * ZAGLAVLJE TABLICE (modal, jedan stupac; u ćeliji zarezom odvojeni naziv, grad, država — id u row[1] ne iscrtava se).
@@ -1266,11 +1268,16 @@
       return;
     }
     if (typeof vnlhPuniSelectStupanjNadleznosti !== 'function') return;
+    var pendingZaXhr = _pendingStupanjId != null ? String(_pendingStupanjId) : null;
     vnlhPuniSelectStupanjNadleznosti(sel, idLozaZaZahtjev, {
       getApiUrl:     getApiUrl,
       kontrolaId:    'zapisnik_select_stupanj_radova',
       getRaceIdLoza: zapisnikIdOdabraneLozISelecta,
-      onComplete:    function () { zapisnikScheduleMinVisinuResiza(); }
+      pendingValue:  pendingZaXhr,
+      onComplete:    function () {
+        if (pendingZaXhr != null) { _pendingStupanjId = null; zapisnikPrimijeniUvjeteUpisPdfGumba(); }
+        zapisnikScheduleMinVisinuResiza();
+      }
     });
   }
 
@@ -2973,9 +2980,9 @@
       prisutni:      prisutni,
       duznosnici:    duznosnici,
       eseji:         zapisnikEsejiData.map(function (d) {
-        return { autor: trimZ(d.autor) || null, naslov: trimZ(d.naslov) || null, tekst: trimZ(d.tekst) || null };
+        return { id_eseja: d.id_eseja || null, autor: trimZ(d.autor) || null, naslov: trimZ(d.naslov) || null };
       }),
-      eseji_sazetak: (function () { var el = document.getElementById('zapisnik_eseji_sazetak'); return el ? trimZ(el.value) || null : null; }())
+      eseji_sazetak: null
     };
   }
 
@@ -3015,7 +3022,7 @@
     var esejCont = document.getElementById('zapisnikEsejiTablica');
     var esejTbody = esejCont ? esejCont.querySelector('.kontrola-tablica__scroll tbody') : null;
     for (var esi = 0; esi < zapisnikEsejiData.length; esi++) {
-      zapisnikEsejiData[esi] = { autor: '', naslov: '', tekst: '' };
+      zapisnikEsejiData[esi] = { autor: '', naslov: '', id_eseja: null, kljucne_rijeci: '', datum_upisa: '' };
       if (esejTbody) {
         var esejTr = esejTbody.querySelector('tr[data-esej-red="' + esi + '"]');
         if (esejTr) {
@@ -3027,7 +3034,7 @@
       }
     }
     var esejTaSaz = document.getElementById('zapisnik_eseji_sazetak');
-    if (esejTaSaz) esejTaSaz.value = '';
+    if (esejTaSaz) esejTaSaz.innerHTML = '';
     /* Osvježi ikone (sve prazne → ellipsis samo u redu 0, trash skriven svugdje) */
     (function () {
       if (!esejTbody) return;
@@ -3361,10 +3368,15 @@
           btnUpisi.disabled = false;
           if (status >= 200 && status < 300 && (res === 'OK' || /^\d+$/.test(res))) {
             var kodPoruke = (!jeMod1 && /^\d+$/.test(res)) ? '001' : '004';
-            if (typeof window.showPorukaModal === 'function') {
-              window.showPorukaModal(kodPoruke, [], function () { zapisnikOcistiSvuFormu(); });
-            } else {
+            function _nakonUspjesnaUpisa() {
               zapisnikOcistiSvuFormu();
+              var tabRoot = document.getElementById('zapisnikKontrolaTab');
+              if (tabRoot && typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(tabRoot, 0);
+            }
+            if (typeof window.showPorukaModal === 'function') {
+              window.showPorukaModal(kodPoruke, [], _nakonUspjesnaUpisa);
+            } else {
+              _nakonUspjesnaUpisa();
             }
           } else {
             var p = typeof parseResponseCode === 'function' ? parseResponseCode(res) : null;
@@ -3435,6 +3447,649 @@
     });
   })();
 
+  /**
+   * Učitaj snimljeni zapisnik po ID-u i popuni sva polja forme.
+   * Geo kaskada (Država→Regija→Loža) pa sva ostala polja u callbacku.
+   */
+  function zapisnikUcitajSnimljeniZaEditing(idZapisnika) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', getApiUrl('Zapisnik_CRUD_ucitaj.php') + '?id=' + encodeURIComponent(idZapisnika), true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      var text = (xhr.responseText || '').replace(/^﻿/, '').trim();
+      if (xhr.status < 200 || xhr.status >= 300) {
+        var pHttp = typeof parseResponseCode === 'function' ? parseResponseCode(text) : null;
+        if (typeof window.showPorukaModal === 'function') window.showPorukaModal(pHttp && pHttp.code ? pHttp.code : '200', pHttp ? (pHttp.replacements || [String(xhr.status)]) : [String(xhr.status)]);
+        return;
+      }
+      var data = null;
+      try { data = JSON.parse(text); } catch (e) {}
+      if (!data || typeof data !== 'object' || !data.id) {
+        var pErr = typeof parseResponseCode === 'function' ? parseResponseCode(text) : null;
+        if (typeof window.showPorukaModal === 'function') window.showPorukaModal(pErr && pErr.code ? pErr.code : '200', pErr ? (pErr.replacements || []) : []);
+        return;
+      }
+      _primijenjiUcitanogZapisnika(data);
+    };
+    xhr.send();
+  }
+
+  function _primijenjiUcitanogZapisnika(data) {
+    /* Resetiraj formu, potom vrati mod=1 i ID. */
+    zapisnikOcistiSvuFormu();
+    zapisnikTrenutniId = data.id;
+    window.mod_upisa_zapisnika = 1;
+    zapisnikPrimijeniFooterPremaModuUpisa();
+
+    var idDrzava = String(data.domacin_id_drzava || '');
+    var idRegija = String(data.domacin_id_regija || '');
+    var idLoza   = String(data.id_domacin || '');
+
+    /* Postavi pending stupanj PRIJE cascade-a — popuniLozeIzKeša interno poziva
+       puniSelectStupanjRadovaZapisnik() čiji setTimeout vidi već postavljenu ložu i pending ID.
+       Ne pozivamo puniSelectStupanjRadovaZapisnik() još jednom iz callbacka. */
+    _pendingStupanjId = data.id_stupanj != null ? parseInt(data.id_stupanj, 10) : null;
+
+    /* Geo: Država. */
+    if (selectDrzava) {
+      selectDrzava.disabled = false;
+      setAutoLockedClass(selectDrzava, false);
+      selectDrzava.value = idDrzava;
+      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_drzava');
+    }
+
+    /* Geo: Regija → Loža → ostatak forme u callbacku. */
+    popuniRegijeIzKeša(idDrzava, function () {
+      if (selectRegija && idRegija) {
+        selectRegija.disabled = false;
+        setAutoLockedClass(selectRegija, false);
+        selectRegija.value = idRegija;
+        if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_regija');
+      }
+      popuniLozeIzKeša(idRegija, function () {
+        if (selectLoza && idLoza) {
+          selectLoza.disabled = false;
+          setAutoLockedClass(selectLoza, false);
+          selectLoza.value = idLoza;
+          if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_loza');
+        }
+        zapisnikUpdateHeaderLogo(idLoza);
+
+        var selT = document.getElementById('zapisnik_select_tip_radova');
+        if (selT && data.id_tip_radova) {
+          selT.value = String(data.id_tip_radova);
+          if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('zapisnik_select_tip_radova');
+        }
+
+        var inpD = document.getElementById('zapisnik_datum_radova');
+        if (inpD) {
+          inpD.value = data.datum_radova || '';
+          inpD.classList.toggle('date-empty', !data.datum_radova);
+        }
+
+        /* Loze ucesnice. */
+        zapisnikLozeDomacinId = idLoza;
+        var g = typeof window.vnlhGeoOgranicenjaDohvatiKeš === 'function' ? window.vnlhGeoOgranicenjaDohvatiKeš() : {};
+        var allLoze = g.loze || [];
+        var domLoza = null;
+        var li;
+        for (li = 0; li < allLoze.length; li++) {
+          if (String(allLoze[li].id) === idLoza) { domLoza = allLoze[li]; break; }
+        }
+        if (domLoza) {
+          var sortTxtDom = [domLoza.naziv, domLoza.grad, domLoza.drzava_naziv].filter(Boolean).join(', ');
+          zapisnikLozeDomacinRow = [sortTxtDom, String(domLoza.id), domLoza.naziv || '', domLoza.grad || '', domLoza.drzava_naziv || ''];
+        }
+        var snimak = [];
+        var guestIds = [];
+        var uces = data.loze_ucesnice || [];
+        var ui;
+        for (ui = 0; ui < uces.length; ui++) {
+          var u = uces[ui];
+          if (!u || !u.id || String(u.id) === idLoza) continue;
+          var srt = [u.naziv, u.grad, u.drzava].filter(Boolean).join(', ');
+          snimak.push([srt, String(u.id), u.naziv || '', u.grad || '', u.drzava || '']);
+          guestIds.push(String(u.id));
+        }
+        zapisnikLozeUcesniceKolekcijaId = guestIds;
+        zapisnikModalLozeUcesniceSnapshot = snimak;
+        zapisnikModalUpisiReadonlyTextareaUcesnice(guestIds, snimak);
+
+        /* Ovjera čekboxovi. */
+        _primijenjiOvjeruZaUcitavanje(data);
+
+        /* Sažetak i tekst. */
+        var taS = document.getElementById('zapisnik_edit_sazetak');
+        if (taS) taS.value = data.sazetak || '';
+        var taT = document.getElementById('zapisnik_edit_tekst');
+        if (taT) taT.value = data.zapisnik || '';
+
+        /* Prisustvo — desna lista. */
+        _primijenjiPrisustvoZaUcitavanje(data.prisutni || []);
+
+        /* Dužnosnici. */
+        _primijeniDuznosniciZaUcitavanje(data.duznosnici || []);
+
+        /* Eseji. */
+        _primijenjiEsejiZaUcitavanje(data.eseji || []);
+
+        /* Osvježi stanje kartica, gumbova, disabled. */
+        zapisnikOsvjeziLoziGrupeIFormu(idLoza);
+        zapisnikPrimijeniUvjeteUpisPdfGumba();
+        zapisnikScheduleMinVisinuResiza();
+      });
+    });
+  }
+
+  function _primijenjiOvjeruZaUcitavanje(data) {
+    var cbPrijeCm = document.getElementById('zapisnik_cb_ovjera_prije_casni_majstor');
+    var cbNakonCm = document.getElementById('zapisnik_cb_ovjera_nakon_casni_majstor');
+    var cbNakonTj = document.getElementById('zapisnik_cb_ovjera_nakon_tajnik');
+    var cbNakonGv = document.getElementById('zapisnik_cb_ovjera_nakon_govornik');
+    function setCb(cb, val, userId) {
+      if (!cb) return;
+      cb.checked = !!+val;
+      if (userId) cb.dataset.ovjeraKorisnikId = String(userId);
+      else delete cb.dataset.ovjeraKorisnikId;
+      zapisnikOvjeraAzurirajKorisnikLabel(cb, !!+val);
+    }
+    setCb(cbPrijeCm, data.ovjera_prije_casni,    data.ovjera_prije_casni_id);
+    setCb(cbNakonCm, data.ovjera_poslije_casni,  data.ovjera_poslije_casni_id);
+    setCb(cbNakonTj, data.ovjera_poslije_tajnik, data.ovjera_poslije_tajnik_id);
+    setCb(cbNakonGv, data.ovjera_poslije_govornik, data.ovjera_poslije_govornik_id);
+    zapisnikPrimijeniStanjeOvjereZapisnika(!!zapisnikIdOdabraneLozISelecta());
+  }
+
+  function _primijenjiPrisustvoZaUcitavanje(prisutni) {
+    zapisnikPrisustvoDesnoListaPoRedu = [];
+    var pi;
+    for (pi = 0; pi < prisutni.length; pi++) {
+      var p = prisutni[pi];
+      var tipIdStr = String(p.id_prisustvo_tip || '');
+      var fgCss = p.boja_prikaza ? zapisnikPrisustvoNormalizirajBojaPrikazaZaCss(p.boja_prikaza) : '';
+      var entry;
+      if (+p.slobodan_unos) {
+        var suId = 'su:' + (++zapisnikPrisustvoSlobUnosSuIdSuffix);
+        var imeVid = trimZ(p.ime_i_prezime || '');
+        var lozaVid = trimZ(p.loza || '');
+        var drzVid = trimZ(p.ime_drzave_gostiju || '');
+        var partsSl = [imeVid, lozaVid, drzVid].filter(Boolean);
+        entry = {
+          id: suId, slobodanUnos: true,
+          tekstSlobPrikaz: partsSl.join(' · '),
+          imeSlobUnos: imeVid, lozaSlobUnos: lozaVid,
+          idDrzaveGostiju: p.id_drzave != null ? String(p.id_drzave) : null,
+          tipUnosaId: tipIdStr, fgCss: fgCss
+        };
+      } else {
+        var cid = String(p.id_clana || '');
+        var ime = [p.prezime, p.ime].filter(Boolean).join(' ');
+        var prikazTekst = p.loza_naziv ? ime + ' · ' + p.loza_naziv : ime;
+        entry = {
+          id: cid, slobodanUnos: false, fgCss: fgCss, tipUnosaId: tipIdStr,
+          prikazTekstZaClana: prikazTekst,
+          duznosnikClanPolja: {
+            prezime: p.prezime || '', ime: p.ime || '',
+            loza_naziv: p.loza_naziv || '', loza_grad: p.loza_grad || '', drzava_loze: p.drzava_loze || ''
+          }
+        };
+      }
+      zapisnikPrisustvoDesnoListaPoRedu.push(entry);
+    }
+    zapisnikPrisustvoIzgradiDesnuTbodyIzListe();
+  }
+
+  function _primijeniDuznosniciZaUcitavanje(duznosnici) {
+    var di;
+    for (di = 0; di < duznosnici.length; di++) {
+      var dz = duznosnici[di];
+      var naziv = trimZ(dz.naziv_duznosti || '');
+      var cid = String(dz.id_clana || '');
+      if (!naziv || !cid) continue;
+      var mi;
+      for (mi = 0; mi < ZAPISNIK_DUZNOSNICI_ENUM_MAP.length; mi++) {
+        var dm = ZAPISNIK_DUZNOSNICI_ENUM_MAP[mi];
+        if (dm.naziv.toLowerCase() === naziv.toLowerCase()) {
+          var editEl = document.getElementById(dm.editId);
+          if (!editEl) break;
+          var o = { prezime: dz.prezime, ime: dz.ime, loza_naziv: dz.loza_naziv, loza_grad: dz.loza_grad, drzava_loze: dz.drzava_loze };
+          var html = zapisnikDuznosnikFormatHtmlClana(o) || zapisnikEscapeHtml([dz.prezime, dz.ime].filter(Boolean).join(' ') || 'ID ' + cid);
+          editEl.innerHTML = html;
+          editEl.dispatchEvent(new Event('input', { bubbles: true }));
+          var wrapEl = editEl.closest ? editEl.closest('.kontrola-edit-delete') : null;
+          if (wrapEl) wrapEl.dataset.zapisnikClanId = cid;
+          break;
+        }
+      }
+    }
+  }
+
+  function _primijenjiEsejiZaUcitavanje(eseji) {
+    var ei;
+    for (ei = 0; ei < zapisnikEsejiData.length; ei++) {
+      if (ei < eseji.length) {
+        var esej = eseji[ei];
+        var imeAutora = [esej.autor_prezime, esej.autor_ime].filter(Boolean).join(' ');
+        var lozaInfo = (+esej.ista_loza !== 1 && esej.loza_naziv) ? [esej.loza_naziv, esej.loza_grad].filter(Boolean).join(', ') : '';
+        zapisnikEsejiData[ei] = {
+          autor: imeAutora + (lozaInfo ? ', ' + lozaInfo : ''),
+          autor_bold: imeAutora, autor_extra: lozaInfo,
+          naslov: trimZ(esej.naslov_eseja || ''),
+          id_eseja: esej.id_eseja || null,
+          kljucne_rijeci: trimZ(esej.kljucne_rijeci || ''),
+          datum_upisa: ''
+        };
+      } else {
+        zapisnikEsejiData[ei] = { autor: '', naslov: '', id_eseja: null, kljucne_rijeci: '', datum_upisa: '' };
+      }
+    }
+    if (typeof _zapisnikEsejiAzurirajFn === 'function') _zapisnikEsejiAzurirajFn();
+  }
+
+  /* ============================================================
+   * Modal „Odaberi zapisnik za editiranje" (ikona liste u zaglavlju)
+   * ============================================================ */
+  (function zapisnikInitListaModal() {
+    var _listaData       = [];
+    var _listaOffset     = 0;
+    var _listaIsLoading  = false;
+    var _listaHasMore    = true;
+    var _listaTrazi      = '';
+    var _LIMIT           = 50;
+    var _DEBOUNCE        = 300;
+    var _listaFilterT    = null;
+    var _listaInitDone   = false;
+    var _STORAGE_KEY     = 'zapisnik_crud_lista_modal';
+    var _DEF_W = 560, _DEF_H = 520, _MIN_W = 400, _MIN_H = 400;
+    var _sazetakHideT    = null;
+    var _sazetakAktivniId = null;
+    var _bojeCache       = { kv1: null, kv1bg: null, kv2: null, kv2bg: null, kv3: null, kv3bg: null };
+
+    function _azurirajMinVisinu(rootEl, dlg) {
+      function tok(n, d) { var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n).trim()); return isNaN(v) ? d : v; }
+      var headerEl = rootEl ? rootEl.querySelector('.modal-tablica__header') : null;
+      var headerH  = (headerEl && headerEl.offsetHeight > 0) ? headerEl.offsetHeight : 160;
+      var padY       = tok('--modal_tablica_body_padding_y', 16);
+      var headH      = tok('--tablica_head_h', 42);
+      var rowH       = tok('--tablica_row_h', 40);
+      var barH       = tok('--panel_resize_bar_height', 28);
+      var footerPadY = tok('--modal_tablica_footer_padding_y', 12);
+      var btnH       = tok('--button_height', 36);
+      var minH = Math.max(400, Math.ceil(headerH + padY + headH + rowH * 5 + padY + barH + footerPadY * 2 + btnH));
+      _MIN_H = minH;
+      if (dlg) {
+        dlg.style.minHeight = minH + 'px';
+        if (dlg.offsetHeight > 0 && dlg.offsetHeight < minH) dlg.style.height = minH + 'px';
+      }
+    }
+
+    function _bojaToStyle(c) {
+      var s = String(c || '').trim().replace(/^#/, '');
+      if (s.length === 8) {
+        var r = parseInt(s.slice(0,2),16), g = parseInt(s.slice(2,4),16),
+            b = parseInt(s.slice(4,6),16), a = parseInt(s.slice(6,8),16) / 255;
+        if (!isNaN(r+g+b+a)) return 'rgba('+r+','+g+','+b+','+a.toFixed(3)+')';
+      }
+      if (s.length === 6) return '#'+s;
+      return '';
+    }
+
+    function _primijeniLegendBoje() {
+      function strip(b) { var s = String(b || '').trim(); return s.length === 9 ? s.substring(0, 7) : s; }
+      var kv1 = document.getElementById('zapisnik_lista_leg_kv1');
+      var kv2 = document.getElementById('zapisnik_lista_leg_kv2');
+      var kv3 = document.getElementById('zapisnik_lista_leg_kv3');
+      if (kv1 && _bojeCache.kv1) kv1.style.backgroundColor = strip(_bojeCache.kv1);
+      if (kv2 && _bojeCache.kv2) kv2.style.backgroundColor = strip(_bojeCache.kv2);
+      if (kv3 && _bojeCache.kv3) kv3.style.backgroundColor = strip(_bojeCache.kv3);
+    }
+
+    function _getStorage() {
+      try { var o = JSON.parse(localStorage.getItem(_STORAGE_KEY) || ''); if (o && typeof o.left === 'number') return o; } catch (e) {}
+      return null;
+    }
+    function _setStorage(l, t, w, h) {
+      try { localStorage.setItem(_STORAGE_KEY, JSON.stringify({ left: l, top: t, width: w, height: h })); } catch (e) {}
+    }
+
+    function _formatDatum(d) {
+      if (!d) return '';
+      try {
+        var parts = String(d).split('-');
+        if (parts.length === 3) return parts[2] + '.' + parts[1] + '.' + parts[0] + '.';
+      } catch (e) {}
+      return String(d);
+    }
+
+    function _formatRed(row) {
+      var parts = [];
+      var datum = _formatDatum(row.datum_radova);
+      if (datum) parts.push(datum);
+      if (row.stupanj_naziv) parts.push(row.stupanj_naziv);
+      else if (row.stupanj_broj != null) parts.push(row.stupanj_broj + '°');
+      return parts.join(', ');
+    }
+
+    function _nadjiRedak(id) {
+      for (var j = 0; j < _listaData.length; j++) { if (String(_listaData[j].id) === String(id)) return _listaData[j]; }
+      return null;
+    }
+
+    function _dodajRedove(arr) {
+      var tbodyM = document.getElementById('zapisnik_lista_tbody');
+      if (!tbodyM) return;
+      for (var j = 0; j < arr.length; j++) {
+        var row = arr[j];
+        if (!row || row.id == null) continue;
+        var trM = document.createElement('tr');
+        trM.dataset.zapisnikListaId = String(row.id);
+
+        var td = document.createElement('td');
+        var wrap = document.createElement('div'); wrap.className = 'esej-crud__lista-red-inner';
+        var cel = document.createElement('div'); cel.className = 'kontrola-tablica__cell-inner'; cel.setAttribute('tabindex', '0');
+        cel.textContent = _formatRed(row);
+
+        var bojaFg = '', bojaBg = '';
+        if (!+row.ovjera_poslije_casni || !+row.ovjera_poslije_tajnik || !+row.ovjera_poslije_govornik) {
+          bojaFg = _bojaToStyle(row.boja_2);
+          bojaBg = _bojaToStyle(row.boja_2_bg);
+        }
+        if (!+row.ovjera_prije_casni) {
+          bojaFg = _bojaToStyle(row.boja_1);
+          bojaBg = _bojaToStyle(row.boja_1_bg);
+        }
+        if (!row.je_domacin) {
+          bojaFg = _bojaToStyle(row.boja_ucesnica);
+          bojaBg = _bojaToStyle(row.boja_ucesnica_bg);
+        }
+        if (bojaFg) cel.style.color = bojaFg;
+        if (bojaBg) td.style.backgroundColor = bojaBg;
+
+        var btnSaz = document.createElement('button'); btnSaz.type = 'button';
+        btnSaz.className = 'esej-crud__lista-elipsis-btn'; btnSaz.setAttribute('aria-label', 'Sažetak radova');
+        btnSaz.dataset.zapisnikListaId = String(row.id);
+        var spSaz = document.createElement('span'); spSaz.className = 'kontrola-icon--ellipsis-horizontal'; spSaz.setAttribute('aria-hidden', 'true');
+        btnSaz.appendChild(spSaz);
+        if (!row.sazetak) btnSaz.hidden = true;
+
+        wrap.appendChild(cel); wrap.appendChild(btnSaz); td.appendChild(wrap); trM.appendChild(td);
+        tbodyM.appendChild(trM);
+      }
+    }
+
+    function _ucitajRedove(append) {
+      if (_listaIsLoading) return;
+      _listaIsLoading = true;
+      var idLoza = selectLoza ? (selectLoza.value || '') : '';
+      var url = getApiUrl('Zapisnik_CRUD_lista.php') + '?id_loza=' + encodeURIComponent(idLoza)
+              + '&offset=' + encodeURIComponent(_listaOffset) + '&limit=' + _LIMIT;
+      if (_listaTrazi) url += '&trazi=' + encodeURIComponent(_listaTrazi);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        _listaIsLoading = false;
+        var arr = [];
+        if (xhr.status >= 200 && xhr.status < 300) {
+          var text = (xhr.responseText || '').replace(/^﻿/, '').trim();
+          if (text.charAt(0) === '[') { try { arr = JSON.parse(text); } catch (ep) {} }
+          if (!Array.isArray(arr)) arr = [];
+        }
+        _listaHasMore = arr.length >= _LIMIT;
+        if (arr.length > 0) {
+          if (arr[0].boja_ucesnica)    _bojeCache.kv1   = arr[0].boja_ucesnica;
+          if (arr[0].boja_ucesnica_bg) _bojeCache.kv1bg = arr[0].boja_ucesnica_bg;
+          if (arr[0].boja_1)           _bojeCache.kv2   = arr[0].boja_1;
+          if (arr[0].boja_1_bg)        _bojeCache.kv2bg = arr[0].boja_1_bg;
+          if (arr[0].boja_2)           _bojeCache.kv3   = arr[0].boja_2;
+          if (arr[0].boja_2_bg)        _bojeCache.kv3bg = arr[0].boja_2_bg;
+          _primijeniLegendBoje();
+        }
+        if (!append) {
+          _listaData = arr;
+          var tbodyM2 = document.getElementById('zapisnik_lista_tbody');
+          if (tbodyM2) tbodyM2.innerHTML = '';
+        } else {
+          _listaData = _listaData.concat(arr);
+        }
+        _dodajRedove(arr);
+      };
+      xhr.send();
+    }
+
+    function _sazetakSakrij() {
+      if (_sazetakHideT) { clearTimeout(_sazetakHideT); _sazetakHideT = null; }
+      var popup = document.getElementById('zapisnikListaSazetakPopup');
+      if (popup) popup.hidden = true;
+      _sazetakAktivniId = null;
+    }
+
+    function _sazetakPokazi(sazetakTekst, targetBtn) {
+      if (_sazetakHideT) { clearTimeout(_sazetakHideT); _sazetakHideT = null; }
+      var popup = document.getElementById('zapisnikListaSazetakPopup');
+      if (!popup) return;
+      var tekst = document.getElementById('zapisnik_lista_sazetak_popup_tekst');
+      if (tekst) tekst.textContent = sazetakTekst || '—';
+      popup.hidden = false;
+      popup.style.left = '-9999px'; popup.style.top = '-9999px';
+      var pw = popup.offsetWidth || 280; var ph = popup.offsetHeight || 120;
+      var rect = targetBtn.getBoundingClientRect();
+      var vw = window.innerWidth || 800; var vh = window.innerHeight || 600;
+      var left = rect.left - pw - 6;
+      if (left < 4) left = rect.right + 6;
+      if (left + pw > vw - 4) left = vw - pw - 4;
+      var top = rect.top;
+      if (top + ph > vh - 4) top = vh - ph - 4;
+      if (top < 4) top = 4;
+      popup.style.left = left + 'px'; popup.style.top = top + 'px';
+    }
+
+    function _zatvori() {
+      var root = document.getElementById('zapisnikListaModal');
+      if (!root) return;
+      var dialog = root.querySelector('.modal-tablica__dialog');
+      if (dialog) {
+        var w = dialog.offsetWidth || parseFloat(dialog.style.width) || 0;
+        var h = dialog.offsetHeight || parseFloat(dialog.style.height) || 0;
+        var l = parseFloat(dialog.style.left); var t = parseFloat(dialog.style.top);
+        if (!isNaN(l) && !isNaN(t) && w >= _MIN_W && h >= _MIN_H) _setStorage(l, t, w, h);
+      }
+      var tbodyM3 = document.getElementById('zapisnik_lista_tbody');
+      if (tbodyM3) tbodyM3.innerHTML = '';
+      _listaData = [];
+      root.classList.remove('modal-tablica--open');
+      root.setAttribute('aria-hidden', 'true');
+      _sazetakSakrij();
+    }
+
+    function _otvori() {
+      var root = document.getElementById('zapisnikListaModal');
+      if (!root) return;
+      _initInterakcije();
+      var dialog = root.querySelector('.modal-tablica__dialog');
+      if (dialog) {
+        var stored = _getStorage();
+        if (stored) {
+          dialog.style.left = stored.left + 'px'; dialog.style.top = stored.top + 'px';
+          dialog.style.width = Math.max(_MIN_W, stored.width) + 'px';
+          dialog.style.height = Math.max(_MIN_H, stored.height) + 'px';
+        } else {
+          var vw = window.innerWidth || 800; var vh = window.innerHeight || 600;
+          var defH = Math.max(_DEF_H, _MIN_H);
+          dialog.style.width = _DEF_W + 'px'; dialog.style.height = defH + 'px';
+          dialog.style.left = Math.max(0, (vw - _DEF_W) / 2) + 'px';
+          dialog.style.top  = Math.max(0, (vh - defH) / 2) + 'px';
+        }
+      }
+      _listaOffset = 0; _listaTrazi = ''; _listaHasMore = true;
+      var traziInp = document.getElementById('zapisnik_lista_trazi');
+      if (traziInp) traziInp.value = '';
+      root.classList.add('modal-tablica--open');
+      root.setAttribute('aria-hidden', 'false');
+      _primijeniLegendBoje();
+      requestAnimationFrame(function () { _azurirajMinVisinu(root, root.querySelector('.modal-tablica__dialog')); });
+      _ucitajRedove(false);
+      setTimeout(function () { if (traziInp) try { traziInp.focus(); } catch (ef) {} }, 0);
+    }
+
+    function _initInterakcije() {
+      if (_listaInitDone) return;
+      _listaInitDone = true;
+
+      var root = document.getElementById('zapisnikListaModal');
+      var dialog = root ? root.querySelector('.modal-tablica__dialog') : null;
+      var naslov = root ? root.querySelector('.esej-crud__modal-autor-naslov') : null;
+      var bar    = document.getElementById('zapisnik_lista_resize_bar');
+      var corner = document.getElementById('zapisnik_lista_resize_corner');
+      if (!root || !dialog) return;
+
+      if (naslov) {
+        naslov.addEventListener('mousedown', function (e) {
+          if (e.button !== 0) return;
+          var l0 = parseFloat(dialog.style.left) || 0; var t0 = parseFloat(dialog.style.top) || 0;
+          var x0 = e.clientX; var y0 = e.clientY;
+          function mv(ev) { dialog.style.left = (l0 + ev.clientX - x0) + 'px'; dialog.style.top = (t0 + ev.clientY - y0) + 'px'; }
+          function st() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', st); }
+          document.addEventListener('mousemove', mv); document.addEventListener('mouseup', st); e.preventDefault();
+        });
+      }
+      if (bar) {
+        bar.addEventListener('mousedown', function (e) {
+          if (e.button !== 0) return;
+          var h0 = dialog.offsetHeight; var y0 = e.clientY;
+          function mv(ev) { dialog.style.height = Math.max(_MIN_H, h0 + ev.clientY - y0) + 'px'; }
+          function st() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', st); }
+          document.addEventListener('mousemove', mv); document.addEventListener('mouseup', st); e.preventDefault();
+        });
+      }
+      if (corner) {
+        corner.addEventListener('mousedown', function (e) {
+          if (e.button !== 0) return;
+          var w0 = dialog.offsetWidth; var h0 = dialog.offsetHeight; var x0 = e.clientX; var y0 = e.clientY;
+          function mv(ev) {
+            dialog.style.width  = Math.max(_MIN_W, w0 + ev.clientX - x0) + 'px';
+            dialog.style.height = Math.max(_MIN_H, h0 + ev.clientY - y0) + 'px';
+          }
+          function st() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', st); }
+          document.addEventListener('mousemove', mv); document.addEventListener('mouseup', st); e.preventDefault();
+        });
+      }
+
+      var traziInp = document.getElementById('zapisnik_lista_trazi');
+      if (traziInp) {
+        traziInp.addEventListener('input', function () {
+          if (_listaFilterT) clearTimeout(_listaFilterT);
+          _listaFilterT = setTimeout(function () {
+            _listaFilterT = null; _listaTrazi = trimZ(traziInp.value);
+            _listaOffset = 0; _listaHasMore = true; _ucitajRedove(false);
+          }, _DEBOUNCE);
+        });
+        if (typeof KontroleInitEditDelete === 'function') {
+          var tw = traziInp.closest('.kontrola-edit-delete');
+          if (tw) {
+            KontroleInitEditDelete(tw);
+            tw.addEventListener('kontrole-edit-delete-clear', function () {
+              _listaTrazi = ''; _listaOffset = 0; _listaHasMore = true; _ucitajRedove(false);
+            });
+          }
+        }
+      }
+
+      var scroll = document.getElementById('zapisnik_lista_scroll');
+      if (scroll) {
+        scroll.addEventListener('scroll', function () {
+          if (_listaIsLoading || !_listaHasMore) return;
+          if (scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 100) {
+            _listaOffset += _LIMIT; _ucitajRedove(true);
+          }
+        });
+
+        scroll.addEventListener('click', function (ev) {
+          var btnK = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+          if (btnK) return;
+          var trK = ev.target && ev.target.closest ? ev.target.closest('tbody tr') : null;
+          if (!trK) return;
+          var zapisnikId = trK.dataset.zapisnikListaId;
+          if (!zapisnikId) return;
+          var rowData = _nadjiRedak(zapisnikId);
+          if (!rowData) return;
+          _zatvori();
+          zapisnikUcitajSnimljeniZaEditing(parseInt(zapisnikId, 10), rowData);
+        });
+
+        scroll.addEventListener('mouseover', function (ev) {
+          var btnE = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+          if (!btnE) return;
+          if (_sazetakHideT) { clearTimeout(_sazetakHideT); _sazetakHideT = null; }
+          var zid = btnE.dataset.zapisnikListaId;
+          if (_sazetakAktivniId === zid) return;
+          _sazetakAktivniId = zid;
+          var row = _nadjiRedak(zid);
+          _sazetakPokazi(row ? row.sazetak : '', btnE);
+        });
+        scroll.addEventListener('click', function (ev) {
+          var btnE = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+          if (!btnE) return;
+          if (_sazetakHideT) { clearTimeout(_sazetakHideT); _sazetakHideT = null; }
+          _sazetakAktivniId = btnE.dataset.zapisnikListaId;
+          var row = _nadjiRedak(_sazetakAktivniId);
+          _sazetakPokazi(row ? row.sazetak : '', btnE);
+          ev.stopPropagation();
+        });
+        scroll.addEventListener('mouseout', function (ev) {
+          var btnE = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+          if (!btnE) return;
+          _sazetakHideT = setTimeout(function () { _sazetakHideT = null; _sazetakSakrij(); }, 300);
+        });
+      }
+
+      var popup = document.getElementById('zapisnikListaSazetakPopup');
+      if (popup) {
+        popup.addEventListener('mouseover', function () {
+          if (_sazetakHideT) { clearTimeout(_sazetakHideT); _sazetakHideT = null; }
+        });
+        popup.addEventListener('mouseout', function () {
+          _sazetakHideT = setTimeout(function () { _sazetakHideT = null; _sazetakSakrij(); }, 300);
+        });
+      }
+
+      var btnZatvori = document.getElementById('zapisnik_lista_zatvori');
+      if (btnZatvori) btnZatvori.addEventListener('click', _zatvori);
+
+      var overlay = root.querySelector('.modal-tablica__overlay');
+      if (overlay) overlay.addEventListener('click', _zatvori);
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          var rootE = document.getElementById('zapisnikListaModal');
+          if (rootE && rootE.classList.contains('modal-tablica--open')) _zatvori();
+          _sazetakSakrij();
+        }
+      });
+
+      var popupIzlaz = document.getElementById('zapisnik_lista_sazetak_popup_izlaz');
+      if (popupIzlaz) popupIzlaz.addEventListener('click', _sazetakSakrij);
+
+      document.addEventListener('click', function (ev) {
+        var pop = document.getElementById('zapisnikListaSazetakPopup');
+        if (!pop || pop.hidden) return;
+        if (pop.contains(ev.target)) return;
+        var scr = document.getElementById('zapisnik_lista_scroll');
+        if (scr && scr.contains(ev.target)) return;
+        _sazetakSakrij();
+      });
+
+      _azurirajMinVisinu(root, dialog);
+    }
+
+    if (btnOdabirPostojecegZapisnik) {
+      btnOdabirPostojecegZapisnik.addEventListener('click', function () {
+        if (!zapisnikIdOdabraneLozISelecta()) return;
+        _otvori();
+      });
+    }
+  }());
+
   /* ============================================================
    * Tab „Eseji": KontroleTablica (3 kol.), ellipsis modal, sažetak
    * ============================================================ */
@@ -3448,16 +4103,11 @@
       { key: 'akcije', title: '',             SQL_Naziv: '', sortable: 0, sortable_icon: 0, type: 't', width: 86,  suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
     ];
 
-    KontroleTablica(container, {
-      getBrojKolona: 3,
-      headerColumns: esejiZaglavlje,
-      data: []
-    });
+    KontroleTablica(container, { getBrojKolona: 3, headerColumns: esejiZaglavlje, data: [] });
 
     var tbody = container.querySelector('.kontrola-tablica__scroll tbody');
     if (!tbody) return;
 
-    /* Gradi 5 fiksnih redaka u tbody. */
     var bi;
     for (bi = 0; bi < zapisnikEsejiData.length; bi++) {
       (function (i) {
@@ -3465,48 +4115,29 @@
         tr.setAttribute('data-esej-red', String(i));
 
         var tdA = document.createElement('td');
-        var dA = document.createElement('div');
-        dA.className = 'kontrola-tablica__cell-inner';
-        dA.setAttribute('tabindex', '0');
-        tdA.appendChild(dA);
-        tr.appendChild(tdA);
+        var dA = document.createElement('div'); dA.className = 'kontrola-tablica__cell-inner'; dA.setAttribute('tabindex', '0');
+        tdA.appendChild(dA); tr.appendChild(tdA);
 
         var tdN = document.createElement('td');
-        var dN = document.createElement('div');
-        dN.className = 'kontrola-tablica__cell-inner';
-        dN.setAttribute('tabindex', '0');
-        tdN.appendChild(dN);
-        tr.appendChild(tdN);
+        var dN = document.createElement('div'); dN.className = 'kontrola-tablica__cell-inner'; dN.setAttribute('tabindex', '0');
+        tdN.appendChild(dN); tr.appendChild(tdN);
 
         var tdAk = document.createElement('td');
-        var akcije = document.createElement('div');
-        akcije.className = 'zapisnik-crud__eseji-akcije';
+        var akcije = document.createElement('div'); akcije.className = 'zapisnik-crud__eseji-akcije';
 
-        var btnEl = document.createElement('button');
-        btnEl.type = 'button';
+        var btnEl = document.createElement('button'); btnEl.type = 'button';
         btnEl.className = 'zapisnik-crud__eseji-btn zapisnik-crud__eseji-btn--elipsis zapisnik-crud__eseji-kontrola';
-        btnEl.setAttribute('aria-label', 'Uredi esej ' + (i + 1));
-        var spEl = document.createElement('span');
-        spEl.className = 'kontrola-icon--ellipsis-horizontal';
-        spEl.setAttribute('aria-hidden', 'true');
-        btnEl.appendChild(spEl);
-        if (i !== 0) btnEl.hidden = true;
+        btnEl.setAttribute('aria-label', 'Odaberi esej ' + (i + 1));
+        var spEl = document.createElement('span'); spEl.className = 'kontrola-icon--ellipsis-horizontal'; spEl.setAttribute('aria-hidden', 'true');
+        btnEl.appendChild(spEl); if (i !== 0) btnEl.hidden = true;
 
-        var btnBr = document.createElement('button');
-        btnBr.type = 'button';
+        var btnBr = document.createElement('button'); btnBr.type = 'button';
         btnBr.className = 'zapisnik-crud__eseji-btn zapisnik-crud__eseji-btn--brisanje zapisnik-crud__eseji-kontrola';
-        btnBr.setAttribute('aria-label', 'Obriši esej ' + (i + 1));
-        btnBr.hidden = true;
-        var spBr = document.createElement('span');
-        spBr.className = 'kontrola-icon--trash';
-        spBr.setAttribute('aria-hidden', 'true');
+        btnBr.setAttribute('aria-label', 'Obriši esej ' + (i + 1)); btnBr.hidden = true;
+        var spBr = document.createElement('span'); spBr.className = 'kontrola-icon--trash'; spBr.setAttribute('aria-hidden', 'true');
         btnBr.appendChild(spBr);
 
-        akcije.appendChild(btnEl);
-        akcije.appendChild(btnBr);
-        tdAk.appendChild(akcije);
-        tr.appendChild(tdAk);
-
+        akcije.appendChild(btnEl); akcije.appendChild(btnBr); tdAk.appendChild(akcije); tr.appendChild(tdAk);
         tbody.appendChild(tr);
       }(bi));
     }
@@ -3515,106 +4146,505 @@
       CommonCRUD.primijeniTablicaZaglavlje(container, esejiZaglavlje);
     }
 
+    /* ---- Pomoćne funkcije ---- */
+
     function esejRedPopunjen(i) {
       var d = zapisnikEsejiData[i];
-      return !!(d && (trimZ(d.autor) || trimZ(d.naslov)));
+      return !!(d && d.id_eseja);
     }
 
-    /** Ažurira ikone: ellipsis — vidljiv na popunjenim redovima i prvom praznom; trash — vidljiv samo na popunjenim redovima. */
     function esejAzurirajIkone() {
       var rows = tbody.querySelectorAll('tr[data-esej-red]');
-      var prviPrazan = -1;
-      var ri;
+      var prviPrazan = -1; var ri;
+      for (ri = 0; ri < rows.length; ri++) { if (!esejRedPopunjen(ri) && prviPrazan === -1) prviPrazan = ri; }
       for (ri = 0; ri < rows.length; ri++) {
-        if (!esejRedPopunjen(ri) && prviPrazan === -1) prviPrazan = ri;
-      }
-      for (ri = 0; ri < rows.length; ri++) {
-        var tr = rows[ri];
         var popunjen = esejRedPopunjen(ri);
-        var btnEl = tr.querySelector('.zapisnik-crud__eseji-btn--elipsis');
-        var btnBr = tr.querySelector('.zapisnik-crud__eseji-btn--brisanje');
-        if (btnEl) btnEl.hidden = (!popunjen && ri !== prviPrazan);
-        if (btnBr) btnBr.hidden = !popunjen;
+        var btnEl2 = rows[ri].querySelector('.zapisnik-crud__eseji-btn--elipsis');
+        var btnBr2 = rows[ri].querySelector('.zapisnik-crud__eseji-btn--brisanje');
+        if (btnEl2) btnEl2.hidden = (!popunjen && ri !== prviPrazan);
+        if (btnBr2) btnBr2.hidden = !popunjen;
       }
     }
 
-    /** Upiše tekst u cell-inner divove retka i. */
     function esejAzurirajCelije(i) {
-      var tr = tbody.querySelector('tr[data-esej-red="' + i + '"]');
-      if (!tr) return;
+      var trR = tbody.querySelector('tr[data-esej-red="' + i + '"]');
+      if (!trR) return;
       var d = zapisnikEsejiData[i];
-      var cellA = tr.querySelector('td:first-child .kontrola-tablica__cell-inner');
-      var cellN = tr.querySelector('td:nth-child(2) .kontrola-tablica__cell-inner');
+      var cellA = trR.querySelector('td:first-child .kontrola-tablica__cell-inner');
+      var cellN = trR.querySelector('td:nth-child(2) .kontrola-tablica__cell-inner');
       if (cellA) cellA.textContent = trimZ(d.autor)  || '';
       if (cellN) cellN.textContent = trimZ(d.naslov) || '';
     }
 
-    function esejOtvoriModal(i) {
-      var modal = document.getElementById('zapisnikEsejTekstModal');
-      var inpA  = document.getElementById('zapisnikEsejModalAutor');
-      var inpN  = document.getElementById('zapisnikEsejModalNaslov');
-      var ta    = document.getElementById('zapisnikEsejModalTekst');
-      if (!modal || !inpA || !inpN || !ta) return;
-      zapisnikEsejModalTrenutniRed = i;
-      var d = zapisnikEsejiData[i];
-      inpA.value = d.autor || '';
-      inpN.value = d.naslov || '';
-      ta.value   = d.tekst  || '';
-      modal.hidden = false;
-      try { inpA.focus(); } catch (ef) {}
+    /* ---- Modal za odabir eseja ---- */
+
+    var _listaTrenutniRed   = -1;
+    var _listaData          = [];
+    var _listaOffset        = 0;
+    var _listaIsLoading     = false;
+    var _listaHasMore       = true;
+    var _listaTrazi         = '';
+    var _LIMIT              = 50;
+    var _DEBOUNCE           = 300;
+    var _listaFilterT       = null;
+    var _listaInitDone      = false;
+    var _listaBojeCache     = { kv1: null, kv2: null };
+    var _STORAGE_KEY        = 'zapisnik_crud_esej_lista_modal';
+    var _DEF_W = 600, _DEF_H = 560, _MIN_W = 600, _MIN_H = 560;
+    var _kljucneHideT       = null;
+    var _kljucneAktivniId   = null;
+
+    function _bojaToStyle(c) {
+      var s = String(c || '').trim().replace(/^#/, '');
+      if (s.length === 8) {
+        var r = parseInt(s.slice(0,2),16), g = parseInt(s.slice(2,4),16),
+            b = parseInt(s.slice(4,6),16), a = parseInt(s.slice(6,8),16) / 255;
+        if (!isNaN(r+g+b+a)) return 'rgba('+r+','+g+','+b+','+a.toFixed(3)+')';
+      }
+      if (s.length === 6) return '#'+s;
+      return '';
     }
 
-    function esejZatvoriModal() {
-      var modal = document.getElementById('zapisnikEsejTekstModal');
-      if (modal) modal.hidden = true;
-      zapisnikEsejModalTrenutniRed = -1;
+    function _getStorage() {
+      try { var o = JSON.parse(localStorage.getItem(_STORAGE_KEY) || ''); if (o && typeof o.left === 'number') return o; } catch (e) {}
+      return null;
+    }
+    function _setStorage(l, t, w, h) {
+      try { localStorage.setItem(_STORAGE_KEY, JSON.stringify({ left: l, top: t, width: w, height: h })); } catch (e) {}
     }
 
-    /* Handleri za gumbe u redovima tablice. */
+    function _primijeniLegendBoje() {
+      var kv1 = document.getElementById('zapisnik_esej_lista_leg_kv1');
+      var kv2 = document.getElementById('zapisnik_esej_lista_leg_kv2');
+      function strip(b) { var s = String(b || '').trim(); return s.length === 9 ? s.substring(0, 7) : s; }
+      if (kv1 && _listaBojeCache.kv1) kv1.style.backgroundColor = strip(_listaBojeCache.kv1);
+      if (kv2 && _listaBojeCache.kv2) kv2.style.backgroundColor = strip(_listaBojeCache.kv2);
+    }
+
+    function _formatRed(row) {
+      var parts = [];
+      var naslov = row.naslov_eseja ? String(row.naslov_eseja).trim() : '';
+      if (naslov) parts.push(naslov);
+      var autor = [row.autor_prezime, row.autor_ime].filter(Boolean).join(' ');
+      if (autor) parts.push(autor);
+      if (row.stupanj_broj != null) parts.push(String(row.stupanj_broj) + '°');
+      if (row.ista_loza !== 1) {
+        var lozaInfo = [row.loza_naziv, row.loza_grad].filter(Boolean).join(', ');
+        if (lozaInfo) parts.push(lozaInfo);
+      }
+      return parts.join(', ');
+    }
+
+    function _nadjiRedak(id) {
+      for (var j = 0; j < _listaData.length; j++) { if (String(_listaData[j].id) === String(id)) return _listaData[j]; }
+      return null;
+    }
+
+    function _dodajRedove(arr) {
+      var tbodyM = document.getElementById('zapisnik_esej_lista_tbody');
+      if (!tbodyM) return;
+      for (var j = 0; j < arr.length; j++) {
+        var row = arr[j];
+        if (!row || row.id == null) continue;
+        var trM = document.createElement('tr');
+        trM.dataset.esejListaId = String(row.id);
+
+        var td = document.createElement('td');
+        var wrap = document.createElement('div'); wrap.className = 'esej-crud__lista-red-inner';
+        var cel = document.createElement('div'); cel.className = 'kontrola-tablica__cell-inner'; cel.setAttribute('tabindex', '0');
+        cel.textContent = _formatRed(row);
+
+        var bojaFg = null, bojaBg = null;
+        if (row.ista_loza !== 1) { bojaFg = row.boja_javno_11 || null; bojaBg = row.boja_javno_11_bg || null; }
+        else if (+row.javno_dostupan === 1) { bojaFg = row.boja_javno || null; bojaBg = row.boja_javno_bg || null; }
+        cel.style.color = bojaFg ? _bojaToStyle(bojaFg) : '';
+        td.style.backgroundColor = bojaBg ? _bojaToStyle(bojaBg) : '';
+
+        var btnKlj = document.createElement('button'); btnKlj.type = 'button';
+        btnKlj.className = 'esej-crud__lista-elipsis-btn'; btnKlj.setAttribute('aria-label', 'Ključne riječi');
+        btnKlj.dataset.esejListaId = String(row.id);
+        var spKlj = document.createElement('span'); spKlj.className = 'kontrola-icon--ellipsis-horizontal'; spKlj.setAttribute('aria-hidden', 'true');
+        btnKlj.appendChild(spKlj);
+
+        wrap.appendChild(cel); wrap.appendChild(btnKlj); td.appendChild(wrap); trM.appendChild(td);
+        tbodyM.appendChild(trM);
+      }
+    }
+
+    function _ucitajRedove(append) {
+      if (_listaIsLoading) return;
+      _listaIsLoading = true;
+      var idLoza = selectLoza ? (selectLoza.value || '') : '';
+      var url = getApiUrl('Esej_CRUD_lista.php') + '?id_loza=' + encodeURIComponent(idLoza)
+              + '&offset=' + encodeURIComponent(_listaOffset) + '&limit=' + _LIMIT;
+      if (_listaTrazi) url += '&trazi=' + encodeURIComponent(_listaTrazi);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        _listaIsLoading = false;
+        var arr = [];
+        if (xhr.status >= 200 && xhr.status < 300) {
+          var text = (xhr.responseText || '').replace(/^﻿/, '').trim();
+          if (text.charAt(0) === '[') { try { arr = JSON.parse(text); } catch (ep) {} }
+          if (!Array.isArray(arr)) arr = [];
+        }
+        _listaHasMore = arr.length >= _LIMIT;
+        if (arr.length > 0) {
+          if (arr[0].boja_javno)    _listaBojeCache.kv1 = arr[0].boja_javno;
+          if (arr[0].boja_javno_11) _listaBojeCache.kv2 = arr[0].boja_javno_11;
+          _primijeniLegendBoje();
+        }
+        if (!append) {
+          _listaData = arr;
+          var tbodyM2 = document.getElementById('zapisnik_esej_lista_tbody');
+          if (tbodyM2) tbodyM2.innerHTML = '';
+        } else {
+          _listaData = _listaData.concat(arr);
+        }
+        _dodajRedove(arr);
+      };
+      xhr.send();
+    }
+
+    function _kljucnePopupSakrij() {
+      if (_kljucneHideT) { clearTimeout(_kljucneHideT); _kljucneHideT = null; }
+      var popup = document.getElementById('zapisnikEsejKljucnePopup');
+      if (popup) popup.hidden = true;
+      _kljucneAktivniId = null;
+    }
+
+    function _kljucnePopupPokazi(kljucneRijeci, targetBtn) {
+      if (_kljucneHideT) { clearTimeout(_kljucneHideT); _kljucneHideT = null; }
+      var popup = document.getElementById('zapisnikEsejKljucnePopup');
+      if (!popup) return;
+      var tekst = document.getElementById('zapisnik_esej_kljucne_popup_tekst');
+      if (tekst) tekst.textContent = kljucneRijeci || '—';
+      popup.hidden = false;
+      popup.style.left = '-9999px'; popup.style.top = '-9999px';
+      var pw = popup.offsetWidth || 280; var ph = popup.offsetHeight || 120;
+      var rect = targetBtn.getBoundingClientRect();
+      var vw = window.innerWidth || 800; var vh = window.innerHeight || 600;
+      var left = rect.left - pw - 6;
+      if (left < 4) left = rect.right + 6;
+      if (left + pw > vw - 4) left = vw - pw - 4;
+      var top = rect.top;
+      if (top + ph > vh - 4) top = vh - ph - 4;
+      if (top < 4) top = 4;
+      popup.style.left = left + 'px'; popup.style.top = top + 'px';
+    }
+
+    function _zatvori() {
+      var root = document.getElementById('zapisnikEsejListaModal');
+      if (!root) return;
+      var dialog = root.querySelector('.modal-tablica__dialog');
+      if (dialog) {
+        var w = dialog.offsetWidth || parseFloat(dialog.style.width) || 0;
+        var h = dialog.offsetHeight || parseFloat(dialog.style.height) || 0;
+        var l = parseFloat(dialog.style.left); var t = parseFloat(dialog.style.top);
+        if (!isNaN(l) && !isNaN(t) && w >= _MIN_W && h >= _MIN_H) _setStorage(l, t, w, h);
+      }
+      var tbodyM3 = document.getElementById('zapisnik_esej_lista_tbody');
+      if (tbodyM3) tbodyM3.innerHTML = '';
+      _listaData = [];
+      root.classList.remove('modal-tablica--open');
+      root.setAttribute('aria-hidden', 'true');
+      _kljucnePopupSakrij();
+      _listaTrenutniRed = -1;
+    }
+
+    function _otvori(idxRed) {
+      var root = document.getElementById('zapisnikEsejListaModal');
+      if (!root) return;
+      _initInterakcije();
+      var dialog = root.querySelector('.modal-tablica__dialog');
+      if (dialog) {
+        var stored = _getStorage();
+        if (stored) {
+          dialog.style.left = stored.left + 'px'; dialog.style.top = stored.top + 'px';
+          dialog.style.width = Math.max(_MIN_W, stored.width) + 'px';
+          dialog.style.height = Math.max(_MIN_H, stored.height) + 'px';
+        } else {
+          var vw = window.innerWidth || 800; var vh = window.innerHeight || 600;
+          dialog.style.width = _DEF_W + 'px'; dialog.style.height = _DEF_H + 'px';
+          dialog.style.left = Math.max(0, (vw - _DEF_W) / 2) + 'px';
+          dialog.style.top  = Math.max(0, (vh - _DEF_H) / 2) + 'px';
+        }
+      }
+      _listaTrenutniRed = idxRed;
+      _listaOffset = 0; _listaTrazi = ''; _listaHasMore = true;
+      var traziInp = document.getElementById('zapisnik_esej_lista_trazi');
+      if (traziInp) traziInp.value = '';
+      root.classList.add('modal-tablica--open');
+      root.setAttribute('aria-hidden', 'false');
+      _primijeniLegendBoje();
+      _ucitajRedove(false);
+      setTimeout(function () { if (traziInp) try { traziInp.focus(); } catch (ef) {} }, 0);
+    }
+
+    function _initInterakcije() {
+      if (_listaInitDone) return;
+      _listaInitDone = true;
+
+      var root = document.getElementById('zapisnikEsejListaModal');
+      var dialog = root ? root.querySelector('.modal-tablica__dialog') : null;
+      var naslov = root ? root.querySelector('.esej-crud__modal-autor-naslov') : null;
+      var bar    = document.getElementById('zapisnik_esej_lista_resize_bar');
+      var corner = document.getElementById('zapisnik_esej_lista_resize_corner');
+      if (!root || !dialog) return;
+
+      if (naslov) {
+        naslov.addEventListener('mousedown', function (e) {
+          if (e.button !== 0) return;
+          var l0 = parseFloat(dialog.style.left) || 0; var t0 = parseFloat(dialog.style.top) || 0;
+          var x0 = e.clientX; var y0 = e.clientY;
+          function mv(ev) { dialog.style.left = (l0 + ev.clientX - x0) + 'px'; dialog.style.top = (t0 + ev.clientY - y0) + 'px'; }
+          function st() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', st); }
+          document.addEventListener('mousemove', mv); document.addEventListener('mouseup', st); e.preventDefault();
+        });
+      }
+      if (bar) {
+        bar.addEventListener('mousedown', function (e) {
+          if (e.button !== 0) return;
+          var h0 = dialog.offsetHeight; var y0 = e.clientY;
+          function mv(ev) { dialog.style.height = Math.max(_MIN_H, h0 + ev.clientY - y0) + 'px'; }
+          function st() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', st); }
+          document.addEventListener('mousemove', mv); document.addEventListener('mouseup', st); e.preventDefault();
+        });
+      }
+      if (corner) {
+        corner.addEventListener('mousedown', function (e) {
+          if (e.button !== 0) return;
+          var w0 = dialog.offsetWidth; var h0 = dialog.offsetHeight; var x0 = e.clientX; var y0 = e.clientY;
+          function mv(ev) {
+            dialog.style.width  = Math.max(_MIN_W, w0 + ev.clientX - x0) + 'px';
+            dialog.style.height = Math.max(_MIN_H, h0 + ev.clientY - y0) + 'px';
+          }
+          function st() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', st); }
+          document.addEventListener('mousemove', mv); document.addEventListener('mouseup', st); e.preventDefault();
+        });
+      }
+
+      var traziInp = document.getElementById('zapisnik_esej_lista_trazi');
+      if (traziInp) {
+        traziInp.addEventListener('input', function () {
+          if (_listaFilterT) clearTimeout(_listaFilterT);
+          _listaFilterT = setTimeout(function () {
+            _listaFilterT = null; _listaTrazi = trimZ(traziInp.value);
+            _listaOffset = 0; _listaHasMore = true; _ucitajRedove(false);
+          }, _DEBOUNCE);
+        });
+        if (typeof KontroleInitEditDelete === 'function') {
+          var tw = traziInp.closest('.kontrola-edit-delete');
+          if (tw) {
+            KontroleInitEditDelete(tw);
+            tw.addEventListener('kontrole-edit-delete-clear', function () {
+              _listaTrazi = ''; _listaOffset = 0; _listaHasMore = true; _ucitajRedove(false);
+            });
+          }
+        }
+      }
+
+      var scroll = document.getElementById('zapisnik_esej_lista_scroll');
+      if (scroll) {
+        scroll.addEventListener('scroll', function () {
+          if (_listaIsLoading || !_listaHasMore) return;
+          if (scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 100) {
+            _listaOffset += _LIMIT; _ucitajRedove(true);
+          }
+        });
+
+        /* Klik na redak → odabir eseja (elipsis samo prekida propagaciju). */
+        scroll.addEventListener('click', function (ev) {
+          var btnK = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+          if (btnK) return;
+          var trK = ev.target && ev.target.closest ? ev.target.closest('tbody tr') : null;
+          if (!trK) return;
+          var esejId = trK.dataset.esejListaId;
+          if (!esejId) return;
+          var rowData = _nadjiRedak(esejId);
+          if (!rowData) return;
+          var idx = _listaTrenutniRed;
+          _zatvori();
+          if (idx < 0 || idx >= zapisnikEsejiData.length) return;
+          /* Provjera duplikata. */
+          var noviId = rowData.id || null;
+          var ek;
+          for (ek = 0; ek < zapisnikEsejiData.length; ek++) {
+            if (ek !== idx && zapisnikEsejiData[ek].id_eseja && String(zapisnikEsejiData[ek].id_eseja) === String(noviId)) {
+              if (typeof window.showPorukaModal === 'function') {
+                window.showPorukaModal('127', []);
+              } else {
+                alert('Odabrani esej je već dodan u ovaj zapisnik.');
+              }
+              return;
+            }
+          }
+          var imeAutora = [rowData.autor_prezime, rowData.autor_ime].filter(Boolean).join(' ');
+          var lozaInfo  = '';
+          if (rowData.ista_loza !== 1) {
+            lozaInfo = [rowData.loza_naziv, rowData.loza_grad].filter(Boolean).join(', ');
+          }
+          zapisnikEsejiData[idx].autor          = imeAutora + (lozaInfo ? ', ' + lozaInfo : '');
+          zapisnikEsejiData[idx].autor_bold      = imeAutora;
+          zapisnikEsejiData[idx].autor_extra     = lozaInfo;
+          zapisnikEsejiData[idx].naslov         = trimZ(rowData.naslov_eseja) || '';
+          zapisnikEsejiData[idx].id_eseja       = rowData.id || null;
+          zapisnikEsejiData[idx].kljucne_rijeci = trimZ(rowData.kljucne_rijeci) || '';
+          zapisnikEsejiData[idx].datum_upisa    = _formatDatumUpisa(rowData.vrijeme_upisa);
+          esejAzurirajCelije(idx);
+          esejAzurirajIkone();
+        });
+
+        /* Elipsis: hover → popup; klik → popup + stopPropagation; mouseout → sakrij s odgodom. */
+        scroll.addEventListener('mouseover', function (ev) {
+          var btnE = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+          if (!btnE) return;
+          if (_kljucneHideT) { clearTimeout(_kljucneHideT); _kljucneHideT = null; }
+          var esejId = btnE.dataset.esejListaId;
+          if (_kljucneAktivniId === esejId) return;
+          _kljucneAktivniId = esejId;
+          var row = _nadjiRedak(esejId);
+          _kljucnePopupPokazi(row ? row.kljucne_rijeci : '', btnE);
+        });
+        scroll.addEventListener('click', function (ev) {
+          var btnE = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+          if (!btnE) return;
+          if (_kljucneHideT) { clearTimeout(_kljucneHideT); _kljucneHideT = null; }
+          _kljucneAktivniId = btnE.dataset.esejListaId;
+          var row = _nadjiRedak(_kljucneAktivniId);
+          _kljucnePopupPokazi(row ? row.kljucne_rijeci : '', btnE);
+          ev.stopPropagation();
+        });
+        scroll.addEventListener('mouseout', function (ev) {
+          var btnE = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
+          if (!btnE) return;
+          _kljucneHideT = setTimeout(function () { _kljucneHideT = null; _kljucnePopupSakrij(); }, 300);
+        });
+      }
+
+      /* Popup: ostaje vidljiv dok se miš nalazi iznad njega. */
+      var popup = document.getElementById('zapisnikEsejKljucnePopup');
+      if (popup) {
+        popup.addEventListener('mouseover', function () {
+          if (_kljucneHideT) { clearTimeout(_kljucneHideT); _kljucneHideT = null; }
+        });
+        popup.addEventListener('mouseout', function () {
+          _kljucneHideT = setTimeout(function () { _kljucneHideT = null; _kljucnePopupSakrij(); }, 300);
+        });
+      }
+
+      var btnZatvori = document.getElementById('zapisnik_esej_lista_zatvori');
+      if (btnZatvori) btnZatvori.addEventListener('click', _zatvori);
+
+      root.querySelector('.modal-tablica__overlay') && root.querySelector('.modal-tablica__overlay').addEventListener('click', _zatvori);
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          var rootE = document.getElementById('zapisnikEsejListaModal');
+          if (rootE && rootE.classList.contains('modal-tablica--open')) _zatvori();
+          _kljucnePopupSakrij();
+        }
+      });
+
+      var popupIzlaz = document.getElementById('zapisnik_esej_kljucne_popup_izlaz');
+      if (popupIzlaz) popupIzlaz.addEventListener('click', _kljucnePopupSakrij);
+
+      /* Klik van popupa ključnih riječi → sakrij. */
+      document.addEventListener('click', function (ev) {
+        var pop = document.getElementById('zapisnikEsejKljucnePopup');
+        if (!pop || pop.hidden) return;
+        if (pop.contains(ev.target)) return;
+        var scr = document.getElementById('zapisnik_esej_lista_scroll');
+        if (scr && scr.contains(ev.target)) return;
+        _kljucnePopupSakrij();
+      });
+
+      /* Dinamički izračun min visine (isti CSS tokeni kao uzor). */
+      (function () {
+        function tok(n, d) { var v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n).trim()); return isNaN(v) ? d : v; }
+        var padY       = tok('--modal_tablica_body_padding_y', 16);
+        var headH      = tok('--tablica_head_h', 42);
+        var rowH       = tok('--tablica_row_h', 40);
+        var barH       = tok('--panel_resize_bar_height', 28);
+        var headerPadY = tok('--modal_tablica_header_padding_y', 12);
+        var footerPadY = tok('--modal_tablica_footer_padding_y', 12);
+        var btnH       = tok('--button_height', 36);
+        var minH = Math.max(400, Math.ceil(headerPadY * 2 + 150 + padY + headH + rowH * 5 + padY + barH + footerPadY * 2 + btnH));
+        _MIN_H = minH;
+        if (dialog) dialog.style.minHeight = minH + 'px';
+      }());
+    }
+
+    function _praznRedak() { return { autor: '', naslov: '', id_eseja: null, kljucne_rijeci: '', datum_upisa: '' }; }
+
+    function _formatDatumUpisa(dt) {
+      if (!dt) return '';
+      try {
+        var parts = String(dt).split(/[\sT]/)[0].split('-');
+        if (parts.length === 3) return parts[2] + '.' + parts[1] + '.' + parts[0] + '.';
+      } catch (e) {}
+      return String(dt);
+    }
+
+    function _esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function _azurirajTaKljucne(d) {
+      var el = document.getElementById('zapisnik_eseji_sazetak');
+      if (!el) return;
+      if (!d || !d.id_eseja) { el.innerHTML = ''; return; }
+      var autorExtra = (d.autor_extra ? ', ' + _esc(d.autor_extra) : '') + (d.datum_upisa ? ', ' + _esc(d.datum_upisa) : '');
+      el.innerHTML = 'Autor: <strong>' + _esc(d.autor_bold || d.autor || '') + '</strong>' + autorExtra + '<br>'
+                   + 'Naslov eseja: <strong>' + _esc(d.naslov || '') + '</strong>'
+                   + '<hr>'
+                   + _esc(d.kljucne_rijeci || '');
+    }
+
+    /* ---- Handleri u redovima tablice ---- */
     var rows = tbody.querySelectorAll('tr[data-esej-red]');
     var ri;
     for (ri = 0; ri < rows.length; ri++) {
       (function (idx) {
-        var tr    = rows[idx];
-        var btnEl = tr.querySelector('.zapisnik-crud__eseji-btn--elipsis');
-        var btnBr = tr.querySelector('.zapisnik-crud__eseji-btn--brisanje');
-        if (btnEl) btnEl.addEventListener('click', function (e) { e.stopPropagation(); esejOtvoriModal(idx); });
+        var trH   = rows[idx];
+        var btnEl = trH.querySelector('.zapisnik-crud__eseji-btn--elipsis');
+        var btnBr = trH.querySelector('.zapisnik-crud__eseji-btn--brisanje');
+        if (btnEl) btnEl.addEventListener('click', function (e) { e.stopPropagation(); _otvori(idx); });
         if (btnBr) btnBr.addEventListener('click', function (e) {
           e.stopPropagation();
-          zapisnikEsejiData[idx] = { autor: '', naslov: '', tekst: '' };
-          esejAzurirajCelije(idx);
+          /* Presloži: pomakni sve redove iza idx za jedno mjesto prema gore. */
+          var k;
+          for (k = idx; k < zapisnikEsejiData.length - 1; k++) {
+            zapisnikEsejiData[k] = zapisnikEsejiData[k + 1];
+          }
+          zapisnikEsejiData[zapisnikEsejiData.length - 1] = _praznRedak();
+          for (k = 0; k < zapisnikEsejiData.length; k++) { esejAzurirajCelije(k); }
           esejAzurirajIkone();
+          _azurirajTaKljucne(null);
         });
       }(ri));
     }
 
-    /* Modal handleri */
-    var modalOk       = document.getElementById('zapisnikEsejModalOk');
-    var modalOdustani = document.getElementById('zapisnikEsejModalOdustani');
-    var modalBackdrop = document.querySelector('#zapisnikEsejTekstModal .zapisnik-crud__esej-modal-backdrop');
+    /* ---- Klik na redak → ključne riječi u textarea; prazan redak / zaglavlje → briše ---- */
+    container.addEventListener('click', function (ev) {
+      if (ev.target && ev.target.closest && ev.target.closest('button')) return;
+      if (ev.target && ev.target.closest && ev.target.closest('.kontrola-tablica__header')) {
+        _azurirajTaKljucne(''); return;
+      }
+      var trC = ev.target && ev.target.closest ? ev.target.closest('tr[data-esej-red]') : null;
+      if (!trC) return;
+      var redIdx = parseInt(trC.getAttribute('data-esej-red'), 10);
+      if (isNaN(redIdx)) return;
+      var d = zapisnikEsejiData[redIdx];
+      _azurirajTaKljucne((d && d.id_eseja) ? d : null);
+    });
 
-    if (modalOk) modalOk.addEventListener('click', function () {
-      var i = zapisnikEsejModalTrenutniRed;
-      if (i >= 0) {
-        var inpA = document.getElementById('zapisnikEsejModalAutor');
-        var inpN = document.getElementById('zapisnikEsejModalNaslov');
-        var ta   = document.getElementById('zapisnikEsejModalTekst');
-        zapisnikEsejiData[i].autor  = inpA ? trimZ(inpA.value) : '';
-        zapisnikEsejiData[i].naslov = inpN ? trimZ(inpN.value) : '';
-        zapisnikEsejiData[i].tekst  = ta   ? ta.value : '';
-        esejAzurirajCelije(i);
-        esejAzurirajIkone();
-      }
-      esejZatvoriModal();
-    });
-    if (modalOdustani) modalOdustani.addEventListener('click', esejZatvoriModal);
-    if (modalBackdrop) modalBackdrop.addEventListener('click', esejZatvoriModal);
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') {
-        var modal = document.getElementById('zapisnikEsejTekstModal');
-        if (modal && !modal.hidden) esejZatvoriModal();
-      }
-    });
+    _zapisnikEsejiAzurirajFn = function () {
+      var i;
+      for (i = 0; i < zapisnikEsejiData.length; i++) esejAzurirajCelije(i);
+      esejAzurirajIkone();
+    };
   }());
 
 })();

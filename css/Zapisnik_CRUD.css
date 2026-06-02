@@ -969,6 +969,12 @@ body {
   overflow-y: auto;
   box-sizing: border-box;
 }
+.zapisnik-crud__eseji-sazetak.kontrola-napomena hr {
+  border: none;
+  border-top: 1px solid var(--text, currentColor);
+  margin: 0.25em 0;
+  opacity: 0.4;
+}
 
 /* Modal za tekst eseja */
 .zapisnik-crud__esej-modal {
