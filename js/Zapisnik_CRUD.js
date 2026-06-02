@@ -28,6 +28,13 @@
   var zapisnikLozeUcesniceKolekcijaId = [];
   /** ID trenutno učitanog/upisanog zapisnika (mod 1); null u modu 0. */
   var zapisnikTrenutniId = null;
+  /** true ako prijavljen korisnik ima razinu ≤ sustav_varijable[117] (smije čekirati ovjere). */
+  var _zapisnikSmijeOvjera = (function () {
+    var razinaCm = typeof window.VNLH_RAZINA_CASNOG_MAJSTORA === 'number' ? window.VNLH_RAZINA_CASNOG_MAJSTORA : 0;
+    var k = window.VNLH_TEKUCI_KORISNIK;
+    var kRazina = k && k.razina != null ? parseInt(k.razina, 10) : 0;
+    return razinaCm > 0 && kRazina > 0 && kRazina <= razinaCm;
+  }());
   /** ID stupnja koji treba odabrati nakon što async GET stupnjeva završi (postavlja ucitavanje snimljenog). */
   var _pendingStupanjId = null;
   /** Ažurira prikaz svih redaka Eseji tablice; postavlja zapisnikInitEseji. */
@@ -811,8 +818,11 @@
 
   function zapisnikPrimijeniStanjeOvjereZapisnika(imaLozu) {
     var cbPrijeCm = document.getElementById('zapisnik_cb_ovjera_prije_casni_majstor');
-    var mozeDesnuKolonu = !!imaLozu && !!(cbPrijeCm && cbPrijeCm.checked);
-    zapisnikPostaviOvjeraRedSamoprikaz(cbPrijeCm, !imaLozu);
+    var mozePanel = !!imaLozu && _zapisnikSmijeOvjera;
+    var mozeDesnuKolonu = mozePanel && !!(cbPrijeCm && cbPrijeCm.checked);
+    var panelEl = document.getElementById('zapisnikPodpanelOvjeraZapisnika');
+    if (panelEl) panelEl.classList.toggle('zapisnik-crud__podpanel-ovjera--onemogucen', !_zapisnikSmijeOvjera);
+    zapisnikPostaviOvjeraRedSamoprikaz(cbPrijeCm, !mozePanel);
     var ix;
     for (ix = 0; ix < ZAPISNIK_OVJERA_NAKON_CB_IDS.length; ix++) {
       var cbN = document.getElementById(ZAPISNIK_OVJERA_NAKON_CB_IDS[ix]);
@@ -854,9 +864,16 @@
       zapisnikTabVratiNaPodaciAkoAktivnaJeOnemogucena(tabRoot);
     }
     var inpD = document.getElementById('zapisnik_datum_radova');
-    if (inpD) inpD.disabled = !imaLozu;
-    var btnOdustani = document.getElementById('zapisnik_datum_btn_odustani');
-    if (btnOdustani) btnOdustani.disabled = !imaLozu;
+    if (inpD) {
+      var datumWrap = inpD.closest ? inpD.closest('.kontrola-edit-delete') : null;
+      if (datumWrap && typeof KontroleSetControlEnabled === 'function') {
+        KontroleSetControlEnabled(datumWrap, imaLozu);
+      } else {
+        inpD.disabled = !imaLozu;
+        var btnOdustani = document.getElementById('zapisnik_datum_btn_odustani');
+        if (btnOdustani) btnOdustani.disabled = !imaLozu;
+      }
+    }
     var selS = document.getElementById('zapisnik_select_stupanj_radova');
     if (selS) {
       selS.disabled = !imaLozu;
@@ -3841,13 +3858,12 @@
     }
 
     function _primijeniLegendBoje() {
-      function strip(b) { var s = String(b || '').trim(); return s.length === 9 ? s.substring(0, 7) : s; }
       var kv1 = document.getElementById('zapisnik_lista_leg_kv1');
       var kv2 = document.getElementById('zapisnik_lista_leg_kv2');
       var kv3 = document.getElementById('zapisnik_lista_leg_kv3');
-      if (kv1 && _bojeCache.kv1) kv1.style.backgroundColor = strip(_bojeCache.kv1);
-      if (kv2 && _bojeCache.kv2) kv2.style.backgroundColor = strip(_bojeCache.kv2);
-      if (kv3 && _bojeCache.kv3) kv3.style.backgroundColor = strip(_bojeCache.kv3);
+      if (kv1 && _bojeCache.kv1) kv1.style.backgroundColor = _bojaToStyle(_bojeCache.kv1);
+      if (kv2 && _bojeCache.kv2) kv2.style.backgroundColor = _bojaToStyle(_bojeCache.kv2);
+      if (kv3 && _bojeCache.kv3) kv3.style.backgroundColor = _bojaToStyle(_bojeCache.kv3);
     }
 
     function _getStorage() {
@@ -3870,9 +3886,9 @@
     function _formatRed(row) {
       var parts = [];
       var datum = _formatDatum(row.datum_radova);
-      if (datum) parts.push(datum);
+      if (datum) parts.push(datum.replace(/\.$/, ''));
+      if (row.stupanj_broj != null) parts.push(String(row.stupanj_broj) + '°');
       if (row.stupanj_naziv) parts.push(row.stupanj_naziv);
-      else if (row.stupanj_broj != null) parts.push(row.stupanj_broj + '°');
       return parts.join(', ');
     }
 
@@ -4322,9 +4338,8 @@
     function _primijeniLegendBoje() {
       var kv1 = document.getElementById('zapisnik_esej_lista_leg_kv1');
       var kv2 = document.getElementById('zapisnik_esej_lista_leg_kv2');
-      function strip(b) { var s = String(b || '').trim(); return s.length === 9 ? s.substring(0, 7) : s; }
-      if (kv1 && _listaBojeCache.kv1) kv1.style.backgroundColor = strip(_listaBojeCache.kv1);
-      if (kv2 && _listaBojeCache.kv2) kv2.style.backgroundColor = strip(_listaBojeCache.kv2);
+      if (kv1 && _listaBojeCache.kv1) kv1.style.backgroundColor = _bojaToStyle(_listaBojeCache.kv1);
+      if (kv2 && _listaBojeCache.kv2) kv2.style.backgroundColor = _bojaToStyle(_listaBojeCache.kv2);
     }
 
     function _formatRed(row) {

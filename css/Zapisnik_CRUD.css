@@ -250,6 +250,21 @@ body {
   --tab_kontrola_body_text: var(--label_text_disabled);
 }
 
+/* Ovjera zapisnika: korisnik nema ovlasti (razina ispod praga) — panel i labele u disabled izgledu. */
+.zapisnik-crud__podpanel-ovjera.zapisnik-crud__podpanel-ovjera--onemogucen.kontrola-panel {
+  --panel_sjena: var(--edit_focus_shadow_disabled);
+  --panel_border: var(--edit_border_disabled);
+  --panel_bg: var(--edit_bg_disabled);
+  --panel_header_bg: var(--edit_bg_disabled);
+  --panel_header_text: var(--label_text_disabled);
+  --panel_header_border_bottom: 1px solid var(--edit_border_disabled);
+  --panel_body_bg: var(--edit_bg_disabled);
+}
+.zapisnik-crud__podpanel-ovjera.zapisnik-crud__podpanel-ovjera--onemogucen .kontrola-labela,
+.zapisnik-crud__podpanel-ovjera.zapisnik-crud__podpanel-ovjera--onemogucen .zapisnik-crud__ovjera-kol-naslov {
+  color: var(--label_text_disabled);
+}
+
 /* Ugniježdeni paneli (Opći podaci, Ovjera zapisnika) kad nema lože: varijable panela kao disabled. */
 .zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .zapisnik-crud__podpanel-opci-radovi.kontrola-panel,
 .zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .zapisnik-crud__podpanel-ovjera.kontrola-panel {

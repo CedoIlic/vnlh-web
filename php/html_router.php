@@ -80,14 +80,33 @@ if (strpos($raw, '__VNLH_TEKUCI_KORISNIK__') !== false && $idKorisnik > 0) {
         $db->close();
     }
     $korisnikJson = json_encode(
-        ['id' => $idKorisnik, 'prezime' => $prezime, 'ime' => $ime],
+        ['id' => $idKorisnik, 'prezime' => $prezime, 'ime' => $ime,
+         'razina' => (int)($_SESSION['id_duznosnik_razina'] ?? 0)],
         JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS
     );
 }
 
+/* __VNLH_RAZINA_CASNOG_MAJSTORA__: dohvat iz sustav_varijable.id=117. */
+$razinaCasnogMajstora = 0;
+if (strpos($raw, '__VNLH_RAZINA_CASNOG_MAJSTORA__') !== false) {
+    $dbVar = vnlh_db_connect();
+    if ($dbVar !== false) {
+        $stmtVar = $dbVar->prepare('SELECT varijabla FROM sustav_varijable WHERE id = 117 LIMIT 1');
+        if ($stmtVar) {
+            $stmtVar->execute();
+            $resVar = $stmtVar->get_result();
+            if ($resVar && ($rowVar = $resVar->fetch_assoc())) {
+                $razinaCasnogMajstora = (int)$rowVar['varijabla'];
+            }
+            $stmtVar->close();
+        }
+        $dbVar->close();
+    }
+}
+
 $html = str_replace(
-    ['__VNLH_TEKUCI_KORISNIK__', '__VNLH_SESSION_MASTER_ID_DUZNOSNIK__', '__VNLH_ID_KORISNIK__'],
-    [$korisnikJson,              (string) $masterIdDuznosnik,             (string) $idKorisnik],
+    ['__VNLH_TEKUCI_KORISNIK__', '__VNLH_SESSION_MASTER_ID_DUZNOSNIK__', '__VNLH_ID_KORISNIK__', '__VNLH_RAZINA_CASNOG_MAJSTORA__'],
+    [$korisnikJson,              (string) $masterIdDuznosnik,             (string) $idKorisnik,   (string) $razinaCasnogMajstora],
     $raw
 );
 
