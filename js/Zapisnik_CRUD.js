@@ -37,6 +37,8 @@
   }());
   /** true = forma u RO modu (učesnica ili usvojen zapisnik); sve zaključano osim ovjera_poslije. */
   var _zapisnikReadOnlyMode = false;
+  /** true = odabrana loža je domaćin tekućih radova; false = loža učesnica → ovjera_poslije samoprikaz. */
+  var _zapisnikJeDomacinZaOvjeru = true;
   /** ID stupnja koji treba odabrati nakon što async GET stupnjeva završi (postavlja ucitavanje snimljenog). */
   var _pendingStupanjId = null;
   /** Ažurira prikaz svih redaka Eseji tablice; postavlja zapisnikInitEseji. */
@@ -819,9 +821,9 @@
     }
   }
 
-  function zapisnikPrimijeniStanjeOvjereZapisnika(imaLozu) {
+  function zapisnikPrimijeniStanjeOvjereZapisnika(imaLozu, zadrzatiVrijednosti) {
     var cbPrijeCm = document.getElementById('zapisnik_cb_ovjera_prije_casni_majstor');
-    var mozePanel = !!imaLozu && _zapisnikSmijeOvjera;
+    var mozePanel = !!imaLozu && _zapisnikSmijeOvjera && _zapisnikJeDomacinZaOvjeru;
     var mozeDesnuKolonu = mozePanel && !!(cbPrijeCm && cbPrijeCm.checked);
     var panelEl = document.getElementById('zapisnikPodpanelOvjeraZapisnika');
     if (panelEl) panelEl.classList.toggle('zapisnik-crud__podpanel-ovjera--onemogucen', !_zapisnikSmijeOvjera);
@@ -831,8 +833,10 @@
       var cbN = document.getElementById(ZAPISNIK_OVJERA_NAKON_CB_IDS[ix]);
       if (!cbN) continue;
       if (!mozeDesnuKolonu) {
-        cbN.checked = false;
-        zapisnikOvjeraAzurirajKorisnikLabel(cbN, false);
+        if (!zadrzatiVrijednosti) {
+          cbN.checked = false;
+          zapisnikOvjeraAzurirajKorisnikLabel(cbN, false);
+        }
         zapisnikPostaviOvjeraRedSamoprikaz(cbN, true);
       } else {
         zapisnikPostaviOvjeraRedSamoprikaz(cbN, false);
@@ -853,9 +857,9 @@
    */
   function zapisnikPostaviKontroleOvisnoLozi(idLozaZaFormu) {
     if (_zapisnikReadOnlyMode) {
-      /* U RO modu: samo ovjera panel (ovlasi za čekiranje) i min visina — bez enable/disable kontrola. */
+      /* U RO modu: samo ovjera panel — zadrzatiVrijednosti=true da se ne brišu vrijednosti učitane iz DB. */
       var imaLozuRO = !!zapisnikIdOdabraneLozISelecta();
-      zapisnikPrimijeniStanjeOvjereZapisnika(imaLozuRO);
+      zapisnikPrimijeniStanjeOvjereZapisnika(imaLozuRO, true);
       zapisnikPrimijeniUvjeteUpisPdfGumba();
       return;
     }
@@ -3081,6 +3085,7 @@
     zapisnikTrenutniId = null;
     var _bioRO = _zapisnikReadOnlyMode;
     if (_bioRO) _zapisnikUkloniReadOnly();
+    _zapisnikJeDomacinZaOvjeru = true;
     window.mod_upisa_zapisnika = 0;
 
     /* Loža učesnica: guest lože se brišu, domaćin ostaje (kolekcija prazna, textarea piše samo domaćin) */
@@ -3212,32 +3217,63 @@
      * Geo zaglavlje (Država→Regija→Loža): listeneri prije ucitajPravaGeo — kao u Clanovi_Loza_CRUD
      * (u initFormi postoje kad stigne odgovor keša država/regija/loža).
      */
+    /* Pohrani stare geo vrijednosti pri mousedown na wrapperu — za revert pri Cancel. */
+    var _geoStaraDrzava = '', _geoStaraRegija = '', _geoStaraLoza = '';
+    function _geoPohrani(sel, ref) {
+      var w = sel && sel.closest ? sel.closest('.kontrola-select') : null;
+      if (w) w.addEventListener('mousedown', function () { ref.v = trimZ(sel.value); });
+      else if (sel) sel.addEventListener('mousedown', function () { ref.v = trimZ(sel.value); });
+    }
+    var _rDrz = { v: '' }, _rReg = { v: '' }, _rLoz = { v: '' };
+    _geoPohrani(selectDrzava, _rDrz);
+    _geoPohrani(selectRegija, _rReg);
+    _geoPohrani(selectLoza,   _rLoz);
+
+    function _geoIzvrsi(novId, akcija) {
+      if (_zapisnikFormaImaPodatke() && typeof window.showPorukaModal === 'function') {
+        window.showPorukaModal('028', [], function (odg) {
+          if (odg !== 'OK') { akcija(false); return; }
+          zapisnikOcistiSvuFormu();
+          akcija(true, novId);
+        });
+      } else {
+        akcija(true, novId);
+      }
+    }
+
     if (selectDrzava) {
       selectDrzava.addEventListener('change', function () {
         var id = trimZ(this.value);
-        popuniRegijeIzKeša(id, function () {
-          zapisnikUpdateHeaderLogo();
-          zapisnikSyncHeaderLogoSize();
+        _geoIzvrsi(id, function (ok, novId) {
+          if (!ok) {
+            selectDrzava.value = _rDrz.v;
+            if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_drzava');
+            return;
+          }
+          popuniRegijeIzKeša(novId, function () {
+            zapisnikUpdateHeaderLogo(); zapisnikSyncHeaderLogoSize();
+          });
         });
       });
     }
     if (selectRegija) {
       selectRegija.addEventListener('change', function () {
         var id = trimZ(this.value);
-        popuniLozeIzKeša(id, function () {
-          zapisnikUpdateHeaderLogo();
-          zapisnikSyncHeaderLogoSize();
+        _geoIzvrsi(id, function (ok, novId) {
+          if (!ok) {
+            selectRegija.value = _rReg.v;
+            if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_regija');
+            return;
+          }
+          popuniLozeIzKeša(novId, function () {
+            zapisnikUpdateHeaderLogo(); zapisnikSyncHeaderLogoSize();
+          });
         });
       });
     }
     if (selectLoza) {
       selectLoza.addEventListener('change', function (ev) {
-        /* Nova loža u zaglavlju → drugi skup kandidata u modalu — reset kolekcije učesnica (bez parsiranja textarea). */
-        var selEl =
-          ev.currentTarget && ev.currentTarget.tagName === 'SELECT'
-            /** @type {HTMLSelectElement} */
-            ? ev.currentTarget
-            : selectLoza;
+        var selEl = ev.currentTarget && ev.currentTarget.tagName === 'SELECT' ? ev.currentTarget : selectLoza;
 
         function zapisnikPromijeniLozuUOsvjezi(idLozaParam) {
           zapisnikLozeUcesniceKolekcijaId = [];
@@ -3250,7 +3286,6 @@
           zapisnikSyncHeaderLogoSize();
           puniSelectStupanjRadovaZapisnik();
           zapisnikOsvjeziLoziGrupeIFormu(idLozaParam);
-          /* Odmah upiši ložu domaćina u textarea učesnica, osvježi tab stanja i tipku Upiši. */
           zapisnikModalDohvatiRedoveLozeIstiTip(function () {
             zapisnikModalUpisiReadonlyTextareaUcesnice([], null);
             zapisnikPostaviKontroleOvisnoLozi();
@@ -3259,13 +3294,17 @@
         }
 
         var idOdmah = zapisnikVrijednostSelektaZaLoz(selEl);
-        if (idOdmah) {
-          zapisnikPromijeniLozuUOsvjezi(idOdmah);
-          return;
-        }
-        /* Zadnji pokušaj: u istoj milisekundi .value još može ostati ''; nakon mikrotaska je commitan za custom UI. */
-        queueMicrotask(function () {
-          zapisnikPromijeniLozuUOsvjezi(zapisnikVrijednostSelektaZaLoz(selEl));
+        _geoIzvrsi(idOdmah || '', function (ok, novId) {
+          if (!ok) {
+            selectLoza.value = _rLoz.v;
+            if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_loza');
+            return;
+          }
+          var idFinal = novId || zapisnikVrijednostSelektaZaLoz(selEl);
+          if (idFinal) { zapisnikPromijeniLozuUOsvjezi(idFinal); return; }
+          queueMicrotask(function () {
+            zapisnikPromijeniLozuUOsvjezi(zapisnikVrijednostSelektaZaLoz(selEl));
+          });
         });
       });
     }
@@ -3351,6 +3390,20 @@
         if (cbNak) {
           cbNak.addEventListener('change', function () {
             zapisnikOvjeraAzurirajKorisnikLabel(cbNak, cbNak.checked);
+            /* Ako smo bili u Case 2 RO modu i svi ovjera_poslije su sada 0 → izlaz iz RO moda. */
+            if (_zapisnikReadOnlyMode && _zapisnikJeDomacinZaOvjeru) {
+              var sviOdcek = ZAPISNIK_OVJERA_NAKON_CB_IDS.every(function (cid) {
+                var c = document.getElementById(cid);
+                return !c || !c.checked;
+              });
+              if (sviOdcek) {
+                _zapisnikUkloniReadOnly();
+                window.mod_upisa_zapisnika = 1;
+                zapisnikPrimijeniFooterPremaModuUpisa();
+                zapisnikPostaviKontroleOvisnoLozi();
+                zapisnikPrimijeniUvjeteUpisPdfGumba();
+              }
+            }
           });
         }
       })(ZAPISNIK_OVJERA_NAKON_CB_IDS[_oix]);
@@ -3786,6 +3839,7 @@
     zapisnikTrenutniId = data.id;
     window.mod_upisa_zapisnika = isRO ? 0 : 1; /* RO = mod 0 (bez Upis/Izmjeni) */
     if (isRO) _zapisnikReadOnlyMode = true;    /* postavi rano — guard u zapisnikPostaviKontroleOvisnoLozi */
+    _zapisnikJeDomacinZaOvjeru = !isCase1;     /* false samo za učesnicu — ovjera_poslije samoprikaz */
     zapisnikPrimijeniFooterPremaModuUpisa();
 
     var idDrzava = String(data.domacin_id_drzava || '');
@@ -4047,7 +4101,8 @@
     setCb(cbNakonCm, data.ovjera_poslije_casni,  data.ovjera_poslije_casni_id);
     setCb(cbNakonTj, data.ovjera_poslije_tajnik, data.ovjera_poslije_tajnik_id);
     setCb(cbNakonGv, data.ovjera_poslije_govornik, data.ovjera_poslije_govornik_id);
-    zapisnikPrimijeniStanjeOvjereZapisnika(!!zapisnikIdOdabraneLozISelecta());
+    /* zadrzatiVrijednosti=true: ne brišemo postavljene vrijednosti pri učitavanju. */
+    zapisnikPrimijeniStanjeOvjereZapisnika(!!zapisnikIdOdabraneLozISelecta(), true);
   }
 
   function _primijenjiPrisustvoZaUcitavanje(prisutni) {
