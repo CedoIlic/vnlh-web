@@ -35,6 +35,8 @@
     var kRazina = k && k.razina != null ? parseInt(k.razina, 10) : 0;
     return razinaCm > 0 && kRazina > 0 && kRazina <= razinaCm;
   }());
+  /** true = forma u RO modu (učesnica ili usvojen zapisnik); sve zaključano osim ovjera_poslije. */
+  var _zapisnikReadOnlyMode = false;
   /** ID stupnja koji treba odabrati nakon što async GET stupnjeva završi (postavlja ucitavanje snimljenog). */
   var _pendingStupanjId = null;
   /** Ažurira prikaz svih redaka Eseji tablice; postavlja zapisnikInitEseji. */
@@ -850,6 +852,13 @@
    * @param {string} [idLozaZaFormu] — ako zadan (npr. iz change na #select_loza), ima ložu se računa iz toga bez oslanjanja na .value koji u custom selectu u istome event tick-u još može nedostati.
    */
   function zapisnikPostaviKontroleOvisnoLozi(idLozaZaFormu) {
+    if (_zapisnikReadOnlyMode) {
+      /* U RO modu: samo ovjera panel (ovlasi za čekiranje) i min visina — bez enable/disable kontrola. */
+      var imaLozuRO = !!zapisnikIdOdabraneLozISelecta();
+      zapisnikPrimijeniStanjeOvjereZapisnika(imaLozuRO);
+      zapisnikPrimijeniUvjeteUpisPdfGumba();
+      return;
+    }
     var imaLozu =
       typeof idLozaZaFormu !== 'undefined'
         ? trimZ(idLozaZaFormu !== null ? String(idLozaZaFormu) : '') !== ''
@@ -3070,6 +3079,8 @@
   function zapisnikOcistiSvuFormu() {
     /* Stanje upisa — reset na novi zapis */
     zapisnikTrenutniId = null;
+    var _bioRO = _zapisnikReadOnlyMode;
+    if (_bioRO) _zapisnikUkloniReadOnly();
     window.mod_upisa_zapisnika = 0;
 
     /* Loža učesnica: guest lože se brišu, domaćin ostaje (kolekcija prazna, textarea piše samo domaćin) */
@@ -3144,6 +3155,8 @@
     /* Osvježi stanje forme i gumba */
     zapisnikPostaviKontroleOvisnoLozi();
     zapisnikPrimijeniUvjeteUpisPdfGumba();
+    /* Nakon RO moda (Case 1): ponovo napuni stupanj select filterom lože. */
+    if (_bioRO) puniSelectStupanjRadovaZapisnik();
   }
 
   function zapisnikPostJson(url, payload, onDone) {
@@ -3562,6 +3575,158 @@
    * Učitaj snimljeni zapisnik po ID-u i popuni sva polja forme.
    * Geo kaskada (Država→Regija→Loža) pa sva ostala polja u callbacku.
    */
+  /**
+   * Primjeni RO na sve kontrole forme osim ovjera_poslije (koja kontrolira _zapisnikSmijeOvjera).
+   * Koristi se za slučaj učesnice (je_domacin=0) i usvojenog zapisnika (ovjera_poslije=1).
+   */
+  function _zapisnikPrimijeniReadOnly() {
+    _zapisnikReadOnlyMode = true;
+
+    /* Lokot ikona u zaglavlju. */
+    var lokot = document.getElementById('zapisnik_ro_lokot');
+    if (lokot) { lokot.hidden = false; lokot.style.display = 'inline-flex'; }
+
+    /* Tipke: sakrij Upis/Izmjeni/Izbriši; onemogući PDF. */
+    var bUpis = document.getElementById('btnUpisi');
+    if (bUpis) { bUpis.hidden = true; bUpis.style.display = 'none'; bUpis.disabled = true; }
+    var bBr = document.getElementById('btnIzbrisi');
+    if (bBr) { bBr.hidden = true; bBr.style.display = 'none'; }
+
+    /* Odustani X (datum): sakrij. */
+    var btnOdust = document.getElementById('zapisnik_datum_btn_odustani');
+    if (btnOdust) { btnOdust.hidden = true; btnOdust.style.display = 'none'; }
+
+    function _roEl(el) {
+      if (!el) return;
+      if (el.tagName === 'INPUT' && el.type !== 'checkbox') { el.readOnly = true; }
+      else if (el.tagName === 'TEXTAREA') { el.readOnly = true; }
+      else if (el.tagName === 'SELECT') {
+        var sw = el.closest ? el.closest('.kontrola-select') : null;
+        if (sw) { sw.style.pointerEvents = 'none'; sw.style.cursor = 'default'; }
+        else { el.style.pointerEvents = 'none'; el.style.cursor = 'default'; }
+      } else if (el.hasAttribute && el.hasAttribute('contenteditable')) {
+        el.setAttribute('contenteditable', 'false');
+      } else {
+        el.style.pointerEvents = 'none'; el.style.cursor = 'default';
+      }
+    }
+
+    /* Tab 0 — Podaci o radovima (sve osim ovjera panela). */
+    ['zapisnik_datum_radova', 'zapisnik_select_stupanj_radova',
+     'zapisnik_select_tip_radova', 'zapisnik_loza_ucesnici'].forEach(function (id) {
+      _roEl(document.getElementById(id));
+    });
+    if (bTipEllipsis) { bTipEllipsis.style.pointerEvents = 'none'; bTipEllipsis.style.cursor = 'default'; }
+
+    /* Tab 1 — Prisustvo: pointer-events none na svim kontrolama i tablicama. */
+    var presWrap = document.getElementById('zapisnik_prisustvo_lijevi_stupac');
+    if (presWrap) { presWrap.style.pointerEvents = 'none'; presWrap.style.cursor = 'default'; }
+    var presDWrap = document.getElementById('zapisnik_prisustvo_tablica_desno');
+    if (presDWrap) { presDWrap.style.pointerEvents = 'none'; presDWrap.style.cursor = 'default'; }
+    var btnUde = document.getElementById('zapisnik_prisustvo_btn_udesno');
+    var btnUli = document.getElementById('zapisnik_prisustvo_btn_ulijevo');
+    if (btnUde) { btnUde.style.pointerEvents = 'none'; btnUde.style.cursor = 'default'; }
+    if (btnUli) { btnUli.style.pointerEvents = 'none'; btnUli.style.cursor = 'default'; }
+    var selTipU2 = document.getElementById('zapisnik_prisustvo_tip_unosa');
+    if (selTipU2) {
+      var stw = selTipU2.closest ? selTipU2.closest('.kontrola-select') : null;
+      if (stw) { stw.style.pointerEvents = 'none'; stw.style.cursor = 'default'; }
+    }
+
+    /* Tab 2 — Dužnosnici: readOnly na editima, pointer-events none na ellipsisima. */
+    var di2;
+    for (di2 = 0; di2 < ZAPISNIK_DUZNOSNICI_REDOVI.length; di2++) {
+      var editDuz = document.getElementById(ZAPISNIK_DUZNOSNICI_REDOVI[di2].editId);
+      var ellDuz  = document.getElementById(ZAPISNIK_DUZNOSNICI_REDOVI[di2].ellipsisId);
+      if (editDuz) { editDuz.setAttribute('contenteditable', 'false'); editDuz.style.pointerEvents = 'none'; }
+      if (ellDuz)  { ellDuz.style.pointerEvents = 'none'; ellDuz.style.cursor = 'default'; }
+    }
+
+    /* Tab 3 — Zapisnik: sažetak readOnly, tekst contenteditable false. */
+    var taS3 = document.getElementById('zapisnik_edit_sazetak');
+    if (taS3) taS3.readOnly = true;
+    var tekEl = document.getElementById('zapisnik_edit_tekst');
+    if (tekEl && tekEl.hasAttribute('contenteditable')) tekEl.setAttribute('contenteditable', 'false');
+
+    /* Tab 4 — Eseji: pointer-events none na gumbima. */
+    var esejCont = document.getElementById('zapisnikEsejiTablica');
+    if (esejCont) {
+      var esejBtns = esejCont.querySelectorAll('.zapisnik-crud__eseji-kontrola');
+      for (var ei4 = 0; ei4 < esejBtns.length; ei4++) {
+        if (esejBtns[ei4]) { esejBtns[ei4].style.pointerEvents = 'none'; esejBtns[ei4].style.cursor = 'default'; }
+      }
+    }
+  }
+
+  /** Ukloni sve RO inline stilove i readOnly atribute koje je postavio _zapisnikPrimijeniReadOnly. */
+  function _zapisnikUkloniReadOnly() {
+    _zapisnikReadOnlyMode = false;
+
+    /* Sakrij lokot ikonu. */
+    var lokot = document.getElementById('zapisnik_ro_lokot');
+    if (lokot) { lokot.hidden = true; lokot.style.display = 'none'; }
+
+    function _restEl(el) {
+      if (!el) return;
+      if (el.tagName === 'INPUT' && el.type !== 'checkbox') { el.readOnly = false; }
+      else if (el.tagName === 'TEXTAREA') { el.readOnly = false; }
+      else if (el.tagName === 'SELECT') {
+        var sw = el.closest ? el.closest('.kontrola-select') : null;
+        if (sw) { sw.style.removeProperty('pointer-events'); sw.style.removeProperty('cursor'); }
+        else { el.style.removeProperty('pointer-events'); el.style.removeProperty('cursor'); }
+      } else {
+        el.style.removeProperty('pointer-events'); el.style.removeProperty('cursor');
+      }
+    }
+
+    ['zapisnik_datum_radova', 'zapisnik_select_stupanj_radova',
+     'zapisnik_select_tip_radova', 'zapisnik_loza_ucesnici'].forEach(function (id) {
+      _restEl(document.getElementById(id));
+    });
+    if (bTipEllipsis) { bTipEllipsis.style.removeProperty('pointer-events'); bTipEllipsis.style.removeProperty('cursor'); }
+
+    var presWrap = document.getElementById('zapisnik_prisustvo_lijevi_stupac');
+    if (presWrap) { presWrap.style.removeProperty('pointer-events'); presWrap.style.removeProperty('cursor'); }
+    var presDWrap = document.getElementById('zapisnik_prisustvo_tablica_desno');
+    if (presDWrap) { presDWrap.style.removeProperty('pointer-events'); presDWrap.style.removeProperty('cursor'); }
+    var btnUde = document.getElementById('zapisnik_prisustvo_btn_udesno');
+    var btnUli = document.getElementById('zapisnik_prisustvo_btn_ulijevo');
+    if (btnUde) { btnUde.style.removeProperty('pointer-events'); btnUde.style.removeProperty('cursor'); }
+    if (btnUli) { btnUli.style.removeProperty('pointer-events'); btnUli.style.removeProperty('cursor'); }
+    var selTipU2 = document.getElementById('zapisnik_prisustvo_tip_unosa');
+    if (selTipU2) {
+      var stw = selTipU2.closest ? selTipU2.closest('.kontrola-select') : null;
+      if (stw) { stw.style.removeProperty('pointer-events'); stw.style.removeProperty('cursor'); }
+    }
+
+    var di2;
+    for (di2 = 0; di2 < ZAPISNIK_DUZNOSNICI_REDOVI.length; di2++) {
+      var editDuz = document.getElementById(ZAPISNIK_DUZNOSNICI_REDOVI[di2].editId);
+      var ellDuz  = document.getElementById(ZAPISNIK_DUZNOSNICI_REDOVI[di2].ellipsisId);
+      if (editDuz) { editDuz.style.removeProperty('pointer-events'); editDuz.style.removeProperty('cursor'); }
+      if (ellDuz)  { ellDuz.style.removeProperty('pointer-events'); ellDuz.style.removeProperty('cursor'); }
+    }
+
+    var taS3 = document.getElementById('zapisnik_edit_sazetak');
+    if (taS3) taS3.readOnly = false;
+    var tekEl = document.getElementById('zapisnik_edit_tekst');
+    if (tekEl && tekEl.hasAttribute('contenteditable')) tekEl.setAttribute('contenteditable', 'true');
+
+    var esejCont = document.getElementById('zapisnikEsejiTablica');
+    if (esejCont) {
+      var esejBtns = esejCont.querySelectorAll('.zapisnik-crud__eseji-kontrola');
+      for (var ei4 = 0; ei4 < esejBtns.length; ei4++) {
+        if (esejBtns[ei4]) { esejBtns[ei4].style.removeProperty('pointer-events'); esejBtns[ei4].style.removeProperty('cursor'); }
+      }
+    }
+
+    var btnOdust = document.getElementById('zapisnik_datum_btn_odustani');
+    if (btnOdust) { btnOdust.hidden = false; btnOdust.style.removeProperty('display'); }
+
+    var bUpis = document.getElementById('btnUpisi');
+    if (bUpis) { bUpis.hidden = false; bUpis.style.removeProperty('display'); bUpis.disabled = false; }
+  }
+
   function _zapisnikLozeUcesniceImaPodatakaZaUpozorenje() {
     if (zapisnikPrisustvoDesnoListaPoRedu && zapisnikPrisustvoDesnoListaPoRedu.length > 0) return true;
     var di;
@@ -3587,7 +3752,8 @@
     return false;
   }
 
-  function zapisnikUcitajSnimljeniZaEditing(idZapisnika) {
+  function zapisnikUcitajSnimljeniZaEditing(idZapisnika, rowData) {
+    var jeDomacinAtLoad = rowData && rowData.je_domacin != null ? +rowData.je_domacin : 1;
     var xhr = new XMLHttpRequest();
     xhr.open('GET', getApiUrl('Zapisnik_CRUD_ucitaj.php') + '?id=' + encodeURIComponent(idZapisnika), true);
     xhr.onreadystatechange = function () {
@@ -3605,21 +3771,38 @@
         if (typeof window.showPorukaModal === 'function') window.showPorukaModal(pErr && pErr.code ? pErr.code : '200', pErr ? (pErr.replacements || []) : []);
         return;
       }
-      _primijenjiUcitanogZapisnika(data);
+      _primijenjiUcitanogZapisnika(data, jeDomacinAtLoad);
     };
     xhr.send();
   }
 
-  function _primijenjiUcitanogZapisnika(data) {
+  function _primijenjiUcitanogZapisnika(data, jeDomacinAtLoad) {
+    var isCase1 = jeDomacinAtLoad === 0; /* učesnica: geo ostaje, samo prikaz */
+    var isCase2 = !isCase1 && (+data.ovjera_poslije_casni || +data.ovjera_poslije_tajnik || +data.ovjera_poslije_govornik);
+    var isRO    = isCase1 || isCase2;
+
     /* Resetiraj formu, potom vrati mod=1 i ID. */
     zapisnikOcistiSvuFormu();
     zapisnikTrenutniId = data.id;
-    window.mod_upisa_zapisnika = 1;
+    window.mod_upisa_zapisnika = isRO ? 0 : 1; /* RO = mod 0 (bez Upis/Izmjeni) */
+    if (isRO) _zapisnikReadOnlyMode = true;    /* postavi rano — guard u zapisnikPostaviKontroleOvisnoLozi */
     zapisnikPrimijeniFooterPremaModuUpisa();
 
     var idDrzava = String(data.domacin_id_drzava || '');
     var idRegija = String(data.domacin_id_regija || '');
     var idLoza   = String(data.id_domacin || '');
+
+    /* Case 1 (učesnica): geo ostaje nepromijenjeno, popuni direktno za prikaz. */
+    if (isCase1) {
+      _primijenjiUcitanogZapisnikaPolja(data);
+      requestAnimationFrame(function () {
+        _zapisnikPrimijeniReadOnly();
+        zapisnikOsvjeziLoziGrupeIFormu(zapisnikIdOdabraneLozISelecta() || undefined);
+        zapisnikPrimijeniUvjeteUpisPdfGumba();
+        zapisnikScheduleMinVisinuResiza();
+      });
+      return;
+    }
 
     /* Postavi pending stupanj PRIJE cascade-a — popuniLozeIzKeša interno poziva
        puniSelectStupanjRadovaZapisnik() čiji setTimeout vidi već postavljenu ložu i pending ID.
@@ -3758,8 +3941,94 @@
         zapisnikOsvjeziLoziGrupeIFormu(idLoza);
         zapisnikPrimijeniUvjeteUpisPdfGumba();
         zapisnikScheduleMinVisinuResiza();
+        /* Case 2: domaćin s usvojenim zapisnikom → RO (nakon što je forma enabled). */
+        if (isCase2) _zapisnikPrimijeniReadOnly();
       });
     });
+  }
+
+  /** Popunjava polja forme bez geo kaskade — za Case 1 (učesnica). */
+  function _primijenjiUcitanogZapisnikaPolja(data) {
+    /* Datum. */
+    var inpD = document.getElementById('zapisnik_datum_radova');
+    if (inpD) { inpD.value = data.datum_radova || ''; inpD.classList.toggle('date-empty', !data.datum_radova); }
+
+    /* Stupanj: jedina hardkodirana opcija (loža učesnica može imati drugi tip). */
+    var selS = document.getElementById('zapisnik_select_stupanj_radova');
+    if (selS && data.id_stupanj) {
+      while (selS.firstChild) selS.removeChild(selS.firstChild);
+      var optSt = document.createElement('option');
+      optSt.value = String(data.id_stupanj);
+      var stTxt = data.stupanj_broj != null ? String(data.stupanj_broj) + '°' : '';
+      if (data.stupanj_naziv) stTxt += (stTxt ? ', ' : '') + data.stupanj_naziv;
+      optSt.textContent = stTxt || String(data.id_stupanj);
+      selS.appendChild(optSt);
+      selS.value = String(data.id_stupanj);
+      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('zapisnik_select_stupanj_radova');
+    }
+
+    /* Tip radova (select je već napunjen pri startu stranice). */
+    var selT = document.getElementById('zapisnik_select_tip_radova');
+    if (selT && data.id_tip_radova) {
+      selT.value = String(data.id_tip_radova);
+      if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('zapisnik_select_tip_radova');
+    }
+
+    /* Loze ucesnice — textarea. */
+    var idLozaDoc = String(data.id_domacin || '');
+    zapisnikLozeDomacinId = idLozaDoc;
+    var domNazivD = trimZ(data.domacin_naziv || '');
+    var domGradD  = trimZ(data.domacin_grad  || '');
+    var domDrzD   = trimZ(data.domacin_drzava_naziv || '');
+    zapisnikLozeDomacinRow = [[domNazivD, domGradD, domDrzD].filter(Boolean).join(', '), idLozaDoc, domNazivD, domGradD, domDrzD];
+    var snimakD = []; var guestIdsD = [];
+    var ucesD = data.loze_ucesnice || [];
+    var ui;
+    for (ui = 0; ui < ucesD.length; ui++) {
+      var uD = ucesD[ui];
+      if (!uD || !uD.id || String(uD.id) === idLozaDoc) continue;
+      snimakD.push([[uD.naziv, uD.grad, uD.drzava].filter(Boolean).join(', '), String(uD.id), uD.naziv||'', uD.grad||'', uD.drzava||'']);
+      guestIdsD.push(String(uD.id));
+    }
+    zapisnikLozeUcesniceKolekcijaId = guestIdsD;
+    zapisnikModalLozeUcesniceSnapshot = snimakD;
+    (function () {
+      var ta = document.getElementById('zapisnik_loza_ucesnici');
+      if (!ta) return;
+      var seg = [];
+      if (zapisnikLozeDomacinRow) { var sd = zapisnikModalFormatJednaLozaZaTextarea(zapisnikLozeDomacinRow); if (sd) seg.push(sd); }
+      var byId = {}; var si; for (si = 0; si < snimakD.length; si++) { var sr = snimakD[si]; if (sr && sr.length >= 5) byId[String(sr[1])] = sr; }
+      for (si = 0; si < guestIdsD.length; si++) { var rw = byId[String(guestIdsD[si])]; if (!rw) continue; var sg = zapisnikModalFormatJednaLozaZaTextarea(rw); if (sg) seg.push(sg); }
+      ta.value = seg.join('; ');
+    }());
+
+    /* Ovjera, sažetak, tekst. */
+    _primijenjiOvjeruZaUcitavanje(data);
+    var taS = document.getElementById('zapisnik_edit_sazetak');
+    if (taS) taS.value = data.sazetak || '';
+    zapisnikTekstSetTekst(data.zapisnik || '');
+
+    /* Prisustvo i dužnosnici — isti async flow kao Case 2. */
+    var prisutniData = data.prisutni || [];
+    zapisnikPrisustvoOsvjeziIzvornuListuClanova(function () {
+      _primijenjiPrisustvoZaUcitavanje(prisutniData);
+      zapisnikPrisustvoOsvjeziLijevoTbodyIzCacheBezPremjestenih();
+      var prviEntry = zapisnikPrisustvoDesnoListaPoRedu[0];
+      if (prviEntry) {
+        var selTipU = document.getElementById('zapisnik_prisustvo_tip_unosa');
+        if (selTipU && prviEntry.tipUnosaId) {
+          selTipU.value = String(prviEntry.tipUnosaId);
+          if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('zapisnik_prisustvo_tip_unosa');
+          selTipU.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        var tbodyD = document.getElementById('zapisnik_prisustvo_tbody_desno');
+        if (tbodyD) { var trs = tbodyD.querySelectorAll('tr'); for (var ti = 0; ti < trs.length; ti++) trs[ti].classList.remove('tablica-row-selected'); if (trs[0]) { trs[0].classList.add('tablica-row-selected'); zapisnikPrisustvoAzurirajVidljivostHasSelectedDesno(); zapisnikPrisustvoAzurirajGumbovePremjestaja(); } }
+      }
+      /* Primijeni RO ponovo jer prisustvo loading može re-enableati kontrole. */
+      if (_zapisnikReadOnlyMode) _zapisnikPrimijeniReadOnly();
+    });
+    _primijeniDuznosniciZaUcitavanje(data.duznosnici || []);
+    _primijenjiEsejiZaUcitavanje(data.eseji || []);
   }
 
   function _primijenjiOvjeruZaUcitavanje(data) {

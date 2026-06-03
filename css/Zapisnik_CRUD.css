@@ -66,6 +66,7 @@ body {
   box-sizing: border-box;
 }
 
+
 /* Zaglavlje: Država / Regija / Loža + logo (Clanovi_Loza_CRUD.css – .clanovi-loza-crud__tablica-header*). */
 .zapisnik-crud__panel-header.clanovi-loza-crud__tablica-header {
   min-width: 0;
