@@ -622,9 +622,20 @@
     if (!root || !dialog) return;
 
     /* Drag samo po naslovu (ne na search redu unutar headera). */
-    var naslov = root ? root.querySelector('.esej-crud__modal-autor-naslov') : null;
-    if (naslov) {
-      naslov.addEventListener('mousedown', function (e) {
+    var header = root ? root.querySelector('.modal-tablica__header') : null;
+    if (header) {
+      header.style.cursor = 'move';
+      /* stopPropagation na interaktivnim dijelovima headera — mousedown ne stiže do drag handlera. */
+      var _stopSels = ['input', 'button', 'select', 'textarea', 'a',
+                       '.kontrola-edit-delete', '.esej-crud__modal-autor-trazi-red',
+                       '.esej-crud__modal-lista-legenda'];
+      _stopSels.forEach(function (sel) {
+        var els = header.querySelectorAll(sel);
+        for (var si = 0; si < els.length; si++) {
+          els[si].addEventListener('mousedown', function (ev) { ev.stopPropagation(); });
+        }
+      });
+      header.addEventListener('mousedown', function (e) {
         if (e.button !== 0) return;
         var left0 = parseFloat(dialog.style.left) || 0;
         var top0  = parseFloat(dialog.style.top)  || 0;
@@ -675,6 +686,7 @@
     var scroll = document.getElementById('esej_modal_autor_scroll');
     if (scroll) {
       scroll.addEventListener('click', function (ev) {
+        if (window.getSelection && window.getSelection().toString().length > 0) return;
         var tr = ev.target && ev.target.closest ? ev.target.closest('tbody tr') : null;
         if (!tr || tr.hidden) return;
         var tbody = document.getElementById('esej_modal_autor_tbody');
@@ -750,7 +762,7 @@
   var _esejModalListaIsLoading   = false;
   var _esejModalListaHasMore     = true;
   var _esejModalListaTrazi       = '';
-  var _ESEJ_MODAL_LISTA_LIMIT    = 50;
+  var _ESEJ_MODAL_LISTA_LIMIT = typeof window.VNLH_LIMIT_ZAHVAT === 'number' && window.VNLH_LIMIT_ZAHVAT > 0 ? window.VNLH_LIMIT_ZAHVAT : 50;
   var _ESEJ_MODAL_LISTA_DEBOUNCE = 300;
   var _esejModalListaFilterT     = null;
   var _esejModalListaInitDone    = false;
@@ -1166,9 +1178,20 @@
     var corner = document.getElementById('esej_modal_lista_resize_corner');
     if (!root || !dialog) return;
 
-    /* Drag. */
-    if (naslov) {
-      naslov.addEventListener('mousedown', function (e) {
+    /* Drag — header element, zaobilazi interaktivne kontrole i legendu. */
+    var headerLista = root ? root.querySelector('.modal-tablica__header') : null;
+    if (headerLista) {
+      headerLista.style.cursor = 'move';
+      var _stopSelsL = ['input', 'button', 'select', 'textarea', 'a',
+                        '.kontrola-edit-delete', '.esej-crud__modal-autor-trazi-red',
+                        '.esej-crud__modal-lista-legenda'];
+      _stopSelsL.forEach(function (sel) {
+        var els = headerLista.querySelectorAll(sel);
+        for (var si = 0; si < els.length; si++) {
+          els[si].addEventListener('mousedown', function (ev) { ev.stopPropagation(); });
+        }
+      });
+      headerLista.addEventListener('mousedown', function (e) {
         if (e.button !== 0) return;
         var l0 = parseFloat(dialog.style.left) || 0;
         var t0 = parseFloat(dialog.style.top)  || 0;
@@ -1231,6 +1254,7 @@
 
       /* Klik na redak → odabir eseja. */
       scroll.addEventListener('click', function (ev) {
+        if (window.getSelection && window.getSelection().toString().length > 0) return;
         /* Klik na ellipsis — popup, ne selekcija. */
         var btn = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
         if (btn) return;

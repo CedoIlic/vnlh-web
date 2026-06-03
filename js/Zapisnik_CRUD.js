@@ -1753,7 +1753,7 @@
   }
 
   /* Isti interval kao Clanovi_Loza_CRUD clanoviLozaInitTraziTablica (200 ms). */
-  var ZAPISNIK_PRISUSTVO_TRAZI_DEBOUNCE_MS = 200;
+  var ZAPISNIK_PRISUSTVO_TRAZI_DEBOUNCE_MS = 300;
   var zapisnikPrisustvoFilterDebounceT = null;
 
   /**
@@ -1850,7 +1850,7 @@
         zapisnikPrisustvoFilterDebounceT = setTimeout(function () {
           zapisnikPrisustvoFilterDebounceT = null;
           zapisnikPrisustvoPrimijeniFilterLijeveListe();
-        }, ZAPISNIK_PRISUSTVO_TRAZI_DEBOUNCE_MS);
+        }, typeof window.vnlhGetPronadjiStankaMs === 'function' ? window.vnlhGetPronadjiStankaMs() : 300);
       });
       var traziEd = inpTrazi.closest('.kontrola-edit-delete');
       if (traziEd) {
@@ -3150,6 +3150,9 @@
   }
 
   function onReady() {
+    if (typeof window.vnlhLoadPronadjiStankaMsFromVar114 === 'function') {
+      window.vnlhLoadPronadjiStankaMsFromVar114(API_BASE);
+    }
     var root = document.getElementById('zapisnikKontrolaTab');
     if (typeof KontroleTabInit === 'function') {
       KontroleTabInit(root);
@@ -3835,7 +3838,7 @@
     var _listaIsLoading  = false;
     var _listaHasMore    = true;
     var _listaTrazi      = '';
-    var _LIMIT           = 50;
+    var _LIMIT = typeof window.VNLH_LIMIT_ZAHVAT === 'number' && window.VNLH_LIMIT_ZAHVAT > 0 ? window.VNLH_LIMIT_ZAHVAT : 50;
     var _DEBOUNCE        = 300;
     var _listaFilterT    = null;
     var _listaInitDone   = false;
@@ -4082,8 +4085,20 @@
       var corner = document.getElementById('zapisnik_lista_resize_corner');
       if (!root || !dialog) return;
 
-      if (naslov) {
-        naslov.addEventListener('mousedown', function (e) {
+      var header = root ? root.querySelector('.modal-tablica__header') : null;
+      if (header) {
+        header.style.cursor = 'move';
+        /* stopPropagation na interaktivnim dijelovima headera — mousedown ne stiže do drag handlera. */
+        var _stopSels = ['input', 'button', 'select', 'textarea', 'a',
+                         '.kontrola-edit-delete', '.esej-crud__modal-autor-trazi-red',
+                         '.esej-crud__modal-lista-legenda'];
+        _stopSels.forEach(function (sel) {
+          var els = header.querySelectorAll(sel);
+          for (var si = 0; si < els.length; si++) {
+            els[si].addEventListener('mousedown', function (ev) { ev.stopPropagation(); });
+          }
+        });
+        header.addEventListener('mousedown', function (e) {
           if (e.button !== 0) return;
           var l0 = parseFloat(dialog.style.left) || 0; var t0 = parseFloat(dialog.style.top) || 0;
           var x0 = e.clientX; var y0 = e.clientY;
@@ -4116,12 +4131,39 @@
 
       var traziInp = document.getElementById('zapisnik_lista_trazi');
       if (traziInp) {
+        /* mousedown na wrapperu: ako postoji selekcija u scroll arealu, preventDefault sprječava
+           brisanje selekcije i "konzumiranje" klika, pa ručno fokusiramo input. */
+        var traziWrap = traziInp.closest ? traziInp.closest('.kontrola-edit-delete') : null;
+        if (traziWrap) {
+          traziWrap.addEventListener('mousedown', function (e) {
+            var scrollEl = document.getElementById('zapisnik_lista_scroll');
+            if (!scrollEl || !window.getSelection) return;
+            var s = window.getSelection();
+            var txt = s ? s.toString().trim() : '';
+            if (!txt) return;
+            var anc = s.anchorNode;
+            if (!scrollEl.contains(anc)) return;
+            traziInp._pendingSel = txt;
+            e.preventDefault();
+            traziInp.focus();
+          });
+        }
+        traziInp.addEventListener('focus', function () {
+          if (traziInp._pendingSel) {
+            var v = traziInp._pendingSel;
+            traziInp._pendingSel = null;
+            traziInp.value = v;
+            traziInp.dispatchEvent(new Event('input', { bubbles: true }));
+            _listaTrazi = trimZ(v);
+            _listaOffset = 0; _listaHasMore = true; _ucitajRedove(false);
+          }
+        });
         traziInp.addEventListener('input', function () {
           if (_listaFilterT) clearTimeout(_listaFilterT);
           _listaFilterT = setTimeout(function () {
             _listaFilterT = null; _listaTrazi = trimZ(traziInp.value);
             _listaOffset = 0; _listaHasMore = true; _ucitajRedove(false);
-          }, _DEBOUNCE);
+          }, typeof window.vnlhGetPronadjiStankaMs === 'function' ? window.vnlhGetPronadjiStankaMs() : 300);
         });
         if (typeof KontroleInitEditDelete === 'function') {
           var tw = traziInp.closest('.kontrola-edit-delete');
@@ -4144,6 +4186,7 @@
         });
 
         scroll.addEventListener('click', function (ev) {
+          if (window.getSelection && window.getSelection().toString().length > 0) return;
           var btnK = ev.target && ev.target.closest ? ev.target.closest('.esej-crud__lista-elipsis-btn') : null;
           if (btnK) return;
           var trK = ev.target && ev.target.closest ? ev.target.closest('tbody tr') : null;
@@ -4323,7 +4366,7 @@
     var _listaIsLoading     = false;
     var _listaHasMore       = true;
     var _listaTrazi         = '';
-    var _LIMIT              = 50;
+    var _LIMIT = typeof window.VNLH_LIMIT_ZAHVAT === 'number' && window.VNLH_LIMIT_ZAHVAT > 0 ? window.VNLH_LIMIT_ZAHVAT : 50;
     var _DEBOUNCE           = 300;
     var _listaFilterT       = null;
     var _listaInitDone      = false;
@@ -4531,8 +4574,20 @@
       var corner = document.getElementById('zapisnik_esej_lista_resize_corner');
       if (!root || !dialog) return;
 
-      if (naslov) {
-        naslov.addEventListener('mousedown', function (e) {
+      var header = root ? root.querySelector('.modal-tablica__header') : null;
+      if (header) {
+        header.style.cursor = 'move';
+        /* stopPropagation na interaktivnim dijelovima headera — mousedown ne stiže do drag handlera. */
+        var _stopSels = ['input', 'button', 'select', 'textarea', 'a',
+                         '.kontrola-edit-delete', '.esej-crud__modal-autor-trazi-red',
+                         '.esej-crud__modal-lista-legenda'];
+        _stopSels.forEach(function (sel) {
+          var els = header.querySelectorAll(sel);
+          for (var si = 0; si < els.length; si++) {
+            els[si].addEventListener('mousedown', function (ev) { ev.stopPropagation(); });
+          }
+        });
+        header.addEventListener('mousedown', function (e) {
           if (e.button !== 0) return;
           var l0 = parseFloat(dialog.style.left) || 0; var t0 = parseFloat(dialog.style.top) || 0;
           var x0 = e.clientX; var y0 = e.clientY;
@@ -4570,7 +4625,7 @@
           _listaFilterT = setTimeout(function () {
             _listaFilterT = null; _listaTrazi = trimZ(traziInp.value);
             _listaOffset = 0; _listaHasMore = true; _ucitajRedove(false);
-          }, _DEBOUNCE);
+          }, typeof window.vnlhGetPronadjiStankaMs === 'function' ? window.vnlhGetPronadjiStankaMs() : 300);
         });
         if (typeof KontroleInitEditDelete === 'function') {
           var tw = traziInp.closest('.kontrola-edit-delete');

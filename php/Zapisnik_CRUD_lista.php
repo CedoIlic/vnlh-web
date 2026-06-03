@@ -3,6 +3,7 @@
  * Zapisnik_CRUD_lista.php — paginirana lista zapisnika za odabir/editiranje.
  * Vraća zapise u kojima je odabrana loža bila domaćin ili učesnica.
  * GET: id_loza (obavezno), offset (zadano 0), limit (zadano 50), trazi (opcionalno).
+ * Pretraga: unos "N°" → točno s.stupanj = N; ostalo → LIKE po datumu, stupnju, tipu, sažetku.
  */
 require_once __DIR__ . '/require_login_api.php';
 
@@ -15,9 +16,15 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $id_loza = isset($_GET['id_loza']) ? (int)$_GET['id_loza'] : 0;
 $offset  = isset($_GET['offset'])  ? max(0, (int)$_GET['offset']) : 0;
 $trazi   = isset($_GET['trazi'])   ? trim((string)$_GET['trazi']) : '';
-$limit   = 50;
+$limit   = isset($_GET['limit'])   ? max(10, min(200, (int)$_GET['limit'])) : 50;
 
 if ($id_loza <= 0) { echo '[]'; exit; }
+
+/* Pretraga po stupnju: "N°" → točna vrijednost; inače LIKE po tekstu. */
+$stupanjExact = null;
+if ($trazi !== '' && preg_match('/^(\d+)\s*°\s*$/', $trazi, $m)) {
+    $stupanjExact = (int)$m[1];
+}
 
 $base_sql = "
     SELECT DISTINCT
@@ -51,11 +58,15 @@ $base_sql = "
 ";
 
 try {
-    if ($trazi !== '') {
+    if ($stupanjExact !== null) {
+        $sql  = $base_sql . " AND s.stupanj = ? ORDER BY zsr.datum_radova DESC LIMIT ? OFFSET ?";
+        $stmt = $mysqli->prepare($sql);
+        $stmt->bind_param('iiiiii', $id_loza, $id_loza, $id_loza, $stupanjExact, $limit, $offset);
+    } elseif ($trazi !== '') {
         $q   = '%' . $trazi . '%';
         $sql = $base_sql
              . " AND (DATE_FORMAT(zsr.datum_radova, '%d.%m.%Y.') LIKE ?"
-             . "   OR s.naziv LIKE ? OR CAST(s.stupanj AS CHAR) LIKE ? OR rt.naziv LIKE ?)"
+             . "   OR s.naziv LIKE ? OR rt.naziv LIKE ? OR zsr.sazetak LIKE ?)"
              . " ORDER BY zsr.datum_radova DESC LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         $stmt->bind_param('iiissssii', $id_loza, $id_loza, $id_loza, $q, $q, $q, $q, $limit, $offset);

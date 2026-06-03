@@ -471,13 +471,28 @@ body {
   flex-direction: column;
   align-items: stretch;
   gap: 0.5rem;
-  cursor: default;
+  cursor: move;
 }
 
 .esej-crud__modal-autor-naslov {
-  cursor: move;
   -webkit-user-select: none;
   user-select: none;
+  pointer-events: none;
+}
+
+/* Search red i legenda: reset cursora i user-select unutar header drag zone. */
+.esej-crud__modal-autor .modal-tablica__header input,
+.esej-crud__modal-autor .modal-tablica__header button,
+.esej-crud__modal-autor .modal-tablica__header label,
+.esej-crud__modal-lista .modal-tablica__header input,
+.esej-crud__modal-lista .modal-tablica__header button,
+.esej-crud__modal-lista .modal-tablica__header label,
+.esej-crud__modal-lista .modal-tablica__header .esej-crud__modal-lista-legenda {
+  cursor: default;
+}
+.esej-crud__modal-autor .modal-tablica__header .kontrola-edit-delete__input,
+.esej-crud__modal-lista .modal-tablica__header .kontrola-edit-delete__input {
+  cursor: text;
 }
 
 /* Search red: Pretraži label + edit-delete sa lupom. */
@@ -626,6 +641,8 @@ body {
 .esej-crud__lista-red-inner .kontrola-tablica__cell-inner {
   flex: 1 1 auto;
   min-width: 0;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 /* Mali ellipsis gumb — manji od standardnog da stane u visinu retka tablice. */

@@ -16,7 +16,7 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $trazi   = isset($_GET['trazi'])   ? trim((string)$_GET['trazi']) : '';
 $offset  = isset($_GET['offset'])  ? max(0, (int)$_GET['offset']) : 0;
 $id_loza = isset($_GET['id_loza']) ? (int)$_GET['id_loza'] : 0;
-$limit   = 50;
+$limit   = isset($_GET['limit']) ? max(10, min(200, (int)$_GET['limit'])) : 50;
 
 if ($id_loza <= 0) { echo '[]'; exit; }
 
