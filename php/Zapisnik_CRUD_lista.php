@@ -20,6 +20,29 @@ $limit   = isset($_GET['limit'])   ? max(10, min(200, (int)$_GET['limit'])) : 50
 
 if ($id_loza <= 0) { echo '[]'; exit; }
 
+/* Dohvat id_obred i id_tip_loze za filtriranje stupnjeva (isti obrazac kao Stupnjevi_CRUD_sve.php). */
+$id_obred_loze   = 0;
+$id_tip_loze_fil = 0;
+$stL = $mysqli->prepare('SELECT id_obred, id_tip_loze FROM loze WHERE id = ? LIMIT 1');
+if ($stL) {
+    $stL->bind_param('i', $id_loza);
+    $stL->execute();
+    $rowL = $stL->get_result()->fetch_assoc();
+    $stL->close();
+    if (!$rowL) { echo '[]'; exit; }
+    $id_obred_loze = (int)$rowL['id_obred'];
+    if ($rowL['id_tip_loze'] !== null && $rowL['id_tip_loze'] !== '') {
+        $id_tip_loze_fil = (int)$rowL['id_tip_loze'];
+    }
+}
+/* Subquery za dozvoljene stupnjeve lože — ako tip nije definiran, svi stupnjevi obreda. */
+$stupanj_filter = $id_tip_loze_fil > 0
+    ? "AND zsr.id_stupanj IN (SELECT s.id FROM stupnjevi s
+           INNER JOIN loze_tip_stupanj_enum e ON e.id_stupanj = s.id
+             AND e.id_vlasnik = $id_tip_loze_fil AND e.id_pozicija = 1
+           WHERE s.id_obred = $id_obred_loze)"
+    : "AND 1=0";
+
 /* Pretraga po stupnju: "N°" → točna vrijednost; inače LIKE po tekstu. */
 $stupanjExact = null;
 if ($trazi !== '' && preg_match('/^(\d+)\s*°\s*$/', $trazi, $m)) {
@@ -59,19 +82,19 @@ $base_sql = "
 
 try {
     if ($stupanjExact !== null) {
-        $sql  = $base_sql . " AND s.stupanj = ? ORDER BY zsr.datum_radova DESC LIMIT ? OFFSET ?";
+        $sql  = $base_sql . " $stupanj_filter AND s.stupanj = ? ORDER BY zsr.datum_radova DESC LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         $stmt->bind_param('iiiiii', $id_loza, $id_loza, $id_loza, $stupanjExact, $limit, $offset);
     } elseif ($trazi !== '') {
         $q   = '%' . $trazi . '%';
-        $sql = $base_sql
+        $sql = $base_sql . " $stupanj_filter"
              . " AND (DATE_FORMAT(zsr.datum_radova, '%d.%m.%Y.') LIKE ?"
              . "   OR s.naziv LIKE ? OR rt.naziv LIKE ? OR zsr.sazetak LIKE ?)"
              . " ORDER BY zsr.datum_radova DESC LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         $stmt->bind_param('iiissssii', $id_loza, $id_loza, $id_loza, $q, $q, $q, $q, $limit, $offset);
     } else {
-        $sql  = $base_sql . " ORDER BY zsr.datum_radova DESC LIMIT ? OFFSET ?";
+        $sql  = $base_sql . " $stupanj_filter ORDER BY zsr.datum_radova DESC LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         $stmt->bind_param('iiiii', $id_loza, $id_loza, $id_loza, $limit, $offset);
     }

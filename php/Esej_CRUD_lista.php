@@ -20,6 +20,28 @@ $limit   = isset($_GET['limit']) ? max(10, min(200, (int)$_GET['limit'])) : 50;
 
 if ($id_loza <= 0) { echo '[]'; exit; }
 
+/* Dohvat id_obred i id_tip_loze za filtriranje stupnjeva (isti obrazac kao Stupnjevi_CRUD_sve.php). */
+$id_obred_loze   = 0;
+$id_tip_loze_fil = 0;
+$stL = $mysqli->prepare('SELECT id_obred, id_tip_loze FROM loze WHERE id = ? LIMIT 1');
+if ($stL) {
+    $stL->bind_param('i', $id_loza);
+    $stL->execute();
+    $rowL = $stL->get_result()->fetch_assoc();
+    $stL->close();
+    if (!$rowL) { echo '[]'; exit; }
+    $id_obred_loze = (int)$rowL['id_obred'];
+    if ($rowL['id_tip_loze'] !== null && $rowL['id_tip_loze'] !== '') {
+        $id_tip_loze_fil = (int)$rowL['id_tip_loze'];
+    }
+}
+$stupanj_filter = $id_tip_loze_fil > 0
+    ? "AND e.stupanj IN (SELECT es.id FROM stupnjevi es
+           INNER JOIN loze_tip_stupanj_enum lt ON lt.id_stupanj = es.id
+             AND lt.id_vlasnik = $id_tip_loze_fil AND lt.id_pozicija = 1
+           WHERE es.id_obred = $id_obred_loze)"
+    : "AND 1=0";
+
 $base_sql = "
     SELECT
         e.id,
@@ -58,7 +80,7 @@ $base_sql = "
 try {
     if ($trazi !== '') {
         $q   = '%' . $trazi . '%';
-        $sql = $base_sql
+        $sql = $base_sql . " $stupanj_filter"
              . " AND (a.prezime LIKE ? OR a.ime LIKE ? OR e.naslov_eseja LIKE ?"
              . "   OR CAST(s.stupanj AS CHAR) LIKE ? OR e.kljucne_rijeci LIKE ?)"
              . " ORDER BY e.vrijeme_upisa DESC LIMIT ? OFFSET ?";
@@ -67,7 +89,7 @@ try {
             $id_loza, $id_loza, $id_loza,
             $q, $q, $q, $q, $q, $limit, $offset);
     } else {
-        $sql  = $base_sql . " ORDER BY e.vrijeme_upisa DESC LIMIT ? OFFSET ?";
+        $sql  = $base_sql . " $stupanj_filter ORDER BY e.vrijeme_upisa DESC LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         $stmt->bind_param('iiiii', $id_loza, $id_loza, $id_loza, $limit, $offset);
     }
