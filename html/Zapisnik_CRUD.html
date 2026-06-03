@@ -272,7 +272,7 @@
                         <!-- Blok: Dužnosnici — CSS grid (label | edit+ellipsis po retku); okomita pregrada: ::before na .kontrola-tab__tijelo (:has ovaj panel) od vrha do dna tijela taba, preko paddinga. -->
                         <div class="zapisnik-crud__duznosnici-lista" role="group" aria-label="Dužnosnici na radovima">
                             <div class="zapisnik-crud__duznosnici-red-cel-label">
-                                    <label class="kontrola-labela mb-0" for="edit_casni_majstor">Časni majstor</label>
+                                    <span class="kontrola-labela mb-0" >Časni majstor</span>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-edit">
                                     <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
@@ -284,7 +284,7 @@
                                     </button>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-label">
-                                    <label class="kontrola-labela mb-0" for="edit_prvi_nadzornik">Prvi nadzornik</label>
+                                    <span class="kontrola-labela mb-0" >Prvi nadzornik</span>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-edit">
                                     <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
@@ -296,7 +296,7 @@
                                     </button>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-label">
-                                    <label class="kontrola-labela mb-0" for="edit_drugi_nadzornik">Drugi nadzornik</label>
+                                    <span class="kontrola-labela mb-0" >Drugi nadzornik</span>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-edit">
                                     <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
@@ -308,7 +308,7 @@
                                     </button>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-label">
-                                    <label class="kontrola-labela mb-0" for="edit_tajnik_loze">Tajnik Lože</label>
+                                    <span class="kontrola-labela mb-0" >Tajnik Lože</span>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-edit">
                                     <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
@@ -320,7 +320,7 @@
                                     </button>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-label">
-                                    <label class="kontrola-labela mb-0" for="edit_govornik">Govornik</label>
+                                    <span class="kontrola-labela mb-0" >Govornik</span>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-edit">
                                     <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
@@ -332,7 +332,7 @@
                                     </button>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-label">
-                                    <label class="kontrola-labela mb-0" for="edit_majstor_ceremonije">Majstor ceremonije</label>
+                                    <span class="kontrola-labela mb-0" >Majstor ceremonije</span>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-edit">
                                     <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
@@ -344,7 +344,7 @@
                                     </button>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-label">
-                                    <label class="kontrola-labela mb-0" for="edit_prvi_dakon">Prvi Đakon</label>
+                                    <span class="kontrola-labela mb-0" >Prvi Đakon</span>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-edit">
                                     <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
@@ -356,7 +356,7 @@
                                     </button>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-label">
-                                    <label class="kontrola-labela mb-0" for="edit_drugi_dakon">Drugi Đakon</label>
+                                    <span class="kontrola-labela mb-0" >Drugi Đakon</span>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-edit">
                                     <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
@@ -368,7 +368,7 @@
                                     </button>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-label">
-                                    <label class="kontrola-labela mb-0" for="edit_unutarnji_cuvar_hrama">Unutarnji čuvar hrama</label>
+                                    <span class="kontrola-labela mb-0" >Unutarnji čuvar hrama</span>
                                 </div>
                                 <div class="zapisnik-crud__duznosnici-red-cel-edit">
                                     <div class="kontrola-edit-delete zapisnik-crud__duznosnici-edit-delete">
@@ -388,7 +388,7 @@
                                 <textarea id="zapisnik_edit_sazetak" class="kontrola-napomena zapisnik-crud__zapisnik-textarea zapisnik-crud__zapisnik-kontrola" rows="2" spellcheck="true" aria-label="Sažetak zapisnika"></textarea>
                             </div>
                             <div class="zapisnik-crud__zapisnik-blok zapisnik-crud__zapisnik-blok--tekst">
-                                <label class="kontrola-labela mb-0" id="zapisnik_edit_tekst_label">Tekst zapisnika</label>
+                                <span class="kontrola-labela mb-0" id="zapisnik_edit_tekst_label">Tekst zapisnika</span>
                                 <div id="zapisnik_edit_tekst" class="kontrola-napomena zapisnik-crud__zapisnik-textarea zapisnik-crud__zapisnik-kontrola" contenteditable="false" role="textbox" aria-multiline="true" aria-labelledby="zapisnik_edit_tekst_label" spellcheck="true"></div>
                             </div>
                         </div>
@@ -397,7 +397,7 @@
                         <div class="zapisnik-crud__eseji-wrap" role="group" aria-label="Eseji">
                             <div id="zapisnikEsejiTablica" class="kontrola-tablica zapisnik-crud__eseji-tablica"></div>
                             <div class="zapisnik-crud__eseji-sazetak-blok">
-                                <label class="kontrola-labela mb-0" for="zapisnik_eseji_sazetak">Ključne riječi</label>
+                                <span class="kontrola-labela mb-0" >Ključne riječi</span>
                                 <div id="zapisnik_eseji_sazetak" class="kontrola-napomena zapisnik-crud__eseji-sazetak" aria-label="Ključne riječi" aria-readonly="true"></div>
                             </div>
                         </div>
@@ -431,14 +431,14 @@
                 </div>
             </div>
             <div class="esej-crud__modal-lista-legenda">
-                <label class="kontrola-labela mb-0">Legenda</label>
+                <span class="kontrola-labela mb-0">Legenda</span>
                 <div class="esej-crud__modal-lista-legenda-red">
                     <span class="esej-crud__modal-lista-legenda-kv" id="zapisnik_esej_lista_leg_kv1"></span>
-                    <label class="kontrola-labela mb-0">Esej je postavljen kao javan.</label>
+                    <span class="kontrola-labela mb-0">Esej je postavljen kao javan.</span>
                 </div>
                 <div class="esej-crud__modal-lista-legenda-red">
                     <span class="esej-crud__modal-lista-legenda-kv" id="zapisnik_esej_lista_leg_kv2"></span>
-                    <label class="kontrola-labela mb-0">Esej druge lože koji je javno dostupan.</label>
+                    <span class="kontrola-labela mb-0">Esej druge lože koji je javno dostupan.</span>
                 </div>
             </div>
         </div>
@@ -488,18 +488,18 @@
                 </div>
             </div>
             <div class="esej-crud__modal-lista-legenda">
-                <label class="kontrola-labela mb-0">Legenda</label>
+                <span class="kontrola-labela mb-0">Legenda</span>
                 <div class="esej-crud__modal-lista-legenda-red">
                     <span class="esej-crud__modal-lista-legenda-kv" id="zapisnik_lista_leg_kv3"></span>
-                    <label class="kontrola-labela mb-0">Loža nije usvojila zapisnik.</label>
+                    <span class="kontrola-labela mb-0">Loža nije usvojila zapisnik.</span>
                 </div>
                 <div class="esej-crud__modal-lista-legenda-red">
                     <span class="esej-crud__modal-lista-legenda-kv" id="zapisnik_lista_leg_kv2"></span>
-                    <label class="kontrola-labela mb-0">Časni majstor nije ovjerio zapisnik.</label>
+                    <span class="kontrola-labela mb-0">Časni majstor nije ovjerio zapisnik.</span>
                 </div>
                 <div class="esej-crud__modal-lista-legenda-red">
                     <span class="esej-crud__modal-lista-legenda-kv" id="zapisnik_lista_leg_kv1"></span>
-                    <label class="kontrola-labela mb-0">Loža je bila učesnica, ne domaćin radova.</label>
+                    <span class="kontrola-labela mb-0">Loža je bila učesnica, ne domaćin radova.</span>
                 </div>
             </div>
         </div>

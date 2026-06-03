@@ -2859,6 +2859,14 @@
                 zapisnikPostaviKontroleOvisnoLozi();
                 /* Izvorna lista prisustva: članovi svih odabranih loža iz modala. */
                 zapisnikPrisustvoOsvjeziIzvornuListuClanova();
+                /* Dužnosnici: promjena loža učesnica invalidira postojeće dodjele. */
+                var di;
+                for (di = 0; di < ZAPISNIK_DUZNOSNICI_ENUM_MAP.length; di++) {
+                  var editElD = document.getElementById(ZAPISNIK_DUZNOSNICI_ENUM_MAP[di].editId);
+                  if (editElD) { editElD.innerHTML = ''; editElD.dispatchEvent(new Event('input', { bubbles: true })); }
+                  var wrapElD = editElD ? editElD.closest('.kontrola-edit-delete') : null;
+                  if (wrapElD) delete wrapElD.dataset.zapisnikClanId;
+                }
               });
             }
           },
@@ -3350,7 +3358,13 @@
     if (bTipEllipsis) {
       bTipEllipsis.addEventListener('click', function () {
         if (bTipEllipsis.disabled) return;
-        zapisnikOtvoriModalLozeUcesnice();
+        if (_zapisnikLozeUcesniceImaPodatakaZaUpozorenje() && typeof window.showPorukaModal === 'function') {
+          window.showPorukaModal('029', [], function (odg) {
+            if (odg === 'OK') zapisnikOtvoriModalLozeUcesnice();
+          });
+        } else {
+          zapisnikOtvoriModalLozeUcesnice();
+        }
       });
     }
     /* Dvoklik na readonly textarea loža učesnica = isto što i ellipsis (modal odabira loža). */
@@ -3548,6 +3562,17 @@
    * Učitaj snimljeni zapisnik po ID-u i popuni sva polja forme.
    * Geo kaskada (Država→Regija→Loža) pa sva ostala polja u callbacku.
    */
+  function _zapisnikLozeUcesniceImaPodatakaZaUpozorenje() {
+    if (zapisnikPrisustvoDesnoListaPoRedu && zapisnikPrisustvoDesnoListaPoRedu.length > 0) return true;
+    var di;
+    for (di = 0; di < ZAPISNIK_DUZNOSNICI_ENUM_MAP.length; di++) {
+      var editElD = document.getElementById(ZAPISNIK_DUZNOSNICI_ENUM_MAP[di].editId);
+      var wrapElD = editElD ? editElD.closest('.kontrola-edit-delete') : null;
+      if (wrapElD && wrapElD.dataset.zapisnikClanId) return true;
+    }
+    return false;
+  }
+
   function _zapisnikFormaImaPodatke() {
     if (zapisnikTrenutniId) return true;
     var inpD = document.getElementById('zapisnik_datum_radova');
