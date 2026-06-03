@@ -1267,17 +1267,7 @@
         if (!rowData) return;
 
         esejModalListaZatvori();
-        if (_esejFormaImaPodatke()) {
-          if (typeof window.showPorukaModal === 'function') {
-            window.showPorukaModal('028', [], function (odg) {
-              if (odg === 'OK') _esejUcitajZaEdit(rowData);
-            });
-          } else {
-            _esejUcitajZaEdit(rowData);
-          }
-        } else {
-          _esejUcitajZaEdit(rowData);
-        }
+        _esejUcitajZaEdit(rowData);
       });
 
       /* Ellipsis hover/klik → popup ključne riječi. */
@@ -1345,7 +1335,13 @@
     var btnOdabir = document.getElementById('esej_btn_odabir_postojeceg');
     if (btnOdabir) btnOdabir.addEventListener('click', function () {
       if (btnOdabir.disabled) return;
-      esejModalListaOtvori();
+      if (_esejFormaImaPodatke() && typeof window.showPorukaModal === 'function') {
+        window.showPorukaModal('028', [], function (odg) {
+          if (odg === 'OK') esejModalListaOtvori();
+        });
+      } else {
+        esejModalListaOtvori();
+      }
     });
 
     /* Izračun min visine (isti tokeni kao modal autora). */

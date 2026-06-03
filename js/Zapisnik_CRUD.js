@@ -3548,6 +3548,20 @@
    * Učitaj snimljeni zapisnik po ID-u i popuni sva polja forme.
    * Geo kaskada (Država→Regija→Loža) pa sva ostala polja u callbacku.
    */
+  function _zapisnikFormaImaPodatke() {
+    if (zapisnikTrenutniId) return true;
+    var inpD = document.getElementById('zapisnik_datum_radova');
+    if (inpD && trimZ(inpD.value)) return true;
+    var selS = document.getElementById('zapisnik_select_stupanj_radova');
+    if (selS && trimZ(selS.value)) return true;
+    if (trimZ(zapisnikTekstGetTekst() || '')) return true;
+    var taS = document.getElementById('zapisnik_edit_sazetak');
+    if (taS && trimZ(taS.value)) return true;
+    if (zapisnikPrisustvoDesnoListaPoRedu && zapisnikPrisustvoDesnoListaPoRedu.length > 0) return true;
+    for (var i = 0; i < zapisnikEsejiData.length; i++) { if (zapisnikEsejiData[i] && zapisnikEsejiData[i].id_eseja) return true; }
+    return false;
+  }
+
   function zapisnikUcitajSnimljeniZaEditing(idZapisnika) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', getApiUrl('Zapisnik_CRUD_ucitaj.php') + '?id=' + encodeURIComponent(idZapisnika), true);
@@ -4267,7 +4281,13 @@
     if (btnOdabirPostojecegZapisnik) {
       btnOdabirPostojecegZapisnik.addEventListener('click', function () {
         if (!zapisnikIdOdabraneLozISelecta()) return;
-        _otvori();
+        if (_zapisnikFormaImaPodatke() && typeof window.showPorukaModal === 'function') {
+          window.showPorukaModal('028', [], function (odg) {
+            if (odg === 'OK') _otvori();
+          });
+        } else {
+          _otvori();
+        }
       });
     }
   }());
