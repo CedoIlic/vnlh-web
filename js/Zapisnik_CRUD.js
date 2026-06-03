@@ -50,6 +50,7 @@
    *
    * • id — id člana (`radovi_radovi_*` FK).
    * • fgCss — boja teksta za taj red na prebacivanju (#rrggbb ili prazno = sistemsko), iz opcije Tipa (`data-boja-prikaza`).
+   * • bgCss — boja pozadine za taj red, iz opcije Tipa (`data-boja-prikaza-bg`); prazno = bez pozadine.
    * • tipUnosaId — string vrijednosti #zapisnik_prisustvo_tip_unosa u trenutku prebacivanja (`radovi_prisustvo_tip.id` kao string); za povratak / obnovu znaka koja je opcija pripala retku (starije zapise bez polja i dalje crtamo samo uz fgCss).
    * • prikazTekstZaClana — opcijski snimljeno „Prezime Ime · loža” za ćeliju desne tablice Prisustva (isti kao lijeva lista).
    * • duznosnikClanPolja — snimak { prezime, ime, loza_naziv, loza_grad, drzava_loze } pri premještaju udesno; ako novi GET zamijeni ClanoviIzvorData, modal Dužnosnika i edit i dalje koriste zarez-format (FormatPlain/Html), ne prikazTekstZaClana.
@@ -1438,11 +1439,13 @@
         var duOk = row && row.duznosnik_ok;
         var dzOk = duOk === 1 || duOk === true || duOk === '1';
         optH.setAttribute('data-duznosnik-ok', dzOk ? '1' : '0');
-        /* Boja teksta članova u desnoj tablici nakon prebacivanja iz lijeve (radovi_prisustvo_tip.boja_prikaza). */
-        var bp =
-          row && row.boja_prikaza !== undefined && row.boja_prikaza !== null ? String(row.boja_prikaza).trim() : '';
+        /* Boja teksta i pozadine članova u desnoj tablici (iz zapisnik_boje_u_listi via PHP). */
+        var bp = row && row.boja_prikaza != null ? String(row.boja_prikaza).trim() : '';
         if (bp) optH.setAttribute('data-boja-prikaza', bp);
         else optH.removeAttribute('data-boja-prikaza');
+        var bpBg = row && row.boja_prikaza_bg != null ? String(row.boja_prikaza_bg).trim() : '';
+        if (bpBg) optH.setAttribute('data-boja-prikaza-bg', bpBg);
+        else optH.removeAttribute('data-boja-prikaza-bg');
       },
       nakonPuno: function () {
         zapisnikPrisustvoOsvjeziIzvornuListuClanova();
@@ -1909,6 +1912,14 @@
     return zapisnikPrisustvoNormalizirajBojaPrikazaZaCss(raw);
   }
 
+  function zapisnikPrisustvoDohvatiBgZaTrenutnoOdabraniTipUnosa() {
+    var sel = document.getElementById('zapisnik_prisustvo_tip_unosa');
+    if (!sel || sel.selectedIndex <= 0) return '';
+    var op = sel.options[sel.selectedIndex];
+    var raw = op ? trimZ(op.getAttribute('data-boja-prikaza-bg') || '') : '';
+    return zapisnikPrisustvoNormalizirajBojaPrikazaZaCss(raw);
+  }
+
   /** Pronađi člana u kešu izvorne liste (uključujući i one koji su već na desnoj listi — id ostaje u kešu). */
   function zapisnikPrisustvoNadjiClanUOstavPodacimaPoId(cid) {
     var src = zapisnikPrisustvoClanoviIzvorData || [];
@@ -2012,6 +2023,9 @@
       var fg = entry.fgCss && typeof entry.fgCss === 'string' ? entry.fgCss : '';
       if (fg) cellInner.style.color = fg;
       else cellInner.style.removeProperty('color');
+      var bg = entry.bgCss && typeof entry.bgCss === 'string' ? entry.bgCss : '';
+      if (bg) td.style.backgroundColor = bg;
+      else td.style.removeProperty('background-color');
       td.appendChild(cellInner);
       tr.appendChild(td);
       tbody.appendChild(tr);
@@ -2104,6 +2118,7 @@
     if (slobXfer) {
       if (!zapisnikPrisustvoSlobPoljaKompletZaUdesno()) return;
       var fgSu = zapisnikPrisustvoDohvatiFgZaTrenutnoOdabraniTipUnosa();
+      var bgSu = zapisnikPrisustvoDohvatiBgZaTrenutnoOdabraniTipUnosa();
       var ei = document.getElementById('zapisnik_prisustvo_edit_ime');
       var lz = document.getElementById('zapisnik_prisustvo_edit_loza');
       var sd = document.getElementById('zapisnik_prisustvo_select_drzava');
@@ -2119,7 +2134,7 @@
       var sintId = 'su:' + String(zapisnikPrisustvoSlobUnosSuIdSuffix);
       zapisnikPrisustvoDesnoListaPoRedu.push({
         id: sintId,
-        fgCss: fgSu,
+        fgCss: fgSu, bgCss: bgSu,
         tipUnosaId: selTipElTip ? trimZ(selTipElTip.value) : '',
         slobodanUnos: true,
         idDrzaveGostiju: drId,
@@ -2141,6 +2156,7 @@
     var cid = parseInt(String(tr.dataset.rowId), 10);
     if (isNaN(cid)) return;
     var fg = zapisnikPrisustvoDohvatiFgZaTrenutnoOdabraniTipUnosa();
+    var bg = zapisnikPrisustvoDohvatiBgZaTrenutnoOdabraniTipUnosa();
     var selTipPr = document.getElementById('zapisnik_prisustvo_tip_unosa');
     var tipUnosaIdZaRed = selTipPr ? trimZ(selTipPr.value) : '';
     /* Snimi prikaz s retka ili iz keša jer kasnije GET može zamijeniti ClanoviIzvorData bez ovog člana — inače ostaje fallback #id. */
@@ -2153,7 +2169,7 @@
     }
     zapisnikPrisustvoDesnoListaPoRedu.push({
       id: cid,
-      fgCss: fg,
+      fgCss: fg, bgCss: bg,
       tipUnosaId: tipUnosaIdZaRed,
       prikazTekstZaClana: tekstZaCl,
       duznosnikClanPolja: zapisnikSnimiPoljaZaDuznosnikaIzClana(oZaPrikaz)
@@ -3729,7 +3745,8 @@
     for (pi = 0; pi < prisutni.length; pi++) {
       var p = prisutni[pi];
       var tipIdStr = String(p.id_prisustvo_tip || '');
-      var fgCss = p.boja_prikaza ? zapisnikPrisustvoNormalizirajBojaPrikazaZaCss(p.boja_prikaza) : '';
+      var fgCss = p.boja_prikaza    ? zapisnikPrisustvoNormalizirajBojaPrikazaZaCss(p.boja_prikaza)    : '';
+      var bgCss = p.boja_prikaza_bg ? zapisnikPrisustvoNormalizirajBojaPrikazaZaCss(p.boja_prikaza_bg) : '';
       var entry;
       if (+p.slobodan_unos) {
         var suId = 'su:' + (++zapisnikPrisustvoSlobUnosSuIdSuffix);
@@ -3742,14 +3759,14 @@
           tekstSlobPrikaz: partsSl.join(' · '),
           imeSlobUnos: imeVid, lozaSlobUnos: lozaVid,
           idDrzaveGostiju: p.id_drzave != null ? String(p.id_drzave) : null,
-          tipUnosaId: tipIdStr, fgCss: fgCss
+          tipUnosaId: tipIdStr, fgCss: fgCss, bgCss: bgCss
         };
       } else {
         var cid = String(p.id_clana || '');
         var ime = [p.prezime, p.ime].filter(Boolean).join(' ');
         var prikazTekst = p.loza_naziv ? ime + ' · ' + p.loza_naziv : ime;
         entry = {
-          id: cid, slobodanUnos: false, fgCss: fgCss, tipUnosaId: tipIdStr,
+          id: cid, slobodanUnos: false, fgCss: fgCss, bgCss: bgCss, tipUnosaId: tipIdStr,
           prikazTekstZaClana: prikazTekst,
           duznosnikClanPolja: {
             prezime: p.prezime || '', ime: p.ime || '',

@@ -7,7 +7,22 @@ if ($db_ret !== -1) {
     exit;
 }
 $result = $mysqli->query(
-    'SELECT id, naziv, redosljed, duznosnik_ok, slobodan_unos, svi_clanovi_obedijncije, boja_prikaza FROM radovi_prisustvo_tip ORDER BY redosljed ASC'
+    'SELECT rpt.id, rpt.naziv, rpt.redosljed, rpt.duznosnik_ok, rpt.slobodan_unos,
+            rpt.svi_clanovi_obedijncije,
+            CASE rpt.id
+              WHEN 2 THEN (SELECT boja    FROM zapisnik_boje_u_listi WHERE id = 5 LIMIT 1)
+              WHEN 3 THEN (SELECT boja    FROM zapisnik_boje_u_listi WHERE id = 6 LIMIT 1)
+              WHEN 4 THEN (SELECT boja    FROM zapisnik_boje_u_listi WHERE id = 7 LIMIT 1)
+              ELSE rpt.boja_prikaza
+            END AS boja_prikaza,
+            CASE rpt.id
+              WHEN 2 THEN (SELECT boja_bg FROM zapisnik_boje_u_listi WHERE id = 5 LIMIT 1)
+              WHEN 3 THEN (SELECT boja_bg FROM zapisnik_boje_u_listi WHERE id = 6 LIMIT 1)
+              WHEN 4 THEN (SELECT boja_bg FROM zapisnik_boje_u_listi WHERE id = 7 LIMIT 1)
+              ELSE NULL
+            END AS boja_prikaza_bg
+     FROM radovi_prisustvo_tip rpt
+     ORDER BY rpt.redosljed ASC'
 );
 $rows = [];
 if (!$result) {
