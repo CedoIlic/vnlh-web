@@ -370,46 +370,83 @@ pdf_template (1) ──< pdf_dokument (1) ──< pdf_dokument_stavke (N)
 
 ---
 
-## 3. Faze izrade (forme i funkcionalnosti)
+## 3. Faze izrade
 
-> Redoslijed je odabran tako da se prvo izgrade "šifarnici" (fontovi, dozvoljeni izvori,
-> stilovi, template) o kojima ovise dokumenti, a tek onda dokument i generator. Sve
-> administratorske forme su dostupne **iza logina, s glavnog izbornika** (gdje se učitavaju
-> pdfmake i fontovi).
+> Projekt je podijeljen u **dvije glavne faze**. Sve administratorske forme dostupne su
+> iza logina, s glavnog izbornika (gdje se učitavaju pdfmake i fontovi).
 
-### Faza 0 — Temelj
-- Postaviti bazu (sve tablice iz poglavlja 2) i početne zapise `pdf_fontovi`.
-- Frontend skelet: login → **glavni izbornik**. Na glavni izbornik uključiti `pdfmake.min.js`
-  i `vfs_fonts.js` (Roboto + Liberation Serif, sve 4 varijante). Registrirati `pdfMake.fonts`.
+---
+
+## FAZA 1 — Baza podataka: sve tablice i relacije
+
+Cilj: postaviti kompletnu shemu baze s ispravnim relacijama, CHECK ograničenjima i
+početnim zapisima. Ništa od UI-a — samo temelj na koji se sve ostalo gradi.
+
+### 1.1 — Kreiranje tablica
+Izvršiti SQL iz poglavlja 2 točno ovim redoslijedom (zbog FK ovisnosti):
+
+1. `pdf_fontovi`
+2. `pdf_dozvoljeni_izvori`
+3. `pdf_paragraf` (FK → `pdf_fontovi`)
+4. `pdf_slika_stil`
+5. `pdf_template`
+6. `pdf_dokument` (FK → `pdf_template`)
+7. `pdf_dokument_stavke` (FK → `pdf_dokument`, `pdf_dozvoljeni_izvori`, `pdf_paragraf`, `pdf_slika_stil`)
+
+### 1.2 — Početni podaci
+```sql
+INSERT INTO pdf_fontovi (naziv, pdfmake_kljuc, tip, podrzana_pisma, aktivan) VALUES
+('Roboto',           'Roboto',          'sans',  '["latin"]', 1),
+('Liberation Serif', 'LiberationSerif', 'serif', '["latin"]', 1);
+```
+
+### 1.3 — Provjera
+- Sve tablice postoje s ispravnim kolonama i tipovima.
+- FK veze su aktivne (probati INSERT koji krši FK — mora vratiti grešku).
+- CHECK ograničenja su aktivna (probati INSERT koji krši CHECK — mora vratiti grešku).
+- Početni zapisi `pdf_fontovi` su uneseni.
+
+### 1.4 — Frontend/backend temelj
+- Frontend skelet: login → **glavni izbornik**.
+- Na glavni izbornik uključiti `pdfmake.min.js` i `vfs_fonts.js`
+  (Roboto + Liberation Serif, sve 4 varijante). Registrirati `pdfMake.fonts`.
 - Backend skelet: konekcija na bazu, osnovni API.
 - **Provjera:** generirati trivijalan "Hello" PDF s oba fonta i hrvatskim znakovima (č,ć,ž,š,đ).
 
-### Faza 1 — Forma: Fontovi (`pdf_fontovi`)
+---
+
+## FAZA 2 — Forme za upis (jedna po jedna)
+
+Cilj: CRUD forme za svaku tablicu, redoslijedom ovisnosti — šifarnici prije dokumenata,
+dokument i generator na kraju. Svaka forma je zasebna cjelina koja se implementira, testira
+i zatvara prije prelaska na sljedeću.
+
+### 2.1 — Forma: Fontovi (`pdf_fontovi`)
 - CRUD nad registrom fontova: naziv, pdfmake_kljuc, tip, podrzana_pisma, aktivan, napomena.
 - **Funkcionalnost:** administrator vidi popis fontova; dodaje/uređuje. Upozorenje da
   `pdfmake_kljuc` mora odgovarati ključu u `vfs_fonts.js`. Dodavanje stvarne `.ttf` datoteke u
   `vfs_fonts.js` je tehnički korak izvan forme (dokumentirati postupak).
 
-### Faza 2 — Forma: Dozvoljeni izvori (`pdf_dozvoljeni_izvori`)
+### 2.2 — Forma: Dozvoljeni izvori (`pdf_dozvoljeni_izvori`)
 - CRUD nad whitelistom izvora: naziv, tablica, kolona, tip_podatka, napomena.
 - **Funkcionalnost:** administrator definira koje tablice i kolone smiju biti korištene kao
   izvor podataka. Forma prikazuje upozorenje: tablica i kolona moraju stvarno postojati u bazi.
   Opcijski: provjera postojanja tablice/kolone pri unosu.
 
-### Faza 3 — Forma: Stilovi paragrafa (`pdf_paragraf`)
+### 2.3 — Forma: Stilovi paragrafa (`pdf_paragraf`)
 - CRUD nad stilovima teksta sa svim poljima (font, veličina, bold/italic/podcrtano, boje,
   pozadina + traka + padding, poravnanje, prored, razmaci, uvlake).
 - **Funkcionalnost:** **živi pregled (preview)** stila — pdfmake renderira primjer paragrafa
   dok administrator mijenja vrijednosti. Birač fonta povučen iz `pdf_fontovi` (aktivni).
   Birači boja (hex). Validacija raspona (prored, postoci).
 
-### Faza 4 — Forma: Stilovi slika (`pdf_slika_stil`)
+### 2.4 — Forma: Stilovi slika (`pdf_slika_stil`)
 - CRUD nad stilovima slika: dimenzije, skaliranje, okvir (+boja/debljina), prozirnost,
   pozicioniranje (u_tijeku/usidreno/apsolutno), poravnanja, apsolutne koordinate, potiskuje.
 - **Funkcionalnost:** preview s test-slikom; dinamičko prikazivanje relevantnih polja (npr.
   x/y samo kad je "apsolutno", poravnanja kad je "usidreno"). Provjeriti podršku prozirnosti.
 
-### Faza 5 — Forma: Template stranice (`pdf_template`)
+### 2.5 — Forma: Template stranice (`pdf_template`)
 - CRUD nad postavkama stranice: papir, orijentacija, margine, zaglavlje (+visina/padding/
   primjena), podnožje (+visina/padding/od_stranice), brojač (+format/zona/poravnanje),
   naslovna stranica.
@@ -417,7 +454,7 @@ pdf_template (1) ──< pdf_dokument (1) ──< pdf_dokument_stavke (N)
 - **Funkcionalnost:** preview prazne stranice s ucrtanim marginama i zonama zaglavlja/podnožja.
   Pomoć za format brojača (`#S`, `#U`).
 
-### Faza 6 — Forma: Dokument + stavke (`pdf_dokument` + `pdf_dokument_stavke`)
+### 2.6 — Forma: Dokument + stavke (`pdf_dokument` + `pdf_dokument_stavke`)
 - Glavna forma: kreiranje dokumenta (naziv, izbor templatea, opis, aktivan) i uređivanje
   njegovih **stavki**.
 - Uređivač stavki: dodavanje/uklanjanje/**preslagivanje redoslijeda** (drag-and-drop);
@@ -428,7 +465,7 @@ pdf_template (1) ──< pdf_dokument (1) ──< pdf_dokument_stavke (N)
   dostupnih kontekst-ključeva (npr. `loza_id`). Izvor se bira iz padajućeg popisa
   `pdf_dozvoljeni_izvori` — ne slobodni unos.
 
-### Faza 7 — Generator PDF-a (jezgra)
+### 2.7 — Generator PDF-a (jezgra)
 - Backend: sastavljanje JSON paketa (tijek iz 1.5) — čitanje dokumenta, templatea, stavki;
   dohvat sadržaja po izvoru (statički/dinamički + kontekst) iz whitelistanih tablica;
   BLOB → base64 data URL za slike; razbijanje teksta po `\n`; mapiranje stilova u pdfmake;
@@ -438,7 +475,7 @@ pdf_template (1) ──< pdf_dokument (1) ──< pdf_dokument_stavke (N)
 - **Funkcionalnost:** generiranje stvarnog dokumenta s dinamičkim kontekstom (npr. izbor lože
   → logo + ime lože). Provjera hrvatskih znakova, margina, zaglavlja/podnožja, brojača.
 
-### Faza 8 — Doterivanje i buduća proširenja (TODO)
+### 2.8 — Doterivanje i buduća proširenja (TODO)
 - **Prelijevanje teksta u dva povezana okvira** (mjerenje + dijeljenje teksta) — za onaj jedan
   dokument. Aktivirati TODO polja u `pdf_dokument_stavke`.
 - **Dvostrani ispis sa zrcalnim marginama** + prazna stranica 2 za naslovnu. Razmotriti
