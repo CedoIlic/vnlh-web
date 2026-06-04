@@ -37,6 +37,8 @@
   }());
   /** true = forma u RO modu (učesnica ili usvojen zapisnik); sve zaključano osim ovjera_poslije. */
   var _zapisnikReadOnlyMode = false;
+  /** Pravo brisanja sloga (iz geo/prava odgovora); 1 = smije, 0 = ne smije. */
+  var _zapisnikPravaBrisanjeSloga = 0;
   /** true = odabrana loža je domaćin tekućih radova; false = loža učesnica → ovjera_poslije samoprikaz. */
   var _zapisnikJeDomacinZaOvjeru = true;
   /** ID stupnja koji treba odabrati nakon što async GET stupnjeva završi (postavlja ucitavanje snimljenog). */
@@ -244,6 +246,9 @@
     if (!zapisnikJeModKorekcijePostojeceg()) {
       bBr.hidden = true;
       bBr.style.display = 'none';
+    } else if (_zapisnikPravaBrisanjeSloga > 0) {
+      bBr.hidden = false;
+      bBr.style.removeProperty('display');
     }
   }
 
@@ -1216,6 +1221,7 @@
 
       var ui = g.upis_izmjena != null ? parseInt(g.upis_izmjena, 10) : 0;
       var bs = g.brisanje_sloga != null ? parseInt(g.brisanje_sloga, 10) : 0;
+      _zapisnikPravaBrisanjeSloga = bs;
       if (typeof vnlhPrimijeniPravaCrud === 'function') vnlhPrimijeniPravaCrud(ui, bs);
       zapisnikNakonPravaPrimijeniModSkriviIzbrisiAkoNovUpis();
       /* Nakon što prava mijenjaju hidden na Upisu, disabled mora odgovarati zapisnikMozePrihvatUpisPdf. */

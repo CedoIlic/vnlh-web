@@ -1370,6 +1370,8 @@
    *  – Labele: ostaju normalne boje (nema KontroleSyncLabelsDisabledState)
    */
   function _esejPrimijeniReadOnly() {
+    var lokot = document.getElementById('esej_ro_lokot');
+    if (lokot) { lokot.hidden = false; lokot.style.display = 'inline-flex'; }
     var oi, ei;
     /* Opci kontrole:
        – esej_upisao: uvijek readonly, ne diraj
@@ -1822,6 +1824,8 @@
    * ============================================================ */
 
   function esejOcistiFormu() {
+    var lokot = document.getElementById('esej_ro_lokot');
+    if (lokot) { lokot.hidden = true; lokot.style.display = 'none'; }
     esejTrenutniId = null;
     esejAutorClanId = null;
     _esejReadOnlyMode = false;
