@@ -23,26 +23,36 @@ strani korisnika** (u pregledniku), bez ikakvih instalacija ili dodataka kod kra
 - **Baza:** MariaDB 10.4+ / MySQL 8.0.16+, sve tablice `ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`.
 
 ### 1.3 Fontovi
-- Dva fonta: **Roboto** (sans-serif, već dolazi s pdfmake-om) i **Liberation Serif**
-  (serif, sličan Times New Roman — dodaje se u `vfs_fonts.js`).
-- Oba u **sve četiri varijante** (normal, bold, italics, bolditalics), s punom podrškom za
-  hrvatske znakove (č, ć, ž, š, đ).
+- **Tekstualni fontovi (GNU FreeFont — izgled nalik Times/Helvetica):**
+  **FreeSerif** (serif), **FreeSans** (sans-serif), **FreeMono** (monospace).
+- **Simbol/fallback font:** **DejaVu Sans** — pokriva ∴, °, crtice, bulete i ček/ballot
+  simbole u **sve 4 varijante** te sva europska pisma (grčki, ćirilica). Služi kao izvor
+  glifova koje tekstualni fontovi nemaju.
+- Svi u **sve četiri varijante** (normal, bold, italics, bolditalics). Sva pisma (latinica
+  HR/PL/HU/baltička/RO, grčki, ćirilica) pokrivena su u svim fontovima.
+- **Rukovanje simbolima (auto-rutanje):** tekstualni font ne mora imati simbole. Generator
+  ima konfiguriran **skup simbol-znakova** (∴, ✓, ✗, ☑, ☒, ✔, posebni buleti…); pri sastavljanju
+  paragrafa razbije tekst na segmente — simbol-znakove crta **DejaVu Sans**, ostatak font
+  paragrafa. Admin u izvornim tablicama tipka **prave znakove** (bez placeholdera). Novi simbol
+  = dodatak u konfiguracijski popis. Egzotični glif koji DejaVu Sans nema → tada dodati
+  namjenski simbol-font (npr. Noto Sans Symbols 2).
 - Fontovi se **ugrađuju u frontend** (pdfmake `vfs` — virtual file system), a **ne** šalju iz
   backenda. Učitavaju se **jednom**, na **glavnom izborniku** (stranica iza logina); preglednik
   ih cachira. Font **nikad ne putuje iz backenda** pri generiranju — backend šalje samo podatke.
-- Registar fontova vodi se u tablici `pdf_fontovi` (metapodaci); same `.ttf` datoteke **nisu** u
-  bazi.
+- `.ttf` datoteke su u folderu `fontovi/` (staza u sustav_varijable id=119), imenovane po
+  konvenciji `Porodica-Varijanta.ttf` (Regular/Bold/Italic/BoldItalic). Registar fontova vodi
+  se u tablici `pdf_fontovi` (metapodaci); same `.ttf` datoteke **nisu** u bazi.
 
   ```javascript
   pdfMake.fonts = {
-    Roboto: {
-      normal: 'Roboto-Regular.ttf', bold: 'Roboto-Medium.ttf',
-      italics: 'Roboto-Italic.ttf', bolditalics: 'Roboto-MediumItalic.ttf'
-    },
-    LiberationSerif: {
-      normal: 'LiberationSerif-Regular.ttf', bold: 'LiberationSerif-Bold.ttf',
-      italics: 'LiberationSerif-Italic.ttf', bolditalics: 'LiberationSerif-BoldItalic.ttf'
-    }
+    FreeSerif:  { normal: 'FreeSerif-Regular.ttf',  bold: 'FreeSerif-Bold.ttf',
+                  italics: 'FreeSerif-Italic.ttf',  bolditalics: 'FreeSerif-BoldItalic.ttf' },
+    FreeSans:   { normal: 'FreeSans-Regular.ttf',   bold: 'FreeSans-Bold.ttf',
+                  italics: 'FreeSans-Italic.ttf',   bolditalics: 'FreeSans-BoldItalic.ttf' },
+    FreeMono:   { normal: 'FreeMono-Regular.ttf',   bold: 'FreeMono-Bold.ttf',
+                  italics: 'FreeMono-Italic.ttf',   bolditalics: 'FreeMono-BoldItalic.ttf' },
+    DejaVuSans: { normal: 'DejaVuSans-Regular.ttf', bold: 'DejaVuSans-Bold.ttf',
+                  italics: 'DejaVuSans-Italic.ttf', bolditalics: 'DejaVuSans-BoldItalic.ttf' }
   };
   ```
 
@@ -119,7 +129,7 @@ CREATE TABLE pdf_fontovi (
   id              INT AUTO_INCREMENT PRIMARY KEY            COMMENT 'Jedinstveni ključ fonta',
   naziv           VARCHAR(50)  NOT NULL                     COMMENT 'Ljudski naziv fonta, npr. "Roboto", "Liberation Serif"',
   pdfmake_kljuc   VARCHAR(50)  NOT NULL                     COMMENT 'Točan ključ u pdfMake.fonts; mora se podudarati (npr. "LiberationSerif")',
-  tip             ENUM('serif','sans') NOT NULL             COMMENT 'Kategorija fonta: serif ili sans-serif',
+  tip             ENUM('serif','sans','mono') NOT NULL      COMMENT 'Kategorija fonta: serif, sans-serif ili monospace',
   podrzana_pisma  JSON         NOT NULL                     COMMENT 'Pisma koja font pokriva, npr. ["latin"] ili ["latin","cyrillic"]',
   aktivan         TINYINT(1)   NOT NULL DEFAULT 1           COMMENT 'Je li font dostupan za izbor (1=da, 0=ne)',
   napomena        VARCHAR(1024) NULL                        COMMENT 'Slobodna bilješka administratora'

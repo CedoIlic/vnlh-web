@@ -1,0 +1,147 @@
+/* PDF_Fontovi_CRUD — registar fontova (pdf_fontovi). */
+
+/* Stupci tablice: Naziv fleks | pdfmake ključ fleks | Tip 120 | Pisma 160 | Aktivan 100 */
+#tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(3),
+#tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(3) {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+}
+#tablicaContainer .kontrola-tablica__header thead tr th:nth-child(3),
+#tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(3) {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  box-sizing: border-box;
+}
+#tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(4),
+#tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(4) {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+#tablicaContainer .kontrola-tablica__header thead tr th:nth-child(4),
+#tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(4) {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  box-sizing: border-box;
+}
+#tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(5),
+#tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(5) {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+#tablicaContainer .kontrola-tablica__header thead tr th:nth-child(5),
+#tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(5) {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  box-sizing: border-box;
+}
+
+/* Edit panel */
+.pdf-fontovi-crud__edit-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.pdf-fontovi-crud__red {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+.pdf-fontovi-crud__red--full {
+  align-items: stretch;
+}
+.pdf-fontovi-crud__polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+/* Select „Dostupni fontovi" iste širine kao polje Naziv u retku ispod:
+   red Naziv|pdfmake|Tip = 2 fleks polja + Tip(11rem) + 2 razmaka(2×0.75rem).
+   Naziv = (100% − 11rem − 1.5rem) / 2 → ista formula za ovaj select. */
+.pdf-fontovi-crud__polje--dostupni {
+  flex: 0 0 calc((100% - 11rem - 1.5rem) / 2);
+  min-width: 0;
+}
+.pdf-fontovi-crud__polje--varijante {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.pdf-fontovi-crud__polje--varijante .kontrola-edit[readonly] {
+  background-color: var(--napomena_bg, #f5f5f5);
+}
+.pdf-fontovi-crud__polje--naziv {
+  flex: 1 1 12rem;
+}
+.pdf-fontovi-crud__polje--kljuc {
+  flex: 1 1 12rem;
+}
+.pdf-fontovi-crud__polje--tip {
+  flex: 0 0 auto;
+  width: 11rem;
+}
+.pdf-fontovi-crud__polje--pisma {
+  flex: 1 1 16rem;
+}
+.pdf-fontovi-crud__polje--aktivan {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.4rem;
+}
+.pdf-fontovi-crud__aktivan-label {
+  cursor: pointer;
+}
+.pdf-fontovi-crud__polje--napomena {
+  flex: 1 1 100%;
+  width: 100%;
+}
+.pdf-fontovi-crud__polje--napomena .kontrola-napomena {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+/* Podnožje: CRUD tipke lijevo, Povratak desno */
+.pdf-fontovi-crud__edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.pdf-fontovi-crud__footer-left {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.pdf-fontovi-crud__footer-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .pdf-fontovi-crud__red {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pdf-fontovi-crud__polje--dostupni,
+  .pdf-fontovi-crud__polje--varijante,
+  .pdf-fontovi-crud__polje--naziv,
+  .pdf-fontovi-crud__polje--kljuc,
+  .pdf-fontovi-crud__polje--tip,
+  .pdf-fontovi-crud__polje--pisma {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+  .pdf-fontovi-crud__polje--aktivan {
+    align-self: flex-start;
+  }
+}

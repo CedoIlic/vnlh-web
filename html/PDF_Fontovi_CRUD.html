@@ -1,0 +1,109 @@
+<!-- =========================================================
+     PDF_Fontovi_CRUD.html
+     CRUD pdf_fontovi: tablica osnovnih porodica fontova + edit panel
+     (naziv, pdfmake ključ, tip, podržana pisma, aktivan, napomena).
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fontovi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/PDF_Fontovi_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Fontovi</h2></div>
+<div class="page-container">
+    <!-- Prvi panel: tablica postojećih fontova -->
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+    <!-- Drugi panel: edit -->
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body pdf-fontovi-crud__edit-body">
+            <div class="pdf-fontovi-crud__edit-inner">
+                <!-- 0. RED: Dostupni fontovi (iz foldera, varijabla 119) + dostupne varijante (RO) -->
+                <div class="pdf-fontovi-crud__red">
+                    <div class="pdf-fontovi-crud__polje pdf-fontovi-crud__polje--dostupni">
+                        <label class="kontrola-labela mb-0" for="edit_dostupni_fontovi">Dostupni fontovi</label>
+                        <div class="kontrola-select">
+                            <select id="edit_dostupni_fontovi" aria-label="Dostupni fontovi u folderu">
+                                <option value="">— Odaberi font —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="pdf-fontovi-crud__polje pdf-fontovi-crud__polje--varijante">
+                        <label class="kontrola-labela mb-0" for="edit_dostupne_varijante">Dostupne porodice odabranog pisma</label>
+                        <input id="edit_dostupne_varijante" type="text" class="kontrola-edit" readonly disabled aria-readonly="true" aria-label="Dostupne varijante odabranog fonta">
+                    </div>
+                </div>
+                <!-- 1. RED: Naziv | pdfmake ključ | Tip -->
+                <div class="pdf-fontovi-crud__red">
+                    <div class="pdf-fontovi-crud__polje pdf-fontovi-crud__polje--naziv">
+                        <label class="kontrola-labela mb-0" for="edit_naziv">Naziv</label>
+                        <div class="kontrola-edit-delete">
+                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="npr. Roboto" maxlength="50" autocomplete="off">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
+                    </div>
+                    <div class="pdf-fontovi-crud__polje pdf-fontovi-crud__polje--kljuc">
+                        <label class="kontrola-labela mb-0" for="edit_pdfmake_kljuc">PDFmake ključ</label>
+                        <input id="edit_pdfmake_kljuc" type="text" class="kontrola-edit" placeholder="npr. LiberationSerif" maxlength="50" autocomplete="off">
+                    </div>
+                    <div class="pdf-fontovi-crud__polje pdf-fontovi-crud__polje--tip">
+                        <label class="kontrola-labela mb-0" for="edit_tip">Tip</label>
+                        <div class="kontrola-select">
+                            <select id="edit_tip" aria-label="Tip fonta">
+                                <option value="sans">sans-serif</option>
+                                <option value="serif">serif</option>
+                                <option value="mono">monospace</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- 2. RED: Podržana pisma | Aktivan -->
+                <div class="pdf-fontovi-crud__red">
+                    <div class="pdf-fontovi-crud__polje pdf-fontovi-crud__polje--pisma">
+                        <label class="kontrola-labela mb-0" for="edit_podrzana_pisma">Podržana pisma</label>
+                        <input id="edit_podrzana_pisma" type="text" class="kontrola-edit" placeholder="npr. latin, cyrillic" maxlength="200" autocomplete="off">
+                    </div>
+                    <div class="pdf-fontovi-crud__polje pdf-fontovi-crud__polje--aktivan">
+                        <input type="checkbox" id="edit_aktivan" class="kontrola-checkbox" value="1" checked aria-label="Font je aktivan (dostupan za izbor)">
+                        <label class="kontrola-labela mb-0 pdf-fontovi-crud__aktivan-label" for="edit_aktivan">Aktivan</label>
+                    </div>
+                </div>
+                <!-- 3. RED: Napomena -->
+                <div class="pdf-fontovi-crud__red pdf-fontovi-crud__red--full">
+                    <div class="pdf-fontovi-crud__polje pdf-fontovi-crud__polje--napomena">
+                        <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                        <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer pdf-fontovi-crud__edit-footer">
+            <div class="pdf-fontovi-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="pdf-fontovi-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/PDF_Fontovi_CRUD.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>
