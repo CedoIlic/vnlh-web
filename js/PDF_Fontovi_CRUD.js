@@ -14,7 +14,7 @@
     CrudCssPrefix: 'pdf-fontovi-crud',
     Tablica_Zaglavlje: [
       { key: 'naziv', title: 'Naziv', SQL_Naziv: 'naziv', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
-      { key: 'pdfmake_kljuc', title: 'pdfmake ključ', SQL_Naziv: 'pdfmake_kljuc', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
+      { key: 'pdfmake_kljuc', title: 'PDFmake ključ', SQL_Naziv: 'pdfmake_kljuc', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'tip', title: 'Tip', SQL_Naziv: 'tip', sortable: 0, sortable_icon: 0, type: 't', width: 120, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
       { key: 'pisma', title: 'Pisma', SQL_Naziv: 'podrzana_pisma', sortable: 0, sortable_icon: 0, type: 't', width: 160, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'aktivan', title: 'Aktivan', SQL_Naziv: 'aktivan', sortable: 0, sortable_icon: 0, type: 'b', width: 100, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1, cell_readonly: 1 }
@@ -39,6 +39,8 @@
   var editDostupni = document.getElementById('edit_dostupni_fontovi');
   var editVarijante = document.getElementById('edit_dostupne_varijante');
   var dostupneVarijanteMap = {};
+  var dostupniJeziciMap = {};   // porodica -> { "Latin": [jezici], "Cyrillic": [...], ... }
+  var trenutniJeziciObj = {};   // trenutno prikazana/spremna struktura
   var editNaziv = document.getElementById('edit_naziv');
   var editKljuc = document.getElementById('edit_pdfmake_kljuc');
   var editTip = document.getElementById('edit_tip');
@@ -51,17 +53,64 @@
     return window.CommonTrim ? window.CommonTrim(s) : (s != null ? String(s).replace(/^\s+|\s+$/g, '') : '');
   }
 
-  /** JSON niz -> "latin, cyrillic" za prikaz. Prima string ili niz. */
-  function pismaToText(val) {
-    if (val == null) return '';
-    var arr = val;
+  function escHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /** Normalizira spremljenu vrijednost u grupiranu strukturu { "Latin": [...], ... }. */
+  function jeziciIzVrijednosti(val) {
+    if (val == null) return {};
+    var o = val;
     if (typeof val === 'string') {
       var s = trim(val);
-      if (s === '') return '';
-      try { arr = JSON.parse(s); } catch (e) { return s; }
+      if (s === '') return {};
+      try { o = JSON.parse(s); } catch (e) { return {}; }
     }
-    if (!Array.isArray(arr)) return '';
-    return arr.filter(function (x) { return x != null && String(x).trim() !== ''; }).join(', ');
+    if (o && typeof o === 'object' && !Array.isArray(o)) return o;
+    return {};
+  }
+
+  /** Za ćeliju tablice: imena pisama (grupa) odvojena zarezom, npr. "Latin, Cyrillic". */
+  function pismaToText(val) {
+    var o = jeziciIzVrijednosti(val);
+    var keys = Object.keys(o);
+    if (keys.length) return keys.join(', ');
+    // legacy: niz pisama ["latin",...]
+    if (typeof val === 'string') {
+      try { var a = JSON.parse(trim(val)); if (Array.isArray(a)) return a.join(', '); } catch (e) {}
+    } else if (Array.isArray(val)) {
+      return val.join(', ');
+    }
+    return '';
+  }
+
+  /** Iscrtava grupiranu strukturu u RO okvir: "<strong>Latin:</strong> hrvatski, ...<br>...". */
+  function renderPismaBox(obj) {
+    if (!editPisma) return;
+    var keys = obj && typeof obj === 'object' ? Object.keys(obj) : [];
+    if (!keys.length) { editPisma.innerHTML = ''; return; }
+    var html = [];
+    for (var i = 0; i < keys.length; i++) {
+      var g = keys[i];
+      var lista = Array.isArray(obj[g]) ? obj[g] : [];
+      html.push('<strong>' + escHtml(g) + ':</strong> ' + escHtml(lista.join(', ')));
+    }
+    editPisma.innerHTML = html.join('<br>');
+  }
+
+  /**
+   * Iscrtava prikaz jezika iz trenutniJeziciObj i upravlja disabled stanjem:
+   * ako nema sadržaja (font nije izabran i red nije selektiran) -> disabled.
+   * Koristi se i pri izboru fonta iz foldera i pri selekciji retka u tablici.
+   */
+  function azurirajPismaBox() {
+    if (!editPisma) return;
+    var ima = trenutniJeziciObj && typeof trenutniJeziciObj === 'object' && Object.keys(trenutniJeziciObj).length > 0;
+    renderPismaBox(ima ? trenutniJeziciObj : {});
+    editPisma.classList.toggle('kontrola-prikaz--disabled', !ima);
+    /* aria-disabled da povezana labela (for) prati disabled stanje preko 0-Kontrole mehanizma. */
+    editPisma.setAttribute('aria-disabled', ima ? 'false' : 'true');
+    if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
   }
 
   function refreshTipSelect() {
@@ -82,7 +131,7 @@
     var dis = !omoguci;
     if (editKljuc) editKljuc.disabled = dis;
     if (editTip) { editTip.disabled = dis; refreshTipSelect(); }
-    if (editPisma) editPisma.disabled = dis;
+    /* editPisma je readonly + automatski iz fonta — ne ulazi u disabled-gating. */
     if (editAktivan) editAktivan.disabled = dis;
     if (editNapomena) editNapomena.disabled = dis;
     if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
@@ -97,10 +146,33 @@
     }
     if (editKljuc) editKljuc.value = '';
     if (editTip) { editTip.value = 'sans'; refreshTipSelect(); }
-    if (editPisma) editPisma.value = '';
+    trenutniJeziciObj = {};
+    azurirajPismaBox();
     if (editAktivan) editAktivan.checked = true;
     if (editNapomena) editNapomena.value = '';
     syncEditPanelDisabledState();
+  }
+
+  /** Postavi selekt „Dostupni fontovi" + RO varijante iz zadane porodice (ne dira pisma). */
+  function postaviDostupniIzReda(por) {
+    por = por != null ? String(por) : '';
+    if (editDostupni) {
+      editDostupni.value = por;
+      if (typeof KontroleRefreshCustomSelect === 'function') {
+        try { KontroleRefreshCustomSelect('edit_dostupni_fontovi'); } catch (e) {}
+      }
+    }
+    if (editVarijante) {
+      var varijante = (por !== '' && dostupneVarijanteMap[por]) ? dostupneVarijanteMap[por] : [];
+      if (por !== '' && varijante.length) {
+        editVarijante.value = varijante.join(', ');
+        editVarijante.disabled = false;
+      } else {
+        editVarijante.value = '';
+        editVarijante.disabled = true;
+      }
+    }
+    if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
   }
 
   onCrudSelectionChange = function () {
@@ -118,7 +190,11 @@
             editTip.value = (tipVal === 'serif' || tipVal === 'mono') ? tipVal : 'sans';
             refreshTipSelect();
           }
-          if (editPisma) editPisma.value = data[i][3] != null ? data[i][3] : '';
+          trenutniJeziciObj = jeziciIzVrijednosti(data[i][7]);
+          azurirajPismaBox();
+          /* Postavi selekt „Dostupni fontovi" + varijante iz spremljene porodice
+             (bez diranja pisma — pisma ostaju iz spremljene vrijednosti retka). */
+          postaviDostupniIzReda(data[i][8]);
           if (editAktivan) {
             var a = data[i][4];
             editAktivan.checked = a === 1 || a === true || a === '1';
@@ -138,13 +214,9 @@
     var wrap = editNaziv && editNaziv.closest('.kontrola-edit-delete');
     if (!wrap) return;
     wrap.addEventListener('kontrole-edit-delete-clear', function () {
-      if (editKljuc) editKljuc.value = '';
-      if (editTip) { editTip.value = 'sans'; refreshTipSelect(); }
-      if (editPisma) editPisma.value = '';
-      if (editAktivan) editAktivan.checked = true;
-      if (editNapomena) editNapomena.value = '';
+      /* X briše cijeli edit panel — uključujući selekt „Dostupni fontovi" i selekciju u tablici. */
       if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
-      syncEditPanelDisabledState();
+      clearControlsFromSelection();
       updateCrudUpisiState();
     });
   })();
@@ -188,8 +260,9 @@
       var params = {
         naziv: naziv,
         pdfmake_kljuc: kljuc,
+        porodica: editDostupni ? trim(editDostupni.value) : '',
         tip: tip,
-        podrzana_pisma: editPisma ? trim(editPisma.value) : '',
+        podrzana_pisma: JSON.stringify(trenutniJeziciObj || {}),
         aktivan: editAktivan && editAktivan.checked ? '1' : '0',
         napomena: editNapomena ? trim(editNapomena.value) : ''
       };
@@ -285,7 +358,7 @@
     return { code: s.slice(0, idx).trim(), replacements: [s.slice(idx + 1).trim()] };
   }
 
-  /** JSON o -> red tablice [ naziv, pdfmake_kljuc, tip, pisma_str, aktivan, napomena, id ]. */
+  /** JSON o -> red tablice [ naziv, pdfmake_kljuc, tip, pisma_str, aktivan, napomena, id, pisma_raw, porodica ]. */
   function redIzJsonZaTablicu(o) {
     var ak = o.aktivan;
     var bitAk = (ak === 1 || ak === true || ak === '1') ? 1 : 0;
@@ -296,7 +369,9 @@
       pismaToText(o.podrzana_pisma),
       bitAk,
       o.napomena != null ? o.napomena : '',
-      o.id != null ? o.id : 0
+      o.id != null ? o.id : 0,
+      o.podrzana_pisma != null ? o.podrzana_pisma : '',
+      o.porodica != null ? o.porodica : ''
     ];
   }
 
@@ -316,6 +391,10 @@
         try {
           var arr = JSON.parse(text || '[]');
           for (var j = 0; j < arr.length; j++) rows.push(redIzJsonZaTablicu(arr[j]));
+          /* Abecedni red po nazivu (hrvatska abeceda: č, ć, š, ž). */
+          rows.sort(function (a, b) {
+            return String(a[0]).localeCompare(String(b[0]), 'hr', { sensitivity: 'base' });
+          });
         } catch (eT) {}
       }
       if (callback) callback(rows);
@@ -356,6 +435,7 @@
       }
       if (!Array.isArray(arr)) arr = [];
       dostupneVarijanteMap = {};
+      dostupniJeziciMap = {};
       while (editDostupni.firstChild) editDostupni.removeChild(editDostupni.firstChild);
       var opt0 = document.createElement('option');
       opt0.value = '';
@@ -365,6 +445,7 @@
         var por = arr[i] && arr[i].porodica != null ? String(arr[i].porodica) : '';
         if (por === '') continue;
         dostupneVarijanteMap[por] = (arr[i].varijante && Array.isArray(arr[i].varijante)) ? arr[i].varijante : [];
+        dostupniJeziciMap[por] = (arr[i].jezici && typeof arr[i].jezici === 'object') ? arr[i].jezici : {};
         var opt = document.createElement('option');
         opt.value = por;
         opt.textContent = por;
@@ -380,21 +461,28 @@
 
   /** Promjena „Dostupni fontovi" -> prikaži varijante odabrane porodice u RO polju. */
   function prikaziVarijanteOdabranog() {
-    if (!editVarijante) return;
     var por = editDostupni ? trim(editDostupni.value) : '';
-    var varijante = (por !== '' && dostupneVarijanteMap[por]) ? dostupneVarijanteMap[por] : [];
-    if (por !== '' && varijante.length) {
-      editVarijante.value = varijante.join(', ');
-      editVarijante.disabled = false;
-    } else {
-      editVarijante.value = '';
-      editVarijante.disabled = true;
+    if (editVarijante) {
+      var varijante = (por !== '' && dostupneVarijanteMap[por]) ? dostupneVarijanteMap[por] : [];
+      if (por !== '' && varijante.length) {
+        editVarijante.value = varijante.join(', ');
+        editVarijante.disabled = false;
+      } else {
+        editVarijante.value = '';
+        editVarijante.disabled = true;
+      }
+      /* Labela prati disabled stanje kontrole (standardni 0-Kontrole token mehanizam). */
+      if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
     }
+    /* Podržana pisma i jezici (RO) — automatski iz detekcije fonta; prazno -> disabled. */
+    trenutniJeziciObj = (por !== '' && dostupniJeziciMap[por]) ? dostupniJeziciMap[por] : {};
+    azurirajPismaBox();
   }
   if (editDostupni) {
     editDostupni.addEventListener('change', prikaziVarijanteOdabranog);
   }
 
   updateCrudUpisiState();
+  azurirajPismaBox();
   window.PDF_FontoviCRUD = PDF_FontoviCRUD;
 })();

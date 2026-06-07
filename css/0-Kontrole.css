@@ -1837,6 +1837,146 @@ input.kontrola-checkbox[type="checkbox"]:disabled {
 }
 
 /* =========================================================
+   KONTROLA PRIKAZ – read-only višelinijski prikaz (podržava HTML/bold)
+   Izgled i ponašanje kao napomena/edit; scrollbar je nativni (kao napomena).
+   Disabled stanje preko klase .kontrola-prikaz--disabled (div nema :disabled).
+   ========================================================= */
+.kontrola-prikaz {
+  box-sizing: border-box;
+  width: 100%;
+  height: calc(var(--prikaz_rows) * var(--tablica_row_h));   /* fiksna visina — ne širi se s tekstom */
+  min-height: calc(var(--prikaz_min_rows) * var(--tablica_row_h));
+  overflow-y: auto;                       /* vertikalni scrollbar pri prelijevanju (nativni, kao napomena) */
+  resize: var(--prikaz_resize);           /* ručni resize po visini (kao napomena) */
+  padding: var(--prikaz_padding_y) var(--prikaz_padding_x);
+  margin: 0;
+  border: 1px solid var(--prikaz_border);
+  border-radius: var(--prikaz_radius);
+  background: var(--prikaz_bg);
+  color: var(--prikaz_text);
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: var(--prikaz_line_height);
+  cursor: var(--prikaz_cursor);
+  outline: none;
+  box-shadow: var(--tablica_sjena);
+}
+
+/* Scrollbar identičan kao na tablici (isti --tablica_scroll_* tokeni: klizač,
+   strelice gore/dolje, hover, širina). Razlika: traka (background) je prozirna
+   umjesto pune boje — kako neproziran track ne bi sjekao zaobljene kutove okvira.
+   Vrijedi za prikaz i napomena kontrolu (obje imaju zaobljen okvir). */
+.kontrola-prikaz::-webkit-scrollbar,
+.kontrola-napomena::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara);
+  height: var(--tablica_sirina_scrol_bara);
+  background: transparent;
+}
+/* Linija lijevo od scrollbara — crta se na samom scrollbaru (border-left), pa je
+   vidljiva SAMO kad scrollbar postoji. Bez scrolla nema linije ni rezerviranog
+   žlijeba — prostor koristi tekst. Debljina iz --tablica_border_w, boja prati
+   okvir kontrole (enable/disable). Border ide i na corner (kad postoji). */
+/* Vertikalna linija lijevo od scrollbara — na scrollbaru i corneru (do dna). */
+.kontrola-prikaz::-webkit-scrollbar,
+.kontrola-prikaz::-webkit-scrollbar-corner {
+  border-left: var(--tablica_border_w) solid var(--prikaz_border);
+}
+/* Horizontalna linija na dnu scrollbara — SAMO na scrollbaru, ne ispod resize
+   ikone (corner). */
+.kontrola-prikaz::-webkit-scrollbar {
+  border-bottom: var(--tablica_border_w) solid var(--prikaz_border);
+}
+.kontrola-prikaz.kontrola-prikaz--disabled::-webkit-scrollbar,
+.kontrola-prikaz.kontrola-prikaz--disabled::-webkit-scrollbar-corner {
+  border-left-color: var(--prikaz_border_disabled);
+  border-bottom-color: var(--prikaz_border_disabled);
+}
+.kontrola-napomena::-webkit-scrollbar,
+.kontrola-napomena::-webkit-scrollbar-corner {
+  border-left: var(--tablica_border_w) solid var(--napomena_border);
+}
+.kontrola-napomena::-webkit-scrollbar {
+  border-bottom: var(--tablica_border_w) solid var(--napomena_border);
+}
+.kontrola-napomena:disabled::-webkit-scrollbar,
+.kontrola-napomena:disabled::-webkit-scrollbar-corner {
+  border-left-color: var(--napomena_border_disabled);
+  border-bottom-color: var(--napomena_border_disabled);
+}
+.kontrola-prikaz::-webkit-scrollbar-thumb,
+.kontrola-napomena::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac);
+  border-radius: 6px;
+}
+.kontrola-prikaz::-webkit-scrollbar-track-piece:vertical:start,
+.kontrola-napomena::-webkit-scrollbar-track-piece:vertical:start {
+  margin-top: 2px;
+}
+.kontrola-prikaz::-webkit-scrollbar-track-piece:vertical:end,
+.kontrola-napomena::-webkit-scrollbar-track-piece:vertical:end {
+  margin-bottom: 2px;
+}
+.kontrola-prikaz::-webkit-scrollbar-thumb:hover,
+.kontrola-napomena::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover);
+}
+.kontrola-prikaz::-webkit-scrollbar-button:single-button,
+.kontrola-napomena::-webkit-scrollbar-button:single-button {
+  height: var(--tablica_sirina_scrol_bara);
+  background: transparent;
+}
+.kontrola-prikaz::-webkit-scrollbar-button:single-button:vertical:decrement,
+.kontrola-napomena::-webkit-scrollbar-button:single-button:vertical:decrement {
+  border-style: solid;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--tablica_scroll_klizac) transparent;
+}
+.kontrola-prikaz::-webkit-scrollbar-button:single-button:vertical:increment,
+.kontrola-napomena::-webkit-scrollbar-button:single-button:vertical:increment {
+  border-style: solid;
+  border-width: 6px 6px 0 6px;
+  border-color: var(--tablica_scroll_klizac) transparent transparent transparent;
+}
+/* Kut dolje-desno (gdje je resize grip): prozirno — da kvadrat ne siječe
+   zaobljeni kut okvira; resize i dalje funkcionira. */
+.kontrola-prikaz::-webkit-scrollbar-corner,
+.kontrola-napomena::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* Resize grip: prozirno kućište (bez sivog kvadratića) + male dijagonalne crtice
+   ikone u donjem-desnom kutu (gradijent u boji klizača). */
+.kontrola-prikaz::-webkit-resizer,
+.kontrola-napomena::-webkit-resizer {
+  background-color: transparent;
+  background-image: linear-gradient(135deg,
+    transparent 0 48%,
+    var(--tablica_scroll_klizac) 48% 56%,
+    transparent 56% 66%,
+    var(--tablica_scroll_klizac) 66% 74%,
+    transparent 74% 100%);
+  background-repeat: no-repeat;
+  background-position: right 1px bottom 1px;
+  background-size: 9px 9px;
+}
+
+/* Placeholder kad je prazno (preko data-placeholder atributa). */
+.kontrola-prikaz[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--prikaz_placeholder);
+}
+
+/* Disabled stanje (tokenizirano). */
+.kontrola-prikaz.kontrola-prikaz--disabled {
+  background: var(--prikaz_bg_disabled);
+  color: var(--prikaz_text_disabled);
+  border-color: var(--prikaz_border_disabled);
+  cursor: var(--prikaz_cursor_disabled);
+  resize: var(--prikaz_resize_disabled);
+  box-shadow: var(--prikaz_focus_shadow_disabled);
+}
+
+/* =========================================================
    KONTROLA LABELA – osnovne labele za kontrole
    ========================================================= */
 

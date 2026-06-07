@@ -6,26 +6,23 @@ if ($db_ret !== -1) {
     exit;
 }
 
-/** Pretvara unos "latin, cyrillic" u JSON niz ["latin","cyrillic"]; prazno -> []. */
+/** Prima grupiranu strukturu jezika kao JSON ({"Latin":[...],...}); validira i normalizira. Prazno/nevaljano -> {}. */
 function pdf_fontovi_pisma_to_json($raw)
 {
     $raw = trim((string) $raw);
     if ($raw === '') {
-        return '[]';
+        return '{}';
     }
-    $parts = preg_split('/[,;]+/', $raw);
-    $clean = [];
-    foreach ($parts as $p) {
-        $p = mb_strtolower(trim($p), 'UTF-8');
-        if ($p !== '' && !in_array($p, $clean, true)) {
-            $clean[] = $p;
-        }
+    $dec = json_decode($raw, true);
+    if (is_array($dec)) {
+        return json_encode($dec, JSON_UNESCAPED_UNICODE);
     }
-    return json_encode($clean, JSON_UNESCAPED_UNICODE);
+    return '{}';
 }
 
 $naziv = isset($_POST['naziv']) ? trim($_POST['naziv']) : '';
 $pdfmake_kljuc = isset($_POST['pdfmake_kljuc']) ? trim($_POST['pdfmake_kljuc']) : '';
+$porodica = isset($_POST['porodica']) ? trim($_POST['porodica']) : '';
 $tip = isset($_POST['tip']) ? trim($_POST['tip']) : '';
 $pisma_json = pdf_fontovi_pisma_to_json($_POST['podrzana_pisma'] ?? '');
 $ak_raw = isset($_POST['aktivan']) ? trim((string) $_POST['aktivan']) : '';
@@ -36,7 +33,7 @@ if ($naziv === '' || $pdfmake_kljuc === '' || !in_array($tip, ['serif', 'sans', 
     echo '105';
     exit;
 }
-if (mb_strlen($naziv, 'UTF-8') > 50 || mb_strlen($pdfmake_kljuc, 'UTF-8') > 50) {
+if (mb_strlen($naziv, 'UTF-8') > 50 || mb_strlen($pdfmake_kljuc, 'UTF-8') > 50 || mb_strlen($porodica, 'UTF-8') > 100) {
     echo '105';
     exit;
 }
@@ -58,14 +55,14 @@ try {
     $stmt->close();
 
     $stmt = $mysqli->prepare(
-        'INSERT INTO pdf_fontovi (naziv, pdfmake_kljuc, tip, podrzana_pisma, aktivan, napomena)
-         VALUES (?, ?, ?, ?, ?, NULLIF(TRIM(?), \'\'))'
+        'INSERT INTO pdf_fontovi (naziv, pdfmake_kljuc, porodica, tip, podrzana_pisma, aktivan, napomena)
+         VALUES (?, ?, ?, ?, ?, ?, NULLIF(TRIM(?), \'\'))'
     );
     if (!$stmt) {
         echo '200,' . $mysqli->errno;
         exit;
     }
-    $stmt->bind_param('ssssis', $naziv, $pdfmake_kljuc, $tip, $pisma_json, $aktivan, $napomena);
+    $stmt->bind_param('sssssis', $naziv, $pdfmake_kljuc, $porodica, $tip, $pisma_json, $aktivan, $napomena);
     $stmt->execute();
     echo 'OK';
     $stmt->close();

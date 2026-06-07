@@ -6,27 +6,24 @@ if ($db_ret !== -1) {
     exit;
 }
 
-/** Pretvara unos "latin, cyrillic" u JSON niz ["latin","cyrillic"]; prazno -> []. */
+/** Prima grupiranu strukturu jezika kao JSON ({"Latin":[...],...}); validira i normalizira. Prazno/nevaljano -> {}. */
 function pdf_fontovi_pisma_to_json($raw)
 {
     $raw = trim((string) $raw);
     if ($raw === '') {
-        return '[]';
+        return '{}';
     }
-    $parts = preg_split('/[,;]+/', $raw);
-    $clean = [];
-    foreach ($parts as $p) {
-        $p = mb_strtolower(trim($p), 'UTF-8');
-        if ($p !== '' && !in_array($p, $clean, true)) {
-            $clean[] = $p;
-        }
+    $dec = json_decode($raw, true);
+    if (is_array($dec)) {
+        return json_encode($dec, JSON_UNESCAPED_UNICODE);
     }
-    return json_encode($clean, JSON_UNESCAPED_UNICODE);
+    return '{}';
 }
 
 $id = isset($_POST['id']) ? (int) $_POST['id'] : 0;
 $naziv = isset($_POST['naziv']) ? trim($_POST['naziv']) : '';
 $pdfmake_kljuc = isset($_POST['pdfmake_kljuc']) ? trim($_POST['pdfmake_kljuc']) : '';
+$porodica = isset($_POST['porodica']) ? trim($_POST['porodica']) : '';
 $tip = isset($_POST['tip']) ? trim($_POST['tip']) : '';
 $pisma_json = pdf_fontovi_pisma_to_json($_POST['podrzana_pisma'] ?? '');
 $ak_raw = isset($_POST['aktivan']) ? trim((string) $_POST['aktivan']) : '';
@@ -37,7 +34,7 @@ if ($id <= 0 || $naziv === '' || $pdfmake_kljuc === '' || !in_array($tip, ['seri
     echo '105';
     exit;
 }
-if (mb_strlen($naziv, 'UTF-8') > 50 || mb_strlen($pdfmake_kljuc, 'UTF-8') > 50) {
+if (mb_strlen($naziv, 'UTF-8') > 50 || mb_strlen($pdfmake_kljuc, 'UTF-8') > 50 || mb_strlen($porodica, 'UTF-8') > 100) {
     echo '105';
     exit;
 }
@@ -62,7 +59,7 @@ try {
 
     $stmt = $mysqli->prepare(
         'UPDATE pdf_fontovi
-         SET naziv = ?, pdfmake_kljuc = ?, tip = ?, podrzana_pisma = ?,
+         SET naziv = ?, pdfmake_kljuc = ?, porodica = ?, tip = ?, podrzana_pisma = ?,
              aktivan = ?, napomena = NULLIF(TRIM(?), \'\')
          WHERE id = ?'
     );
@@ -70,7 +67,7 @@ try {
         echo '200,' . $mysqli->errno;
         exit;
     }
-    $stmt->bind_param('ssssisi', $naziv, $pdfmake_kljuc, $tip, $pisma_json, $aktivan, $napomena, $id);
+    $stmt->bind_param('sssssisi', $naziv, $pdfmake_kljuc, $porodica, $tip, $pisma_json, $aktivan, $napomena, $id);
     $stmt->execute();
     echo 'OK';
     $stmt->close();

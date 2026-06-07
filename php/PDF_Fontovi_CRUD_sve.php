@@ -7,7 +7,7 @@ if ($db_ret !== -1) {
     exit;
 }
 $result = $mysqli->query(
-    'SELECT id, naziv, pdfmake_kljuc, tip, podrzana_pisma, aktivan, napomena
+    'SELECT id, naziv, pdfmake_kljuc, porodica, tip, podrzana_pisma, aktivan, napomena
      FROM pdf_fontovi
      ORDER BY naziv ASC'
 );

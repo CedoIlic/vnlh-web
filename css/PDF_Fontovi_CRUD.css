@@ -73,9 +73,6 @@
   flex: 1 1 auto;
   min-width: 0;
 }
-.pdf-fontovi-crud__polje--varijante .kontrola-edit[readonly] {
-  background-color: var(--napomena_bg, #f5f5f5);
-}
 .pdf-fontovi-crud__polje--naziv {
   flex: 1 1 12rem;
 }
@@ -87,7 +84,7 @@
   width: 11rem;
 }
 .pdf-fontovi-crud__polje--pisma {
-  flex: 1 1 16rem;
+  flex: 1 1 100%;
 }
 .pdf-fontovi-crud__polje--aktivan {
   flex: 0 0 auto;

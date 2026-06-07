@@ -89,7 +89,7 @@
       document.head.appendChild(el);
     }
     var safe = value.replace(/[\\'"<>]/g, '');
-    el.textContent = '.kontrola-tablica__scroll::-webkit-scrollbar-thumb:hover, .kontrola-select__list::-webkit-scrollbar-thumb:hover { background: ' + safe + ' !important; }';
+    el.textContent = '.kontrola-tablica__scroll::-webkit-scrollbar-thumb:hover, .kontrola-select__list::-webkit-scrollbar-thumb:hover, .kontrola-prikaz::-webkit-scrollbar-thumb:hover, .kontrola-napomena::-webkit-scrollbar-thumb:hover { background: ' + safe + ' !important; }';
   }
 
   function applyTokenClasses(container) {

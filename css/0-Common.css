@@ -731,6 +731,40 @@
   --napomena_focus_shadow_disabled: none;                            /* Sjena kontrole za napomenu kada je disabled */
 
   /* =========================================================
+     GRUPA: KONTROLA PRIKAZ (read-only višelinijski prikaz; podržava HTML/bold)
+     Inicijalne vrijednosti identične kao napomena/edit, ali neovisna grupa.
+     ========================================================= */
+  /* BOJE – enabled */
+  --prikaz_bg: var(--c-white);                                       /* Pozadina prikaz kontrole */
+  --prikaz_text: var(--text);                                        /* Boja teksta u prikaz kontroli */
+  --prikaz_border: var(--c-gray-300);                                /* Boja okvira prikaz kontrole */
+  --prikaz_placeholder: var(--c-gray-300);                           /* Boja placeholder teksta (prazan prikaz) */
+
+  /* BOJE – disabled */
+  --prikaz_bg_disabled: var(--c-gray-100);                           /* Pozadina prikaz kontrole kada je disabled */
+  --prikaz_text_disabled: var(--c-gray-700);                         /* Boja teksta prikaz kontrole kada je disabled */
+  --prikaz_border_disabled: var(--c-gray-200);                       /* Boja okvira prikaz kontrole kada je disabled */
+
+  /* ISCRTAVANJE */
+  --prikaz_radius: 8px;                                              /* Radius kutova prikaz kontrole */
+  --prikaz_padding_y: 8px;                                           /* Okomiti padding unutar prikaz kontrole */
+  --prikaz_padding_x: 10px;                                          /* Vodoravni padding unutar prikaz kontrole */
+  --prikaz_rows: 2;                                                  /* Fiksna početna visina (redaka) — kao napomena; ne širi se s tekstom */
+  --prikaz_min_rows: 2;                                              /* Min. visina pri ručnom resizeu (redaka) */
+  --prikaz_line_height: 1.4;                                         /* Visina retka u prikaz kontroli */
+
+  /* PONAŠANJE – enabled */
+  --prikaz_cursor: default;                                          /* Kursor miša iznad prikaz kontrole (read-only) */
+  --prikaz_resize: vertical;                                         /* Ručni resize po visini (kao napomena) */
+  --prikaz_focus_shadow: var(--kontrole_sjena_slaba_1);              /* Sjena prikaz kontrole (fokus, ako se koristi) */
+
+  /* PONAŠANJE – disabled */
+  --prikaz_cursor_disabled: default;                                 /* Kursor miša kada je prikaz kontrola disabled */
+  --prikaz_resize_disabled: vertical;                                /* Resize ikona uvijek vidljiva (i u disabled stanju) */
+  --prikaz_focus_shadow_disabled: none;                              /* Sjena prikaz kontrole kada je disabled */
+  /* Scrollbar koristi zajedničke --tablica_scroll_* tokene (izgled kao na tablici). */
+
+  /* =========================================================
      GRUPA: KONTROLA LABELA
      ========================================================= */
   /* BOJE */
