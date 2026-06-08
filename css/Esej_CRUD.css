@@ -538,6 +538,12 @@ body {
   min-height: 0;
 }
 
+/* RO mod: wrapper preuzima RO boje (inner napomena je transparentna + bez okvira). */
+.esej-crud__scrol-omot--readonly {
+  background: var(--napomena_bg_readonly);
+  border-color: var(--napomena_border_readonly);
+}
+
 /* Flex sizing wrapperima preuzet od kontrola. */
 .esej-crud__opci-kljucne-omot {
   flex: 1 1 auto;

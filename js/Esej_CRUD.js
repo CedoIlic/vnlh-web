@@ -1061,19 +1061,15 @@
       var inpNaslov = document.getElementById('esej_naslov_eseja');
       if (inpNaslov) inpNaslov.value = esejNaslovSreduji(rowData.naslov_eseja || '');
 
-      /* Stupanj: popuni select s jednom opcijom iz podataka tuđeg eseja. */
-      var selSt = document.getElementById('esej_select_stupanj');
-      if (selSt && rowData.id_stupanj) {
-        while (selSt.firstChild) selSt.removeChild(selSt.firstChild);
-        var optSt = document.createElement('option');
-        optSt.value = String(rowData.id_stupanj);
-        var stTxt = rowData.stupanj_broj != null ? String(rowData.stupanj_broj) + '°' : '';
-        if (rowData.stupanj_naziv) stTxt += (stTxt ? ', ' : '') + rowData.stupanj_naziv;
-        optSt.textContent = stTxt || String(rowData.id_stupanj);
-        selSt.appendChild(optSt);
-        selSt.value = String(rowData.id_stupanj);
-        if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('esej_select_stupanj'); } catch (e) {} }
-      }
+      /* Stupanj: lista se (async) puni SVIM dostupnim stupnjevima u esejProvedeUvjeteForma
+         (pozvanog iz esejOcistiFormu, jer je loža dostupna). Filter stupnja = filter izbora eseja
+         → esejev stupanj je sigurno u toj listi. Postavljamo ga preko _esejPendingStupanj, koji
+         XHR konzumira po završetku (isti mehanizam kao kod vlastitog eseja).
+         Brisanje (esejOcistiFormu) → „Nije izabrano", bez micanja opcija. */
+      _esejPendingStupanj = String(rowData.id_stupanj || '');
+      /* Eksplicitno okini XHR NAKON postavljanja pendinga (esejProvedeUvjeteForma bi u RO
+         modu ranije izašao, a XHR iz esejOcistiFormu je uhvatio prazan pending). */
+      puniSelectStupanjEseja();
 
       var cbJavno = document.getElementById('esej_javno_dostupan');
       if (cbJavno) cbJavno.checked = !!(parseInt(rowData.javno_dostupan, 10));
@@ -1362,65 +1358,61 @@
   }
 
   /**
-   * Primjeni RO ograničenja za tuđi javni esej:
-   *  – Opci/esej kontrole: disabled (ne mogu se mijenjati)
-   *  – Autor: samo ellipsis gumb disabled; X (clear) ostaje AKTIVAN — jedini povratak na init stanje
-   *  – Geo selekti: disabled (samo prikaz konteksta)
+   * Primjenjuje/uklanja jedinstveni RO vizual (KontroleSetControlReadonly) na kontrole eseja.
+   * Preskače esej_upisao (trajni RO) i autor-ellipsis (ostaje funkcionalno disabled).
+   * Posebno: autor edit-delete (X ostaje aktivan) i checkbox-labela (label-for klik ne smije
+   * mijenjati vrijednost u RO).
+   * @param {boolean} ro
+   */
+  function _esejPostaviRoVizual(ro) {
+    if (typeof KontroleSetControlReadonly !== 'function') return;
+    var nodes = document.querySelectorAll(
+      '#esejKontrolaTabPanel0 .esej-crud__opci-kontrola, #esejKontrolaTabPanel1 .esej-crud__esej-kontrola'
+    );
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      if (!el || el.id === 'esej_upisao' || el.id === 'esej_btn_autor_ellipsis') continue;
+      KontroleSetControlReadonly(el, ro);
+      /* Napomene su u wrapperu .esej-crud__scrol-omot (on daje vidljivi okvir+pozadinu;
+         inner kontrola je transparentna) → RO boje stavi na wrapper. */
+      var omot = el.closest && el.closest('.esej-crud__scrol-omot');
+      if (omot) omot.classList.toggle('esej-crud__scrol-omot--readonly', ro);
+      /* Checkbox: blokiraj i povezanu labelu (label-for klik bi inače mijenjao vrijednost). */
+      if (el.tagName === 'INPUT' && el.type === 'checkbox' && el.id) {
+        var lbl = document.querySelector('label[for="' + el.id + '"]');
+        if (lbl) {
+          if (ro) { lbl.style.pointerEvents = 'none'; lbl.style.cursor = 'default'; }
+          else { lbl.style.removeProperty('pointer-events'); lbl.style.removeProperty('cursor'); }
+        }
+      }
+    }
+    /* Autor edit-delete (rich-html) — RO vizual; X (clear) ostaje aktivan. */
+    var autorWrap = document.querySelector('.esej-crud__autor-edit-delete');
+    if (autorWrap) KontroleSetControlReadonly(autorWrap, ro);
+  }
+
+  /**
+   * Primjeni RO ograničenja za tuđi javni esej (jedinstveni RO vizual + funkcionalni lokoti):
+   *  – Kontrole: kontrola-*--readonly (plavi RO izgled, vrijednost vidljiva, inertno)
+   *  – Autor: X (clear) ostaje aktivan — jedini povratak na init; ellipsis disabled
+   *  – Sadržaj eseja: contenteditable=false (helper ne dira contentEditable)
    *  – Tipke Upis/Izmjeni/Izbriši/PDF: skrivene / disabled
-   *  – Labele: ostaju normalne boje (nema KontroleSyncLabelsDisabledState)
+   *  – Labele: ostaju normalne (RO ne sivi labele)
    */
   function _esejPrimijeniReadOnly() {
     var lokot = document.getElementById('esej_ro_lokot');
     if (lokot) { lokot.hidden = false; lokot.style.display = 'inline-flex'; }
-    var oi, ei;
-    /* Opci kontrole:
-       – esej_upisao: uvijek readonly, ne diraj
-       – text inputi: readonly (izgleda enabled, vrijednost vidljiva, ne može se tipkati)
-       – select: pointer-events na wrapperuu (izgleda enabled, vrijednost vidljiva, dropdown ne radi)
-       – checkbox: pointer-events inline (stanje vidljivo, ne može se kliknuti)
-       – textarea: readonly
-       – Autor ellipsis: disabled (jedini koji ostaje funkcionalno disabled) */
-    var opciNodes = document.querySelectorAll('#esejKontrolaTabPanel0 .esej-crud__opci-kontrola');
-    for (oi = 0; oi < opciNodes.length; oi++) {
-      var elO = opciNodes[oi];
-      if (!elO || elO.id === 'esej_upisao') continue;
-      if (elO.tagName === 'INPUT' && elO.type !== 'checkbox') {
-        elO.readOnly = true;
-      } else if (elO.tagName === 'TEXTAREA') {
-        elO.readOnly = true;
-      } else if (elO.tagName === 'SELECT') {
-        var selWrap = elO.closest('.kontrola-select');
-        if (selWrap) selWrap.classList.add('esej-crud__kontrola-ro');
-        else { elO.style.pointerEvents = 'none'; elO.style.cursor = 'default'; }
-      } else if (elO.tagName === 'INPUT' && elO.type === 'checkbox') {
-        elO.style.pointerEvents = 'none'; elO.style.cursor = 'default';
-        var cbLbl = elO.id ? document.querySelector('label[for="' + elO.id + '"]') : null;
-        if (cbLbl) { cbLbl.style.pointerEvents = 'none'; cbLbl.style.cursor = 'default'; }
-      } else if ('disabled' in elO) {
-        elO.disabled = true;
-      }
-    }
-    /* Autor ellipsis: disabled; X ostaje aktivan. */
+    _esejPostaviRoVizual(true);
+    var sadrzaj = document.getElementById('esej_sadrzaj');
+    if (sadrzaj && sadrzaj.hasAttribute('contenteditable')) sadrzaj.contentEditable = 'false';
     var btnAutorEll = document.getElementById('esej_btn_autor_ellipsis');
     if (btnAutorEll) btnAutorEll.disabled = true;
-    /* Esej tab kontrole. */
-    var esejNodes = document.querySelectorAll('#esejKontrolaTabPanel1 .esej-crud__esej-kontrola');
-    for (ei = 0; ei < esejNodes.length; ei++) {
-      var el = esejNodes[ei];
-      if (!el) continue;
-      if (el.tagName === 'TEXTAREA') { el.readOnly = true; }
-      else if (el.hasAttribute('contenteditable')) { el.contentEditable = 'false'; }
-      else if ('disabled' in el) { el.disabled = true; }
-    }
-    /* Geo selekti se NE diraju — ostaju enabled za normalnu upotrebu. */
-    /* Tipke: skrivene. */
     var bUpis = document.getElementById('btnUpisi');
     if (bUpis) { bUpis.hidden = true; bUpis.style.display = 'none'; bUpis.disabled = true; }
     var bBr = document.getElementById('btnIzbrisi');
     if (bBr)   { bBr.hidden = true; bBr.style.display = 'none'; }
     var btnPdf = document.getElementById('esej_btn_pdf');
     if (btnPdf) btnPdf.disabled = true;
-    /* Labele NE sinkroniziramo — ostaju normalne boje (vizualni RO, ne disabled izgled). */
   }
 
   /**
@@ -1868,6 +1860,8 @@
     /* Re-enable forme bez stupanj XHR-a (izbjegava race condition s _ucitajPolja). */
     (function () {
       var imaLCur = !!esejIdOdabraneLozISelecta();
+      /* Skini jedinstveni RO vizual (kontrola-*--readonly) prije re-gatinga. */
+      _esejPostaviRoVizual(false);
       var oi, ei;
       var opN = document.querySelectorAll('#esejKontrolaTabPanel0 .esej-crud__opci-kontrola');
       for (oi = 0; oi < opN.length; oi++) {
