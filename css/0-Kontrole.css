@@ -420,8 +420,8 @@ body {
   margin-right: auto;
 }
 
-/* Hover zaglavlja tablice – invertiraj gradient (osim kad je tablica disabled) */
-.kontrola-tablica:not(.kontrola-tablica--disabled) th:hover {
+/* Hover zaglavlja tablice – invertiraj gradient (osim kad je tablica disabled ili readonly) */
+.kontrola-tablica:not(.kontrola-tablica--disabled):not(.kontrola-tablica--readonly) th:hover {
   background: linear-gradient(
     to bottom,
     var(--tablica_head_bg_2),
@@ -572,6 +572,67 @@ body {
 }
 .kontrola-tablica.kontrola-tablica--disabled td {
   color: var(--tablica_row_fg_disabled);
+}
+
+/* =========================================================
+   READONLY TABLICA — svi tokeni nose normalne vrijednosti (pa izgleda kao normalna tablica);
+   trenutno odudaraju samo: bg redaka (= edit bg), okvir + linije (= boja okvira edit).
+   Sva svojstva idu kroz --tablica_*_readonly tokene radi lakšeg kasnijeg podešavanja.
+   Scroll radi; selekt/klik/hover blokirani (JS guardovi + suppress hover).
+   :not(--disabled) jamči da disabled pobjeđuje kad su oba razreda prisutna.
+   ========================================================= */
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) {
+  box-shadow: var(--tablica_sjena_readonly);
+  background: var(--tablica_bg_readonly);
+  border-color: var(--tablica_border_readonly);
+}
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) .kontrola-tablica__scroll {
+  background: var(--tablica_bg_readonly);
+}
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) .kontrola-tablica__scroll-linija {
+  background: var(--tablica_line_readonly);
+}
+/* Zaglavlje */
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) th {
+  background: linear-gradient(
+    to bottom,
+    var(--tablica_head_bg_1_readonly),
+    var(--tablica_head_bg_2_readonly)
+  );
+  color: var(--tablica_head_text_boja_readonly);
+  border-bottom-color: var(--tablica_line_readonly);
+}
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled).tablica--zaglavlje-v-linije th {
+  border-right-color: var(--tablica_line_readonly);
+}
+/* Redovi */
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) tbody tr {
+  background: var(--tablica_row_bg_readonly);
+}
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) tbody tr:nth-child(even).tablica-row-striped {
+  background: var(--tablica_row_bg_readonly);
+}
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) tbody tr.tablica-row-selected {
+  background: var(--tablica_row_selected_bg_readonly);
+}
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) td {
+  color: var(--tablica_row_fg_readonly);
+}
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled).tablica--podaci-h-linije td {
+  border-bottom-color: var(--tablica_line_readonly);
+}
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled).tablica--podaci-v-linije td {
+  border-right-color: var(--tablica_line_readonly);
+}
+/* Hover blokiran — pozadina ostaje kao red / selektirani red. */
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) tbody tr:hover {
+  background: var(--tablica_row_bg_readonly);
+}
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) tbody tr:nth-child(even).tablica-row-striped:hover {
+  background: var(--tablica_row_bg_readonly);
+}
+.kontrola-tablica.kontrola-tablica--readonly:not(.kontrola-tablica--disabled) tbody tr.tablica-row-selected:hover {
+  background: var(--tablica_row_selected_bg_readonly);
 }
 
 /* --- Blok: Tablica – horizontalne linije (--podaci-h-linije) --- */

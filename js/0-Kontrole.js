@@ -397,7 +397,7 @@
         tr.dataset.rowId = String(rid);
         tr.addEventListener('click', function (e) {
           if (container._cellShortTapScroll) { container._cellShortTapScroll = false; return; }
-          if (container.classList.contains('kontrola-tablica--disabled')) return;
+          if ((container.classList.contains('kontrola-tablica--disabled') || container.classList.contains('kontrola-tablica--readonly'))) return;
           var multi = (options.multiSelect === true) || container.classList.contains('tablica--multi-select');
           var shift = e && (e.shiftKey === true);
           var ctrl = e && (e.ctrlKey === true || e.metaKey === true);
@@ -793,14 +793,14 @@
       var panel = container.closest && container.closest('.kontrola-panel-tablica');
       
       container.addEventListener('mousedown', function (e) {
-        if (container.classList.contains('kontrola-tablica--disabled')) return;
+        if ((container.classList.contains('kontrola-tablica--disabled') || container.classList.contains('kontrola-tablica--readonly'))) return;
         if (container.contains(e.target)) {
           scrollDiv.focus({ preventScroll: true });
         }
       });
 
       container.addEventListener('click', function (e) {
-        if (container.classList.contains('kontrola-tablica--disabled')) return;
+        if ((container.classList.contains('kontrola-tablica--disabled') || container.classList.contains('kontrola-tablica--readonly'))) return;
         if (container.contains(e.target) && !e.target.closest('.kontrola-btn')) {
           scrollDiv.focus({ preventScroll: true });
         }
@@ -808,7 +808,7 @@
 
       if (panel) {
         panel.addEventListener('mousedown', function (e) {
-          if (container.classList.contains('kontrola-tablica--disabled')) return;
+          if ((container.classList.contains('kontrola-tablica--disabled') || container.classList.contains('kontrola-tablica--readonly'))) return;
           if (panel.contains(e.target) && !e.target.closest('.kontrola-btn') && !e.target.closest('.kontrola-panel__header')) {
             scrollDiv.focus({ preventScroll: true });
           }
@@ -817,7 +817,7 @@
 
       var tableKeydownHandler = function (e) {
         if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-        if (container.classList.contains('kontrola-tablica--disabled')) return;
+        if ((container.classList.contains('kontrola-tablica--disabled') || container.classList.contains('kontrola-tablica--readonly'))) return;
         var activeEl = document.activeElement;
         var isInPanel = panel && panel.contains(activeEl);
         var isInTable = container.contains(activeEl) || activeEl === scrollDiv;
@@ -1792,6 +1792,24 @@
   function KontroleSetControlReadonly(el, ro) {
     if (!el || typeof document === 'undefined') return;
     ro = !!ro;
+
+    /* Tablica — RO je samo klasa na kontejneru; interakciju (selekt/klik/hover)
+       blokiraju JS guardovi, scroll ostaje nativan. Bez tabindex/readonly atributa.
+       Pri ulasku u RO uklanja se selekcija retka (vizual + has-selected stanje). */
+    if (el.classList.contains('kontrola-tablica')) {
+      el.classList.toggle('kontrola-tablica--readonly', ro);
+      if (ro) {
+        el.setAttribute('aria-readonly', 'true');
+        el.querySelectorAll('.kontrola-tablica__scroll tbody tr.tablica-row-selected').forEach(function (tr) {
+          tr.classList.remove('tablica-row-selected');
+        });
+        el.classList.remove('kontrola-tablica--has-selected');
+      } else {
+        el.removeAttribute('aria-readonly');
+      }
+      return;
+    }
+
     var wrap, cls, focusables;
 
     if (el.classList.contains('kontrola-select') || (el.tagName === 'SELECT' && el.closest('.kontrola-select'))) {
@@ -2235,7 +2253,7 @@
         tableContainer._modalTablicaRowDblClickHandler = function (ev) {
           var tr = ev.target && ev.target.closest ? ev.target.closest('tbody tr') : null;
           if (!tr || !tableContainer.contains(tr)) return;
-          if (tableContainer.classList.contains('kontrola-tablica--disabled')) return;
+          if ((tableContainer.classList.contains('kontrola-tablica--disabled') || tableContainer.classList.contains('kontrola-tablica--readonly'))) return;
           var rid = tr.dataset.rowId;
           if (rid == null || String(rid).trim() === '') return;
           ev.preventDefault();

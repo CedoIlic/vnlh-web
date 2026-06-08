@@ -211,7 +211,7 @@
   if (btnToggleReadonly && typeof KontroleSetControlReadonly === 'function') {
     btnToggleReadonly.addEventListener('click', function () {
       readonly = !readonly;
-      ['ctrlEditDelete', 'ctrlEdit', 'ctrlSelect', 'ctrlNapomena', 'ctrlPrikaz', 'ctrlCheckbox', 'modalTestSelect', 'ctrlXAktivan'].forEach(function (id) {
+      ['ctrlEditDelete', 'ctrlEdit', 'ctrlSelect', 'ctrlNapomena', 'ctrlPrikaz', 'ctrlCheckbox', 'modalTestSelect', 'ctrlXAktivan', 'tablicaContainer'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) KontroleSetControlReadonly(el, readonly);
       });

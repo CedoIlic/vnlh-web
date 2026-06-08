@@ -248,7 +248,21 @@
   --tablica_bg_disabled: var(--c-gray-50);                           /* Pozadina tablice u disable stanju */
   --tablica_row_bg_disabled: var(--c-gray-50);                       /* Pozadina reda s podacima u disable stanju */
   --tablica_row_selected_bg_disabled: var(--c-gray-100);             /* Pozadina selektiranog reda u disable stanju */
-  
+
+  /* READONLY STANJE – TABLICA: izgled kao normalna (ne-disable) tablica — svi tokeni nose
+     normalne vrijednosti (radi lakšeg kasnijeg podešavanja); mijenja se SAMO: bg redaka = edit bg,
+     okvir + sve linije = boja okvira edit kontrole. Scroll da; selekt/klik/hover ne. */
+  --tablica_border_readonly: var(--edit_border_readonly);            /* Okvir tablice u RO = okvir RO kontrola (--c-blue-300) */
+  --tablica_line_readonly: var(--edit_border_readonly);              /* Sve linije (mreža + zaglavlje) u RO = okvir RO kontrola */
+  --tablica_head_bg_1_readonly: var(--tablica_head_bg_1);            /* Gornja boja gradienta zaglavlja u RO (kao normalno) */
+  --tablica_head_bg_2_readonly: var(--tablica_head_bg_2);            /* Donja boja gradienta zaglavlja u RO (kao normalno) */
+  --tablica_head_text_boja_readonly: var(--tablica_head_text_boja);  /* Boja teksta zaglavlja u RO (kao normalno) */
+  --tablica_row_fg_readonly: var(--tablica_row_fg);                  /* Boja teksta redova u RO (kao normalno) */
+  --tablica_bg_readonly: var(--tablica_bg);                          /* Pozadina tablice u RO (kao normalno) */
+  --tablica_row_bg_readonly: var(--c-blue-50);                       /* Pozadina reda u RO = plavi RO tint (kao ostale RO kontrole) */
+  --tablica_row_selected_bg_readonly: var(--c-blue-50);              /* RO uklanja selekciju → i selektirani red = isti RO tint (bez highlighta) */
+  --tablica_sjena_readonly: var(--tablica_sjena);                    /* Sjena tablice u RO (kao normalno) */
+
   /* Sjena – iz GRUPA: SJENE – KONTROLA */
   --tablica_sjena               : var(--kontrole_sjena_tablica);     /* Sjena oko okvira tablice, none - bez sjene */
   --tablica_sjena_disabled      : none;                              /* Sjena tablice (i okvira s h-scrollom) u disable stanju */
