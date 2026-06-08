@@ -40,7 +40,7 @@
                     </div>
                     <div class="pdf-fontovi-crud__polje pdf-fontovi-crud__polje--varijante">
                         <label class="kontrola-labela mb-0" for="edit_dostupne_varijante">Dostupne porodice odabranog pisma</label>
-                        <input id="edit_dostupne_varijante" type="text" class="kontrola-edit" readonly disabled aria-readonly="true" aria-label="Dostupne varijante odabranog fonta">
+                        <input id="edit_dostupne_varijante" type="text" class="kontrola-edit kontrola-edit--readonly" readonly disabled tabindex="-1" aria-readonly="true" aria-label="Dostupne varijante odabranog fonta">
                     </div>
                 </div>
                 <!-- 1. RED: Naziv | pdfmake ključ | Tip -->
@@ -74,7 +74,7 @@
                         <div id="edit_podrzana_pisma" class="kontrola-prikaz kontrola-prikaz--disabled" data-placeholder="(automatski iz odabranog fonta)" role="textbox" aria-readonly="true" aria-label="Podržana pisma i jezici (automatski iz fonta)"></div>
                     </div>
                     <div class="pdf-fontovi-crud__polje pdf-fontovi-crud__polje--aktivan">
-                        <input type="checkbox" id="edit_aktivan" class="kontrola-checkbox" value="1" checked aria-label="Font je aktivan (dostupan za izbor)">
+                        <input type="checkbox" id="edit_aktivan" class="kontrola-checkbox" value="1" aria-label="Font je aktivan (dostupan za izbor)">
                         <label class="kontrola-labela mb-0 pdf-fontovi-crud__aktivan-label" for="edit_aktivan">Aktivan</label>
                     </div>
                 </div>

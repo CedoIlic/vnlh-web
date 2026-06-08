@@ -1378,6 +1378,16 @@ body {
   box-shadow: var(--edit_focus_shadow_disabled);
 }
 
+/* READONLY (modifikator-klasa) — čitljiv tekst, potpuno inertno (bez klika/fokusa/selekcije). */
+.kontrola-edit--readonly {
+  background: var(--edit_bg_readonly);
+  color: var(--edit_text_readonly);
+  border-color: var(--edit_border_readonly);
+  cursor: var(--edit_cursor_readonly);
+  box-shadow: var(--edit_focus_shadow_readonly);
+  pointer-events: none;
+}
+
 /* =========================================================
    KONTROLA SLIKA – prikaz slike (okvir, podloga, dimenzije)
    Sva svojstva iz tokena 0-Common (GRUPA: KONTROLA SLIKA).
@@ -1635,6 +1645,27 @@ body {
   color: var(--select_text_disabled_auto_select);
 }
 
+/* READONLY (modifikator-klasa na wrapperu) — čitljiv tekst, lista se ne otvara, inertno.
+   Otvaranje liste dodatno blokira JS (provjera --readonly), kao i pointer-events. */
+.kontrola-select--readonly {
+  background: var(--select_bg_readonly);
+  border-color: var(--select_border_readonly);
+  box-shadow: var(--select_focus_shadow_readonly);
+  cursor: var(--select_cursor_readonly);
+  pointer-events: none;
+}
+.kontrola-select--readonly .kontrola-select__display {
+  color: var(--select_text_readonly);
+}
+.kontrola-select--readonly .kontrola-select__caret {
+  background: linear-gradient(
+    to bottom,
+    var(--select_caret_bg_1_readonly),
+    var(--select_caret_bg_2_readonly)
+  );
+  color: var(--select_caret_color_readonly);
+}
+
 .kontrola-select__list {
   position: absolute;
   left: 0;
@@ -1787,6 +1818,22 @@ input.kontrola-checkbox[type="checkbox"]:disabled {
   box-shadow: var(--checkbox_focus_shadow_disabled); /* disabled – bez sjene */
 }
 
+/* READONLY (modifikator-klasa) — vrijednost (kvačica) vidljiva, inertno. */
+input.kontrola-checkbox[type="checkbox"].kontrola-checkbox--readonly {
+  background-color: var(--checkbox_bg_readonly);
+  border-color: var(--checkbox_border_readonly);
+  cursor: var(--checkbox_cursor_readonly);
+  box-shadow: var(--checkbox_focus_shadow_readonly);
+  pointer-events: none;
+}
+input.kontrola-checkbox[type="checkbox"].kontrola-checkbox--readonly:checked {
+  background-color: var(--checkbox_checked_bg_readonly);
+  border-color: var(--checkbox_checked_border_readonly);
+}
+input.kontrola-checkbox[type="checkbox"].kontrola-checkbox--readonly:checked::after {
+  border-color: var(--checkbox_check_readonly);
+}
+
 /* =========================================================
    KONTROLA NAPOMENA – textarea / multi-line
    ========================================================= */
@@ -1834,6 +1881,21 @@ input.kontrola-checkbox[type="checkbox"]:disabled {
   cursor: var(--napomena_cursor_disabled);
   box-shadow: var(--napomena_focus_shadow_disabled);
   resize: none;
+}
+
+/* READONLY (modifikator-klasa) — čitljiv tekst, inertno ALI scroll ostaje aktivan
+   (ne koristimo pointer-events:none jer bi blokirao kotačić i povlačenje trake).
+   Uređivanje blokira native readonly + tabindex=-1 (helper); selekcija/caret ugašeni. */
+.kontrola-napomena--readonly {
+  background: var(--napomena_bg_readonly);
+  color: var(--napomena_text_readonly);
+  border-color: var(--napomena_border_readonly);
+  cursor: var(--napomena_cursor_readonly);
+  box-shadow: var(--napomena_focus_shadow_readonly);
+  resize: vertical;
+  -webkit-user-select: none;
+  user-select: none;
+  caret-color: transparent;
 }
 
 /* =========================================================
@@ -1974,6 +2036,30 @@ input.kontrola-checkbox[type="checkbox"]:disabled {
   cursor: var(--prikaz_cursor_disabled);
   resize: var(--prikaz_resize_disabled);
   box-shadow: var(--prikaz_focus_shadow_disabled);
+}
+
+/* Disabled mora pobijediti readonly kad su oba razreda prisutna (veća specifičnost). */
+.kontrola-prikaz.kontrola-prikaz--readonly.kontrola-prikaz--disabled {
+  background: var(--prikaz_bg_disabled);
+  color: var(--prikaz_text_disabled);
+  border-color: var(--prikaz_border_disabled);
+  cursor: var(--prikaz_cursor_disabled);
+  resize: var(--prikaz_resize_disabled);
+  box-shadow: var(--prikaz_focus_shadow_disabled);
+}
+
+/* READONLY (modifikator-klasa) — čitljiv tekst, inertno ALI scroll ostaje aktivan
+   (ne koristimo pointer-events:none jer bi blokirao kotačić i povlačenje trake).
+   Selekcija ugašena; fokus blokira tabindex=-1 (helper). */
+.kontrola-prikaz.kontrola-prikaz--readonly {
+  background: var(--prikaz_bg_readonly);
+  color: var(--prikaz_text_readonly);
+  border-color: var(--prikaz_border_readonly);
+  cursor: var(--prikaz_cursor_readonly);
+  resize: var(--prikaz_resize_readonly);
+  box-shadow: var(--prikaz_focus_shadow_readonly);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* =========================================================
@@ -2311,10 +2397,43 @@ input.kontrola-checkbox[type="checkbox"]:disabled {
   box-shadow: var(--tablica_sjena);
 }
 
-.kontrola-edit-delete--disabled {
+.kontrola-edit-delete--disabled,
+/* Disabled mora pobijediti readonly kad su oba razreda prisutna (veća specifičnost). */
+.kontrola-edit-delete--readonly.kontrola-edit-delete--disabled {
   border-color: var(--edit_delete_border_disabled);
   background: var(--edit_delete_bg_disabled);
   box-shadow: var(--edit_delete_focus_shadow_disabled);
+}
+
+/* READONLY (modifikator-klasa na wrapperu) — okvir + pozadina kontrole u RO.
+   pointer-events:none ide na INPUT (ne na cijeli wrapper), da „×" može ostati
+   klikabilan kad je aktivan (X radi i u RO). */
+.kontrola-edit-delete--readonly {
+  border-color: var(--edit_delete_border_readonly);
+  background: var(--edit_delete_bg_readonly);
+  box-shadow: var(--edit_delete_focus_shadow_readonly);
+  cursor: var(--edit_delete_cursor_readonly);
+}
+.kontrola-edit-delete--readonly .kontrola-edit-delete__input {
+  color: var(--edit_delete_text_readonly);
+  pointer-events: none;            /* polje nije interaktivno u RO */
+}
+
+/* „X nije aktivan" (u svakom modu): „×" uvijek vidljiv + neklikabilan.
+   Boje „×" ostaju normalne (kao aktivni „×") — mijenjaju se samo u RO (niže). */
+.kontrola-edit-delete--x-neaktivan .kontrola-edit-delete__clear {
+  display: flex !important;
+  pointer-events: none;
+}
+/* RO + „X nije aktivan": bg i fg „×" = strelica selecta U RO (isti --select_caret_*_readonly).
+   RO + „X aktivan" NEMA override — „×" zadržava normalne boje i klikabilan je. */
+.kontrola-edit-delete--readonly.kontrola-edit-delete--x-neaktivan .kontrola-edit-delete__clear {
+  background: linear-gradient(
+    to bottom,
+    var(--edit_delete_caret_bg_1_readonly),
+    var(--edit_delete_caret_bg_2_readonly)
+  );
+  color: var(--edit_delete_caret_color_readonly);
 }
 
 /* --- Blok: Edit-delete – fokus (selektirano stanje) --- */
@@ -2428,7 +2547,8 @@ input.kontrola-checkbox[type="checkbox"]:disabled {
   -webkit-mask-size: 18px 18px;
 }
 
-.kontrola-edit-delete__clear:disabled {
+.kontrola-edit-delete__clear:disabled,
+.kontrola-edit-delete--disabled .kontrola-edit-delete__clear:disabled {
   cursor: default;
   /* Disable stanje: koristi zasebne disable tokene za gradient i boju X ikone */
   background: linear-gradient(
@@ -2456,6 +2576,17 @@ input.kontrola-checkbox[type="checkbox"]:disabled {
   align-items: flex-end;
   gap: 1rem;
   flex-wrap: wrap;
+}
+/* Varijanta: poravnaj vrhove (labele i kontrole na istoj Y), npr. napomena + prikaz. */
+.alati-teme__controls-row--top {
+  align-items: flex-start;
+}
+/* Checkbox „X je/nije aktivan" ispod edit-delete kontrole – vlastiti layout + razmak. */
+.alati-teme__x-aktivan-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 .alati-teme__control-cell {
   flex: 1;
@@ -2605,6 +2736,7 @@ input.kontrola-checkbox[type="checkbox"]:disabled {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 0.5rem;
 }
 
 /* Panel paleta boja – CORE, 6 u redu */

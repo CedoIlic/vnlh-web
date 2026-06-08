@@ -58,12 +58,16 @@
     <div class="kontrola-panel mb-3" id="kontrolePanel">
         <div class="kontrola-panel__body alati-teme__kontrole-body">
             <!-- Edit-delete, Edit, Select u istom redu -->
-            <div class="alati-teme__controls-row mb-3">
+            <div class="alati-teme__controls-row alati-teme__controls-row--top mb-3">
                 <div class="alati-teme__control-cell">
                     <label class="kontrola-labela" for="ctrlEditDelete">Edit-delete kontrola</label>
                     <div class="kontrola-edit-delete">
-                        <input id="ctrlEditDelete" type="text" class="kontrola-edit-delete__input" placeholder="Tekst koji se može obrisati...">
+                        <input id="ctrlEditDelete" type="text" class="kontrola-edit-delete__input" value="Primjer teksta" placeholder="Tekst koji se može obrisati...">
                         <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    </div>
+                    <div class="alati-teme__x-aktivan-wrap">
+                        <input id="ctrlXAktivan" type="checkbox" class="kontrola-checkbox" checked>
+                        <label id="lblXAktivan" class="kontrola-labela mb-0" for="ctrlXAktivan">X je aktivan</label>
                     </div>
                 </div>
                 <div class="alati-teme__control-cell">
@@ -99,13 +103,15 @@
                 </div>
             </div>
 
-            <!-- Napomena (label lijevo, textarea desno) -->
-            <div class="mb-3 alati-teme__napomena-row">
-                <div class="alati-teme__napomena-left">
-                    <label class="kontrola-labela" for="ctrlNapomena">Napomena</label>
+            <!-- Napomena + Prikaz (label iznad svake, jedna pored druge) -->
+            <div class="alati-teme__controls-row alati-teme__controls-row--top mb-3">
+                <div class="alati-teme__control-cell">
+                    <label class="kontrola-labela" for="ctrlNapomena">Napomena kontrola</label>
+                    <textarea id="ctrlNapomena" class="kontrola-napomena" placeholder="Napomena...">Testni tekst u napomena kontroli za pregled readonly i normalnog stanja. Ovo je drugi redak teksta. Treći redak da sadržaj sigurno prijeđe visinu kontrole. Četvrti redak teksta. Peti redak teksta kako bi se pojavio vertikalni scrollbar i mogli provjeriti njegov izgled te ponašanje resize ikone i linija oko scrollbara.</textarea>
                 </div>
-                <div class="alati-teme__napomena-right">
-                    <textarea id="ctrlNapomena" class="kontrola-napomena" placeholder="Napomena..."></textarea>
+                <div class="alati-teme__control-cell">
+                    <label class="kontrola-labela" for="ctrlPrikaz">Prikaz kontrola</label>
+                    <div id="ctrlPrikaz" class="kontrola-prikaz" role="textbox" aria-readonly="true" aria-label="Prikaz kontrola"><strong>Latin:</strong> engleski, hrvatski, njemački, talijanski, francuski, španjolski, poljski, češki, mađarski<br><strong>Cyrillic:</strong> ruski, srpski, makedonski, bugarski, ukrajinski<br><strong>Greek:</strong> grčki<br>Dodatni redak teksta kako bi sadržaj prešao visinu kontrole i pojavio se vertikalni scrollbar za provjeru izgleda.</div>
                 </div>
             </div>
             <!-- Checkbox -->
@@ -195,6 +201,13 @@
             </div>
         </div>
         <div class="kontrola-panel__footer alati-teme__kontrole-footer">
+            <button type="button" id="btnToggleReadonly" class="kontrola-btn" aria-pressed="false">
+                <span class="kontrola-btn__outer">
+                    <span class="kontrola-btn__inner">
+                        <span class="kontrola-btn__label">Samo za čitanje</span>
+                    </span>
+                </span>
+            </button>
             <button type="button" id="btnToggleEnable" class="kontrola-btn">
                 <span class="kontrola-btn__outer">
                     <span class="kontrola-btn__inner">

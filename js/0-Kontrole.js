@@ -1227,6 +1227,7 @@
       }
 
       function openList() {
+        if (wrap.classList.contains('kontrola-select--readonly')) return; /* readonly: lista se ne otvara */
         document.querySelectorAll('.kontrola-select.kontrola-select--open').forEach(function (w) {
           if (w !== wrap) w.classList.remove('kontrola-select--open');
         });
@@ -1744,6 +1745,17 @@
       else wrap.classList.remove('kontrola-edit-delete--disabled');
     });
 
+    // Prikaz (RO div kontrola) – disabled preko klase + aria-disabled (da povezana labela posivi)
+    scope.querySelectorAll('.kontrola-prikaz').forEach(function (el) {
+      if (disable) {
+        el.classList.add('kontrola-prikaz--disabled');
+        el.setAttribute('aria-disabled', 'true');
+      } else {
+        el.classList.remove('kontrola-prikaz--disabled');
+        el.removeAttribute('aria-disabled');
+      }
+    });
+
     // Tablica – dodaj/ukloni disabled klasu na wrapperu
     scope.querySelectorAll('.kontrola-tablica').forEach(function (tbl) {
       if (disable) tbl.classList.add('kontrola-tablica--disabled');
@@ -1767,9 +1779,69 @@
     initCustomSelect(scope);
   }
 
+  /**
+   * Postavlja/uklanja readonly stanje POJEDINE kontrole (vizual + inertnost).
+   * Podržava: edit, napomena, prikaz, checkbox, select (wrapper ili inner select),
+   * edit-delete (wrapper ili inner element). RO modifikator-klasa nosi vizual +
+   * pointer-events:none; uz to: aria-readonly, tabindex=-1 (blok fokusa) i — za
+   * native input/textarea — atribut readonly (semantika). Za select zatvara listu.
+   * RO NE sivi povezanu labelu (labela reagira samo na disabled/aria-disabled).
+   * @param {HTMLElement} el - kontrola ili njen wrapper
+   * @param {boolean} ro - true = readonly, false = normalno
+   */
+  function KontroleSetControlReadonly(el, ro) {
+    if (!el || typeof document === 'undefined') return;
+    ro = !!ro;
+    var wrap, cls, focusables;
+
+    if (el.classList.contains('kontrola-select') || (el.tagName === 'SELECT' && el.closest('.kontrola-select'))) {
+      wrap = el.classList.contains('kontrola-select') ? el : el.closest('.kontrola-select');
+      cls = 'kontrola-select--readonly';
+      focusables = wrap.querySelectorAll('select, [tabindex]');
+      if (ro) wrap.classList.remove('kontrola-select--open');
+    } else if (el.classList.contains('kontrola-edit-delete') || (el.closest && el.closest('.kontrola-edit-delete'))) {
+      wrap = el.classList.contains('kontrola-edit-delete') ? el : el.closest('.kontrola-edit-delete');
+      cls = 'kontrola-edit-delete--readonly';
+      focusables = wrap.querySelectorAll('input, button, [tabindex]');
+    } else if (el.classList.contains('kontrola-napomena')) {
+      wrap = el; cls = 'kontrola-napomena--readonly'; focusables = [el];
+    } else if (el.classList.contains('kontrola-prikaz')) {
+      wrap = el; cls = 'kontrola-prikaz--readonly'; focusables = [el];
+    } else if (el.classList.contains('kontrola-checkbox')) {
+      wrap = el; cls = 'kontrola-checkbox--readonly'; focusables = [el];
+    } else if (el.classList.contains('kontrola-edit')) {
+      wrap = el; cls = 'kontrola-edit--readonly'; focusables = [el];
+    } else {
+      return;
+    }
+
+    if (ro) wrap.classList.add(cls); else wrap.classList.remove(cls);
+    if (ro) wrap.setAttribute('aria-readonly', 'true'); else wrap.removeAttribute('aria-readonly');
+
+    Array.prototype.forEach.call(focusables || [], function (f) {
+      if (!f) return;
+      var isTextField = (f.tagName === 'INPUT' || f.tagName === 'TEXTAREA') && f.type !== 'checkbox';
+      if (ro) {
+        if (f.getAttribute('data-ro-tabindex') == null) {
+          f.setAttribute('data-ro-tabindex', f.hasAttribute('tabindex') ? f.getAttribute('tabindex') : '');
+        }
+        f.tabIndex = -1;
+        if (isTextField) f.readOnly = true;
+      } else {
+        var prev = f.getAttribute('data-ro-tabindex');
+        if (prev != null) {
+          if (prev === '') f.removeAttribute('tabindex'); else f.setAttribute('tabindex', prev);
+          f.removeAttribute('data-ro-tabindex');
+        }
+        if (isTextField) f.readOnly = false;
+      }
+    });
+  }
+
   global.KontroleTablica = KontroleTablica;
   global.KontroleSetEnabled = KontroleSetEnabled;
   global.KontroleSetControlEnabled = KontroleSetControlEnabled;
+  global.KontroleSetControlReadonly = KontroleSetControlReadonly;
   global.KontroleSyncLabelsDisabledState = syncLabelsDisabledState;
   global.KontroleInitEditDelete = initEditDelete;
   global.KontroleInitCustomSelect = initCustomSelect;

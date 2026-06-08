@@ -20,6 +20,7 @@
   --c-gray-900: #111827;
 
   --c-blue-100: #d9e9ff;
+  --c-blue-50:  #eef4ff;
   --c-blue-200: #c3dcff;
   --c-blue-500: #6fa8dc;
   --c-blue-600: #0d6efd;
@@ -531,6 +532,13 @@
   --edit_cursor_disabled: default;                                   /* Kursor miša kada je edit kontrola disabled */
   --edit_focus_shadow_disabled: none;                                /* Sjena edit kontrole kada je disabled */
 
+  /* BOJE / PONAŠANJE – readonly (samo za čitanje; čitljiv tekst, inertno) */
+  --edit_bg_readonly: var(--c-blue-50);                              /* Pozadina edit kontrole u readonly stanju */
+  --edit_text_readonly: var(--text);                                 /* Boja teksta edit kontrole u readonly (čitljiv, ne sivi) */
+  --edit_border_readonly: var(--c-blue-300);                         /* Boja okvira edit kontrole u readonly */
+  --edit_cursor_readonly: default;                                   /* Kursor miša kada je edit kontrola readonly */
+  --edit_focus_shadow_readonly: none;                                /* Sjena edit kontrole u readonly */
+
   /* =========================================================
      GRUPA: KONTROLA SLIKA (prikaz slike)
      Okvir i podloga za prikaz slike. Ponašanje: auto = okvir prilagođen slici, fix = fiksne dimenzije okvira.
@@ -610,6 +618,16 @@
   /* PONAŠANJE – disabled */
   --select_cursor_disabled: default;                                 /* Kursor miša kada je select kontrola disabled */
   --select_focus_shadow_disabled: none;                              /* Sjena select kontrole kada je disabled */
+
+  /* BOJE / PONAŠANJE – readonly (samo za čitanje; čitljiv tekst, inertno) */
+  --select_bg_readonly: var(--c-blue-50);                            /* Pozadina select kontrole u readonly */
+  --select_text_readonly: var(--text);                               /* Boja teksta select kontrole u readonly (čitljiv) */
+  --select_border_readonly: var(--c-blue-300);                       /* Boja okvira select kontrole u readonly */
+  --select_caret_bg_1_readonly: var(--select_caret_bg_1);            /* Podloga strelice u readonly (gornja) */
+  --select_caret_bg_2_readonly: var(--select_caret_bg_2);            /* Podloga strelice u readonly (donja) */
+  --select_caret_color_readonly: var(--c-gray-300);                  /* Boja strelice u readonly (lista se ne otvara) */
+  --select_cursor_readonly: default;                                 /* Kursor miša kada je select kontrola readonly */
+  --select_focus_shadow_readonly: none;                              /* Sjena select kontrole u readonly */
 
   /* Placeholder tekst (npr. „Nije izabrano“) prije prvog izbora */
   --select_placeholder: var(--edit_placeholder);                     /* Boja placeholder teksta u select kontroli */
@@ -702,6 +720,15 @@
   --checkbox_cursor_disabled: default;                               /* Kursor miša kada je checkbox disabled */
   --checkbox_focus_shadow_disabled: none;                            /* Sjena checkboxa kada je disabled */
 
+  /* BOJE / PONAŠANJE – readonly (vrijednost vidljiva, inertno) */
+  --checkbox_bg_readonly: var(--c-blue-50);                          /* Pozadina neoznačenog checkboxa u readonly */
+  --checkbox_border_readonly: var(--c-blue-300);                     /* Boja okvira checkboxa u readonly */
+  --checkbox_checked_bg_readonly: var(--c-gray-300);                 /* Pozadina označenog checkboxa u readonly (prigušeno, ne živo plavo) */
+  --checkbox_checked_border_readonly: var(--c-gray-300);             /* Boja okvira označenog checkboxa u readonly */
+  --checkbox_check_readonly: var(--c-white);                         /* Boja oznake (check) u readonly */
+  --checkbox_cursor_readonly: default;                               /* Kursor miša kada je checkbox readonly */
+  --checkbox_focus_shadow_readonly: none;                            /* Sjena checkboxa u readonly */
+
   /* =========================================================
      GRUPA: KONTROLA NAPOMENA (textarea / info box)
      ========================================================= */
@@ -729,6 +756,13 @@
   /* PONAŠANJE – disabled */
   --napomena_cursor_disabled: default;                               /* Kursor miša kada je kontrola za napomenu disabled */
   --napomena_focus_shadow_disabled: none;                            /* Sjena kontrole za napomenu kada je disabled */
+
+  /* BOJE / PONAŠANJE – readonly (čitljiv tekst, inertno) */
+  --napomena_bg_readonly: var(--c-blue-50);                          /* Pozadina kontrole za napomenu u readonly */
+  --napomena_text_readonly: var(--text);                             /* Boja teksta napomene u readonly (čitljiv, ne sivi) */
+  --napomena_border_readonly: var(--c-blue-300);                     /* Boja okvira napomene u readonly */
+  --napomena_cursor_readonly: default;                               /* Kursor miša kada je napomena readonly */
+  --napomena_focus_shadow_readonly: none;                            /* Sjena napomene u readonly */
 
   /* =========================================================
      GRUPA: KONTROLA PRIKAZ (read-only višelinijski prikaz; podržava HTML/bold)
@@ -762,6 +796,14 @@
   --prikaz_cursor_disabled: default;                                 /* Kursor miša kada je prikaz kontrola disabled */
   --prikaz_resize_disabled: vertical;                                /* Resize ikona uvijek vidljiva (i u disabled stanju) */
   --prikaz_focus_shadow_disabled: none;                              /* Sjena prikaz kontrole kada je disabled */
+
+  /* BOJE / PONAŠANJE – readonly (čitljiv tekst, inertno) */
+  --prikaz_bg_readonly: var(--c-blue-50);                            /* Pozadina prikaz kontrole u readonly */
+  --prikaz_text_readonly: var(--text);                               /* Boja teksta prikaz kontrole u readonly (čitljiv) */
+  --prikaz_border_readonly: var(--c-blue-300);                       /* Boja okvira prikaz kontrole u readonly */
+  --prikaz_cursor_readonly: default;                                 /* Kursor miša kada je prikaz kontrola readonly */
+  --prikaz_resize_readonly: vertical;                                /* Resize ostaje aktivan i u RO (kao scroll) */
+  --prikaz_focus_shadow_readonly: none;                              /* Sjena prikaz kontrole u readonly */
   /* Scrollbar koristi zajedničke --tablica_scroll_* tokene (izgled kao na tablici). */
 
   /* =========================================================
@@ -809,6 +851,16 @@
   /* PONAŠANJE – sjena */
   --edit_delete_focus_shadow: var(--kontrole_sjena_slaba_1);         /* Minimalna sjena edit-delete kontrole u selektiranom stanju */
   --edit_delete_focus_shadow_disabled: none;                         /* Sjena edit-delete kontrole kada je disabled */
+
+  /* BOJE / PONAŠANJE – readonly (čitljiv tekst; „×" vidljiv ali inertan) */
+  --edit_delete_bg_readonly: var(--c-blue-50);                       /* Pozadina edit-delete kontrole u readonly */
+  --edit_delete_text_readonly: var(--text);                          /* Boja teksta edit-delete u readonly (čitljiv) */
+  --edit_delete_border_readonly: var(--c-blue-300);                  /* Boja okvira edit-delete u readonly */
+  --edit_delete_caret_bg_1_readonly: var(--select_caret_bg_1_readonly);  /* Podloga „×" zone u RO = strelica selecta u RO (gornja) */
+  --edit_delete_caret_bg_2_readonly: var(--select_caret_bg_2_readonly);  /* Podloga „×" zone u RO = strelica selecta u RO (donja) */
+  --edit_delete_caret_color_readonly: var(--select_caret_color_readonly); /* Boja „×" ikone u RO = strelica selecta u RO */
+  --edit_delete_cursor_readonly: default;                            /* Kursor miša kada je edit-delete readonly */
+  --edit_delete_focus_shadow_readonly: none;                         /* Sjena edit-delete u readonly */
 
 }
 

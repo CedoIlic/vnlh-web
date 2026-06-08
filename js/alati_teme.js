@@ -205,6 +205,36 @@
     });
   }
 
+  // Samo za čitanje (RO) – naizmjenično RO <-> Normalno na test kontrolama u panelu
+  var readonly = false;
+  var btnToggleReadonly = document.getElementById('btnToggleReadonly');
+  if (btnToggleReadonly && typeof KontroleSetControlReadonly === 'function') {
+    btnToggleReadonly.addEventListener('click', function () {
+      readonly = !readonly;
+      ['ctrlEditDelete', 'ctrlEdit', 'ctrlSelect', 'ctrlNapomena', 'ctrlPrikaz', 'ctrlCheckbox', 'modalTestSelect', 'ctrlXAktivan'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) KontroleSetControlReadonly(el, readonly);
+      });
+      btnToggleReadonly.setAttribute('aria-pressed', readonly ? 'true' : 'false');
+    });
+  }
+
+  // „X je/nije aktivan" – prebacuje stanje „×" na edit-delete (ostatak kontrole ostaje normalan)
+  var ctrlXAktivan = document.getElementById('ctrlXAktivan');
+  var lblXAktivan = document.getElementById('lblXAktivan');
+  var ctrlEditDeleteInput = document.getElementById('ctrlEditDelete');
+  var editDeleteWrap = ctrlEditDeleteInput ? ctrlEditDeleteInput.closest('.kontrola-edit-delete') : null;
+  function syncXAktivan() {
+    if (!ctrlXAktivan || !editDeleteWrap) return;
+    var aktivan = ctrlXAktivan.checked;
+    editDeleteWrap.classList.toggle('kontrola-edit-delete--x-neaktivan', !aktivan);
+    if (lblXAktivan) lblXAktivan.textContent = aktivan ? 'X je aktivan' : 'X nije aktivan';
+  }
+  if (ctrlXAktivan) {
+    ctrlXAktivan.addEventListener('change', syncXAktivan);
+    syncXAktivan();
+  }
+
   /* Select kodova poruka – popuni prije inita custom selecta da lista ima opcije */
   var modalTestSelect = document.getElementById('modalTestSelect');
   if (typeof MODAL_MESSAGES === 'object' && modalTestSelect) {
@@ -288,8 +318,8 @@
   var CORE_PALETA_TOKENI = [
     '--c-white', '--c-black',
     '--c-gray-50', '--c-gray-100', '--c-gray-200', '--c-gray-300', '--c-gray-700', '--c-gray-800', '--c-gray-900',
-    '--c-blue-100', '--c-blue-200', '--c-blue-300', '--c-blue-500', '--c-blue-600', '--c-blue-700', '--c-blue-800',
-    '--c-yellow-500', '--c-red-500', '--c-green-500',
+    '--c-blue-50', '--c-blue-100', '--c-blue-200', '--c-blue-300', '--c-blue-500', '--c-blue-600', '--c-blue-700', '--c-blue-800',
+    '--c-yellow-500', '--c-red-500', '--c-red-900', '--c-green-500',
     '--text',
     '--c-shadow-10', '--c-shadow-30', '--c-shadow-35', '--c-shadow-45', '--c-shadow-60', '--c-text-shadow-75',
     '--c-near-black', '--c-near-black-10', '--c-near-black-25', '--c-near-black-50', '--c-near-black-75',

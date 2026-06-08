@@ -103,14 +103,41 @@
    * ako nema sadržaja (font nije izabran i red nije selektiran) -> disabled.
    * Koristi se i pri izboru fonta iz foldera i pri selekciji retka u tablici.
    */
+  /** Ima li izabran font u selektu „Dostupni fontovi". */
+  function imaIzabranFont() {
+    return !!(editDostupni && trim(editDostupni.value) !== '');
+  }
+
+  /**
+   * Stanje polja „Dostupne porodice" i kontrole „Podržana pisma i jezici":
+   *  - nema izabranog fonta -> DISABLED (sivo, labele posive),
+   *  - ima izabran font     -> ENABLED READONLY (RO izgled, labele normalne).
+   * Sadržaj prikaza iscrtava iz trenutniJeziciObj.
+   */
   function azurirajPismaBox() {
-    if (!editPisma) return;
-    var ima = trenutniJeziciObj && typeof trenutniJeziciObj === 'object' && Object.keys(trenutniJeziciObj).length > 0;
-    renderPismaBox(ima ? trenutniJeziciObj : {});
-    editPisma.classList.toggle('kontrola-prikaz--disabled', !ima);
-    /* aria-disabled da povezana labela (for) prati disabled stanje preko 0-Kontrole mehanizma. */
-    editPisma.setAttribute('aria-disabled', ima ? 'false' : 'true');
-    if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
+    var ima = imaIzabranFont();
+    if (editPisma) {
+      renderPismaBox(ima ? trenutniJeziciObj : {});
+      editPisma.classList.toggle('kontrola-prikaz--readonly', ima);
+      editPisma.classList.toggle('kontrola-prikaz--disabled', !ima);
+      editPisma.setAttribute('aria-readonly', 'true');
+      /* aria-disabled da povezana labela (for) posivi kad nema fonta. */
+      editPisma.setAttribute('aria-disabled', ima ? 'false' : 'true');
+    }
+    /* „Dostupne porodice" — RO klasa je stalna (HTML); togglamo samo disabled. */
+    if (editVarijante) editVarijante.disabled = !ima;
+    /* „Naziv" (edit-delete) — disabled dok nema izabranog fonta, enabled kad se izabere. */
+    if (editNaziv) {
+      var nazivWrap = editNaziv.closest('.kontrola-edit-delete');
+      editNaziv.disabled = !ima;
+      if (nazivWrap) {
+        var nazivClear = nazivWrap.querySelector('.kontrola-edit-delete__clear');
+        if (nazivClear) nazivClear.disabled = !ima;
+        nazivWrap.classList.toggle('kontrola-edit-delete--disabled', !ima);
+      }
+    }
+    /* Kaskada na sekundarna polja (kljuc/tip/aktivan/napomena) prema Naziv/selekciji + labele. */
+    syncEditPanelDisabledState();
   }
 
   function refreshTipSelect() {
@@ -139,7 +166,7 @@
 
   function clearControlsFromSelection() {
     if (editDostupni) { editDostupni.value = ''; if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('edit_dostupni_fontovi'); } catch (e) {} } }
-    if (editVarijante) { editVarijante.value = ''; editVarijante.disabled = true; }
+    if (editVarijante) editVarijante.value = '';   /* uvijek RO (kontrola-edit--readonly); samo praznimo vrijednost */
     if (editNaziv) {
       editNaziv.value = '';
       editNaziv.dispatchEvent(new Event('input', { bubbles: true }));
@@ -148,7 +175,7 @@
     if (editTip) { editTip.value = 'sans'; refreshTipSelect(); }
     trenutniJeziciObj = {};
     azurirajPismaBox();
-    if (editAktivan) editAktivan.checked = true;
+    if (editAktivan) editAktivan.checked = false;   /* default 0 (nije aktivan) */
     if (editNapomena) editNapomena.value = '';
     syncEditPanelDisabledState();
   }
@@ -164,15 +191,10 @@
     }
     if (editVarijante) {
       var varijante = (por !== '' && dostupneVarijanteMap[por]) ? dostupneVarijanteMap[por] : [];
-      if (por !== '' && varijante.length) {
-        editVarijante.value = varijante.join(', ');
-        editVarijante.disabled = false;
-      } else {
-        editVarijante.value = '';
-        editVarijante.disabled = true;
-      }
+      editVarijante.value = (por !== '' && varijante.length) ? varijante.join(', ') : '';
     }
-    if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
+    /* RO/disable stanje (i prikaza i varijanti) + labele prema izboru fonta. */
+    azurirajPismaBox();
   }
 
   onCrudSelectionChange = function () {
@@ -191,9 +213,9 @@
             refreshTipSelect();
           }
           trenutniJeziciObj = jeziciIzVrijednosti(data[i][7]);
-          azurirajPismaBox();
-          /* Postavi selekt „Dostupni fontovi" + varijante iz spremljene porodice
-             (bez diranja pisma — pisma ostaju iz spremljene vrijednosti retka). */
+          /* Postavi selekt „Dostupni fontovi" + varijante iz spremljene porodice;
+             postaviDostupniIzReda na kraju zove azurirajPismaBox koji prema izboru
+             fonta postavi RO/disable stanje prikaza i varijanti (i labele). */
           postaviDostupniIzReda(data[i][8]);
           if (editAktivan) {
             var a = data[i][4];
@@ -464,15 +486,7 @@
     var por = editDostupni ? trim(editDostupni.value) : '';
     if (editVarijante) {
       var varijante = (por !== '' && dostupneVarijanteMap[por]) ? dostupneVarijanteMap[por] : [];
-      if (por !== '' && varijante.length) {
-        editVarijante.value = varijante.join(', ');
-        editVarijante.disabled = false;
-      } else {
-        editVarijante.value = '';
-        editVarijante.disabled = true;
-      }
-      /* Labela prati disabled stanje kontrole (standardni 0-Kontrole token mehanizam). */
-      if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
+      editVarijante.value = (por !== '' && varijante.length) ? varijante.join(', ') : '';
     }
     /* Podržana pisma i jezici (RO) — automatski iz detekcije fonta; prazno -> disabled. */
     trenutniJeziciObj = (por !== '' && dostupniJeziciMap[por]) ? dostupniJeziciMap[por] : {};
