@@ -649,6 +649,9 @@
    * @param {boolean} mozeDuznosnici
    */
   function zapisnikPrimijeniDisabledNaKarticeZapisnika(imaLozu, mozePrisustvo, mozeDuznosnici) {
+    /* RO pregled (view-only): sve kartice dostupne za navigaciju — sadržaj je već učitan,
+       edit-flow uvjeti (mozePrisustvo/mozeDuznosnici) ne vrijede za samo gledanje. */
+    if (_zapisnikReadOnlyMode) { imaLozu = true; mozePrisustvo = true; mozeDuznosnici = true; }
     var map = [
       { id: 'zapisnikKontrolaTabKart0', ok: !!imaLozu },
       { id: 'zapisnikKontrolaTabKart1', ok: !!mozePrisustvo },
@@ -831,7 +834,15 @@
     var mozePanel = !!imaLozu && _zapisnikSmijeOvjera && _zapisnikJeDomacinZaOvjeru;
     var mozeDesnuKolonu = mozePanel && !!(cbPrijeCm && cbPrijeCm.checked);
     var panelEl = document.getElementById('zapisnikPodpanelOvjeraZapisnika');
-    if (panelEl) panelEl.classList.toggle('zapisnik-crud__podpanel-ovjera--onemogucen', !_zapisnikSmijeOvjera);
+    if (panelEl) {
+      panelEl.classList.toggle('zapisnik-crud__podpanel-ovjera--onemogucen', !_zapisnikSmijeOvjera);
+      /* Tijelo panela: RO boja pozadine (--edit_bg_readonly) samo kad panel NIJE disabled
+         (_zapisnikSmijeOvjera), ima kontekst lože (imaLozu), a korisnik NE smije mijenjati
+         ovjera-checkboxove (!mozePanel). Ako je panel već disabled (--onemogucen) ili nema lože,
+         RO se ne stavlja — ostaje disabled/default izgled. */
+      var ovjeraBody = panelEl.querySelector('.zapisnik-crud__podpanel-ovjera-body');
+      if (ovjeraBody) ovjeraBody.classList.toggle('zapisnik-crud__podpanel-ovjera-body--ro', !!_zapisnikSmijeOvjera && !!imaLozu && !mozePanel);
+    }
     zapisnikPostaviOvjeraRedSamoprikaz(cbPrijeCm, !mozePanel);
     var ix;
     for (ix = 0; ix < ZAPISNIK_OVJERA_NAKON_CB_IDS.length; ix++) {
@@ -865,6 +876,12 @@
       /* U RO modu: samo ovjera panel — zadrzatiVrijednosti=true da se ne brišu vrijednosti učitane iz DB. */
       var imaLozuRO = !!zapisnikIdOdabraneLozISelecta();
       zapisnikPrimijeniStanjeOvjereZapisnika(imaLozuRO, true);
+      /* RO pregled: sve kartice dostupne za navigaciju (sadržaj je učitan, edit-flow uvjeti ne vrijede). */
+      var tabRootRO = document.getElementById('zapisnikKontrolaTab');
+      if (tabRootRO) {
+        tabRootRO.classList.remove('zapisnik-crud__tab--onemogucen');
+        zapisnikPrimijeniDisabledNaKarticeZapisnika(imaLozuRO, true, true);
+      }
       zapisnikPrimijeniUvjeteUpisPdfGumba();
       return;
     }
@@ -2169,7 +2186,7 @@
     }
 
     var tab = document.getElementById('zapisnik_prisustvo_tablica_lijevo');
-    if (!tab || tab.classList.contains('kontrola-tablica--disabled')) return;
+    if (!tab || (tab.classList.contains('kontrola-tablica--disabled') || tab.classList.contains('kontrola-tablica--readonly'))) return;
     var tr = tab.querySelector('tbody tr.tablica-row-selected');
     if (!tr || tr.hidden || !tr.dataset || tr.dataset.rowId == null || tr.dataset.rowId === '') return;
     var cid = parseInt(String(tr.dataset.rowId), 10);
@@ -2201,7 +2218,7 @@
 
   function zapisnikPrisustvoKlikPremjestULijevo() {
     var tab = document.getElementById('zapisnik_prisustvo_tablica_desno');
-    if (!tab || tab.classList.contains('kontrola-tablica--disabled')) return;
+    if (!tab || (tab.classList.contains('kontrola-tablica--disabled') || tab.classList.contains('kontrola-tablica--readonly'))) return;
     var tr = tab.querySelector('tbody tr.tablica-row-selected');
     if (!tr || tr.hidden || !tr.dataset || tr.dataset.rowId == null || String(tr.dataset.rowId).trim() === '')
       return;
@@ -2272,7 +2289,7 @@
       var tr = e.target && e.target.closest ? e.target.closest('tbody tr') : null;
       if (!tr || !scroll.contains(tr)) return;
       if (tr.hidden) return;
-      if (tab.classList.contains('kontrola-tablica--disabled')) return;
+      if ((tab.classList.contains('kontrola-tablica--disabled') || tab.classList.contains('kontrola-tablica--readonly'))) return;
       var tbody = tab.querySelector('tbody');
       if (!tbody) return;
       zapisnikPrisustvoOcistiSelekcijuLijeveListe();
@@ -2294,7 +2311,7 @@
       var trDu = eDblD.target && eDblD.target.closest ? eDblD.target.closest('tbody tr') : null;
       if (!trDu || !scroll.contains(trDu)) return;
       if (trDu.hidden) return;
-      if (tab.classList.contains('kontrola-tablica--disabled')) return;
+      if ((tab.classList.contains('kontrola-tablica--disabled') || tab.classList.contains('kontrola-tablica--readonly'))) return;
       var tbodyDu = tab.querySelector('tbody');
       if (!tbodyDu) return;
       zapisnikPrisustvoOcistiSelekcijuLijeveListe();
@@ -2510,7 +2527,7 @@
       if (!tr || !scroll.contains(tr)) return;
       /* Sakriveni (<tr hidden>) retci ne selektiraju se. */
       if (tr.hidden) return;
-      if (tab.classList.contains('kontrola-tablica--disabled')) return;
+      if ((tab.classList.contains('kontrola-tablica--disabled') || tab.classList.contains('kontrola-tablica--readonly'))) return;
       var tbody = tab.querySelector('tbody');
       if (!tbody) return;
       zapisnikPrisustvoOcistiSelekcijuDesnogTbodyja();
@@ -2532,7 +2549,7 @@
       var trUd = eDblL.target && eDblL.target.closest ? eDblL.target.closest('tbody tr') : null;
       if (!trUd || !scroll.contains(trUd)) return;
       if (trUd.hidden) return;
-      if (tab.classList.contains('kontrola-tablica--disabled')) return;
+      if ((tab.classList.contains('kontrola-tablica--disabled') || tab.classList.contains('kontrola-tablica--readonly'))) return;
       var tbodyUd = tab.querySelector('tbody');
       if (!tbodyUd) return;
       zapisnikPrisustvoOcistiSelekcijuDesnogTbodyja();
@@ -3443,7 +3460,7 @@
     var taLozaUces = document.getElementById('zapisnik_loza_ucesnici');
     if (taLozaUces && bTipEllipsis) {
       taLozaUces.addEventListener('dblclick', function (ev) {
-        if (taLozaUces.disabled || bTipEllipsis.disabled) return;
+        if (_zapisnikReadOnlyMode || taLozaUces.disabled || bTipEllipsis.disabled) return;
         ev.preventDefault();
         bTipEllipsis.click();
       });
@@ -3635,6 +3652,52 @@
    * Geo kaskada (Država→Regija→Loža) pa sva ostala polja u callbacku.
    */
   /**
+   * Primjenjuje/uklanja jedinstveni RO vizual (KontroleSetControlReadonly) na kontrole Zapisnika
+   * kroz sve kartice: edit/select/napomena/edit-delete (dužnosnici, datum, prisustvo) i tablice
+   * (prisustvo ×2, eseji). Ovjera panel (checkboxovi) se NE dira — njime upravlja domaćin/razinska
+   * logika. Ellipsis i transfer gumbi nisu RO kontrole (disable je u _zapisnikPrimijeniReadOnly).
+   * @param {boolean} ro
+   */
+  function _zapisnikPostaviRoVizual(ro) {
+    if (typeof KontroleSetControlReadonly !== 'function') return;
+    var i;
+    ['zapisnik_datum_radova', 'zapisnik_select_stupanj_radova', 'zapisnik_select_tip_radova',
+     'zapisnik_loza_ucesnici',
+     'zapisnik_prisustvo_tablica_lijevo', 'zapisnik_prisustvo_tablica_desno',
+     'zapisnik_prisustvo_tip_unosa', 'zapisnik_prisustvo_edit_ime', 'zapisnik_prisustvo_edit_loza',
+     'zapisnik_edit_sazetak',
+     'zapisnikEsejiTablica', 'zapisnik_eseji_sazetak'].forEach(function (id) {
+      var e = document.getElementById(id);
+      if (e) KontroleSetControlReadonly(e, ro);
+    });
+    /* Edit-delete s vidljivim „×" (prisustvo trazi + 9× dužnosnici): u RO makni --disabled (da RO
+       plava dođe), primijeni RO + „×" NIJE AKTIVAN (--x-neaktivan: inertan i bg/fg kao select strelica
+       u RO — ne izgleda klikabilno). Datum nije ovdje — njegov „×" (odustani) je skriven u RO.
+       Pri izlasku skini RO/x-neaktivan — gating vraća točno enabled/disabled stanje. */
+    var edDeleteIds = ['zapisnik_prisustvo_trazi'];
+    for (i = 0; i < ZAPISNIK_DUZNOSNICI_REDOVI.length; i++) edDeleteIds.push(ZAPISNIK_DUZNOSNICI_REDOVI[i].editId);
+    edDeleteIds.forEach(function (id) {
+      var ed = document.getElementById(id);
+      if (!ed) return;
+      var edW = ed.closest ? ed.closest('.kontrola-edit-delete') : null;
+      if (ro) {
+        if (edW && typeof KontroleSetControlEnabled === 'function') KontroleSetControlEnabled(edW, true);
+        KontroleSetControlReadonly(ed, true);
+        if (edW) edW.classList.add('kontrola-edit-delete--x-neaktivan');
+      } else {
+        if (edW) edW.classList.remove('kontrola-edit-delete--x-neaktivan');
+        KontroleSetControlReadonly(ed, false);
+      }
+    });
+    /* Tekst zapisnika (contenteditable napomena): RO vizual + contentEditable. */
+    var tek = document.getElementById('zapisnik_edit_tekst');
+    if (tek) {
+      KontroleSetControlReadonly(tek, ro);
+      if (tek.hasAttribute('contenteditable')) tek.setAttribute('contenteditable', ro ? 'false' : 'true');
+    }
+  }
+
+  /**
    * Primjeni RO na sve kontrole forme osim ovjera_poslije (koja kontrolira _zapisnikSmijeOvjera).
    * Koristi se za slučaj učesnice (je_domacin=0) i usvojenog zapisnika (ovjera_poslije=1).
    */
@@ -3655,59 +3718,21 @@
     var btnOdust = document.getElementById('zapisnik_datum_btn_odustani');
     if (btnOdust) { btnOdust.hidden = true; btnOdust.style.display = 'none'; }
 
-    function _roEl(el) {
-      if (!el) return;
-      if (el.tagName === 'INPUT' && el.type !== 'checkbox') { el.readOnly = true; }
-      else if (el.tagName === 'TEXTAREA') { el.readOnly = true; }
-      else if (el.tagName === 'SELECT') {
-        var sw = el.closest ? el.closest('.kontrola-select') : null;
-        if (sw) { sw.style.pointerEvents = 'none'; sw.style.cursor = 'default'; }
-        else { el.style.pointerEvents = 'none'; el.style.cursor = 'default'; }
-      } else if (el.hasAttribute && el.hasAttribute('contenteditable')) {
-        el.setAttribute('contenteditable', 'false');
-      } else {
-        el.style.pointerEvents = 'none'; el.style.cursor = 'default';
-      }
+    /* Jedinstveni RO vizual na kontrolama (edit/select/napomena/edit-delete/tablice). Ovjera ostaje izvan. */
+    _zapisnikPostaviRoVizual(true);
+
+    /* Ellipsis gumbi: NORMALAN izgled (disabled=false) ali inertni (pointer-events:none) u RO. */
+    if (bTipEllipsis) { bTipEllipsis.disabled = false; bTipEllipsis.style.pointerEvents = 'none'; bTipEllipsis.style.cursor = 'default'; }
+    var di2;
+    for (di2 = 0; di2 < ZAPISNIK_DUZNOSNICI_REDOVI.length; di2++) {
+      var ellDuz = document.getElementById(ZAPISNIK_DUZNOSNICI_REDOVI[di2].ellipsisId);
+      if (ellDuz) { ellDuz.disabled = false; ellDuz.style.pointerEvents = 'none'; ellDuz.style.cursor = 'default'; }
     }
-
-    /* Tab 0 — Podaci o radovima (sve osim ovjera panela). */
-    ['zapisnik_datum_radova', 'zapisnik_select_stupanj_radova',
-     'zapisnik_select_tip_radova', 'zapisnik_loza_ucesnici'].forEach(function (id) {
-      _roEl(document.getElementById(id));
-    });
-    if (bTipEllipsis) { bTipEllipsis.style.pointerEvents = 'none'; bTipEllipsis.style.cursor = 'default'; }
-
-    /* Tab 1 — Prisustvo: pointer-events none na svim kontrolama i tablicama. */
-    var presWrap = document.getElementById('zapisnik_prisustvo_lijevi_stupac');
-    if (presWrap) { presWrap.style.pointerEvents = 'none'; presWrap.style.cursor = 'default'; }
-    var presDWrap = document.getElementById('zapisnik_prisustvo_tablica_desno');
-    if (presDWrap) { presDWrap.style.pointerEvents = 'none'; presDWrap.style.cursor = 'default'; }
+    /* Transfer i eseji gumbi — pointer-events none. */
     var btnUde = document.getElementById('zapisnik_prisustvo_btn_udesno');
     var btnUli = document.getElementById('zapisnik_prisustvo_btn_ulijevo');
     if (btnUde) { btnUde.style.pointerEvents = 'none'; btnUde.style.cursor = 'default'; }
     if (btnUli) { btnUli.style.pointerEvents = 'none'; btnUli.style.cursor = 'default'; }
-    var selTipU2 = document.getElementById('zapisnik_prisustvo_tip_unosa');
-    if (selTipU2) {
-      var stw = selTipU2.closest ? selTipU2.closest('.kontrola-select') : null;
-      if (stw) { stw.style.pointerEvents = 'none'; stw.style.cursor = 'default'; }
-    }
-
-    /* Tab 2 — Dužnosnici: readOnly na editima, pointer-events none na ellipsisima. */
-    var di2;
-    for (di2 = 0; di2 < ZAPISNIK_DUZNOSNICI_REDOVI.length; di2++) {
-      var editDuz = document.getElementById(ZAPISNIK_DUZNOSNICI_REDOVI[di2].editId);
-      var ellDuz  = document.getElementById(ZAPISNIK_DUZNOSNICI_REDOVI[di2].ellipsisId);
-      if (editDuz) { editDuz.setAttribute('contenteditable', 'false'); editDuz.style.pointerEvents = 'none'; }
-      if (ellDuz)  { ellDuz.style.pointerEvents = 'none'; ellDuz.style.cursor = 'default'; }
-    }
-
-    /* Tab 3 — Zapisnik: sažetak readOnly, tekst contenteditable false. */
-    var taS3 = document.getElementById('zapisnik_edit_sazetak');
-    if (taS3) taS3.readOnly = true;
-    var tekEl = document.getElementById('zapisnik_edit_tekst');
-    if (tekEl && tekEl.hasAttribute('contenteditable')) tekEl.setAttribute('contenteditable', 'false');
-
-    /* Tab 4 — Eseji: pointer-events none na gumbima. */
     var esejCont = document.getElementById('zapisnikEsejiTablica');
     if (esejCont) {
       var esejBtns = esejCont.querySelectorAll('.zapisnik-crud__eseji-kontrola');
@@ -3725,52 +3750,20 @@
     var lokot = document.getElementById('zapisnik_ro_lokot');
     if (lokot) { lokot.hidden = true; lokot.style.display = 'none'; }
 
-    function _restEl(el) {
-      if (!el) return;
-      if (el.tagName === 'INPUT' && el.type !== 'checkbox') { el.readOnly = false; }
-      else if (el.tagName === 'TEXTAREA') { el.readOnly = false; }
-      else if (el.tagName === 'SELECT') {
-        var sw = el.closest ? el.closest('.kontrola-select') : null;
-        if (sw) { sw.style.removeProperty('pointer-events'); sw.style.removeProperty('cursor'); }
-        else { el.style.removeProperty('pointer-events'); el.style.removeProperty('cursor'); }
-      } else {
-        el.style.removeProperty('pointer-events'); el.style.removeProperty('cursor');
-      }
-    }
+    /* Skini jedinstveni RO vizual (kontrola-*--readonly). */
+    _zapisnikPostaviRoVizual(false);
 
-    ['zapisnik_datum_radova', 'zapisnik_select_stupanj_radova',
-     'zapisnik_select_tip_radova', 'zapisnik_loza_ucesnici'].forEach(function (id) {
-      _restEl(document.getElementById(id));
-    });
+    /* Vrati elemente koji nisu RO kontrole. */
     if (bTipEllipsis) { bTipEllipsis.style.removeProperty('pointer-events'); bTipEllipsis.style.removeProperty('cursor'); }
-
-    var presWrap = document.getElementById('zapisnik_prisustvo_lijevi_stupac');
-    if (presWrap) { presWrap.style.removeProperty('pointer-events'); presWrap.style.removeProperty('cursor'); }
-    var presDWrap = document.getElementById('zapisnik_prisustvo_tablica_desno');
-    if (presDWrap) { presDWrap.style.removeProperty('pointer-events'); presDWrap.style.removeProperty('cursor'); }
+    var di2;
+    for (di2 = 0; di2 < ZAPISNIK_DUZNOSNICI_REDOVI.length; di2++) {
+      var ellDuz = document.getElementById(ZAPISNIK_DUZNOSNICI_REDOVI[di2].ellipsisId);
+      if (ellDuz) { ellDuz.style.removeProperty('pointer-events'); ellDuz.style.removeProperty('cursor'); }
+    }
     var btnUde = document.getElementById('zapisnik_prisustvo_btn_udesno');
     var btnUli = document.getElementById('zapisnik_prisustvo_btn_ulijevo');
     if (btnUde) { btnUde.style.removeProperty('pointer-events'); btnUde.style.removeProperty('cursor'); }
     if (btnUli) { btnUli.style.removeProperty('pointer-events'); btnUli.style.removeProperty('cursor'); }
-    var selTipU2 = document.getElementById('zapisnik_prisustvo_tip_unosa');
-    if (selTipU2) {
-      var stw = selTipU2.closest ? selTipU2.closest('.kontrola-select') : null;
-      if (stw) { stw.style.removeProperty('pointer-events'); stw.style.removeProperty('cursor'); }
-    }
-
-    var di2;
-    for (di2 = 0; di2 < ZAPISNIK_DUZNOSNICI_REDOVI.length; di2++) {
-      var editDuz = document.getElementById(ZAPISNIK_DUZNOSNICI_REDOVI[di2].editId);
-      var ellDuz  = document.getElementById(ZAPISNIK_DUZNOSNICI_REDOVI[di2].ellipsisId);
-      if (editDuz) { editDuz.style.removeProperty('pointer-events'); editDuz.style.removeProperty('cursor'); }
-      if (ellDuz)  { ellDuz.style.removeProperty('pointer-events'); ellDuz.style.removeProperty('cursor'); }
-    }
-
-    var taS3 = document.getElementById('zapisnik_edit_sazetak');
-    if (taS3) taS3.readOnly = false;
-    var tekEl = document.getElementById('zapisnik_edit_tekst');
-    if (tekEl && tekEl.hasAttribute('contenteditable')) tekEl.setAttribute('contenteditable', 'true');
-
     var esejCont = document.getElementById('zapisnikEsejiTablica');
     if (esejCont) {
       var esejBtns = esejCont.querySelectorAll('.zapisnik-crud__eseji-kontrola');

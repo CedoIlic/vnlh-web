@@ -266,6 +266,12 @@ body {
   color: var(--label_text_disabled);
 }
 
+/* Ovjera panel — tijelo u RO boji pozadine (kao RO pozadina edit kontrola) kad logirani korisnik
+   NE smije mijenjati ovjera-checkboxove (!mozePanel). Checkboxovi se ne diraju (rade po svojoj logici). */
+.zapisnik-crud__podpanel-ovjera-body.zapisnik-crud__podpanel-ovjera-body--ro {
+  background: var(--edit_bg_readonly);
+}
+
 /* Ugniježdeni paneli (Opći podaci, Ovjera zapisnika) kad nema lože: varijable panela kao disabled. */
 .zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .zapisnik-crud__podpanel-opci-radovi.kontrola-panel,
 .zapisnik-crud__tab.zapisnik-crud__tab--onemogucen .zapisnik-crud__podpanel-ovjera.kontrola-panel {
