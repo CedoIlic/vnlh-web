@@ -195,6 +195,20 @@ CREATE TABLE pdf_paragraf (
   uvlaka_desno_mm          DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Desna uvlaka paragrafa u mm (pdfmake: margin desni)',
   uvlaka_prvi_red_mm       DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Uvlaka prvog retka u mm; nije nativno u pdfmake — generator simulira',
 
+  -- Okvir (border) oko paragrafa — render kao jedna-ćelija tablica; debljina 0 = strana bez linije
+  okvir_debljina_gore_mm   DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Debljina gornje linije okvira u mm; 0=nema (pdfmake: hLineWidth(0))',
+  okvir_debljina_dolje_mm  DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Debljina donje linije okvira u mm; 0=nema (pdfmake: hLineWidth(1))',
+  okvir_debljina_lijevo_mm DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Debljina lijeve linije okvira u mm; 0=nema (pdfmake: vLineWidth(0))',
+  okvir_debljina_desno_mm  DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Debljina desne linije okvira u mm; 0=nema (pdfmake: vLineWidth(1))',
+  okvir_padding_gore_mm    DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Unutarnji razmak teksta od gornje linije okvira u mm (pdfmake: paddingTop)',
+  okvir_padding_dolje_mm   DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Padding dolje u mm (pdfmake: paddingBottom)',
+  okvir_padding_lijevo_mm  DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Padding lijevo u mm (pdfmake: paddingLeft)',
+  okvir_padding_desno_mm   DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Padding desno u mm (pdfmake: paddingRight)',
+  okvir_boja               VARCHAR(7)   NOT NULL DEFAULT '#000000' COMMENT 'Boja linija okvira, hex; jedna za sve 4 strane (pdfmake: hLineColor/vLineColor)',
+  okvir_boja_podloge       VARCHAR(7)   NULL DEFAULT NULL   COMMENT 'Boja ispune (podloge) okvira, hex; NULL=bez ispune (pdfmake: fillColor ćelije)',
+  okvir_puna_sirina        TINYINT(1)   NOT NULL DEFAULT 1  COMMENT '1=okvir od margine do margine (widths:[*]); 0=širina po sadržaju (widths:[auto])',
+  okvir_postuj_uvlaku      TINYINT(1)   NOT NULL DEFAULT 0  COMMENT 'Kad okvir_puna_sirina=1: 1=kutija poštuje uvlaka_lijevo/desno; 0=ide do margina',
+
   napomena                 VARCHAR(1024) NULL               COMMENT 'Slobodna bilješka administratora',
 
   CONSTRAINT fk_paragraf_font
@@ -205,6 +219,15 @@ CREATE TABLE pdf_paragraf (
 **Logika pozadine:** `boja_pozadine` NULL → nema pozadine; zadana + `pozadina_cijeli_red=0` →
 highlight iza slova; zadana + `pozadina_cijeli_red=1` → puna traka punom širinom (paragraf se
 zamota u tablicu s `fillColor`, `traka_padding_*` kao padding ćelije).
+
+**Logika okvira:** okvir „postoji" ako je bar jedna `okvir_debljina_*_mm > 0`. Tada se paragraf
+renderira kao **jedna-ćelija tablica**: linije = `okvir_boja` (po strani uključene/širine iz
+`okvir_debljina_*`, 0=nema), ispuna = `okvir_boja_podloge` (NULL=bez ispune), padding =
+`okvir_padding_*`. Ta podloga **dominira** — kad okvir postoji, `boja_pozadine`/`traka_*` se
+**ignorira**; bez okvira vrijedi gornja „Logika pozadine". Širina: `okvir_puna_sirina=1` →
+margina↔margina (`widths:['*']`), uz `okvir_postuj_uvlaku=1` kutija se sužava za
+`uvlaka_lijevo/desno`; `okvir_puna_sirina=0` → po sadržaju (`widths:['auto']`). **Bez zaobljenih
+kutova** (tablični okvir u pdfmake to ne podržava). mm→pt konverziju radi generator (1 mm ≈ 2.835 pt).
 
 ### 2.4 `pdf_slika_stil` — stilovi slika
 
@@ -446,6 +469,9 @@ i zatvara prije prelaska na sljedeću.
 ### 2.3 — Forma: Stilovi paragrafa (`pdf_paragraf`)
 - CRUD nad stilovima teksta sa svim poljima (font, veličina, bold/italic/podcrtano, boje,
   pozadina + traka + padding, poravnanje, prored, razmaci, uvlake).
+- **Okvir (border):** kontrole za debljinu linije po strani u mm (gore/dolje/lijevo/desno;
+  0=nema), padding po strani u mm, boju okvira (jedna), boju podloge (NULL=bez ispune), te
+  prekidače „puna širina (margina↔margina)" i „poštuj uvlaku". Vidi „Logika okvira" u 2.3 shemi.
 - **Funkcionalnost:** **živi pregled (preview)** stila — pdfmake renderira primjer paragrafa
   dok administrator mijenja vrijednosti. Birač fonta povučen iz `pdf_fontovi` (aktivni).
   Birači boja (hex). Validacija raspona (prored, postoci).
