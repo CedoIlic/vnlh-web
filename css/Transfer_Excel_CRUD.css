@@ -27,11 +27,6 @@
   box-sizing: border-box;
 }
 
-.transfer-excel-crud__ro {
-  background: var(--panel_body_bg, #f6f6f6);
-  cursor: default;
-}
-
 .transfer-excel-crud__header-row .kontrola-edit {
   flex: 0 0 auto;
   min-width: 0;

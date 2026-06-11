@@ -45,11 +45,17 @@
                 <div style="display: flex; gap: 0.75rem;">
                     <div style="display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 0; min-width: 0;">
                         <label class="kontrola-labela mb-0" for="edit_stupnjevi_nadleznosti">Stupnjevi nadležnosti</label>
-                        <input id="edit_stupnjevi_nadleznosti" type="text" class="kontrola-edit" readonly tabindex="-1" aria-readonly="true">
+                        <div class="loze-tip-crud__edit-ellipsis-red">
+                            <input id="edit_stupnjevi_nadleznosti" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                            <button type="button" id="btn_stupnjevi_nadleznosti" class="loze-tip-crud__ellipsis-btn" aria-label="Izbor stupnjeva nadležnosti" title="Izbor stupnjeva nadležnosti" disabled><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                        </div>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 0; min-width: 0;">
                         <label class="kontrola-labela mb-0" for="edit_stupnjevi_pregleda">Stupnjevi za pregled</label>
-                        <input id="edit_stupnjevi_pregleda" type="text" class="kontrola-edit" readonly tabindex="-1" aria-readonly="true">
+                        <div class="loze-tip-crud__edit-ellipsis-red">
+                            <input id="edit_stupnjevi_pregleda" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                            <button type="button" id="btn_stupnjevi_pregleda" class="loze-tip-crud__ellipsis-btn" aria-label="Izbor stupnjeva za pregled" title="Izbor stupnjeva za pregled" disabled><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                        </div>
                     </div>
                 </div>
             </div>

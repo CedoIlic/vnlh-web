@@ -103,14 +103,12 @@
       editBojaPrikaza.value = '';
       editBojaPrikaza.style.backgroundColor = '';
       editBojaPrikaza.style.color = '';
-      editBojaPrikaza.setAttribute('readonly', 'readonly');
       return;
     }
     var parsed = bojaFromStorage(storageVal);
     editBojaPrikaza.value = storageVal;
     editBojaPrikaza.style.backgroundColor = hexAlphaToRgba(parsed.hex, parsed.alpha);
     editBojaPrikaza.style.color = '';
-    editBojaPrikaza.setAttribute('readonly', 'readonly');
   }
 
   /** Boja teksta u polju „Naziv” = odabrana boja prikaza (za pregled u formi). */

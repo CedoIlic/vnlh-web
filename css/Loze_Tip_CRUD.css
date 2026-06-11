@@ -19,3 +19,44 @@
     align-self: flex-start;
   }
 }
+
+/* Stupnjevi nadležnosti / za pregled: RO edit + elipsis gumb koji diže modal izbora stupnjeva.
+   Dvoklik na RO edit ne radi (RO je inertan), pa modal diže elipsis. Stil/tokeni kao esej-crud__ellipsis-btn. */
+.loze-tip-crud__edit-ellipsis-red {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+.loze-tip-crud__edit-ellipsis-red .kontrola-edit {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.loze-tip-crud__ellipsis-btn {
+  flex-shrink: 0;
+  width: var(--edit_height, 2.25rem);
+  height: var(--edit_height, 2.25rem);
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  color: var(--label_text, inherit);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2, 0 1px 2px rgba(0, 0, 0, 0.06));
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.loze-tip-crud__ellipsis-btn:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--label_text_disabled);
+  border-color: var(--edit_border_disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .loze-tip-crud__ellipsis-btn:hover:not(:disabled) {
+    background: var(--c-gray-100, #eee);
+    box-shadow: var(--kontrole_sjena_slaba_1, 0 1px 3px rgba(0, 0, 0, 0.1));
+  }
+}

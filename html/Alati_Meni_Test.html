@@ -37,7 +37,7 @@
                 <div class="alati-meni-test__grupa alati-meni-test__grupa--sustav-meni-tip">
                     <label class="kontrola-labela mb-0" for="edit_glavni_id">ID horizontalnog menija</label>
                     <div class="alati-meni-test__grupa-kontrole">
-                        <input id="edit_glavni_id" type="text" class="kontrola-edit alati-meni-test__edit-id" readonly>
+                        <input id="edit_glavni_id" type="text" class="kontrola-edit kontrola-edit--readonly alati-meni-test__edit-id" readonly tabindex="-1" aria-readonly="true">
                         <div class="kontrola-select">
                             <select id="select_meni_tip">
                                 <option value="0">Nije izabran</option>
@@ -48,7 +48,7 @@
                 <div class="alati-meni-test__grupa alati-meni-test__grupa--sustav-meni-tip">
                     <label class="kontrola-labela mb-0" for="edit_izvrsni_meni">ID izvršnog menija</label>
                     <div class="alati-meni-test__grupa-kontrole">
-                        <input id="edit_izvrsni_meni" type="text" class="kontrola-edit alati-meni-test__edit-id" readonly>
+                        <input id="edit_izvrsni_meni" type="text" class="kontrola-edit kontrola-edit--readonly alati-meni-test__edit-id" readonly tabindex="-1" aria-readonly="true">
                         <!-- Select izvršnog menija + toggle „Svi“ (isti uvjet prikaza kao Ograničenja dužnosti: var. 1004=1 i korisnik u listi 1002); kontrolira punjenje select_duznosnik. -->
                         <div class="alati-meni-test__izvrsni-select-row">
                             <div class="kontrola-select alati-meni-test__izvrsni-select-grow">
@@ -72,7 +72,7 @@
                 <div class="alati-meni-test__grupa alati-meni-test__grupa--sustav-meni-tip">
                     <label class="kontrola-labela mb-0" for="edit_podmeniji">ID podmenija</label>
                     <div class="alati-meni-test__grupa-kontrole">
-                        <input id="edit_podmeniji" type="text" class="kontrola-edit alati-meni-test__edit-id" readonly>
+                        <input id="edit_podmeniji" type="text" class="kontrola-edit kontrola-edit--readonly alati-meni-test__edit-id" readonly tabindex="-1" aria-readonly="true">
                         <div class="kontrola-select">
                             <select id="select_podmeniji">
                                 <option value="0">Nije izabran</option>
@@ -92,7 +92,7 @@
             <!-- Ne korišteni moduli – ispod obje kolone -->
             <div class="alati-meni-test__grupa alati-meni-test__grupa--full">
                 <label class="kontrola-labela mb-0" for="edit_napomena">Ne korišteni moduli</label>
-                <div id="edit_napomena" class="kontrola-napomena alati-meni-test__napomena" role="textbox" aria-readonly="true"></div>
+                <div id="edit_napomena" class="kontrola-napomena kontrola-napomena--readonly alati-meni-test__napomena" role="textbox" tabindex="-1" aria-readonly="true"></div>
             </div>
             <!-- Spacer: raste s panelom, kontrole ostaju na mjestu -->
             <div class="alati-meni-test__body-spacer" aria-hidden="true"></div>

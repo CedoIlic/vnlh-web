@@ -24,22 +24,22 @@
         <div class="kontrola-panel__header transfer-excel-crud__tablica-header">
             <div class="transfer-excel-crud__header-row">
                 <label class="kontrola-labela mb-0">Kontaktni telefon</label>
-                <input id="header_telefon_id" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="ID kontaktnog telefona">
-                <input id="header_telefon_naziv" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="Naziv kontaktnog telefona">
+                <input id="header_telefon_id" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true" aria-label="ID kontaktnog telefona">
+                <input id="header_telefon_naziv" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true" aria-label="Naziv kontaktnog telefona">
             </div>
             <div class="transfer-excel-crud__header-row">
                 <label class="kontrola-labela mb-0">Kontakti email</label>
-                <input id="header_email_id" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="ID kontaktnog emaila">
-                <input id="header_email_naziv" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="Naziv kontaktnog emaila">
+                <input id="header_email_id" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true" aria-label="ID kontaktnog emaila">
+                <input id="header_email_naziv" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true" aria-label="Naziv kontaktnog emaila">
             </div>
             <div class="transfer-excel-crud__header-row">
                 <label class="kontrola-labela mb-0">Kontaktna adresa</label>
-                <input id="header_adresa_id" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="ID kontaktne adrese">
-                <input id="header_adresa_naziv" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly aria-label="Naziv kontaktne adrese">
+                <input id="header_adresa_id" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true" aria-label="ID kontaktne adrese">
+                <input id="header_adresa_naziv" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true" aria-label="Naziv kontaktne adrese">
             </div>
             <div class="transfer-excel-crud__header-row transfer-excel-crud__header-row--putanja">
                 <label class="kontrola-labela mb-0" for="header_putanja">Putanja Excel fajlova</label>
-                <input id="header_putanja" type="text" class="kontrola-edit transfer-excel-crud__ro" readonly placeholder="Putanja do foldera sa excel fajlovima." aria-label="Putanja Excel fajlova – apsolutna putanja">
+                <input id="header_putanja" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true" placeholder="Putanja do foldera sa excel fajlovima." aria-label="Putanja Excel fajlova – apsolutna putanja">
                 <button type="button" id="btn_folder_picker" class="transfer-excel-crud__folder-btn" aria-label="Odaberi folder" title="Odaberi folder"><span class="kontrola-icon--folder-open" aria-hidden="true"></span></button>
                 <button type="button" id="btn_reload_tablica" class="transfer-excel-crud__reload-btn" aria-label="Puni tablicu preduvjeta" title="Puni tablicu imenima Excel fajlova"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
             </div>
@@ -68,7 +68,7 @@
             </div>
             <div class="transfer-excel-crud__header-row transfer-excel-crud__header-row--putanja transfer-excel-crud__rezultat-header-row">
                 <label class="kontrola-labela mb-0" for="putanja_slike">Putanja mape sa slikama</label>
-                <input id="putanja_slike" name="putanja_slike" type="text" class="kontrola-edit transfer-excel-crud__ro transfer-excel-crud__rezultat-edit-ml" readonly placeholder="Putanja do foldera sa slikama." aria-label="Putanja mape sa slikama">
+                <input id="putanja_slike" name="putanja_slike" type="text" class="kontrola-edit kontrola-edit--readonly transfer-excel-crud__rezultat-edit-ml" readonly tabindex="-1" aria-readonly="true" placeholder="Putanja do foldera sa slikama." aria-label="Putanja mape sa slikama">
                 <button type="button" id="btn_folder_slike" class="transfer-excel-crud__folder-btn" aria-label="Odaberi folder" title="Odaberi folder"><span class="kontrola-icon--folder-open" aria-hidden="true"></span></button>
                 <button type="button" id="btn_reload_slike" class="transfer-excel-crud__reload-btn" aria-label="Puni radnu tablicu iz Excel fajlova" title="Puni radnu tablicu iz Excel fajlova. Omogućeno kad su svim redovima u prvom panelu dodijeljene lože, te su postavljeni početna kolona, početni red i folder slika."><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
                 <button type="button" id="btn_document_check" class="transfer-excel-crud__reload-btn" aria-label="Test dokument-check" title="Test kontrola podataka"><span class="kontrola-icon--check" aria-hidden="true"></span></button>

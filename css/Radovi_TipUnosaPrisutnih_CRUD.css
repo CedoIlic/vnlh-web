@@ -88,9 +88,12 @@
   max-width: 14rem;
   flex: 1 1 8rem;
 }
+/* Boja prikaza: RO polje (klasa kontrola-edit--readonly).
+   - Prazno → čisti RO izgled (RO plava pozadina+okvir iz --readonly klase).
+   - Ima boje → inline style.backgroundColor (boja) nadjača RO pozadinu, ostaje samo RO okvir.
+   Tekst držimo na --edit_text (normalan, čitljiv hex) — namjerno NE RO tekst. Vrijedi samo za ovu formu. */
 .radovi-tip-unosa-pris-crud__boja-display {
   color: var(--edit_text);
-  background-color: var(--napomena_bg, #fff);
 }
 .radovi-tip-unosa-pris-crud__boja-icon-btn {
   flex-shrink: 0;

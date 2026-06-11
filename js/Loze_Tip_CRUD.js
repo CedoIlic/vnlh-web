@@ -50,6 +50,8 @@
 
   var editStupnjeviNadleznosti = document.getElementById('edit_stupnjevi_nadleznosti');
   var editStupnjeviPregleda = document.getElementById('edit_stupnjevi_pregleda');
+  var btnEllipsisNadleznosti = document.getElementById('btn_stupnjevi_nadleznosti');
+  var btnEllipsisPregleda = document.getElementById('btn_stupnjevi_pregleda');
   var editRedosljed = document.getElementById('edit_redosljed');
   var selectObred = document.getElementById('select_obred_loze');
   var editPanel = document.getElementById('edit_panel');
@@ -66,6 +68,9 @@
     var enabled = imaSelekciju && imaSadrzaj;
     if (editStupnjeviNadleznosti) editStupnjeviNadleznosti.disabled = !enabled;
     if (editStupnjeviPregleda) editStupnjeviPregleda.disabled = !enabled;
+    /* Elipsis (diže modal izbora stupnjeva) prati isto enable/disable kao RO editi. */
+    if (btnEllipsisNadleznosti) btnEllipsisNadleznosti.disabled = !enabled;
+    if (btnEllipsisPregleda) btnEllipsisPregleda.disabled = !enabled;
     /* Redosljed (i labela) prati edit-delete: kad je naziv enabled, i Redosljed je enabled */
     if (editRedosljed) editRedosljed.disabled = editEl ? editEl.disabled : true;
     if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
@@ -333,63 +338,59 @@
     });
   }
 
-  (function () {
-    if (!editStupnjeviPregleda) return;
-    editStupnjeviPregleda.addEventListener('dblclick', function () {
-      if (this.disabled) return;
-      if (getSelectedRowId() == null) {
-        if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['015'] && typeof window.showPorukaModal === 'function') {
-          window.showPorukaModal('015', []);
-        }
-        return;
+  /* Modal izbora stupnjeva za pregled — diže ga elipsis (dvoklik na RO edit više ne radi jer je RO inertan). */
+  function otvoriModalStupnjeviPregleda() {
+    if (getSelectedRowId() == null) {
+      if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['015'] && typeof window.showPorukaModal === 'function') {
+        window.showPorukaModal('015', []);
       }
-      currentModalIdVlasnikPregleda = getSelectedRowId();
-      var obredId = selectObred ? trim(selectObred.value) : '';
-      ucitajEnumStupnjeviZaVlasnika(currentModalIdVlasnikPregleda, 2, function (postavljeniStupnjevi) {
-        var selectedIds = (postavljeniStupnjevi || []).map(function (r) { return r && r.id != null ? String(r.id) : null; }).filter(Boolean);
-        ucitajStupnjeviZaModal(obredId, function (rows) {
-          if (modalStupnjeviPregledaApi) {
-            modalStupnjeviPregledaApi.open({
-              zaglavlje: modalStupnjeviPregledaZaglavlje,
-              rows: rows,
-              multiSelect: true,
-              getRowId: function (row) { return row && row[2] != null ? row[2] : null; },
-              selectedRowIds: selectedIds
-            });
-          }
-        });
+      return;
+    }
+    currentModalIdVlasnikPregleda = getSelectedRowId();
+    var obredId = selectObred ? trim(selectObred.value) : '';
+    ucitajEnumStupnjeviZaVlasnika(currentModalIdVlasnikPregleda, 2, function (postavljeniStupnjevi) {
+      var selectedIds = (postavljeniStupnjevi || []).map(function (r) { return r && r.id != null ? String(r.id) : null; }).filter(Boolean);
+      ucitajStupnjeviZaModal(obredId, function (rows) {
+        if (modalStupnjeviPregledaApi) {
+          modalStupnjeviPregledaApi.open({
+            zaglavlje: modalStupnjeviPregledaZaglavlje,
+            rows: rows,
+            multiSelect: true,
+            getRowId: function (row) { return row && row[2] != null ? row[2] : null; },
+            selectedRowIds: selectedIds
+          });
+        }
       });
     });
-  })();
+  }
+  if (btnEllipsisPregleda) btnEllipsisPregleda.addEventListener('click', otvoriModalStupnjeviPregleda);
 
-  (function () {
-    if (!editStupnjeviNadleznosti) return;
-    editStupnjeviNadleznosti.addEventListener('dblclick', function () {
-      if (this.disabled) return;
-      if (getSelectedRowId() == null) {
-        if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['015'] && typeof window.showPorukaModal === 'function') {
-          window.showPorukaModal('015', []);
-        }
-        return;
+  /* Modal izbora stupnjeva nadležnosti — diže ga elipsis. */
+  function otvoriModalStupnjeviNadleznosti() {
+    if (getSelectedRowId() == null) {
+      if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['015'] && typeof window.showPorukaModal === 'function') {
+        window.showPorukaModal('015', []);
       }
-      currentModalIdVlasnik = getSelectedRowId();
-      var obredId = selectObred ? trim(selectObred.value) : '';
-      ucitajStupnjeviNadleznostiZaVlasnika(currentModalIdVlasnik, function (postavljeniStupnjevi) {
-        var selectedIds = (postavljeniStupnjevi || []).map(function (r) { return r && r.id != null ? String(r.id) : null; }).filter(Boolean);
-        ucitajStupnjeviZaModal(obredId, function (rows) {
-          if (modalStupnjeviNadleznostiApi) {
-            modalStupnjeviNadleznostiApi.open({
-              zaglavlje: modalStupnjeviNadleznostiZaglavlje,
-              rows: rows,
-              multiSelect: true,
-              getRowId: function (row) { return row && row[2] != null ? row[2] : null; },
-              selectedRowIds: selectedIds
-            });
-          }
-        });
+      return;
+    }
+    currentModalIdVlasnik = getSelectedRowId();
+    var obredId = selectObred ? trim(selectObred.value) : '';
+    ucitajStupnjeviNadleznostiZaVlasnika(currentModalIdVlasnik, function (postavljeniStupnjevi) {
+      var selectedIds = (postavljeniStupnjevi || []).map(function (r) { return r && r.id != null ? String(r.id) : null; }).filter(Boolean);
+      ucitajStupnjeviZaModal(obredId, function (rows) {
+        if (modalStupnjeviNadleznostiApi) {
+          modalStupnjeviNadleznostiApi.open({
+            zaglavlje: modalStupnjeviNadleznostiZaglavlje,
+            rows: rows,
+            multiSelect: true,
+            getRowId: function (row) { return row && row[2] != null ? row[2] : null; },
+            selectedRowIds: selectedIds
+          });
+        }
       });
     });
-  })();
+  }
+  if (btnEllipsisNadleznosti) btnEllipsisNadleznosti.addEventListener('click', otvoriModalStupnjeviNadleznosti);
 
   if (Loze_TipCRUD.Reload_Ikona === 1) {
     var btnReloadTablica = document.getElementById('btnReloadTablica');

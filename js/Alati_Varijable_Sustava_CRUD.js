@@ -188,13 +188,22 @@
   });
 
   /**
-   * Pri odabranom retku: readOnly + skini maxlength (PK iz baze može biti dugačak). Bez retka: maxlength 3 (ograničeni način) ili 5 (Razvoj).
+   * Pri odabranom retku: RO (novi mehanizam — plavi izgled, polje inertno) + skini maxlength
+   * (PK iz baze može biti dugačak). Bez retka: enable + maxlength 3 (ograničeni način) ili 5 (Razvoj).
+   * „×" NAMJERNO ostaje aktivan i u RO (X aktivan scenarij): klik briše polje i poništava selekciju
+   * retka (odustani od izmjene / novi upis). KontroleSetControlReadonly postavlja native `readOnly`
+   * na inputu, pa ostala logika (maxlength, input filtar) i dalje radi.
    */
   function primijeniRezimInputIdVarijabla(imaSelekcijuRetka) {
     var g = document.getElementById('edit_varijabla');
     if (!g) return;
-    g.readOnly = !!imaSelekcijuRetka;
-    if (imaSelekcijuRetka) {
+    var ro = !!imaSelekcijuRetka;
+    if (typeof KontroleSetControlReadonly === 'function') {
+      KontroleSetControlReadonly(g, ro);
+    } else {
+      g.readOnly = ro;
+    }
+    if (ro) {
       g.removeAttribute('maxlength');
     } else {
       g.setAttribute('maxlength', String(maxZnamenkiZaNoviUnosId()));
