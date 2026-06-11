@@ -460,35 +460,35 @@ i zatvara prije prelaska na sljedeću.
   `pdfmake_kljuc` mora odgovarati ključu u `vfs_fonts.js`. Dodavanje stvarne `.ttf` datoteke u
   `vfs_fonts.js` je tehnički korak izvan forme (dokumentirati postupak).
 
-### 2.2 — Forma: Dozvoljeni izvori (`pdf_dozvoljeni_izvori`)
-- CRUD nad whitelistom izvora: naziv, tablica, kolona, tip_podatka, napomena.
-- **Funkcionalnost:** administrator definira koje tablice i kolone smiju biti korištene kao
-  izvor podataka. Forma prikazuje upozorenje: tablica i kolona moraju stvarno postojati u bazi.
-  Opcijski: provjera postojanja tablice/kolone pri unosu.
-
-### 2.3 — Forma: Stilovi paragrafa (`pdf_paragraf`)
+### 2.2 — Forma: Stilovi paragrafa (`pdf_paragraf`)
 - CRUD nad stilovima teksta sa svim poljima (font, veličina, bold/italic/podcrtano, boje,
   pozadina + traka + padding, poravnanje, prored, razmaci, uvlake).
 - **Okvir (border):** kontrole za debljinu linije po strani u mm (gore/dolje/lijevo/desno;
   0=nema), padding po strani u mm, boju okvira (jedna), boju podloge (NULL=bez ispune), te
-  prekidače „puna širina (margina↔margina)" i „poštuj uvlaku". Vidi „Logika okvira" u 2.3 shemi.
+  prekidače „puna širina (margina↔margina)" i „poštuj uvlaku". Vidi „Logika okvira" u shemi `pdf_paragraf`.
 - **Funkcionalnost:** **živi pregled (preview)** stila — pdfmake renderira primjer paragrafa
   dok administrator mijenja vrijednosti. Birač fonta povučen iz `pdf_fontovi` (aktivni).
   Birači boja (hex). Validacija raspona (prored, postoci).
 
-### 2.4 — Forma: Stilovi slika (`pdf_slika_stil`)
+### 2.3 — Forma: Stilovi slika (`pdf_slika_stil`)
 - CRUD nad stilovima slika: dimenzije, skaliranje, okvir (+boja/debljina), prozirnost,
   pozicioniranje (u_tijeku/usidreno/apsolutno), poravnanja, apsolutne koordinate, potiskuje.
 - **Funkcionalnost:** preview s test-slikom; dinamičko prikazivanje relevantnih polja (npr.
   x/y samo kad je "apsolutno", poravnanja kad je "usidreno"). Provjeriti podršku prozirnosti.
 
-### 2.5 — Forma: Template stranice (`pdf_template`)
+### 2.4 — Forma: Template stranice (`pdf_template`)
 - CRUD nad postavkama stranice: papir, orijentacija, margine, zaglavlje (+visina/padding/
   primjena), podnožje (+visina/padding/od_stranice), brojač (+format/zona/poravnanje),
   naslovna stranica.
 - Polja `dvostran`/`vezna_margina_mm` prikazati, ali označiti kao "buduće" (neaktivno).
 - **Funkcionalnost:** preview prazne stranice s ucrtanim marginama i zonama zaglavlja/podnožja.
   Pomoć za format brojača (`#S`, `#U`).
+
+### 2.5 — Forma: Dozvoljeni izvori (`pdf_dozvoljeni_izvori`)
+- CRUD nad whitelistom izvora: naziv, tablica, kolona, tip_podatka, napomena.
+- **Funkcionalnost:** administrator definira koje tablice i kolone smiju biti korištene kao
+  izvor podataka. Forma prikazuje upozorenje: tablica i kolona moraju stvarno postojati u bazi.
+  Opcijski: provjera postojanja tablice/kolone pri unosu.
 
 ### 2.6 — Forma: Dokument + stavke (`pdf_dokument` + `pdf_dokument_stavke`)
 - Glavna forma: kreiranje dokumenta (naziv, izbor templatea, opis, aktivan) i uređivanje
@@ -508,6 +508,19 @@ i zatvara prije prelaska na sljedeću.
   mm→pt konverzije; raspoređivanje po zonama (tijelo/zaglavlje/podnožje/naslovna); brojač
   stranica prema zoni i poravnanju iz templatea.
 - Frontend: primanje JSON-a, `pdfMake.createPdf(...)`, prikaz (preview), spremanje, ispis.
+- **Učitavanje fontova — lazy-load (dogovoreno 2026-06-11):** NEMA monolitnog `vfs_fonts.js`.
+  Fontovi se učitavaju **na klik PDF ikone**, i to **samo oni koje dokument stvarno koristi**
+  (skup iz stilova paragrafa/slika korištenih stavki + `DejaVuSans` ako je aktivno auto-rutanje
+  simbola), i **samo ako već nisu u `pdfMake.vfs`**.
+  - Tok: izračunaj potrebne porodice → za svaku koja nije u `pdfMake.vfs` dohvati **sve 4
+    varijante** `.ttf` (normal/bold/italic/bolditalic; inače pdfmake puca kad dokument zatraži
+    varijantu koje nema), `ArrayBuffer → base64`, ubaci u `pdfMake.vfs` + osiguraj `pdfMake.fonts`
+    mapiranje (gradi se iz `pdf_fontovi`); zatim `createPdf`.
+  - **Dvije razine keša:** (1) u sesiji stranice — `pdfMake.vfs` drži već učitane do reloada;
+    (2) između sesija — dohvaća se **statički `.ttf` iz `fontovi/`** s dugim `Cache-Control`/`ETag`,
+    pa ga preglednik kešira na disk (base64 konverzija je klijentska). Provjeriti ispravan MIME za `.ttf`.
+  - Prva generacija povuče potrebne fontove (par MB) → prikazati **spinner „priprema fontova…"**;
+    sljedeći klikovi su instant.
 - **Funkcionalnost:** generiranje stvarnog dokumenta s dinamičkim kontekstom (npr. izbor lože
   → logo + ime lože). Provjera hrvatskih znakova, margina, zaglavlja/podnožja, brojača.
 
@@ -516,8 +529,9 @@ i zatvara prije prelaska na sljedeću.
   dokument. Aktivirati TODO polja u `pdf_dokument_stavke`.
 - **Dvostrani ispis sa zrcalnim marginama** + prazna stranica 2 za naslovnu. Razmotriti
   pdfmake ograničenja vs. prelazak na CSS Paged Media (Paged.js) za taj dio.
-- **Višejezičnost:** dodavanje fontova s drugim pismima (ćirilica i sl.) u `vfs_fonts.js` +
-  evidencija u `pdf_fontovi.podrzana_pisma`.
+- **Višejezičnost:** dodavanje fontova s drugim pismima (ćirilica i sl.) — `.ttf` u `fontovi/`
+  + zapis u `pdf_fontovi` (`podrzana_pisma`); lazy-load ih automatski povuče po potrebi
+  (vidi „Učitavanje fontova" u 2.7).
 - Provjeriti/riješiti **prozirnost slika** ako se pokaže nedostatnom u pdfmake.
 
 ---
