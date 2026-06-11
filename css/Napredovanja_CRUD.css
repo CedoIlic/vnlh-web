@@ -119,9 +119,56 @@
 }
 
 .napredovanja-crud__edit-st {
-  width: 120px;
+  /* Umanjeno za širinu X (clear-all) gumba + dodatni gap (1rem) koji je X unio u prvi red,
+     da edit ne bude zalijepljen za susjedni select „Izbor stupnja". */
+  width: calc(120px - var(--edit_delete_caret_width) - 1rem);
   box-sizing: border-box;
   text-align: center;
+}
+
+/* Clear-all „×": visina kao ostale ikone (2.25rem), a širina/pozadina/glif kao edit-delete „×".
+   Aktivan kad je odabran član (pali se Izbor stupnja) — disabled stanjem iz JS-a. */
+.napredovanja-crud__clear-all-btn {
+  flex-shrink: 0;
+  width: var(--edit_delete_caret_width);
+  height: 2.25rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--edit_delete_border);
+  border-radius: var(--edit_radius, 6px);
+  background: linear-gradient(
+    to bottom,
+    var(--edit_delete_caret_bg_1),
+    var(--edit_delete_caret_bg_2)
+  );
+  color: var(--edit_delete_caret_color);
+  cursor: pointer;
+}
+.napredovanja-crud__clear-all-btn .kontrola-icon--x-mark {
+  width: 18px;
+  height: 18px;
+  mask-size: 18px 18px;
+  -webkit-mask-size: 18px 18px;
+}
+.napredovanja-crud__clear-all-btn:disabled {
+  cursor: default;
+  background: linear-gradient(
+    to bottom,
+    var(--edit_delete_caret_bg_1_disabled),
+    var(--edit_delete_caret_bg_2_disabled)
+  );
+  color: var(--edit_delete_caret_color_disabled);
+}
+@media (hover: hover) {
+  .napredovanja-crud__clear-all-btn:hover:not(:disabled) {
+    background: linear-gradient(
+      to bottom,
+      var(--edit_delete_caret_bg_2),
+      var(--edit_delete_caret_bg_1)
+    );
+  }
 }
 
 .napredovanja-crud__edit-cell--select {

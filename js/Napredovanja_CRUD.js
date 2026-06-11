@@ -97,6 +97,7 @@
   var tablicaStupnjeviContainerEl = document.getElementById('tablicaStupnjeviContainer');
   var editPanel = document.getElementById('edit_panel');
   var editSt = document.getElementById('edit_st');
+  var btnClearAll = document.getElementById('btn_clear_all');
   var selectIzborStupnja = document.getElementById('select_izbor_stupnja');
   var selectTipNapredovanja = document.getElementById('select_tip_napredovanja');
   var editDatumStEl = document.getElementById('edit_datum_st');
@@ -767,7 +768,7 @@
     }
 
     var editControlsDisabled = !imaRedTablica1;
-    var controls = [editSt, selectIzborStupnja, selectTipNapredovanja, editDatumStEl, selectLozaNapredovanja];
+    var controls = [editSt, selectIzborStupnja, selectTipNapredovanja, editDatumStEl, selectLozaNapredovanja, btnClearAll];
     controls.forEach(function (el) {
       if (el) el.disabled = editControlsDisabled;
     });
@@ -860,6 +861,18 @@
   if (btnReloadTablica) {
     btnReloadTablica.addEventListener('click', function () {
       osvjeziTablicu();
+    });
+  }
+
+  /** Clear-all „×": briše Pronađi tekst, selekcije obje tablice i sva edit polja (opseg B). */
+  if (btnClearAll) {
+    btnClearAll.addEventListener('click', function () {
+      if (this.disabled) return;
+      if (editPronadi) { editPronadi.value = ''; primijeniFilterPronadji(); }
+      if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
+      if (tablicaStupnjeviApi && typeof tablicaStupnjeviApi.clearSelection === 'function') tablicaStupnjeviApi.clearSelection();
+      ocistiEditPanelNapredovanja();
+      updateEditAndStupnjeviState();
     });
   }
 
