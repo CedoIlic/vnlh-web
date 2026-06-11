@@ -331,10 +331,16 @@
           inputX.value = String(fixedRatioX);
           inputY.value = String(fixedRatioY);
           if (ratioInputsDisabled) {
-            inputX.readOnly = true;
-            inputY.readOnly = true;
-            inputX.setAttribute('readonly', 'readonly');
-            inputY.setAttribute('readonly', 'readonly');
+            /* Zaključani omjer → jedinstveni RO mehanizam (plavi izgled + inertno + native readonly). */
+            if (typeof KontroleSetControlReadonly === 'function') {
+              KontroleSetControlReadonly(inputX, true);
+              KontroleSetControlReadonly(inputY, true);
+            } else {
+              inputX.readOnly = true;
+              inputY.readOnly = true;
+              inputX.setAttribute('readonly', 'readonly');
+              inputY.setAttribute('readonly', 'readonly');
+            }
           }
         } else if (savedModalState && savedModalState.ratioX != null && savedModalState.ratioY != null) {
           inputX.value = savedModalState.ratioX;
@@ -1263,11 +1269,17 @@
       lastValidRatioY = fixedRatioY;
       ratioX.value = String(fixedRatioX);
       ratioY.value = String(fixedRatioY);
-      ratioX.readOnly = true;
-      ratioY.readOnly = true;
-      if (ratioInputsDisabled) {
-        ratioX.setAttribute('readonly', 'readonly');
-        ratioY.setAttribute('readonly', 'readonly');
+      /* Fiksni omjer = zaključano → jedinstveni RO mehanizam (plavi izgled + inertno + native readonly). */
+      if (typeof KontroleSetControlReadonly === 'function') {
+        KontroleSetControlReadonly(ratioX, true);
+        KontroleSetControlReadonly(ratioY, true);
+      } else {
+        ratioX.readOnly = true;
+        ratioY.readOnly = true;
+        if (ratioInputsDisabled) {
+          ratioX.setAttribute('readonly', 'readonly');
+          ratioY.setAttribute('readonly', 'readonly');
+        }
       }
     }
 
