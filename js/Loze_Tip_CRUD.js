@@ -62,10 +62,10 @@
   }
 
   function updateStupnjeviEditsState() {
-    var imaSelekciju = getSelectedRowId() != null;
     var editEl = document.getElementById('edit_naziv');
     var imaSadrzaj = editEl ? trim(editEl.value) !== '' : false;
-    var enabled = imaSelekciju && imaSadrzaj;
+    /* Enable kad „Tip lože" ima tekst (vrijedi i za novi upis i za izmjenu); disable kad je prazan. */
+    var enabled = imaSadrzaj;
     if (editStupnjeviNadleznosti) editStupnjeviNadleznosti.disabled = !enabled;
     if (editStupnjeviPregleda) editStupnjeviPregleda.disabled = !enabled;
     /* Elipsis (diže modal izbora stupnjeva) prati isto enable/disable kao RO editi. */
@@ -82,6 +82,8 @@
     if (editStupnjeviNadleznosti) editStupnjeviNadleznosti.value = '';
     if (editStupnjeviPregleda) editStupnjeviPregleda.value = '';
     if (editRedosljed) editRedosljed.value = '';
+    noviStupnjeviNadleznost = [];
+    noviStupnjeviPregled = [];
     updateStupnjeviEditsState();
   }
 
@@ -89,6 +91,9 @@
     var id = getSelectedRowId();
     if (id == null) { clearControlsFromSelection(); }
     else {
+      /* Prelazak na izmjenu postojećeg tipa: held (novi-upis) odabir se odbacuje — prikaz ide iz baze. */
+      noviStupnjeviNadleznost = [];
+      noviStupnjeviPregled = [];
       var editEl = document.getElementById('edit_naziv');
       if (editEl) {
         var data = tablicaApi.getData();
@@ -119,6 +124,8 @@
       if (editStupnjeviNadleznosti) editStupnjeviNadleznosti.value = '';
       if (editStupnjeviPregleda) editStupnjeviPregleda.value = '';
       if (editRedosljed) editRedosljed.value = '';
+      noviStupnjeviNadleznost = [];
+      noviStupnjeviPregled = [];
       if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
       updateStupnjeviEditsState();
       updateCrudUpisiState();
@@ -152,6 +159,37 @@
 
   /* Modal: Izbor stupnjeva nadležnosti – punjenje preko Stupnjevi_CRUD_sve.php (obred_id = selektirani obred); kolone Stupanj, Naziv; skriveni id. */
   var currentModalIdVlasnik = null;
+  /* NOVI upis tipa lože: id_vlasnik još ne postoji, pa se odabir stupnjeva drži klijentski
+     ([{id, stupanj}]) dok glavni „Upiši" ne upiše tip i (u istom PHP-u) child enum redove.
+     U izmjeni (postojeći tip) ostaje staro ponašanje: modal piše odmah u bazu. */
+  var noviStupnjeviNadleznost = [];
+  var noviStupnjeviPregled = [];
+  var zadnjiStupnjeviModalRows = []; /* [stupanj, naziv, id] redovi trenutno otvorenog modala (za map id→broj). */
+
+  /** Iz odabranih id-eva (modal) + redova modala složi [{id, stupanj}] sortirano po broju stupnja. */
+  function stupnjeviHeldIzSelekcije(selectedIds, modalRows) {
+    var map = {};
+    var i;
+    for (i = 0; i < (modalRows || []).length; i++) {
+      var r = modalRows[i];
+      if (r && r[2] != null) map[String(r[2])] = (r[0] != null ? r[0] : '');
+    }
+    var out = [];
+    for (i = 0; i < (selectedIds || []).length; i++) {
+      var idS = String(selectedIds[i]);
+      out.push({ id: idS, stupanj: (map[idS] != null ? map[idS] : '') });
+    }
+    out.sort(function (a, b) { return (parseInt(a.stupanj, 10) || 0) - (parseInt(b.stupanj, 10) || 0); });
+    return out;
+  }
+
+  /** Prikaz held odabira u RO edit polju (brojevi stupnjeva, npr. „1, 2, 3"). */
+  function prikaziHeldStupnjevi(editEl, held) {
+    if (!editEl) return;
+    editEl.value = (held && held.length)
+      ? held.map(function (h) { return h.stupanj != null ? String(h.stupanj) : ''; }).join(', ')
+      : '';
+  }
   var modalStupnjeviNadleznostiZaglavlje = [
     { key: 'stupanj', title: 'Stupanj', sortable: 1, sortable_icon: 0, type: 'n', width: 100, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
     { key: 'naziv', title: 'Naziv', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
@@ -201,9 +239,15 @@
             primary: true,
             className: 'kontrola-btn--crud-upisi',
             onClick: function (tablicaApi) {
-              var idVlasnik = currentModalIdVlasnik;
-              if (idVlasnik == null || idVlasnik <= 0) return;
               var ids = tablicaApi && typeof tablicaApi.getSelectedRowIds === 'function' ? tablicaApi.getSelectedRowIds() : [];
+              var idVlasnik = currentModalIdVlasnik;
+              if (idVlasnik == null || idVlasnik <= 0) {
+                /* NOVI upis: zapamti odabir klijentski + osvježi prikaz; u bazu ide tek na glavni „Upiši". */
+                noviStupnjeviNadleznost = stupnjeviHeldIzSelekcije(ids, zadnjiStupnjeviModalRows);
+                prikaziHeldStupnjevi(editStupnjeviNadleznosti, noviStupnjeviNadleznost);
+                if (modalStupnjeviNadleznostiApi) modalStupnjeviNadleznostiApi.close();
+                return;
+              }
               var formData = new FormData();
               formData.append('id_vlasnik', idVlasnik);
               formData.append('id_pozicija', 1);
@@ -232,7 +276,13 @@
             onClick: function (tablicaApi) {
               if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
               var idVlasnik = currentModalIdVlasnik;
-              if (idVlasnik == null || idVlasnik <= 0) return;
+              if (idVlasnik == null || idVlasnik <= 0) {
+                /* NOVI upis: očisti held odabir + prikaz; zatvori. */
+                noviStupnjeviNadleznost = [];
+                prikaziHeldStupnjevi(editStupnjeviNadleznosti, noviStupnjeviNadleznost);
+                if (modalStupnjeviNadleznostiApi) modalStupnjeviNadleznostiApi.close();
+                return;
+              }
               var formData = new FormData();
               formData.append('id_vlasnik', idVlasnik);
               formData.append('id_pozicija', 1);
@@ -279,9 +329,15 @@
             primary: true,
             className: 'kontrola-btn--crud-upisi',
             onClick: function (tablicaApi) {
-              var idVlasnik = currentModalIdVlasnikPregleda;
-              if (idVlasnik == null || idVlasnik <= 0) return;
               var ids = tablicaApi && typeof tablicaApi.getSelectedRowIds === 'function' ? tablicaApi.getSelectedRowIds() : [];
+              var idVlasnik = currentModalIdVlasnikPregleda;
+              if (idVlasnik == null || idVlasnik <= 0) {
+                /* NOVI upis: zapamti odabir klijentski + osvježi prikaz; u bazu ide tek na glavni „Upiši". */
+                noviStupnjeviPregled = stupnjeviHeldIzSelekcije(ids, zadnjiStupnjeviModalRows);
+                prikaziHeldStupnjevi(editStupnjeviPregleda, noviStupnjeviPregled);
+                if (modalStupnjeviPregledaApi) modalStupnjeviPregledaApi.close();
+                return;
+              }
               var formData = new FormData();
               formData.append('id_vlasnik', idVlasnik);
               formData.append('id_pozicija', 2);
@@ -310,7 +366,13 @@
             onClick: function (tablicaApi) {
               if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
               var idVlasnik = currentModalIdVlasnikPregleda;
-              if (idVlasnik == null || idVlasnik <= 0) return;
+              if (idVlasnik == null || idVlasnik <= 0) {
+                /* NOVI upis: očisti held odabir + prikaz; zatvori. */
+                noviStupnjeviPregled = [];
+                prikaziHeldStupnjevi(editStupnjeviPregleda, noviStupnjeviPregled);
+                if (modalStupnjeviPregledaApi) modalStupnjeviPregledaApi.close();
+                return;
+              }
               var formData = new FormData();
               formData.append('id_vlasnik', idVlasnik);
               formData.append('id_pozicija', 2);
@@ -338,19 +400,16 @@
     });
   }
 
-  /* Modal izbora stupnjeva za pregled — diže ga elipsis (dvoklik na RO edit više ne radi jer je RO inertan). */
+  /* Modal izbora stupnjeva za pregled — diže ga elipsis (dvoklik na RO edit ne radi jer je RO inertan).
+     Postojeći tip (red odabran): pred-odabir iz baze. Novi upis (nema reda): pred-odabir iz held niza. */
   function otvoriModalStupnjeviPregleda() {
-    if (getSelectedRowId() == null) {
-      if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['015'] && typeof window.showPorukaModal === 'function') {
-        window.showPorukaModal('015', []);
-      }
-      return;
-    }
-    currentModalIdVlasnikPregleda = getSelectedRowId();
+    var editEl = document.getElementById('edit_naziv');
+    if (!editEl || trim(editEl.value) === '') return;
+    var idRetka = getSelectedRowId();
     var obredId = selectObred ? trim(selectObred.value) : '';
-    ucitajEnumStupnjeviZaVlasnika(currentModalIdVlasnikPregleda, 2, function (postavljeniStupnjevi) {
-      var selectedIds = (postavljeniStupnjevi || []).map(function (r) { return r && r.id != null ? String(r.id) : null; }).filter(Boolean);
-      ucitajStupnjeviZaModal(obredId, function (rows) {
+    ucitajStupnjeviZaModal(obredId, function (rows) {
+      zadnjiStupnjeviModalRows = rows;
+      function _open(selectedIds) {
         if (modalStupnjeviPregledaApi) {
           modalStupnjeviPregledaApi.open({
             zaglavlje: modalStupnjeviPregledaZaglavlje,
@@ -360,24 +419,30 @@
             selectedRowIds: selectedIds
           });
         }
-      });
+      }
+      if (idRetka != null) {
+        currentModalIdVlasnikPregleda = idRetka;
+        ucitajEnumStupnjeviZaVlasnika(idRetka, 2, function (postavljeniStupnjevi) {
+          _open((postavljeniStupnjevi || []).map(function (r) { return r && r.id != null ? String(r.id) : null; }).filter(Boolean));
+        });
+      } else {
+        currentModalIdVlasnikPregleda = null;
+        _open(noviStupnjeviPregled.map(function (h) { return String(h.id); }));
+      }
     });
   }
   if (btnEllipsisPregleda) btnEllipsisPregleda.addEventListener('click', otvoriModalStupnjeviPregleda);
 
-  /* Modal izbora stupnjeva nadležnosti — diže ga elipsis. */
+  /* Modal izbora stupnjeva nadležnosti — diže ga elipsis.
+     Postojeći tip (red odabran): pred-odabir iz baze. Novi upis (nema reda): pred-odabir iz held niza. */
   function otvoriModalStupnjeviNadleznosti() {
-    if (getSelectedRowId() == null) {
-      if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['015'] && typeof window.showPorukaModal === 'function') {
-        window.showPorukaModal('015', []);
-      }
-      return;
-    }
-    currentModalIdVlasnik = getSelectedRowId();
+    var editEl = document.getElementById('edit_naziv');
+    if (!editEl || trim(editEl.value) === '') return;
+    var idRetka = getSelectedRowId();
     var obredId = selectObred ? trim(selectObred.value) : '';
-    ucitajStupnjeviNadleznostiZaVlasnika(currentModalIdVlasnik, function (postavljeniStupnjevi) {
-      var selectedIds = (postavljeniStupnjevi || []).map(function (r) { return r && r.id != null ? String(r.id) : null; }).filter(Boolean);
-      ucitajStupnjeviZaModal(obredId, function (rows) {
+    ucitajStupnjeviZaModal(obredId, function (rows) {
+      zadnjiStupnjeviModalRows = rows;
+      function _open(selectedIds) {
         if (modalStupnjeviNadleznostiApi) {
           modalStupnjeviNadleznostiApi.open({
             zaglavlje: modalStupnjeviNadleznostiZaglavlje,
@@ -387,7 +452,16 @@
             selectedRowIds: selectedIds
           });
         }
-      });
+      }
+      if (idRetka != null) {
+        currentModalIdVlasnik = idRetka;
+        ucitajStupnjeviNadleznostiZaVlasnika(idRetka, function (postavljeniStupnjevi) {
+          _open((postavljeniStupnjevi || []).map(function (r) { return r && r.id != null ? String(r.id) : null; }).filter(Boolean));
+        });
+      } else {
+        currentModalIdVlasnik = null;
+        _open(noviStupnjeviNadleznost.map(function (h) { return String(h.id); }));
+      }
     });
   }
   if (btnEllipsisNadleznosti) btnEllipsisNadleznosti.addEventListener('click', otvoriModalStupnjeviNadleznosti);
@@ -429,7 +503,13 @@
       } else {
         var obredId = selectObred ? trim(selectObred.value) : '';
         if (!obredId) return;
-        lozeTipAdd({ naziv: naziv, id_obred: obredId, redosljed: redosljed }, function (res) {
+        lozeTipAdd({
+          naziv: naziv,
+          id_obred: obredId,
+          redosljed: redosljed,
+          stupnjevi_nadleznost: noviStupnjeviNadleznost.map(function (h) { return h.id; }).join(','),
+          stupnjevi_pregled: noviStupnjeviPregled.map(function (h) { return h.id; }).join(',')
+        }, function (res) {
           if (res === 'OK') {
             if (typeof window.showPorukaModal === 'function') window.showPorukaModal('001', [], function () {
               if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
