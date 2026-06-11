@@ -4271,6 +4271,8 @@
       if (datum) parts.push(datum.replace(/\.$/, ''));
       if (row.stupanj_broj != null) parts.push(String(row.stupanj_broj) + '°');
       if (row.stupanj_naziv) parts.push(row.stupanj_naziv);
+      /* Učesnica (nije nosioc): na kraj retka dodaj ime lože nosioca radova. */
+      if (!row.je_domacin && row.nosioc_naziv) parts.push('(Nosioc: ' + row.nosioc_naziv + ')');
       return parts.join(', ');
     }
 

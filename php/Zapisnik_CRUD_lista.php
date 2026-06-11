@@ -58,6 +58,7 @@ $base_sql = "
         s.naziv     AS stupanj_naziv,
         rt.naziv    AS tip_naziv,
         IF(zsr.id_domacin = ?, 1, 0)                            AS je_domacin,
+        ld.naziv                                                AS nosioc_naziv,
         zsr.ovjera_prije_casni,
         zsr.ovjera_poslije_casni,
         zsr.ovjera_poslije_tajnik,
@@ -71,6 +72,7 @@ $base_sql = "
     FROM zapisnik_sa_radova zsr
     LEFT JOIN stupnjevi  s  ON s.id  = zsr.id_stupanj
     LEFT JOIN radovi_tip rt ON rt.id = zsr.id_tip_radova
+    LEFT JOIN loze       ld ON ld.id = zsr.id_domacin
     WHERE (
         zsr.id_domacin = ?
         OR EXISTS (
