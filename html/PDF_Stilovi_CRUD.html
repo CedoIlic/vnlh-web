@@ -89,9 +89,12 @@
                             </span>
                             <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--boja pdf-stilovi-crud__polje--desno">
                                 <label class="kontrola-labela mb-0" for="edit_boja">Boja teksta</label>
-                                <div class="pdf-stilovi-crud__boja">
-                                    <input type="color" id="edit_boja_swatch" class="pdf-stilovi-crud__boja-swatch" value="#000000" aria-label="Boja teksta (izbornik)">
-                                    <input id="edit_boja" type="text" class="kontrola-edit pdf-stilovi-crud__boja-hex" maxlength="7" placeholder="#000000" aria-label="Boja teksta (hex)">
+                                <div class="kontrola-boja" data-boja-za="edit_boja" data-boja-nullable="0">
+                                    <button type="button" id="edit_boja_trigger" class="kontrola-boja__trigger" aria-label="Izaberi boju teksta">
+                                        <span class="kontrola-icon--paleta" aria-hidden="true"></span>
+                                    </button>
+                                    <input id="edit_boja" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="#000000" readonly aria-label="Boja teksta (hex)">
+                                    <span class="kontrola-boja__swatch" aria-hidden="true"></span>
                                 </div>
                             </div>
                         </div>
@@ -145,15 +148,14 @@
                     <!-- TAB 2: Pozadina -->
                     <div class="kontrola-tab__panel" role="tabpanel" id="stiloviTabPanel2" aria-labelledby="stiloviTabKart2" hidden>
                         <div class="pdf-stilovi-crud__red">
-                            <span class="pdf-stilovi-crud__cb">
-                                <input type="checkbox" id="edit_boja_pozadine_ima" class="kontrola-checkbox" value="1" aria-label="Ima boju pozadine">
-                                <label class="kontrola-labela mb-0" for="edit_boja_pozadine_ima">Pozadina</label>
-                            </span>
                             <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--boja">
                                 <label class="kontrola-labela mb-0" for="edit_boja_pozadine">Boja pozadine</label>
-                                <div class="pdf-stilovi-crud__boja">
-                                    <input type="color" id="edit_boja_pozadine_swatch" class="pdf-stilovi-crud__boja-swatch" value="#ffff00" aria-label="Boja pozadine (izbornik)">
-                                    <input id="edit_boja_pozadine" type="text" class="kontrola-edit pdf-stilovi-crud__boja-hex" maxlength="7" placeholder="(bez)" aria-label="Boja pozadine (hex)">
+                                <div class="kontrola-boja" data-boja-za="edit_boja_pozadine" data-boja-nullable="1">
+                                    <button type="button" id="edit_boja_pozadine_trigger" class="kontrola-boja__trigger" aria-label="Izaberi boju pozadine">
+                                        <span class="kontrola-icon--paleta" aria-hidden="true"></span>
+                                    </button>
+                                    <input id="edit_boja_pozadine" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" readonly aria-label="Boja pozadine (hex)">
+                                    <span class="kontrola-boja__swatch" aria-hidden="true"></span>
                                 </div>
                             </div>
                             <span class="pdf-stilovi-crud__cb">
@@ -226,20 +228,22 @@
                         <div class="pdf-stilovi-crud__red">
                             <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--boja">
                                 <label class="kontrola-labela mb-0" for="edit_okvir_boja">Boja okvira</label>
-                                <div class="pdf-stilovi-crud__boja">
-                                    <input type="color" id="edit_okvir_boja_swatch" class="pdf-stilovi-crud__boja-swatch" value="#000000" aria-label="Boja okvira (izbornik)">
-                                    <input id="edit_okvir_boja" type="text" class="kontrola-edit pdf-stilovi-crud__boja-hex" maxlength="7" placeholder="#000000" aria-label="Boja okvira (hex)">
+                                <div class="kontrola-boja" data-boja-za="edit_okvir_boja" data-boja-nullable="0">
+                                    <button type="button" id="edit_okvir_boja_trigger" class="kontrola-boja__trigger" aria-label="Izaberi boju okvira">
+                                        <span class="kontrola-icon--paleta" aria-hidden="true"></span>
+                                    </button>
+                                    <input id="edit_okvir_boja" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="#000000" readonly aria-label="Boja okvira (hex)">
+                                    <span class="kontrola-boja__swatch" aria-hidden="true"></span>
                                 </div>
                             </div>
-                            <span class="pdf-stilovi-crud__cb">
-                                <input type="checkbox" id="edit_okvir_boja_podloge_ima" class="kontrola-checkbox" value="1" aria-label="Ima boju podloge okvira">
-                                <label class="kontrola-labela mb-0" for="edit_okvir_boja_podloge_ima">Podloga</label>
-                            </span>
                             <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--boja">
                                 <label class="kontrola-labela mb-0" for="edit_okvir_boja_podloge">Boja podloge</label>
-                                <div class="pdf-stilovi-crud__boja">
-                                    <input type="color" id="edit_okvir_boja_podloge_swatch" class="pdf-stilovi-crud__boja-swatch" value="#ffffff" aria-label="Boja podloge okvira (izbornik)">
-                                    <input id="edit_okvir_boja_podloge" type="text" class="kontrola-edit pdf-stilovi-crud__boja-hex" maxlength="7" placeholder="(bez)" aria-label="Boja podloge okvira (hex)">
+                                <div class="kontrola-boja" data-boja-za="edit_okvir_boja_podloge" data-boja-nullable="1">
+                                    <button type="button" id="edit_okvir_boja_podloge_trigger" class="kontrola-boja__trigger" aria-label="Izaberi boju podloge okvira">
+                                        <span class="kontrola-icon--paleta" aria-hidden="true"></span>
+                                    </button>
+                                    <input id="edit_okvir_boja_podloge" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" readonly aria-label="Boja podloge okvira (hex)">
+                                    <span class="kontrola-boja__swatch" aria-hidden="true"></span>
                                 </div>
                             </div>
                         </div>
@@ -292,6 +296,39 @@
         </div>
     </div>
 
+</div>
+
+<!-- Modal: izbor boje (kontrola-boja) — dijeljen za sva polja boje -->
+<div class="kontrola-boja-modal" id="bojaModal" aria-hidden="true">
+    <div class="kontrola-boja-modal__overlay" data-boja-zatvori></div>
+    <div class="kontrola-boja-modal__dialog" role="dialog" aria-modal="true" aria-label="Izbor boje">
+        <div class="kontrola-boja-modal__zaglavlje">
+            <span class="kontrola-boja-modal__naslov">Boje</span>
+            <div class="kontrola-select kontrola-boja-modal__nacin"><select id="bojaModalNacin" aria-label="Način izbora boje">
+                <option value="paleta">Paleta boja</option>
+                <option value="korisnik">Korisnička boja</option>
+            </select></div>
+        </div>
+        <div class="kontrola-boja-modal__body">
+            <div class="kontrola-boja-modal__paleta" id="bojaModalPaleta" role="listbox" aria-label="Paleta boja"></div>
+            <div class="kontrola-boja-modal__korisnik" id="bojaModalKorisnik" hidden>
+                <input type="color" id="bojaModalNativ" class="kontrola-boja-modal__nativ" value="#000000" aria-label="Korisnička boja">
+            </div>
+            <div class="kontrola-boja-modal__red kontrola-boja-modal__red--pregled">
+                <span class="kontrola-boja-modal__pregled-okvir"><span id="bojaModalPregled" class="kontrola-boja-modal__pregled"></span></span>
+                <input type="text" id="bojaModalHex" class="kontrola-edit kontrola-edit--readonly kontrola-boja-modal__hex" maxlength="9" placeholder="#000000" readonly tabindex="-1" aria-readonly="true" aria-label="Kod boje (hex)">
+            </div>
+            <div class="kontrola-boja-modal__red" id="bojaModalAlphaRed">
+                <label class="kontrola-labela mb-0" for="bojaModalAlpha">Prozirnost</label>
+                <input type="range" id="bojaModalAlpha" min="0" max="255" value="255" class="kontrola-boja-modal__alpha" aria-label="Prozirnost (alpha)">
+                <span id="bojaModalAlphaVal" class="kontrola-boja-modal__alpha-val">255</span>
+            </div>
+        </div>
+        <div class="kontrola-boja-modal__footer">
+            <button type="button" id="bojaModalOk" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+            <button type="button" id="bojaModalOdustani" class="kontrola-btn kontrola-btn--crud-povratak" data-boja-zatvori><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
+        </div>
+    </div>
 </div>
 
 <script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>

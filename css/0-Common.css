@@ -39,6 +39,23 @@
   --font_family: Arial, sans-serif;                                     /* Sistemski font */
   --font_size: 16px;                                                    /* Veličina sistemskog fonta */
   --font_weight: 400;                                                   /* Težina sistemskog fonta */
+  --kontrola_boja_alpha: 1;                                             /* Picker boja: 0 = bez alpha; 1 = s alpha klizačem (PRIVREMENO 1 za test; ekranski prikaz, ne PDF) */
+  /* Picker boja — trigger gumb (sjena / hover / klik / disable) */
+  --kontrola_boja_trigger_bg: var(--edit_bg);                           /* pozadina trigger gumba */
+  --kontrola_boja_trigger_border: var(--edit_border);                   /* okvir trigger gumba */
+  --kontrola_boja_trigger_boja: var(--label_text);                      /* boja ikone */
+  --kontrola_boja_trigger_sjena: var(--tablica_sjena);                  /* normalna sjena */
+  --kontrola_boja_trigger_hover_bg: var(--c-gray-100);                  /* hover pozadina */
+  --kontrola_boja_trigger_hover_sjena: var(--edit_focus_shadow);        /* hover sjena */
+  --kontrola_boja_trigger_active_sjena: var(--edit_focus_shadow_disabled); /* klik (pritisnut) sjena */
+  --kontrola_boja_trigger_disabled_bg: var(--edit_bg_disabled);         /* disabled pozadina */
+  --kontrola_boja_trigger_disabled_border: var(--edit_border_disabled); /* disabled okvir */
+  --kontrola_boja_trigger_disabled_boja: var(--label_text_disabled);    /* disabled ikona */
+  --kontrola_boja_trigger_disabled_sjena: none;                         /* disabled bez sjene */
+  /* Picker boja — font modala (jedinstven, iz 0-Common) */
+  --kontrola_boja_modal_font_family: var(--font_family);
+  --kontrola_boja_modal_font_size: var(--font_size);
+  --kontrola_boja_modal_font_weight: var(--font_weight);
 
   /* =========================================================
      GRUPA: SJENE – CORE (sirove rgba vrijednosti)
