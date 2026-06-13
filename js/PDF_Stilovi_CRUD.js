@@ -149,7 +149,7 @@
   function azurirajOkvirPozadina() {
     var akt = okvirAktivan();
     POZADINA_IDS.forEach(function (id) { var el = byId(id); if (el) el.disabled = akt; });
-    var panel = byId('stiloviTabPanel2');
+    var panel = byId('pozadina_sekcija');
     if (panel) panel.classList.toggle('pdf-stilovi-crud__polje--priguseno', akt);
     var hint = byId('pozadina_okvir_hint'); if (hint) hint.hidden = !akt;
   }

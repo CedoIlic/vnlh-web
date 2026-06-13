@@ -82,6 +82,10 @@
   align-items: flex-end;
   gap: 0.75rem;
 }
+/* Kontrole u redu razmaknute preko cijele širine (lijeva lijevo, desna do desnog ruba) */
+.pdf-stilovi-crud__red--razmaknuto {
+  justify-content: space-between;
+}
 
 /* Pojedinačno polje: labela iznad kontrole */
 .pdf-stilovi-crud__polje {
@@ -102,6 +106,12 @@
   flex: 0 0 auto;
   width: 11rem;
 }
+/* Polje boje s oznakom u istom redu (lijevo od kontrole), umjesto iznad */
+.pdf-stilovi-crud__polje--boja-red {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
 
 /* Numerički input (mm, pt, prored) */
 .pdf-stilovi-crud__num {
@@ -110,6 +120,42 @@
 }
 .pdf-stilovi-crud__polje--mini .pdf-stilovi-crud__num {
   width: 4.5rem;
+}
+/* Input + jedinica mjere (×, mm) u istoj liniji; jedinica je zasebna labela desno od edita */
+.pdf-stilovi-crud__unos-mjera {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.pdf-stilovi-crud__mjera {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 0.9em;
+  opacity: 0.75;
+}
+/* Tab Poravnanje: oba reda u istoj mreži da numerički editi 2. reda dođu ispod onih iz 1. reda.
+   Stupci: poravnanje (select) | prored | razmak prije | razmak poslije. Uvlake kreću od 2. stupca. */
+.pdf-stilovi-crud__mreza-poravnanje {
+  display: grid;
+  grid-template-columns: 11rem repeat(3, max-content);
+  gap: 1rem 1rem;
+  align-items: end;
+  /* Slobodni prostor u razmake → zadnji stupac do desnog ruba (desna strana poravnata) */
+  justify-content: space-between;
+}
+.pdf-stilovi-crud__polje--uvlaka1 {
+  grid-column-start: 2;
+}
+/* Tab Okvir: obje grupe (Debljina, Padding) u istoj mreži — editi 2. grupe ispod onih iz 1.
+   Stupci: naslov | Gore | Dolje | Lijevo | Desno. */
+.pdf-stilovi-crud__mreza-okvir {
+  display: grid;
+  grid-template-columns: max-content repeat(4, max-content);
+  gap: 1rem 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+  /* Slobodni prostor se raspoređuje u razmake → zadnji stupac do desnog ruba (desna strana poravnata) */
+  justify-content: space-between;
 }
 
 /* Otvoreni select smije „izaći" iz tab kontrole (inače ga overflow:hidden taba reže na dnu). */
@@ -181,6 +227,13 @@
   color: var(--label_text, inherit);
   margin-bottom: 0.1rem;
 }
+/* Naslov grupe u istom redu kao editi (skroz lijevo), poravnat s poljima na dnu */
+.pdf-stilovi-crud__strane-naslov--lijevo {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+  align-self: flex-end;
+  padding-bottom: 0.4rem;
+}
 
 /* Checkbox + labela u istom redu */
 .pdf-stilovi-crud__cb {
@@ -192,6 +245,20 @@
 .pdf-stilovi-crud__cb .kontrola-labela {
   white-space: nowrap;
 }
+/* Checkbox gurnut na desni rub reda */
+.pdf-stilovi-crud__cb--desno {
+  margin-left: auto;
+}
+/* Okvir: tri checkboxa — lijevi lijevo, srednji sredina, desni desno (preko cijele širine) */
+.pdf-stilovi-crud__okvir-cekboxi {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.pdf-stilovi-crud__okvir-cb--lijevo { justify-self: start; }
+.pdf-stilovi-crud__okvir-cb--sredina { justify-self: center; }
+.pdf-stilovi-crud__okvir-cb--desno { justify-self: end; }
 
 /* Birač boje (staro — više se ne koristi, ostavljeno bezopasno): swatch + hex */
 .pdf-stilovi-crud__boja {
@@ -220,6 +287,21 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+/* Naslov pod-sekcije unutar taba + linija preko cijele širine taba */
+.pdf-stilovi-crud__sekcija-naslov {
+  font-weight: 600;
+  margin: 0.4rem 0 0;
+}
+.pdf-stilovi-crud__sekcija-linija {
+  border: 0;
+  border-top: 1px solid var(--edit_border, #ced4da);
+  margin: 0.35rem 0 0.7rem;
+}
+/* Pozadina retka: razmak ispod reda s bojom i reda Padding pozadine (kao u Okvir tabu) */
+#pozadina_sekcija .pdf-stilovi-crud__red {
+  margin-bottom: 1rem;
 }
 
 /* Hint (okvir preuzima pozadinu) */

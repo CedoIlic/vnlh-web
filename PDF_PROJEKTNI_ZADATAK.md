@@ -539,6 +539,23 @@ i zatvara prije prelaska na sljedeću.
   (vidi „Učitavanje fontova" u 2.7).
 - Provjeriti/riješiti **prozirnost slika** ako se pokaže nedostatnom u pdfmake.
 
+#### Migracija formi na dijeljeni kolor picker (`kontrola-boja`) — NAKON svih PDF formi
+Picker je sada dijeljena kontrola u `0-Kontrole` (`KontroleBojaInit` auto-init na `.kontrola-boja`;
+`KontroleBojaRefresh(targetId)`; modal `#bojaModal` se gradi u JS-u). Forme se prebacuju samo
+dodavanjem `.kontrola-boja[data-boja-za][data-boja-nullable]` markupa.
+
+**Već koristi picker:**
+- `PDF_Stilovi_CRUD` — 4 polja (`edit_boja`, `edit_boja_pozadine`, `edit_okvir_boja`, `edit_okvir_boja_podloge`).
+
+**Kandidati za migraciju s nativnog `<input type="color">`:**
+- `Alati_Poruke_Razvoja_Tip` — `boja_picker_color`
+- `Clanovi_Zastavice_CRUD` — `boja_picker_color`
+- `Radovi_TipUnosaPrisutnih_CRUD` — `radovi_tip_pris_boja_picker_color`
+- `Zapisnik_Boje_U_Listi_CRUD` — `boja_picker_color`
+
+Migracija jednostavna: 6-hex bez prozirnosti/„bez boje" → `data-boja-nullable="0"`; alpha je globalno
+isključen osim gdje token kaže drukčije.
+
 ---
 
 ## 4. Napomene za implementaciju
