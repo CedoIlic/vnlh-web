@@ -1,0 +1,305 @@
+<!-- =========================================================
+     PDF_Stilovi_CRUD.html
+     CRUD pdf_paragraf: tablica stilova + edit panel (tab kontrola:
+     Font / Poravnanje i razmaci / Pozadina / Okvir) + preview panel.
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Stilovi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole_Tab.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/PDF_Stilovi_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Stilovi</h2></div>
+<div class="page-container pdf-stilovi-crud">
+
+    <div class="pdf-stilovi-crud__gornji-red">
+
+    <!-- Panel 1: tablica postojećih stilova (lijevo) -->
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3 pdf-stilovi-crud__panel-tablica" data-resize-sync-group="pdf-stilovi">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+
+    <!-- Panel 2: edit (desno) — bez vlastite resize trake; visinu sinkronizira sync-group s tablicom -->
+    <div class="kontrola-panel mb-3 pdf-stilovi-crud__panel-edit" id="edit_panel" data-resize-sync-group="pdf-stilovi">
+        <div class="kontrola-panel__body pdf-stilovi-crud__edit-body">
+
+            <!-- Naziv stila: uvijek vidljiv iznad tabova -->
+            <div class="pdf-stilovi-crud__naziv-red">
+                <label class="kontrola-labela mb-0" for="edit_naziv">Naziv stila</label>
+                <div class="kontrola-edit-delete pdf-stilovi-crud__naziv-kontrola">
+                    <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="npr. Naslov1, Tijelo" maxlength="50" autocomplete="off">
+                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                </div>
+            </div>
+
+            <!-- Tab kontrola -->
+            <div class="kontrola-tab pdf-stilovi-crud__tab" id="stiloviTab" role="tablist" aria-label="Postavke stila paragrafa">
+                <div class="kontrola-tab__traka" role="presentation">
+                    <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="stiloviTabKart0" aria-selected="true" aria-controls="stiloviTabPanel0" data-tab-index="0">Font</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="stiloviTabKart1" aria-selected="false" aria-controls="stiloviTabPanel1" data-tab-index="1" tabindex="-1">Poravnanje i razmaci</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="stiloviTabKart2" aria-selected="false" aria-controls="stiloviTabPanel2" data-tab-index="2" tabindex="-1">Pozadina</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="stiloviTabKart3" aria-selected="false" aria-controls="stiloviTabPanel3" data-tab-index="3" tabindex="-1">Okvir</button>
+                </div>
+                <div class="kontrola-tab__tijelo" role="presentation">
+
+                    <!-- TAB 0: Font -->
+                    <div class="kontrola-tab__panel" role="tabpanel" id="stiloviTabPanel0" aria-labelledby="stiloviTabKart0">
+                        <div class="pdf-stilovi-crud__red">
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--font">
+                                <label class="kontrola-labela mb-0" for="edit_font_id">Font</label>
+                                <div class="kontrola-select">
+                                    <select id="edit_font_id" aria-label="Font (aktivni iz registra)">
+                                        <option value="">— Odaberi font —</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--velicina">
+                                <label class="kontrola-labela mb-0" for="edit_velicina_pt">Veličina (pt)</label>
+                                <div class="pdf-stilovi-crud__stepper">
+                                    <input id="edit_velicina_pt" type="text" class="kontrola-edit pdf-stilovi-crud__num pdf-stilovi-crud__stepper-input" inputmode="numeric" value="12" aria-label="Veličina slova u pt (cijeli broj)">
+                                    <span class="pdf-stilovi-crud__stepper-strelice">
+                                        <button type="button" id="velicina_pt_gore" class="pdf-stilovi-crud__stepper-btn" aria-label="Povećaj veličinu za 1" tabindex="-1">&#9650;</button>
+                                        <button type="button" id="velicina_pt_dolje" class="pdf-stilovi-crud__stepper-btn" aria-label="Smanji veličinu za 1" tabindex="-1">&#9660;</button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pdf-stilovi-crud__red pdf-stilovi-crud__red--cekboxi">
+                            <span class="pdf-stilovi-crud__cb">
+                                <input type="checkbox" id="edit_bold" class="kontrola-checkbox" value="1" aria-label="Podebljano">
+                                <label class="kontrola-labela mb-0" for="edit_bold">Podebljano</label>
+                            </span>
+                            <span class="pdf-stilovi-crud__cb">
+                                <input type="checkbox" id="edit_italic" class="kontrola-checkbox" value="1" aria-label="Kurziv">
+                                <label class="kontrola-labela mb-0" for="edit_italic">Kurziv</label>
+                            </span>
+                            <span class="pdf-stilovi-crud__cb">
+                                <input type="checkbox" id="edit_podcrtano" class="kontrola-checkbox" value="1" aria-label="Podcrtano">
+                                <label class="kontrola-labela mb-0" for="edit_podcrtano">Podcrtano</label>
+                            </span>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--boja pdf-stilovi-crud__polje--desno">
+                                <label class="kontrola-labela mb-0" for="edit_boja">Boja teksta</label>
+                                <div class="pdf-stilovi-crud__boja">
+                                    <input type="color" id="edit_boja_swatch" class="pdf-stilovi-crud__boja-swatch" value="#000000" aria-label="Boja teksta (izbornik)">
+                                    <input id="edit_boja" type="text" class="kontrola-edit pdf-stilovi-crud__boja-hex" maxlength="7" placeholder="#000000" aria-label="Boja teksta (hex)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 1: Poravnanje i razmaci -->
+                    <div class="kontrola-tab__panel" role="tabpanel" id="stiloviTabPanel1" aria-labelledby="stiloviTabKart1" hidden>
+                        <div class="pdf-stilovi-crud__red">
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--poravnanje">
+                                <label class="kontrola-labela mb-0" for="edit_poravnanje">Poravnanje</label>
+                                <div class="kontrola-select">
+                                    <select id="edit_poravnanje" aria-label="Poravnanje teksta">
+                                        <option value="left">Lijevo</option>
+                                        <option value="right">Desno</option>
+                                        <option value="center">Sredina</option>
+                                        <option value="justify">Obostrano</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--prored">
+                                <label class="kontrola-labela mb-0" for="edit_prored">Prored (×)</label>
+                                <input id="edit_prored" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="1" aria-label="Množitelj proreda">
+                            </div>
+                        </div>
+                        <div class="pdf-stilovi-crud__red">
+                            <div class="pdf-stilovi-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_razmak_prije_mm">Razmak prije (mm)</label>
+                                <input id="edit_razmak_prije_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Razmak iznad paragrafa u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_razmak_poslije_mm">Razmak poslije (mm)</label>
+                                <input id="edit_razmak_poslije_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Razmak ispod paragrafa u mm">
+                            </div>
+                        </div>
+                        <div class="pdf-stilovi-crud__red">
+                            <div class="pdf-stilovi-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_uvlaka_lijevo_mm">Uvlaka lijevo (mm)</label>
+                                <input id="edit_uvlaka_lijevo_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Lijeva uvlaka u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_uvlaka_desno_mm">Uvlaka desno (mm)</label>
+                                <input id="edit_uvlaka_desno_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Desna uvlaka u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_uvlaka_prvi_red_mm">Uvlaka 1. retka (mm)</label>
+                                <input id="edit_uvlaka_prvi_red_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Uvlaka prvog retka u mm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Pozadina -->
+                    <div class="kontrola-tab__panel" role="tabpanel" id="stiloviTabPanel2" aria-labelledby="stiloviTabKart2" hidden>
+                        <div class="pdf-stilovi-crud__red">
+                            <span class="pdf-stilovi-crud__cb">
+                                <input type="checkbox" id="edit_boja_pozadine_ima" class="kontrola-checkbox" value="1" aria-label="Ima boju pozadine">
+                                <label class="kontrola-labela mb-0" for="edit_boja_pozadine_ima">Pozadina</label>
+                            </span>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--boja">
+                                <label class="kontrola-labela mb-0" for="edit_boja_pozadine">Boja pozadine</label>
+                                <div class="pdf-stilovi-crud__boja">
+                                    <input type="color" id="edit_boja_pozadine_swatch" class="pdf-stilovi-crud__boja-swatch" value="#ffff00" aria-label="Boja pozadine (izbornik)">
+                                    <input id="edit_boja_pozadine" type="text" class="kontrola-edit pdf-stilovi-crud__boja-hex" maxlength="7" placeholder="(bez)" aria-label="Boja pozadine (hex)">
+                                </div>
+                            </div>
+                            <span class="pdf-stilovi-crud__cb">
+                                <input type="checkbox" id="edit_pozadina_cijeli_red" class="kontrola-checkbox" value="1" aria-label="Puna traka preko cijele širine">
+                                <label class="kontrola-labela mb-0" for="edit_pozadina_cijeli_red">Puna traka</label>
+                            </span>
+                        </div>
+                        <div class="pdf-stilovi-crud__red pdf-stilovi-crud__red--strane">
+                            <span class="pdf-stilovi-crud__strane-naslov">Padding trake (mm)</span>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_traka_padding_gore_mm">Gore</label>
+                                <input id="edit_traka_padding_gore_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Padding trake gore u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_traka_padding_dolje_mm">Dolje</label>
+                                <input id="edit_traka_padding_dolje_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Padding trake dolje u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_traka_padding_lijevo_mm">Lijevo</label>
+                                <input id="edit_traka_padding_lijevo_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Padding trake lijevo u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_traka_padding_desno_mm">Desno</label>
+                                <input id="edit_traka_padding_desno_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Padding trake desno u mm">
+                            </div>
+                        </div>
+                        <p class="pdf-stilovi-crud__hint" id="pozadina_okvir_hint" hidden>Okvir je aktivan — podloga okvira preuzima pozadinu (ova polja se ignoriraju).</p>
+                    </div>
+
+                    <!-- TAB 3: Okvir -->
+                    <div class="kontrola-tab__panel" role="tabpanel" id="stiloviTabPanel3" aria-labelledby="stiloviTabKart3" hidden>
+                        <div class="pdf-stilovi-crud__red pdf-stilovi-crud__red--strane">
+                            <span class="pdf-stilovi-crud__strane-naslov">Debljina linije (mm) — 0 = bez linije</span>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_debljina_gore_mm">Gore</label>
+                                <input id="edit_okvir_debljina_gore_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Debljina gornje linije okvira u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_debljina_dolje_mm">Dolje</label>
+                                <input id="edit_okvir_debljina_dolje_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Debljina donje linije okvira u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_debljina_lijevo_mm">Lijevo</label>
+                                <input id="edit_okvir_debljina_lijevo_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Debljina lijeve linije okvira u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_debljina_desno_mm">Desno</label>
+                                <input id="edit_okvir_debljina_desno_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Debljina desne linije okvira u mm">
+                            </div>
+                        </div>
+                        <div class="pdf-stilovi-crud__red pdf-stilovi-crud__red--strane">
+                            <span class="pdf-stilovi-crud__strane-naslov">Padding okvira (mm)</span>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_padding_gore_mm">Gore</label>
+                                <input id="edit_okvir_padding_gore_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Padding okvira gore u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_padding_dolje_mm">Dolje</label>
+                                <input id="edit_okvir_padding_dolje_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Padding okvira dolje u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_padding_lijevo_mm">Lijevo</label>
+                                <input id="edit_okvir_padding_lijevo_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Padding okvira lijevo u mm">
+                            </div>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--mini">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_padding_desno_mm">Desno</label>
+                                <input id="edit_okvir_padding_desno_mm" type="text" class="kontrola-edit pdf-stilovi-crud__num" inputmode="decimal" value="0" aria-label="Padding okvira desno u mm">
+                            </div>
+                        </div>
+                        <div class="pdf-stilovi-crud__red">
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--boja">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_boja">Boja okvira</label>
+                                <div class="pdf-stilovi-crud__boja">
+                                    <input type="color" id="edit_okvir_boja_swatch" class="pdf-stilovi-crud__boja-swatch" value="#000000" aria-label="Boja okvira (izbornik)">
+                                    <input id="edit_okvir_boja" type="text" class="kontrola-edit pdf-stilovi-crud__boja-hex" maxlength="7" placeholder="#000000" aria-label="Boja okvira (hex)">
+                                </div>
+                            </div>
+                            <span class="pdf-stilovi-crud__cb">
+                                <input type="checkbox" id="edit_okvir_boja_podloge_ima" class="kontrola-checkbox" value="1" aria-label="Ima boju podloge okvira">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_boja_podloge_ima">Podloga</label>
+                            </span>
+                            <div class="pdf-stilovi-crud__polje pdf-stilovi-crud__polje--boja">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_boja_podloge">Boja podloge</label>
+                                <div class="pdf-stilovi-crud__boja">
+                                    <input type="color" id="edit_okvir_boja_podloge_swatch" class="pdf-stilovi-crud__boja-swatch" value="#ffffff" aria-label="Boja podloge okvira (izbornik)">
+                                    <input id="edit_okvir_boja_podloge" type="text" class="kontrola-edit pdf-stilovi-crud__boja-hex" maxlength="7" placeholder="(bez)" aria-label="Boja podloge okvira (hex)">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pdf-stilovi-crud__red pdf-stilovi-crud__red--cekboxi">
+                            <span class="pdf-stilovi-crud__cb">
+                                <input type="checkbox" id="edit_okvir_do_lijeve_margine" class="kontrola-checkbox" value="1" aria-label="Okvir do lijeve margine">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_do_lijeve_margine">Do lijeve margine</label>
+                            </span>
+                            <span class="pdf-stilovi-crud__cb">
+                                <input type="checkbox" id="edit_okvir_do_desne_margine" class="kontrola-checkbox" value="1" aria-label="Okvir do desne margine">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_do_desne_margine">Do desne margine</label>
+                            </span>
+                            <span class="pdf-stilovi-crud__cb">
+                                <input type="checkbox" id="edit_okvir_postuj_uvlaku" class="kontrola-checkbox" value="1" aria-label="Poštuj uvlaku">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_postuj_uvlaku">Poštuj uvlaku</label>
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Napomena: uvijek vidljiva dolje -->
+            <div class="pdf-stilovi-crud__napomena-red">
+                <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+            </div>
+        </div>
+
+        <div class="kontrola-panel__footer pdf-stilovi-crud__edit-footer">
+            <div class="pdf-stilovi-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="pdf-stilovi-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+
+    </div><!-- /gornji-red -->
+
+    <!-- Panel 3: preview (pdfmake — korak 4) — ispod, puna širina -->
+    <div class="kontrola-panel kontrola-panel--resize-y mb-3 pdf-stilovi-crud__preview-panel">
+        <div class="kontrola-panel__header pdf-stilovi-crud__preview-header">Pregled</div>
+        <div class="kontrola-panel__body pdf-stilovi-crud__preview-body">
+            <div id="stiloviPreview" class="pdf-stilovi-crud__preview" aria-label="Pregled stila paragrafa">
+                <p class="pdf-stilovi-crud__preview-placeholder">(pregled se aktivira u koraku 4 — pdfmake)</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole_Tab.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/PDF_Stilovi_CRUD.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>
