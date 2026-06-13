@@ -206,8 +206,9 @@ CREATE TABLE pdf_paragraf (
   okvir_padding_desno_mm   DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Padding desno u mm (pdfmake: paddingRight)',
   okvir_boja               VARCHAR(7)   NOT NULL DEFAULT '#000000' COMMENT 'Boja linija okvira, hex; jedna za sve 4 strane (pdfmake: hLineColor/vLineColor)',
   okvir_boja_podloge       VARCHAR(7)   NULL DEFAULT NULL   COMMENT 'Boja ispune (podloge) okvira, hex; NULL=bez ispune (pdfmake: fillColor ćelije)',
-  okvir_puna_sirina        TINYINT(1)   NOT NULL DEFAULT 1  COMMENT '1=okvir od margine do margine (widths:[*]); 0=širina po sadržaju (widths:[auto])',
-  okvir_postuj_uvlaku      TINYINT(1)   NOT NULL DEFAULT 0  COMMENT 'Kad okvir_puna_sirina=1: 1=kutija poštuje uvlaka_lijevo/desno; 0=ide do margina',
+  okvir_do_lijeve_margine  TINYINT(1)   NOT NULL DEFAULT 0  COMMENT 'Lijevi rub okvira ide do lijeve margine (1) ili po sadržaju teksta (0)',
+  okvir_do_desne_margine   TINYINT(1)   NOT NULL DEFAULT 0  COMMENT 'Desni rub okvira ide do desne margine (1) ili po sadržaju teksta (0)',
+  okvir_postuj_uvlaku      TINYINT(1)   NOT NULL DEFAULT 0  COMMENT 'Kad strana ide do margine, a ovo=1, ide do uvlake te strane (uvlaka_lijevo/desno) umjesto do margine; obje strane',
 
   napomena                 VARCHAR(1024) NULL               COMMENT 'Slobodna bilješka administratora',
 
@@ -224,10 +225,14 @@ zamota u tablicu s `fillColor`, `traka_padding_*` kao padding ćelije).
 renderira kao **jedna-ćelija tablica**: linije = `okvir_boja` (po strani uključene/širine iz
 `okvir_debljina_*`, 0=nema), ispuna = `okvir_boja_podloge` (NULL=bez ispune), padding =
 `okvir_padding_*`. Ta podloga **dominira** — kad okvir postoji, `boja_pozadine`/`traka_*` se
-**ignorira**; bez okvira vrijedi gornja „Logika pozadine". Širina: `okvir_puna_sirina=1` →
-margina↔margina (`widths:['*']`), uz `okvir_postuj_uvlaku=1` kutija se sužava za
-`uvlaka_lijevo/desno`; `okvir_puna_sirina=0` → po sadržaju (`widths:['auto']`). **Bez zaobljenih
-kutova** (tablični okvir u pdfmake to ne podržava). mm→pt konverziju radi generator (1 mm ≈ 2.835 pt).
+**ignorira**; bez okvira vrijedi gornja „Logika pozadine". **Širina okvira** kontroliraju dva
+neovisna prekidača: `okvir_do_lijeve_margine` i `okvir_do_desne_margine` — svaka strana ide do
+svoje margine (1) ili po sadržaju teksta (0). Kombinacije: 1/1 = puna širina (margina↔margina,
+`widths:['*']`); 0/0 = po sadržaju (`widths:['auto']`); 1/0 i 0/1 = jednostrano rastezanje
+(generator mjeri širinu sadržaja i pozicionira kutiju). Uz `okvir_postuj_uvlaku=1` strana koja
+ide „do margine" ide do **uvlake** te strane (`uvlaka_lijevo/desno`) umjesto do prave margine
+(vrijedi za obje strane). **Bez zaobljenih kutova** (tablični okvir u pdfmake to ne podržava).
+mm→pt konverziju radi generator (1 mm ≈ 2.835 pt).
 
 ### 2.4 `pdf_slika_stil` — stilovi slika
 
@@ -465,7 +470,7 @@ i zatvara prije prelaska na sljedeću.
   pozadina + traka + padding, poravnanje, prored, razmaci, uvlake).
 - **Okvir (border):** kontrole za debljinu linije po strani u mm (gore/dolje/lijevo/desno;
   0=nema), padding po strani u mm, boju okvira (jedna), boju podloge (NULL=bez ispune), te
-  prekidače „puna širina (margina↔margina)" i „poštuj uvlaku". Vidi „Logika okvira" u shemi `pdf_paragraf`.
+  prekidače „do lijeve margine", „do desne margine" i „poštuj uvlaku". Vidi „Logika okvira" u shemi `pdf_paragraf`.
 - **Funkcionalnost:** **živi pregled (preview)** stila — pdfmake renderira primjer paragrafa
   dok administrator mijenja vrijednosti. Birač fonta povučen iz `pdf_fontovi` (aktivni).
   Birači boja (hex). Validacija raspona (prored, postoci).
