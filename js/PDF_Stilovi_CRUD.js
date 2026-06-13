@@ -147,7 +147,8 @@
 
   var KB = {
     modal: null, nacin: null, paleta: null, korisnik: null, nativ: null, hexInp: null,
-    alphaRed: null, alpha: null, alphaVal: null, pregled: null,
+    alphaRed: null, alpha: null, alphaVal: null, pregled: null, pregledRed: null,
+    nativTrigger: null, korHex: null, korPuna: null, korAlphaRed: null, korAlpha: null, korAlphaVal: null, korPregled: null,
     alphaOn: false, targetId: null, nullable: false,
     rgb: '#000000', a: 255, bezBoje: false,
     BOJE: [
@@ -196,14 +197,24 @@
       }
       return rgb;
     },
+    _bojaSwatch: function (el, prozirno) {
+      if (!el) return;
+      if (this.bezBoje) { el.style.background = ''; el.classList.add('kontrola-boja__swatch--prazno'); return; }
+      el.classList.remove('kontrola-boja__swatch--prazno');
+      el.style.background = prozirno ? this.cssBoja() : (jeHex6(normHex(this.rgb)) ? normHex(this.rgb) : '#000000');
+    },
     prikaziSve: function () {
-      if (this.hexInp) this.hexInp.value = this.bezBoje ? '' : this.sastaviHex();
-      if (this.pregled) {
-        if (this.bezBoje) { this.pregled.style.background = ''; this.pregled.classList.add('kontrola-boja__swatch--prazno'); }
-        else { this.pregled.classList.remove('kontrola-boja__swatch--prazno'); this.pregled.style.background = this.cssBoja(); }
-      }
+      var hex = this.bezBoje ? '' : this.sastaviHex();
+      if (this.hexInp) this.hexInp.value = hex;
+      if (this.korHex) this.korHex.value = hex;
+      this._bojaSwatch(this.pregled, true);      /* paleta mod: mali pregled (s prozirnošću) */
+      this._bojaSwatch(this.korPregled, true);   /* korisnik mod: 4. red — boja s prozirnošću */
+      this._bojaSwatch(this.korPuna, false);     /* korisnik mod: 2. red — odabrana boja neprozirno */
+      var pct = Math.round(this.a / 255 * 100) + '%';
       if (this.alpha) this.alpha.value = this.a;
-      if (this.alphaVal) this.alphaVal.textContent = Math.round(this.a / 255 * 100) + '%';
+      if (this.korAlpha) this.korAlpha.value = this.a;
+      if (this.alphaVal) this.alphaVal.textContent = pct;
+      if (this.korAlphaVal) this.korAlphaVal.textContent = pct;
       if (this.nativ && !this.bezBoje && jeHex6(normHex(this.rgb))) this.nativ.value = normHex(this.rgb);
       if (this.paleta) {
         var sel = this.bezBoje ? '[data-bez]' : '[data-hex="' + normHex(this.rgb) + '"]';
@@ -223,18 +234,30 @@
         this.prikaziSve();
       }
     },
-    izAlpha: function () { if (this.alpha) this.a = parseInt(this.alpha.value, 10) || 0; if (this.bezBoje) this.bezBoje = false; this.prikaziSve(); },
+    izAlpha: function (el) { var src = el || this.alpha; if (src) this.a = parseInt(src.value, 10) || 0; if (this.bezBoje) this.bezBoje = false; this.prikaziSve(); },
     postaviNacin: function (n) {
       if (this.nacin) this.nacin.value = n;
-      if (this.paleta) this.paleta.hidden = (n !== 'paleta');
-      if (this.korisnik) this.korisnik.hidden = (n !== 'korisnik');
+      var paleta = (n === 'paleta');
+      if (this.paleta) this.paleta.hidden = !paleta;
+      if (this.korisnik) this.korisnik.hidden = paleta;
+      /* Zajednički redovi (mali pregled+hex, alpha) pripadaju Paleta modu; Korisnik mod ima vlastite (korAlphaRed je u korisnik kontejneru) */
+      if (this.pregledRed) this.pregledRed.hidden = !paleta;
+      if (this.alphaRed) this.alphaRed.hidden = !paleta;
       refreshSelect('bojaModalNacin');
+      this.prikaziSve();
+    },
+    /* Token --kontrola_boja_alpha=0 ne skriva red, nego ga disable-a (slajder inert + label/vrijednost zasivljeni) */
+    primijeniAlphaStanje: function () {
+      var off = !this.alphaOn;
+      [[this.alphaRed, this.alpha], [this.korAlphaRed, this.korAlpha]].forEach(function (par) {
+        if (par[0]) par[0].classList.toggle('kontrola-boja-modal__red--disabled', off);
+        if (par[1]) par[1].disabled = off;
+      });
     },
     otvori: function (targetId, nullable) {
       if (!this.modal) return;
       this.targetId = targetId; this.nullable = !!nullable;
       this.napuniPaletu();
-      if (this.alphaRed) this.alphaRed.hidden = !this.alphaOn;
       var inp = byId(targetId); var cur = inp ? normHex(inp.value) : '';
       if (cur === '' && this.nullable) { this.bezBoje = true; this.rgb = '#000000'; this.a = 255; }
       else {
@@ -280,11 +303,22 @@
       this.alpha = byId('bojaModalAlpha');
       this.alphaVal = byId('bojaModalAlphaVal');
       this.pregled = byId('bojaModalPregled');
+      this.pregledRed = byId('bojaModalPregledRed');
+      this.nativTrigger = byId('bojaModalNativTrigger');
+      this.korHex = byId('bojaModalKorHex');
+      this.korPuna = byId('bojaModalKorPuna');
+      this.korAlphaRed = byId('bojaModalKorAlphaRed');
+      this.korAlpha = byId('bojaModalKorAlpha');
+      this.korAlphaVal = byId('bojaModalKorAlphaVal');
+      this.korPregled = byId('bojaModalKorPregled');
       this.alphaOn = (getComputedStyle(document.documentElement).getPropertyValue('--kontrola_boja_alpha').trim() === '1');
+      this.primijeniAlphaStanje();
       if (this.nacin) this.nacin.addEventListener('change', function () { self.postaviNacin(self.nacin.value); });
+      if (this.nativTrigger) this.nativTrigger.addEventListener('click', function () { if (self.nativ) self.nativ.click(); });
       if (this.nativ) this.nativ.addEventListener('input', function () { self.izNativ(); });
       if (this.hexInp) this.hexInp.addEventListener('input', function () { self.izHex(); });
-      if (this.alpha) this.alpha.addEventListener('input', function () { self.izAlpha(); });
+      if (this.alpha) this.alpha.addEventListener('input', function () { self.izAlpha(self.alpha); });
+      if (this.korAlpha) this.korAlpha.addEventListener('input', function () { self.izAlpha(self.korAlpha); });
       if (this.paleta) this.paleta.addEventListener('click', function (e) {
         var sw = e.target && e.target.closest ? e.target.closest('.kontrola-boja-modal__swatch') : null;
         if (!sw) return;

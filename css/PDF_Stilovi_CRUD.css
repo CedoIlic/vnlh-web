@@ -1,5 +1,9 @@
 /* PDF_Stilovi_CRUD — stilovi paragrafa (pdf_paragraf). Desktop only. */
 
+/* PDF nema prozirnost → na ovoj formi gasimo alpha klizač (default je 1 u 0-Common).
+   Override na :root jer JS čita token s document.documentElement; CSS se učitava samo na ovoj stranici. */
+:root { --kontrola_boja_alpha: 0; }
+
 /* Globalni raspored: tablica lijevo, edit desno (isti red), preview ispod preko cijele širine.
    align-items: stretch → oba panela jednake visine; veći tab (edit) povlači i tablicu.
    Sync visine pri manualnom resizeu: data-resize-sync-group="pdf-stilovi" (0-Kontrole.js).
@@ -300,10 +304,18 @@
 .kontrola-boja-modal__hex { width: 8rem; text-align: center; text-transform: uppercase; }
 .kontrola-boja-modal__alpha { flex: 1 1 auto; width: auto; min-width: 0; }
 .kontrola-boja-modal__alpha-val { flex: 0 0 auto; width: 3rem; text-align: right; font-family: monospace; }
+/* Alpha isključen (token 0): red ostaje vidljiv ali disabled (slajder inert + sve zasivljeno) */
+.kontrola-boja-modal__red--disabled { opacity: 0.5; }
+.kontrola-boja-modal__red--disabled .kontrola-boja-modal__alpha { cursor: default; pointer-events: none; }
 .kontrola-boja-modal__red--pregled .kontrola-boja-modal__hex { flex: 1 1 auto; width: auto; }
-.kontrola-boja-modal__pregled-okvir { flex: 0 0 auto; width: var(--edit_height, 2.25rem); height: var(--edit_height, 2.25rem); border: 1px solid var(--edit_border, #ccc); border-radius: var(--edit_radius, 6px); overflow: hidden; box-sizing: border-box; }
-.kontrola-boja-modal__pregled { display: block; width: 100%; height: 100%; background: #000; }
+.kontrola-boja-modal__pregled-okvir { flex: 0 0 auto; width: var(--edit_height, 2.25rem); height: var(--edit_height, 2.25rem); border: 1px solid var(--edit_border, #ccc); border-radius: var(--edit_radius, 6px); overflow: hidden; box-sizing: border-box; background: #fff; }
+.kontrola-boja-modal__pregled { display: block; width: 100%; height: 100%; }
 .kontrola-boja-modal__footer { padding: 0.6rem 0.9rem; display: flex; justify-content: flex-end; gap: 0.5rem; border-top: 1px solid var(--edit_border, #eee); }
+
+/* [hidden] mora nadjačati eksplicitni display (grid/flex), inače prebacivanje moda nema efekta */
+.kontrola-boja-modal__paleta[hidden],
+.kontrola-boja-modal__korisnik[hidden],
+.kontrola-boja-modal__red[hidden] { display: none; }
 
 /* Paleta (grid swatcheva) + korisnička (nativna) boja */
 .kontrola-boja-modal__paleta { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
@@ -321,8 +333,16 @@
 @media (hover: hover) { .kontrola-boja-modal__swatch:hover { transform: scale(1.1); } }
 /* Prazan prostor (širina jednog kvadratića) iza Bijele */
 .kontrola-boja-modal__placeholder { aspect-ratio: 1 / 1; }
-.kontrola-boja-modal__korisnik { display: flex; }
-.kontrola-boja-modal__korisnik .kontrola-boja-modal__nativ { width: 100%; height: 3rem; }
+/* Korisnička boja: 4 reda (ikona+hex / odabrana boja / prozirnost / pregled s prozirnošću) */
+.kontrola-boja-modal__korisnik { display: flex; flex-direction: column; gap: 0.7rem; }
+.kontrola-boja-modal__kor-unos { display: flex; align-items: center; gap: 0.5rem; position: relative; }
+.kontrola-boja-modal__kor-unos .kontrola-boja-modal__hex { flex: 1 1 auto; width: auto; }
+.kontrola-boja-modal__nativ-trigger { flex: 0 0 auto; }
+/* nativni <input type=color> je skriven; otvara se klikom na ikonu (.click()) */
+.kontrola-boja-modal__nativ-skriven { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; pointer-events: none; }
+.kontrola-boja-modal__kor-puna { display: block; width: 100%; height: 2.4rem; border: 1px solid var(--edit_border, #ccc); border-radius: var(--edit_radius, 6px); box-sizing: border-box; }
+.kontrola-boja-modal__kor-pregled-okvir { display: block; width: 100%; height: 3rem; border: 1px solid var(--edit_border, #ccc); border-radius: var(--edit_radius, 6px); overflow: hidden; box-sizing: border-box; background: #fff; }
+.kontrola-boja-modal__kor-pregled { display: block; width: 100%; height: 100%; }
 
 /* Birač boje (staro — više se ne koristi, ostavljeno bezopasno): swatch + hex */
 .pdf-stilovi-crud__boja {

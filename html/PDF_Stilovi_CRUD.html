@@ -312,9 +312,24 @@
         <div class="kontrola-boja-modal__body">
             <div class="kontrola-boja-modal__paleta" id="bojaModalPaleta" role="listbox" aria-label="Paleta boja"></div>
             <div class="kontrola-boja-modal__korisnik" id="bojaModalKorisnik" hidden>
-                <input type="color" id="bojaModalNativ" class="kontrola-boja-modal__nativ" value="#000000" aria-label="Korisnička boja">
+                <!-- 1. red: ikona (otvara sistemski piker) + RO hex kod, puna širina -->
+                <div class="kontrola-boja-modal__kor-unos">
+                    <button type="button" id="bojaModalNativTrigger" class="kontrola-boja__trigger kontrola-boja-modal__nativ-trigger" aria-label="Sistemski izbor boje"><span class="kontrola-icon--paleta" aria-hidden="true"></span></button>
+                    <input type="text" id="bojaModalKorHex" class="kontrola-edit kontrola-edit--readonly kontrola-boja-modal__hex" maxlength="9" placeholder="#000000" readonly tabindex="-1" aria-readonly="true" aria-label="Kod boje (hex)">
+                    <input type="color" id="bojaModalNativ" class="kontrola-boja-modal__nativ-skriven" value="#000000" tabindex="-1" aria-hidden="true">
+                </div>
+                <!-- 2. red: odabrana boja (neprozirno) preko cijelog reda -->
+                <span id="bojaModalKorPuna" class="kontrola-boja-modal__kor-puna" aria-hidden="true"></span>
+                <!-- 3. red: prozirnost (isto kao u Paleta modu) -->
+                <div class="kontrola-boja-modal__red" id="bojaModalKorAlphaRed">
+                    <label class="kontrola-labela mb-0" for="bojaModalKorAlpha">Prozirnost</label>
+                    <input type="range" id="bojaModalKorAlpha" min="0" max="255" value="255" class="kontrola-boja-modal__alpha" aria-label="Prozirnost (alpha)">
+                    <span id="bojaModalKorAlphaVal" class="kontrola-boja-modal__alpha-val">100%</span>
+                </div>
+                <!-- 4. red: prikaz boje s prozirnošću, preko svega -->
+                <span class="kontrola-boja-modal__kor-pregled-okvir"><span id="bojaModalKorPregled" class="kontrola-boja-modal__kor-pregled" aria-hidden="true"></span></span>
             </div>
-            <div class="kontrola-boja-modal__red kontrola-boja-modal__red--pregled">
+            <div class="kontrola-boja-modal__red kontrola-boja-modal__red--pregled" id="bojaModalPregledRed">
                 <span class="kontrola-boja-modal__pregled-okvir"><span id="bojaModalPregled" class="kontrola-boja-modal__pregled"></span></span>
                 <input type="text" id="bojaModalHex" class="kontrola-edit kontrola-edit--readonly kontrola-boja-modal__hex" maxlength="9" placeholder="#000000" readonly tabindex="-1" aria-readonly="true" aria-label="Kod boje (hex)">
             </div>

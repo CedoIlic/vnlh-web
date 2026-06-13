@@ -39,7 +39,7 @@
   --font_family: Arial, sans-serif;                                     /* Sistemski font */
   --font_size: 16px;                                                    /* Veličina sistemskog fonta */
   --font_weight: 400;                                                   /* Težina sistemskog fonta */
-  --kontrola_boja_alpha: 1;                                             /* Picker boja: 0 = bez alpha; 1 = s alpha klizačem (PRIVREMENO 1 za test; ekranski prikaz, ne PDF) */
+  --kontrola_boja_alpha: 1;                                             /* Picker boja — default: 1 = alpha klizač enable; 0 = red s klizačem disable. Forma može override-ati na :root (npr. PDF_Stilovi = 0). Ekranski prikaz, ne PDF. */
   /* Picker boja — trigger gumb (sjena / hover / klik / disable) */
   --kontrola_boja_trigger_bg: var(--edit_bg);                           /* pozadina trigger gumba */
   --kontrola_boja_trigger_border: var(--edit_border);                   /* okvir trigger gumba */
