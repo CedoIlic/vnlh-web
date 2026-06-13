@@ -2681,6 +2681,281 @@
       });
     }
 
+    /* ========== KONTROLA BOJA (picker s modalom; dijeljeno za sva polja boje) ==========
+       Markup po polju: <div class="kontrola-boja" data-boja-za="<id_inputa>" data-boja-nullable="0|1">
+                          <button class="kontrola-boja__trigger">…paleta ikona…</button>
+                          (opcionalno RO hex) <span class="kontrola-boja__swatch"></span></div>
+       Modal #bojaModal gradi se jednom u JS-u i dodaje u <body>. Alpha klizač tokenom --kontrola_boja_alpha
+       (1=enable, 0=red disable). API: KontroleBojaInit(root), KontroleBojaRefresh(targetId). */
+    (function () {
+      function byId(id) { return document.getElementById(id); }
+      function jeHex6(s) { return /^#[0-9A-Fa-f]{6}$/.test(String(s || '')); }
+      function jeHex8(s) { return /^#[0-9A-Fa-f]{8}$/.test(String(s || '')); }
+      function normHex(s) { return String(s == null ? '' : s).trim().toUpperCase(); }
+      function bojaUCss(val) {
+        val = normHex(val);
+        if (jeHex8(val)) {
+          var r = parseInt(val.substr(1, 2), 16), g = parseInt(val.substr(3, 2), 16),
+              b = parseInt(val.substr(5, 2), 16), a = parseInt(val.substr(7, 2), 16) / 255;
+          return 'rgba(' + r + ',' + g + ',' + b + ',' + a.toFixed(3) + ')';
+        }
+        return val;
+      }
+      function refreshSelect(id) { if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect(id); } catch (e) {} } }
+
+      var MODAL_HTML = [
+        '<div class="kontrola-boja-modal__overlay" data-boja-zatvori></div>',
+        '<div class="kontrola-boja-modal__dialog" role="dialog" aria-modal="true" aria-label="Izbor boje">',
+        '<div class="kontrola-boja-modal__zaglavlje">',
+        '<span class="kontrola-boja-modal__naslov">Boje</span>',
+        '<div class="kontrola-select kontrola-boja-modal__nacin"><select id="bojaModalNacin" aria-label="Način izbora boje">',
+        '<option value="paleta">Paleta boja</option><option value="korisnik">Korisnička boja</option>',
+        '</select></div>',
+        '</div>',
+        '<div class="kontrola-boja-modal__body">',
+        '<div class="kontrola-boja-modal__paleta" id="bojaModalPaleta" role="listbox" aria-label="Paleta boja"></div>',
+        '<div class="kontrola-boja-modal__korisnik" id="bojaModalKorisnik" hidden>',
+        '<div class="kontrola-boja-modal__kor-unos">',
+        '<button type="button" id="bojaModalNativTrigger" class="kontrola-boja__trigger kontrola-boja-modal__nativ-trigger" aria-label="Sistemski izbor boje"><span class="kontrola-icon--paleta" aria-hidden="true"></span></button>',
+        '<input type="text" id="bojaModalKorHex" class="kontrola-edit kontrola-edit--readonly kontrola-boja-modal__hex" maxlength="9" placeholder="#000000" readonly tabindex="-1" aria-readonly="true" aria-label="Kod boje (hex)">',
+        '<input type="color" id="bojaModalNativ" class="kontrola-boja-modal__nativ-skriven" value="#000000" tabindex="-1" aria-hidden="true">',
+        '</div>',
+        '<span id="bojaModalKorPuna" class="kontrola-boja-modal__kor-puna" aria-hidden="true"></span>',
+        '<div class="kontrola-boja-modal__red" id="bojaModalKorAlphaRed">',
+        '<label class="kontrola-labela mb-0" for="bojaModalKorAlpha">Prozirnost</label>',
+        '<input type="range" id="bojaModalKorAlpha" min="0" max="255" value="255" class="kontrola-boja-modal__alpha" aria-label="Prozirnost (alpha)">',
+        '<span id="bojaModalKorAlphaVal" class="kontrola-boja-modal__alpha-val">100%</span>',
+        '</div>',
+        '<span class="kontrola-boja-modal__kor-pregled-okvir"><span id="bojaModalKorPregled" class="kontrola-boja-modal__kor-pregled" aria-hidden="true"></span></span>',
+        '</div>',
+        '<div class="kontrola-boja-modal__red kontrola-boja-modal__red--pregled" id="bojaModalPregledRed">',
+        '<span class="kontrola-boja-modal__pregled-okvir"><span id="bojaModalPregled" class="kontrola-boja-modal__pregled"></span></span>',
+        '<input type="text" id="bojaModalHex" class="kontrola-edit kontrola-edit--readonly kontrola-boja-modal__hex" maxlength="9" placeholder="#000000" readonly tabindex="-1" aria-readonly="true" aria-label="Kod boje (hex)">',
+        '</div>',
+        '<div class="kontrola-boja-modal__red" id="bojaModalAlphaRed">',
+        '<label class="kontrola-labela mb-0" for="bojaModalAlpha">Prozirnost</label>',
+        '<input type="range" id="bojaModalAlpha" min="0" max="255" value="255" class="kontrola-boja-modal__alpha" aria-label="Prozirnost (alpha)">',
+        '<span id="bojaModalAlphaVal" class="kontrola-boja-modal__alpha-val">255</span>',
+        '</div>',
+        '</div>',
+        '<div class="kontrola-boja-modal__footer">',
+        '<button type="button" id="bojaModalOk" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>',
+        '<button type="button" id="bojaModalOdustani" class="kontrola-btn kontrola-btn--crud-povratak" data-boja-zatvori><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>',
+        '</div>',
+        '</div>'
+      ].join('');
+
+      var KB = {
+        _built: false,
+        modal: null, nacin: null, paleta: null, korisnik: null, nativ: null, hexInp: null,
+        alphaRed: null, alpha: null, alphaVal: null, pregled: null, pregledRed: null,
+        nativTrigger: null, korHex: null, korPuna: null, korAlphaRed: null, korAlpha: null, korAlphaVal: null, korPregled: null,
+        alphaOn: false, targetId: null, nullable: false,
+        rgb: '#000000', a: 255, bezBoje: false,
+        BOJE: [
+          ['Crna', '#000000'], ['Bijela', '#FFFFFF'],
+          ['Siva 1', '#404040'], ['Siva 2', '#808080'], ['Siva 3', '#BFBFBF'], ['Siva 4', '#E0E0E0'],
+          ['Crvena', '#E53935'], ['Tamnocrvena', '#B71C1C'],
+          ['Roza', '#D81B60'], ['Ljubičasta', '#8E24AA'], ['Indigo', '#3949AB'],
+          ['Plava', '#1E88E5'], ['Tamnoplava', '#1565C0'], ['Svijetloplava', '#039BE5'],
+          ['Cijan', '#00ACC1'], ['Tirkizna', '#00897B'],
+          ['Zelena', '#43A047'], ['Tamnozelena', '#2E7D32'], ['Limeta', '#C0CA33'],
+          ['Žuta', '#FDD835'], ['Jantar', '#FFB300'],
+          ['Narančasta', '#FB8C00'], ['Tamnonarančasta', '#F4511E'],
+          ['Smeđa', '#6D4C41'], ['Plavosiva', '#546E7A'], ['Tamnoljubičasta', '#5E35B1']
+        ],
+        osvjeziSwatch: function (targetId) {
+          var wrap = document.querySelector('.kontrola-boja[data-boja-za="' + targetId + '"]');
+          if (!wrap) return;
+          var sw = wrap.querySelector('.kontrola-boja__swatch');
+          var inp = byId(targetId);
+          var val = inp ? normHex(inp.value) : '';
+          if (!sw) return;
+          if (val === '') { sw.style.background = ''; sw.classList.add('kontrola-boja__swatch--prazno'); }
+          else { sw.classList.remove('kontrola-boja__swatch--prazno'); sw.style.background = bojaUCss(val); }
+        },
+        napuniPaletu: function () {
+          if (!this.paleta) return;
+          var html = '';
+          if (this.nullable) html += '<button type="button" class="kontrola-boja-modal__swatch kontrola-boja__swatch--prazno" data-bez="1" title="Bez boje (sistemska)" aria-label="Bez boje"></button>';
+          this.BOJE.forEach(function (b, i) {
+            html += '<button type="button" class="kontrola-boja-modal__swatch" data-hex="' + b[1] + '" title="' + b[0] + '" aria-label="' + b[0] + '" style="background:' + b[1] + '"></button>';
+            if (i === 1) html += '<span class="kontrola-boja-modal__placeholder" aria-hidden="true"></span>';
+          });
+          this.paleta.innerHTML = html;
+        },
+        sastaviHex: function () {
+          var rgb = jeHex6(normHex(this.rgb)) ? normHex(this.rgb) : '#000000';
+          if (this.alphaOn && this.a < 255) { var aa = ((this.a | 0)).toString(16).toUpperCase(); if (aa.length < 2) aa = '0' + aa; return rgb + aa; }
+          return rgb;
+        },
+        cssBoja: function () {
+          var rgb = jeHex6(normHex(this.rgb)) ? normHex(this.rgb) : '#000000';
+          if (this.alphaOn) {
+            var r = parseInt(rgb.substr(1, 2), 16), g = parseInt(rgb.substr(3, 2), 16), b = parseInt(rgb.substr(5, 2), 16);
+            return 'rgba(' + r + ',' + g + ',' + b + ',' + (this.a / 255).toFixed(3) + ')';
+          }
+          return rgb;
+        },
+        _bojaSwatch: function (el, prozirno) {
+          if (!el) return;
+          if (this.bezBoje) { el.style.background = ''; el.classList.add('kontrola-boja__swatch--prazno'); return; }
+          el.classList.remove('kontrola-boja__swatch--prazno');
+          el.style.background = prozirno ? this.cssBoja() : (jeHex6(normHex(this.rgb)) ? normHex(this.rgb) : '#000000');
+        },
+        prikaziSve: function () {
+          var hex = this.bezBoje ? '' : this.sastaviHex();
+          if (this.hexInp) this.hexInp.value = hex;
+          if (this.korHex) this.korHex.value = hex;
+          this._bojaSwatch(this.pregled, true);
+          this._bojaSwatch(this.korPregled, true);
+          this._bojaSwatch(this.korPuna, false);
+          var pct = Math.round(this.a / 255 * 100) + '%';
+          if (this.alpha) this.alpha.value = this.a;
+          if (this.korAlpha) this.korAlpha.value = this.a;
+          if (this.alphaVal) this.alphaVal.textContent = pct;
+          if (this.korAlphaVal) this.korAlphaVal.textContent = pct;
+          if (this.nativ && !this.bezBoje && jeHex6(normHex(this.rgb))) this.nativ.value = normHex(this.rgb);
+          if (this.paleta) {
+            var sel = this.bezBoje ? '[data-bez]' : '[data-hex="' + normHex(this.rgb) + '"]';
+            Array.prototype.forEach.call(this.paleta.querySelectorAll('.kontrola-boja-modal__swatch'), function (el) {
+              el.classList.toggle('kontrola-boja-modal__swatch--odabran', el.matches(sel));
+            });
+          }
+        },
+        odaberiHex: function (hex) { this.bezBoje = false; this.rgb = normHex(hex); this.prikaziSve(); },
+        odaberiBez: function () { this.bezBoje = true; this.prikaziSve(); },
+        izNativ: function () { this.bezBoje = false; this.rgb = normHex(this.nativ ? this.nativ.value : '#000000'); this.prikaziSve(); },
+        izHex: function () {
+          var v = normHex(this.hexInp ? this.hexInp.value : '');
+          if (jeHex6(v) || jeHex8(v)) {
+            this.bezBoje = false; this.rgb = '#' + v.substr(1, 6);
+            if (this.alphaOn) this.a = jeHex8(v) ? parseInt(v.substr(7, 2), 16) : 255;
+            this.prikaziSve();
+          }
+        },
+        izAlpha: function (el) { var src = el || this.alpha; if (src) this.a = parseInt(src.value, 10) || 0; if (this.bezBoje) this.bezBoje = false; this.prikaziSve(); },
+        postaviNacin: function (n) {
+          if (this.nacin) this.nacin.value = n;
+          var paleta = (n === 'paleta');
+          if (this.paleta) this.paleta.hidden = !paleta;
+          if (this.korisnik) this.korisnik.hidden = paleta;
+          if (this.pregledRed) this.pregledRed.hidden = !paleta;
+          if (this.alphaRed) this.alphaRed.hidden = !paleta;
+          refreshSelect('bojaModalNacin');
+          this.prikaziSve();
+        },
+        primijeniAlphaStanje: function () {
+          var off = !this.alphaOn;
+          [[this.alphaRed, this.alpha], [this.korAlphaRed, this.korAlpha]].forEach(function (par) {
+            if (par[0]) par[0].classList.toggle('kontrola-boja-modal__red--disabled', off);
+            if (par[1]) par[1].disabled = off;
+          });
+        },
+        otvori: function (targetId, nullable) {
+          this.ensureModal();
+          if (!this.modal) return;
+          this.targetId = targetId; this.nullable = !!nullable;
+          this.napuniPaletu();
+          var inp = byId(targetId); var cur = inp ? normHex(inp.value) : '';
+          if (cur === '' && this.nullable) { this.bezBoje = true; this.rgb = '#000000'; this.a = 255; }
+          else {
+            this.bezBoje = false;
+            var base = (jeHex6(cur) || jeHex8(cur)) ? cur : '#000000';
+            this.rgb = '#' + base.substr(1, 6);
+            this.a = (this.alphaOn && jeHex8(base)) ? parseInt(base.substr(7, 2), 16) : 255;
+          }
+          this.postaviNacin('paleta');
+          this.prikaziSve();
+          this.modal.classList.add('kontrola-boja-modal--open');
+          this.modal.setAttribute('aria-hidden', 'false');
+        },
+        zatvori: function () {
+          if (!this.modal) return;
+          this.modal.classList.remove('kontrola-boja-modal--open');
+          this.modal.setAttribute('aria-hidden', 'true');
+          this.targetId = null;
+        },
+        jeOtvoren: function () { return this.modal && this.modal.classList.contains('kontrola-boja-modal--open'); },
+        potvrdi: function () {
+          if (!this.targetId) { this.zatvori(); return; }
+          var inp = byId(this.targetId);
+          var val = this.bezBoje ? '' : this.sastaviHex();
+          if (inp) {
+            inp.value = val;
+            inp.dispatchEvent(new Event('input', { bubbles: true }));
+            inp.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          this.osvjeziSwatch(this.targetId);
+          this.zatvori();
+        },
+        ensureModal: function () {
+          if (this._built) return;
+          var self = this;
+          var m = document.createElement('div');
+          m.className = 'kontrola-boja-modal';
+          m.id = 'bojaModal';
+          m.setAttribute('aria-hidden', 'true');
+          m.innerHTML = MODAL_HTML;
+          document.body.appendChild(m);
+          this._built = true;
+          this.modal = m;
+          this.nacin = byId('bojaModalNacin');
+          this.paleta = byId('bojaModalPaleta');
+          this.korisnik = byId('bojaModalKorisnik');
+          this.nativ = byId('bojaModalNativ');
+          this.hexInp = byId('bojaModalHex');
+          this.alphaRed = byId('bojaModalAlphaRed');
+          this.alpha = byId('bojaModalAlpha');
+          this.alphaVal = byId('bojaModalAlphaVal');
+          this.pregled = byId('bojaModalPregled');
+          this.pregledRed = byId('bojaModalPregledRed');
+          this.nativTrigger = byId('bojaModalNativTrigger');
+          this.korHex = byId('bojaModalKorHex');
+          this.korPuna = byId('bojaModalKorPuna');
+          this.korAlphaRed = byId('bojaModalKorAlphaRed');
+          this.korAlpha = byId('bojaModalKorAlpha');
+          this.korAlphaVal = byId('bojaModalKorAlphaVal');
+          this.korPregled = byId('bojaModalKorPregled');
+          if (typeof initCustomSelect === 'function') initCustomSelect(m);
+          this.alphaOn = (getComputedStyle(document.documentElement).getPropertyValue('--kontrola_boja_alpha').trim() === '1');
+          this.primijeniAlphaStanje();
+          if (this.nacin) this.nacin.addEventListener('change', function () { self.postaviNacin(self.nacin.value); });
+          if (this.nativTrigger) this.nativTrigger.addEventListener('click', function () { if (self.nativ) self.nativ.click(); });
+          if (this.nativ) this.nativ.addEventListener('input', function () { self.izNativ(); });
+          if (this.hexInp) this.hexInp.addEventListener('input', function () { self.izHex(); });
+          if (this.alpha) this.alpha.addEventListener('input', function () { self.izAlpha(self.alpha); });
+          if (this.korAlpha) this.korAlpha.addEventListener('input', function () { self.izAlpha(self.korAlpha); });
+          if (this.paleta) this.paleta.addEventListener('click', function (e) {
+            var sw = e.target && e.target.closest ? e.target.closest('.kontrola-boja-modal__swatch') : null;
+            if (!sw) return;
+            if (sw.getAttribute('data-bez')) self.odaberiBez(); else self.odaberiHex(sw.getAttribute('data-hex'));
+          });
+          var okB = byId('bojaModalOk'); if (okB) okB.addEventListener('click', function () { self.potvrdi(); });
+          Array.prototype.forEach.call(m.querySelectorAll('[data-boja-zatvori]'), function (el) { el.addEventListener('click', function () { self.zatvori(); }); });
+          document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && self.jeOtvoren()) self.zatvori(); });
+        },
+        initWrappers: function (root) {
+          var self = this;
+          var wraps = (root || document).querySelectorAll('.kontrola-boja');
+          if (!wraps.length) return; /* nema polja boje na stranici → ne gradi modal */
+          this.ensureModal();
+          Array.prototype.forEach.call(wraps, function (wrap) {
+            if (wrap.dataset.bojaInit === '1') return;
+            wrap.dataset.bojaInit = '1';
+            var btn = wrap.querySelector('.kontrola-boja__trigger');
+            var targetId = wrap.getAttribute('data-boja-za');
+            var nullable = wrap.getAttribute('data-boja-nullable') === '1';
+            if (btn) btn.addEventListener('click', function () { if (btn.disabled) return; self.otvori(targetId, nullable); });
+            self.osvjeziSwatch(targetId);
+          });
+        }
+      };
+
+      global.KontroleBojaInit = function (root) { KB.initWrappers(root || document); };
+      global.KontroleBojaRefresh = function (targetId) { KB.osvjeziSwatch(targetId); };
+    })();
+
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function () {
         runScrollbarStyles();
@@ -2692,6 +2967,7 @@
         initPanelResizeBar(document);
         initButtonTouchFeedback(document);
         syncLabelsDisabledState(document);
+        KontroleBojaInit(document);
       });
     } else {
       runScrollbarStyles();
@@ -2703,6 +2979,7 @@
       initPanelResizeBar(document);
       initButtonTouchFeedback(document);
       syncLabelsDisabledState(document);
+      KontroleBojaInit(document);
     }
     window.addEventListener('load', runScrollbarStyles);
     global.KontroleRefreshScrollbarHoverColor = function () {
