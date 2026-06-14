@@ -539,22 +539,28 @@ i zatvara prije prelaska na sljedeću.
   (vidi „Učitavanje fontova" u 2.7).
 - Provjeriti/riješiti **prozirnost slika** ako se pokaže nedostatnom u pdfmake.
 
-#### Migracija formi na dijeljeni kolor picker (`kontrola-boja`) — NAKON svih PDF formi
-Picker je sada dijeljena kontrola u `0-Kontrole` (`KontroleBojaInit` auto-init na `.kontrola-boja`;
-`KontroleBojaRefresh(targetId)`; modal `#bojaModal` se gradi u JS-u). Forme se prebacuju samo
+#### Migracija formi na dijeljeni kolor picker (`kontrola-boja`) — ZAVRŠENO
+Picker je dijeljena kontrola u `0-Kontrole` (`KontroleBojaInit` auto-init na `.kontrola-boja`;
+`KontroleBojaRefresh(targetId)`; modal `#bojaModal` se gradi u JS-u). Forme se prebacuju
 dodavanjem `.kontrola-boja[data-boja-za][data-boja-nullable]` markupa.
 
-**Već koristi picker:**
-- `PDF_Stilovi_CRUD` — 4 polja (`edit_boja`, `edit_boja_pozadine`, `edit_okvir_boja`, `edit_okvir_boja_podloge`).
+**Sve forme migrirane (svaka ima prozirnost i sprema `#RRGGBBAA`):**
+- `PDF_Stilovi_CRUD` — 4 polja (`edit_boja`, `edit_boja_pozadine`, `edit_okvir_boja`, `edit_okvir_boja_podloge`); alpha isključen tokenom (boje za tisak).
+- `Clanovi_Zastavice_CRUD` — 1 boja. ✔ (`6614c91`)
+- `Zapisnik_Boje_U_Listi_CRUD` — 2 boje (tekst + podloga); izgubljen ručni unos hexa (RO hex). ✔ (`b01f29e`)
+- `Radovi_TipUnosaPrisutnih_CRUD` — 1 boja; zadržano bojanje naziva. ✔ (`7e354fc`)
+- `Alati_Poruke_Razvoja_Tip` — 2 boje (tekst + podloga). ✔ (`30fb33d`)
 
-**Kandidati za migraciju s nativnog `<input type="color">`:**
-- `Alati_Poruke_Razvoja_Tip` — `boja_picker_color`
-- `Clanovi_Zastavice_CRUD` — `boja_picker_color`
-- `Radovi_TipUnosaPrisutnih_CRUD` — `radovi_tip_pris_boja_picker_color`
-- `Zapisnik_Boje_U_Listi_CRUD` — `boja_picker_color`
+**Pristup (A):** DB format `#RRGGBBAA` ostaje netaknut; mijenja se samo UI pickera. Svaka forma
+ima konverziju između `kontrola-boja` formata (6-hex opaque / 8-hex prozirno) i `#RRGGBBAA`
+(`storageToKb` / `kbToStorage` / `setKbBoja`). DB/PHP/potrošači boje nepromijenjeni. Hex je RO
+(ako zatreba kopiranje boje — riješiti drukčije). Migrirane forme NE override-aju
+`--kontrola_boja_alpha` (alpha uključen); PDF_Stilovi ga gasi (token 0).
 
-Migracija jednostavna: 6-hex bez prozirnosti/„bez boje" → `data-boja-nullable="0"`; alpha je globalno
-isključen osim gdje token kaže drukčije.
+**Dorade pickera (uz migraciju, `a571c4c`):**
+- Premještanje modala povlačenjem zaglavlja (`attachModalDrag` / `global.KontroleModalDrag` — radi za bilo koji modal; re-centrira se pri otvaranju).
+- Default mod selekta po alpha stanju: alpha aktivan → „Korisnička boja"; disabled → „Paleta boja".
+- Paleta: +9 dodatnih boja (`BOJE_EKSTRA`); zadnji red uvijek pun (nullable 8 swatcheva uz „Bez boje" ćeliju, non-nullable 9).
 
 ---
 
