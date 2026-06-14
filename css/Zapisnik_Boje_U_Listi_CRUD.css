@@ -63,64 +63,15 @@
   min-width: 0;
 }
 
-.zapisnik-boje-u-listi-crud__boja-display {
-  text-align: center;
-}
-
-/* Edit-delete wrapper za boja polja: zauzima punu širinu ćelije. */
-.zapisnik-boje-u-listi-crud__boja-edit-delete {
+/* Kontrola boje puni ćeliju; hex edit se širi (ikona i swatch fiksni) */
+.zapisnik-boje-u-listi-crud__cell--boja .kontrola-boja {
+  display: flex;
   width: 100%;
-  overflow: hidden;
 }
-
-/* Boja podloge: prikazuje se kao backgroundColor retka. */
-.zapisnik-boje-u-listi-crud__boja-display--bg {
-  color: var(--edit_text);
-}
-
-.zapisnik-boje-u-listi-crud__cell--icon {
-  flex: 0 0 auto;
-  align-self: flex-end;
-}
-
-.zapisnik-boje-u-listi-crud__boja-icon-btn {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 0;
-  border: 1px solid var(--edit_border);
-  border-radius: var(--edit_radius);
-  background: var(--edit_bg);
-  color: var(--edit_text);
-  cursor: pointer;
-  box-shadow: var(--button_outer_shadow);
-}
-
-.zapisnik-boje-u-listi-crud__boja-icon-btn:disabled {
-  color: var(--label_text_disabled);
-  border-color: var(--label_text_disabled);
-  background: var(--edit_bg);
-  cursor: default;
-  box-shadow: var(--edit_focus_shadow_disabled, none);
-}
-
-@media (hover: hover) {
-  .zapisnik-boje-u-listi-crud__boja-icon-btn:hover:not(:disabled) {
-    border-color: var(--edit_border_focus);
-    background: var(--edit_bg_hover, var(--c-gray-100));
-    box-shadow: var(--edit_focus_shadow);
-  }
-}
-.zapisnik-boje-u-listi-crud__boja-icon-btn:active:not(:disabled) {
-  box-shadow: var(--edit_focus_shadow_disabled, none);
-}
-
-.zapisnik-boje-u-listi-crud__boja-icon {
-  width: 1.25rem;
-  height: 1.25rem;
+.zapisnik-boje-u-listi-crud__cell--boja .kontrola-boja__hex {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
 }
 
 .zapisnik-boje-u-listi-crud__opis {
@@ -152,98 +103,4 @@
 
 .zapisnik-boje-u-listi-crud__footer-right {
   margin-left: auto;
-}
-
-/* Modal za odabir boje */
-.zapisnik-boje-u-listi-crud__picker-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  font-family: var(--font_family);
-  font-size: var(--font_size);
-  font-weight: var(--font_weight);
-  color: var(--text);
-}
-
-.zapisnik-boje-u-listi-crud__picker-modal[hidden] {
-  display: none;
-}
-
-.zapisnik-boje-u-listi-crud__picker-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.zapisnik-boje-u-listi-crud__picker-box {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1.25rem;
-  background: var(--edit_bg);
-  color: var(--edit_text);
-  border-radius: var(--edit_radius, 8px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  box-sizing: border-box;
-  width: min(338px, calc(100vw - 2rem));
-  max-width: calc(100vw - 2rem);
-  min-width: 0;
-  font-family: var(--font_family);
-  font-size: var(--font_size);
-  font-weight: var(--font_weight);
-}
-
-.zapisnik-boje-u-listi-crud__picker-label {
-  margin: 0;
-  font-family: var(--font_family);
-  font-size: var(--font_size);
-  font-weight: 700;
-  color: var(--edit_text);
-}
-
-.zapisnik-boje-u-listi-crud__picker-color {
-  width: 100%;
-  height: 2.5rem;
-  padding: 0;
-  border: 1px solid var(--edit_border);
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.zapisnik-boje-u-listi-crud__picker-alpha {
-  width: 100%;
-}
-
-/* Pregled: tekst u odabranoj boji na neutralnoj podlozi */
-.zapisnik-boje-u-listi-crud__picker-preview {
-  width: 100%;
-  height: 2.5rem;
-  border: 1px solid var(--edit_border);
-  border-radius: 4px;
-  background: var(--napomena_bg, #fff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font_family);
-  font-size: var(--font_size);
-  font-weight: 700;
-}
-
-.zapisnik-boje-u-listi-crud__picker-hex {
-  margin: 0;
-  font-family: var(--font_family);
-  font-size: var(--font_size);
-  color: var(--edit_text);
-}
-
-.zapisnik-boje-u-listi-crud__picker-actions {
-  display: flex;
-  justify-content: center;
-  gap: 0.75rem;
-  margin-top: 0.25rem;
 }
