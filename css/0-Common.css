@@ -57,6 +57,14 @@
   --kontrola_boja_modal_font_size: var(--font_size);
   --kontrola_boja_modal_font_weight: var(--font_weight);
 
+  /* Spiner (kontrola .kontrola-spiner u 0-Kontrole). JS čita broj_segmenata, segment_omjer, promjer, brzina. */
+  --spiner_promjer: 40px;                            /* vanjski promjer */
+  --spiner_broj_segmenata: 12;                       /* broj segmenata/točkica */
+  --spiner_segment_omjer: 0.26;                      /* veličina segmenta ÷ vanjski promjer */
+  --spiner_boja: var(--c-blue-500);                  /* boja */
+  --spiner_brzina: 1.1s;                             /* trajanje animacije */
+  --spiner_overlay_bg: rgba(255, 255, 255, 0.66);    /* podloga overlaya pri učitavanju */
+
   /* =========================================================
      GRUPA: SJENE – CORE (sirove rgba vrijednosti)
      Sirove boje sjene; koriste se u GRUPA: SJENE KONTROLA i naslov forme.

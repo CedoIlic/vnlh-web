@@ -3315,3 +3315,56 @@ input.kontrola-checkbox[type="checkbox"].kontrola-checkbox--readonly:checked::af
 .kontrola-boja-modal__kor-puna { display: block; width: 100%; height: 2.4rem; border: 1px solid var(--edit_border, #ccc); border-radius: var(--edit_radius, 6px); box-sizing: border-box; }
 .kontrola-boja-modal__kor-pregled-okvir { display: block; width: 100%; height: 3rem; border: 1px solid var(--edit_border, #ccc); border-radius: var(--edit_radius, 6px); overflow: hidden; box-sizing: border-box; background: #fff; }
 .kontrola-boja-modal__kor-pregled { display: block; width: 100%; height: 100%; }
+
+/* ============================================================
+   SPINER (kontrola; dijeljeno) — tokeni u 0-Common (--spiner_*).
+   Varijante: --segment (trakice koje blijede), --dot (točkice, blijede stupnjevito).
+   Strukturu (broj/veličina/raspored) gradi JS (KontroleSpinerInit).
+   ============================================================ */
+.kontrola-spiner {
+  position: relative;
+  display: inline-block;
+  width: var(--spiner_promjer, 40px);
+  height: var(--spiner_promjer, 40px);
+  color: var(--spiner_boja, #6fa8dc);
+  flex: 0 0 auto;
+}
+.kontrola-spiner__dio { position: absolute; background: currentColor; }
+
+/* SEGMENT: trakice, transform-origin u centru, fade po segmentu (delay iz JS-a) */
+.kontrola-spiner--segment .kontrola-spiner__dio {
+  left: 50%;
+  top: 0;
+  width: calc(var(--spiner_promjer, 40px) * 0.085);
+  height: calc(var(--spiner_promjer, 40px) * var(--spiner_segment_omjer, 0.26));
+  margin-left: calc(var(--spiner_promjer, 40px) * -0.0425);
+  border-radius: 999px;
+  transform-origin: center calc(var(--spiner_promjer, 40px) / 2);
+  animation: kontrola-spiner-fade var(--spiner_brzina, 1.1s) linear infinite;
+}
+@keyframes kontrola-spiner-fade { to { opacity: 0.15; } }
+
+/* DOT: točkice u krug (JS rotate+translate); blijede stupnjevito (delay iz JS-a).
+   Animira se samo opacity (ne transform) da ne poništi pozicioniranje točkice. */
+.kontrola-spiner--dot .kontrola-spiner__dio {
+  left: 50%;
+  top: 50%;
+  /* dot = 50% segment omjera (faktor 0.5 mora se podudarati s R u KontroleSpinerInit) */
+  width: calc(var(--spiner_promjer, 40px) * var(--spiner_segment_omjer, 0.26) * 0.5);
+  height: calc(var(--spiner_promjer, 40px) * var(--spiner_segment_omjer, 0.26) * 0.5);
+  margin: calc(var(--spiner_promjer, 40px) * var(--spiner_segment_omjer, 0.26) * 0.5 / -2);
+  border-radius: 50%;
+  animation: kontrola-spiner-fade var(--spiner_brzina, 1.1s) linear infinite;
+}
+
+/* Overlay: prekrije roditelja (position:relative) dok traje učitavanje */
+.kontrola-spiner-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--spiner_overlay_bg, rgba(255, 255, 255, 0.66));
+  z-index: 5;
+}
+.kontrola-spiner-overlay--vidljiv { display: flex; }

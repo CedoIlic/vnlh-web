@@ -348,3 +348,22 @@
   color: var(--label_text_disabled, #888);
   font-style: italic;
 }
+
+/* PRIVREMENI test spinera u preview panelu (korak 1; uklanja se u koraku 4). Kontrola .kontrola-spiner* je u 0-Kontrole.css, tokeni u 0-Common.css. */
+.pdf-stilovi-crud__spiner-test {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 7rem;
+}
+.pdf-stilovi-crud__spiner-test-stavka {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+.pdf-stilovi-crud__spiner-test-oznaka {
+  font-size: 0.85rem;
+  color: var(--label_text, #555);
+}

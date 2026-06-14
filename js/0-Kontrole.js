@@ -2956,6 +2956,42 @@
       global.KontroleBojaRefresh = function (targetId) { KB.osvjeziSwatch(targetId); };
     })();
 
+    /* ========== SPINER (kontrola; dijeljeno) ==========
+       Gradi segmente/točkice iz tokena (--spiner_broj_segmenata, --spiner_segment_omjer,
+       --spiner_promjer, --spiner_brzina). Varijanta po klasi: --segment ili --dot.
+       API: KontroleSpinerInit(el), KontroleSpinerInitAll(root), KontroleSpinerShow/Hide(overlay). */
+    function KontroleSpinerInit(el) {
+      if (!el || el.dataset.spinerInit === '1') return;
+      el.dataset.spinerInit = '1';
+      var cs = getComputedStyle(el);
+      var n = parseInt(cs.getPropertyValue('--spiner_broj_segmenata'), 10) || 12;
+      var promjer = parseFloat(cs.getPropertyValue('--spiner_promjer')) || 40;
+      var omjer = parseFloat(cs.getPropertyValue('--spiner_segment_omjer')) || 0.26;
+      var brzina = parseFloat(cs.getPropertyValue('--spiner_brzina')) || 1.1; /* sekunde */
+      var jeDot = el.classList.contains('kontrola-spiner--dot');
+      var ang = 360 / n;
+      /* dot je 50% manji od segment omjera (faktor 0.5 mora se podudarati s CSS-om) → vanjski rub do ruba kruga */
+      var R = (promjer - promjer * omjer * 0.5) / 2;
+      el.innerHTML = '';
+      for (var i = 0; i < n; i++) {
+        var s = document.createElement('span');
+        s.className = 'kontrola-spiner__dio';
+        s.style.animationDelay = ((i / n) * brzina).toFixed(3) + 's';
+        if (jeDot) s.style.transform = 'rotate(' + (i * ang) + 'deg) translateY(-' + R.toFixed(2) + 'px)';
+        else s.style.transform = 'rotate(' + (i * ang) + 'deg)';
+        el.appendChild(s);
+      }
+    }
+    function KontroleSpinerInitAll(root) {
+      Array.prototype.forEach.call((root || document).querySelectorAll('.kontrola-spiner'), KontroleSpinerInit);
+    }
+    function KontroleSpinerShow(overlay) { if (overlay) overlay.classList.add('kontrola-spiner-overlay--vidljiv'); }
+    function KontroleSpinerHide(overlay) { if (overlay) overlay.classList.remove('kontrola-spiner-overlay--vidljiv'); }
+    global.KontroleSpinerInit = KontroleSpinerInit;
+    global.KontroleSpinerInitAll = KontroleSpinerInitAll;
+    global.KontroleSpinerShow = KontroleSpinerShow;
+    global.KontroleSpinerHide = KontroleSpinerHide;
+
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function () {
         runScrollbarStyles();
@@ -2968,6 +3004,7 @@
         initButtonTouchFeedback(document);
         syncLabelsDisabledState(document);
         KontroleBojaInit(document);
+        KontroleSpinerInitAll(document);
       });
     } else {
       runScrollbarStyles();
@@ -2980,6 +3017,7 @@
       initButtonTouchFeedback(document);
       syncLabelsDisabledState(document);
       KontroleBojaInit(document);
+      KontroleSpinerInitAll(document);
     }
     window.addEventListener('load', runScrollbarStyles);
     global.KontroleRefreshScrollbarHoverColor = function () {

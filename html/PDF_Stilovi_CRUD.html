@@ -338,7 +338,17 @@
         <div class="kontrola-panel__header pdf-stilovi-crud__preview-header">Pregled</div>
         <div class="kontrola-panel__body pdf-stilovi-crud__preview-body">
             <div id="stiloviPreview" class="pdf-stilovi-crud__preview" aria-label="Pregled stila paragrafa">
-                <p class="pdf-stilovi-crud__preview-placeholder">(pregled se aktivira u koraku 4 — pdfmake)</p>
+                <!-- PRIVREMENI TEST spinera (korak 1) — uklanja se kad dođe pdfmake preview (korak 4) -->
+                <div class="pdf-stilovi-crud__spiner-test">
+                    <div class="pdf-stilovi-crud__spiner-test-stavka">
+                        <span class="kontrola-spiner kontrola-spiner--segment" id="spinerSeg" role="status" aria-label="Učitavanje"></span>
+                        <span class="pdf-stilovi-crud__spiner-test-oznaka">segment</span>
+                    </div>
+                    <div class="pdf-stilovi-crud__spiner-test-stavka">
+                        <span class="kontrola-spiner kontrola-spiner--dot" id="spinerDot" role="status" aria-label="Učitavanje"></span>
+                        <span class="pdf-stilovi-crud__spiner-test-oznaka">dot</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
