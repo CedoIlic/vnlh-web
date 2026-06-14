@@ -3093,6 +3093,29 @@ input.kontrola-checkbox[type="checkbox"].kontrola-checkbox--readonly:checked::af
   -webkit-mask-repeat: no-repeat;
 }
 
+/* Toggle redaka (pregled): jedna crta / tri crte */
+.kontrola-icon--jedan-redak,
+.kontrola-icon--vise-redaka {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-size: 20px 20px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 20px 20px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+.kontrola-icon--jedan-redak {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='4' y1='12' x2='20' y2='12'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='4' y1='12' x2='20' y2='12'/%3E%3C/svg%3E");
+}
+.kontrola-icon--vise-redaka {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='4' y1='6' x2='20' y2='6'/%3E%3Cline x1='4' y1='12' x2='20' y2='12'/%3E%3Cline x1='4' y1='18' x2='14' y2='18'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='4' y1='6' x2='20' y2='6'/%3E%3Cline x1='4' y1='12' x2='20' y2='12'/%3E%3Cline x1='4' y1='18' x2='14' y2='18'/%3E%3C/svg%3E");
+}
+
 /* Header panela tablice s reload ikonom (kad je Reload_Ikona = 1) */
 .obredi-crud__tablica-header {
   display: flex;

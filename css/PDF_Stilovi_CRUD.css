@@ -53,15 +53,24 @@
 }
 
 /* Naziv stila (iznad tabova) */
+/* Naziv red = puna širina panela: sam naziv 100%, s „Nasljedi stil" 50/50 */
 .pdf-stilovi-crud__naziv-red {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+.pdf-stilovi-crud__naziv-polje,
+.pdf-stilovi-crud__naslijedi-polje {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  max-width: 28rem;
+  flex: 1 1 0;
+  min-width: 0;
 }
-.pdf-stilovi-crud__naziv-kontrola {
-  width: 100%;
-}
+/* [hidden] mora nadjačati display:flex (inače skrivanje praznog selekta ne radi) */
+.pdf-stilovi-crud__naslijedi-polje[hidden] { display: none; }
+.pdf-stilovi-crud__naziv-kontrola { width: 100%; }
+.pdf-stilovi-crud__naslijedi { width: 100%; }
 
 /* Redovi polja unutar tab-panela */
 .pdf-stilovi-crud__red {
@@ -304,10 +313,10 @@
   margin-bottom: 1rem;
 }
 
-/* Hint (okvir preuzima pozadinu) */
+/* Hint (okvir preuzima pozadinu) — izvan zatamnjene sekcije, ostaje čitljiv/enabled */
 .pdf-stilovi-crud__hint {
-  margin: 0.25rem 0 0;
-  color: var(--label_text_disabled, #888);
+  margin: 0.5rem 0 0;
+  color: var(--label_text, #333);
 }
 
 /* Zasivljena polja kad okvir dominira nad pozadinom */
@@ -331,39 +340,75 @@
 /* Preview panel */
 .pdf-stilovi-crud__preview-header {
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.pdf-stilovi-crud__preview-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--edit_bg, #fff);
+  color: var(--label_text, #333);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .pdf-stilovi-crud__preview-toggle:hover { background: var(--c-gray-100, #eee); }
+}
+.pdf-stilovi-crud__preview-toggle span { width: 18px; height: 18px; }
+.pdf-stilovi-crud__preview-toggle:disabled {
+  background: var(--edit_bg_disabled, #e9ecef);
+  border-color: var(--edit_border_disabled, #ddd);
+  color: var(--label_text_disabled, #999);
+  cursor: not-allowed;
+}
+
+/* Resize panela prati i PDF iframe (flex lanac); inicijalna visina = min (zabrana smanjivanja ispod). */
+.pdf-stilovi-crud__preview-panel {
+  height: 19.5rem;
+  min-height: 19.5rem;
+}
+/* Disabled (bez naziva): neproziran, zasivljen — NE prozirnost. */
+.pdf-stilovi-crud__preview-panel--disabled .pdf-stilovi-crud__preview {
+  background: var(--edit_bg_disabled, #e9ecef);
 }
 .pdf-stilovi-crud__preview-body {
-  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
 }
 .pdf-stilovi-crud__preview {
-  min-height: 8rem;
+  position: relative;                /* sidro za spiner overlay */
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   background: var(--c-gray-100, #f2f2f2);
   border: 1px solid var(--edit_border, #ced4da);
   border-radius: var(--edit_radius, 6px);
   padding: 0.5rem;
   box-sizing: border-box;
 }
-.pdf-stilovi-crud__preview-placeholder {
-  margin: 0;
+.pdf-stilovi-crud__preview-sadrzaj {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--label_text_disabled, #888);
   font-style: italic;
 }
-
-/* PRIVREMENI test spinera u preview panelu (korak 1; uklanja se u koraku 4). Kontrola .kontrola-spiner* je u 0-Kontrole.css, tokeni u 0-Common.css. */
-.pdf-stilovi-crud__spiner-test {
-  display: flex;
-  gap: 3rem;
-  align-items: center;
-  justify-content: center;
-  min-height: 7rem;
-}
-.pdf-stilovi-crud__spiner-test-stavka {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-}
-.pdf-stilovi-crud__spiner-test-oznaka {
-  font-size: 0.85rem;
-  color: var(--label_text, #555);
+.pdf-stilovi-crud__preview-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+  border-radius: var(--edit_radius, 6px);
 }

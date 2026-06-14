@@ -35,10 +35,20 @@
 
             <!-- Naziv stila: uvijek vidljiv iznad tabova -->
             <div class="pdf-stilovi-crud__naziv-red">
-                <label class="kontrola-labela mb-0" for="edit_naziv">Naziv stila</label>
-                <div class="kontrola-edit-delete pdf-stilovi-crud__naziv-kontrola">
-                    <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="npr. Naslov1, Tijelo" maxlength="50" autocomplete="off">
-                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                <div class="pdf-stilovi-crud__naziv-polje">
+                    <label class="kontrola-labela mb-0" for="edit_naziv">Naziv stila</label>
+                    <div class="kontrola-edit-delete pdf-stilovi-crud__naziv-kontrola">
+                        <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="npr. Naslov1, Tijelo" maxlength="50" autocomplete="off">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    </div>
+                </div>
+                <div class="pdf-stilovi-crud__naslijedi-polje" id="naslijediWrap" hidden>
+                    <label class="kontrola-labela mb-0" for="edit_naslijedi">Nasljedi stil</label>
+                    <div class="kontrola-select pdf-stilovi-crud__naslijedi">
+                        <select id="edit_naslijedi" aria-label="Nasljedi stil">
+                            <option value="">— odaberi —</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -171,6 +181,10 @@
                                     </div>
                                 </div>
                                 <span class="pdf-stilovi-crud__cb pdf-stilovi-crud__cb--desno">
+                                    <input type="checkbox" id="edit_pozadina_popuni_razmak" class="kontrola-checkbox" value="1" aria-label="Popuni razmak pozadinom">
+                                    <label class="kontrola-labela mb-0" for="edit_pozadina_popuni_razmak">Popuni razmak pozadinom</label>
+                                </span>
+                                <span class="pdf-stilovi-crud__cb">
                                     <input type="checkbox" id="edit_pozadina_cijeli_red" class="kontrola-checkbox" value="1" aria-label="Preko cijelog retka">
                                     <label class="kontrola-labela mb-0" for="edit_pozadina_cijeli_red">Preko cijelog retka</label>
                                 </span>
@@ -206,8 +220,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <p class="pdf-stilovi-crud__hint" id="pozadina_okvir_hint" hidden>Okvir je aktivan — podloga okvira preuzima pozadinu (ova polja se ignoriraju).</p>
                         </div>
+                        <p class="pdf-stilovi-crud__hint" id="pozadina_okvir_hint" hidden>Okvir je aktivan — podloga okvira preuzima pozadinu (ova polja se ignoriraju).</p>
                     </div>
 
                     <!-- TAB 2: Okvir -->
@@ -335,19 +349,17 @@
 
     <!-- Panel 3: preview (pdfmake — korak 4) — ispod, puna širina -->
     <div class="kontrola-panel kontrola-panel--resize-y mb-3 pdf-stilovi-crud__preview-panel">
-        <div class="kontrola-panel__header pdf-stilovi-crud__preview-header">Pregled</div>
+        <div class="kontrola-panel__header pdf-stilovi-crud__preview-header">
+            <span>Pregled</span>
+            <button type="button" id="stiloviPreviewToggle" class="pdf-stilovi-crud__preview-toggle" aria-label="Prikaži jedan redak" title="Jedan redak / više redaka">
+                <span class="kontrola-icon--vise-redaka" aria-hidden="true"></span>
+            </button>
+        </div>
         <div class="kontrola-panel__body pdf-stilovi-crud__preview-body">
             <div id="stiloviPreview" class="pdf-stilovi-crud__preview" aria-label="Pregled stila paragrafa">
-                <!-- PRIVREMENI TEST spinera (korak 1) — uklanja se kad dođe pdfmake preview (korak 4) -->
-                <div class="pdf-stilovi-crud__spiner-test">
-                    <div class="pdf-stilovi-crud__spiner-test-stavka">
-                        <span class="kontrola-spiner kontrola-spiner--segment" id="spinerSeg" role="status" aria-label="Učitavanje"></span>
-                        <span class="pdf-stilovi-crud__spiner-test-oznaka">segment</span>
-                    </div>
-                    <div class="pdf-stilovi-crud__spiner-test-stavka">
-                        <span class="kontrola-spiner kontrola-spiner--dot" id="spinerDot" role="status" aria-label="Učitavanje"></span>
-                        <span class="pdf-stilovi-crud__spiner-test-oznaka">dot</span>
-                    </div>
+                <div id="stiloviPreviewSadrzaj" class="pdf-stilovi-crud__preview-sadrzaj"></div>
+                <div id="stiloviPreviewSpiner" class="kontrola-spiner-overlay" aria-hidden="true">
+                    <span class="kontrola-spiner kontrola-spiner--segment" role="status" aria-label="Učitavanje"></span>
                 </div>
             </div>
         </div>

@@ -9,6 +9,7 @@ CREATE TABLE `pdf_paragraf` (
   `boja`                     varchar(7) NOT NULL DEFAULT '#000000' COMMENT 'Boja teksta, hex',
   `boja_pozadine`            varchar(7) DEFAULT NULL COMMENT 'Boja pozadine teksta, hex; NULL=bez',
   `pozadina_cijeli_red`      tinyint(1) NOT NULL DEFAULT 0 COMMENT '0=highlight iza teksta; 1=puna traka',
+  `pozadina_popuni_razmak`   tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Boja pozadine puni i razmak do sljedeceg odlomka istog tipa (1=da); dominira pozadina gornjeg; ne vrijedi za zadnji u nizu istog tipa',
   `traka_padding_lijevo_mm`  decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Padding lijevo trake u mm',
   `traka_padding_desno_mm`   decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Padding desno trake u mm',
   `traka_padding_gore_mm`    decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Padding gore trake u mm',

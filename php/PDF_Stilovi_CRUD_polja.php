@@ -80,6 +80,7 @@ function pdf_stilovi_citaj_polja(&$code)
         ['boja', 's', pdf_stil_hex('boja', false)],
         ['boja_pozadine', 's', pdf_stil_hex('boja_pozadine', true)],
         ['pozadina_cijeli_red', 'i', pdf_stil_bool('pozadina_cijeli_red')],
+        ['pozadina_popuni_razmak', 'i', pdf_stil_bool('pozadina_popuni_razmak')],
         ['traka_padding_lijevo_mm', 'd', pdf_stil_dec('traka_padding_lijevo_mm', 0, 999.99, 0)],
         ['traka_padding_desno_mm', 'd', pdf_stil_dec('traka_padding_desno_mm', 0, 999.99, 0)],
         ['traka_padding_gore_mm', 'd', pdf_stil_dec('traka_padding_gore_mm', 0, 999.99, 0)],
