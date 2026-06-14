@@ -83,30 +83,35 @@
     return 'rgba(0,0,0,1)';
   }
 
-  function applyBojaToDisplay(displayEl, storageVal) {
-    if (!displayEl) return;
-    if (!storageVal || trim(storageVal) === '') {
-      displayEl.value = '';
-      displayEl.style.backgroundColor = '';
-      displayEl.style.color = '';
-      return;
-    }
-    var parsed = bojaFromStorage(storageVal);
-    displayEl.value = storageVal;
-    displayEl.style.backgroundColor = hexAlphaToRgba(parsed.hex, parsed.alpha);
-    displayEl.style.color = '';
+  /* Konverzije dijeljeni picker (kontrola-boja: 6-hex opaque / 8-hex prozirno) ↔ pohrana (#RRGGBBAA). */
+  function storageToKb(storageVal) {
+    if (!storageVal || trim(storageVal) === '') return '';
+    var p = bojaFromStorage(storageVal);
+    if (p.alpha >= 255) return p.hex.toUpperCase();
+    var aa = (p.alpha < 16 ? '0' : '') + p.alpha.toString(16).toUpperCase();
+    return (p.hex + aa).toUpperCase();
+  }
+  function kbToStorage(kbVal) {
+    if (!kbVal || trim(kbVal) === '') return '';
+    var p = bojaFromStorage(kbVal);
+    return bojaToStorage(p.hex, p.alpha);
+  }
+  function setKbBoja(kbVal) {
+    var el = document.getElementById('boja_kb');
+    if (!el) return;
+    el.value = kbVal || '';
+    if (window.KontroleBojaRefresh) KontroleBojaRefresh('boja_kb');
   }
 
   function clearControlsFromSelection() {
     var idEl = document.getElementById('id_edit');
     var nazivEl = document.getElementById('naziv_edit');
     var opisEl = document.getElementById('opis_edit');
-    var bojaDisplay = document.getElementById('boja_display');
     var aktivnostEl = document.getElementById('aktivnost_edit');
     if (idEl) idEl.value = '';
     if (nazivEl) { nazivEl.value = ''; nazivEl.dispatchEvent(new Event('input', { bubbles: true })); }
     if (opisEl) opisEl.value = '';
-    if (bojaDisplay) applyBojaToDisplay(bojaDisplay, '');
+    setKbBoja('');
     if (aktivnostEl) aktivnostEl.checked = false;
     resizeOpisToContent();
   }
@@ -142,7 +147,6 @@
         var idEl = document.getElementById('id_edit');
         var nazivEl = document.getElementById('naziv_edit');
         var opisEl = document.getElementById('opis_edit');
-        var bojaDisplay = document.getElementById('boja_display');
         var aktivnostEl = document.getElementById('aktivnost_edit');
         var raw = zastaviceRawData[i];
         if (idEl) idEl.value = String(row[0] != null ? row[0] : '');
@@ -151,7 +155,7 @@
           nazivEl.dispatchEvent(new Event('input', { bubbles: true }));
         }
         if (opisEl) opisEl.value = (raw && raw.opis != null) ? String(raw.opis) : '';
-        if (bojaDisplay) applyBojaToDisplay(bojaDisplay, (raw && raw.boja != null) ? String(raw.boja) : '');
+        setKbBoja(storageToKb((raw && raw.boja != null) ? String(raw.boja) : ''));
         if (aktivnostEl) aktivnostEl.checked = (raw && (raw.aktivnost === 1 || raw.aktivnost === true || raw.aktivnost === '1'));
         break;
       }
@@ -204,9 +208,9 @@
       if (labelNaziv) labelNaziv.classList.remove('kontrola-labela--disabled');
       var btnPovratak = document.getElementById('btnPovratak');
       if (btnPovratak) btnPovratak.removeAttribute('disabled');
-      var bojaPickerBtn = document.getElementById('boja_picker_btn');
+      var bojaPickerBtn = document.getElementById('boja_kb_trigger');
       if (bojaPickerBtn) bojaPickerBtn.disabled = !imaTekstUNazivu;
-      var labelBoja = document.querySelector('.kontrola-labela[for="boja_display"]');
+      var labelBoja = document.querySelector('.kontrola-labela[for="boja_kb"]');
       if (labelBoja) labelBoja.classList.toggle('kontrola-labela--disabled', !imaTekstUNazivu);
       var labelCheckbox = document.querySelector('.clanovi-zastavice-crud__label-checkbox');
       if (labelCheckbox) labelCheckbox.classList.toggle('kontrola-labela--disabled', !imaTekstUNazivu);
@@ -246,68 +250,7 @@
     if (btnReloadTablica) btnReloadTablica.addEventListener('click', osvjeziTablicu);
   }
 
-  (function () {
-    var bojaDisplay = document.getElementById('boja_display');
-    var pickerBtn = document.getElementById('boja_picker_btn');
-    var modal = document.getElementById('boja_picker_modal');
-    var pickerColor = document.getElementById('boja_picker_color');
-    var pickerAlpha = document.getElementById('boja_picker_alpha');
-    var pickerHex = document.getElementById('boja_picker_hex');
-    var pickerOk = document.getElementById('boja_picker_ok');
-    var pickerCancel = document.getElementById('boja_picker_cancel');
-
-    var pickerPreview = document.getElementById('boja_picker_preview');
-
-    function openPicker() {
-      var current = (bojaDisplay && bojaDisplay.value) ? bojaDisplay.value.trim() : '';
-      var parsed = bojaFromStorage(current);
-      if (pickerColor) pickerColor.value = parsed.hex;
-      if (pickerAlpha) pickerAlpha.value = String(parsed.alpha);
-      updatePickerHex();
-      updatePickerPreview();
-      if (modal) { modal.hidden = false; modal.removeAttribute('hidden'); }
-      if (pickerOk) pickerOk.focus();
-    }
-
-    function closePicker() {
-      if (modal) { modal.hidden = true; modal.setAttribute('hidden', ''); }
-    }
-
-    function updatePickerHex() {
-      var hex = pickerColor ? pickerColor.value : '#000000';
-      var a = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
-      if (isNaN(a)) a = 255;
-      var storage = bojaToStorage(hex, a);
-      if (pickerHex) pickerHex.textContent = storage || '—';
-    }
-
-    function updatePickerPreview() {
-      if (!pickerPreview) return;
-      var hex = pickerColor ? pickerColor.value : '#000000';
-      var a = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
-      if (isNaN(a)) a = 255;
-      pickerPreview.style.backgroundColor = hexAlphaToRgba(hex, a);
-    }
-
-    function applyFromPicker() {
-      var hex = pickerColor ? pickerColor.value : '#000000';
-      var a = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
-      if (isNaN(a)) a = 255;
-      var storage = bojaToStorage(hex, a);
-      if (bojaDisplay) applyBojaToDisplay(bojaDisplay, storage);
-      closePicker();
-    }
-
-    if (pickerBtn) pickerBtn.addEventListener('click', openPicker);
-    if (pickerColor) {
-      pickerColor.addEventListener('input', function () { updatePickerHex(); updatePickerPreview(); });
-    }
-    if (pickerAlpha) {
-      pickerAlpha.addEventListener('input', function () { updatePickerHex(); updatePickerPreview(); });
-    }
-    if (pickerOk) pickerOk.addEventListener('click', applyFromPicker);
-    if (pickerCancel) pickerCancel.addEventListener('click', closePicker);
-  })();
+  /* Boju bira dijeljeni picker (kontrola-boja, auto-init u 0-Kontrole.js); vrijednost je u #boja_kb. */
 
   (function () {
     var opisEl = document.getElementById('opis_edit');
@@ -319,12 +262,12 @@
       var idEl = document.getElementById('id_edit');
       var nazivEl = document.getElementById('naziv_edit');
       var opisEl = document.getElementById('opis_edit');
-      var bojaDisplay = document.getElementById('boja_display');
+      var kbEl = document.getElementById('boja_kb');
       var aktivnostEl = document.getElementById('aktivnost_edit');
       var idVal = idEl ? trim(idEl.value) : '';
       var nazivVal = nazivEl ? trim(nazivEl.value) : '';
       var opisVal = opisEl ? trim(opisEl.value) : '';
-      var bojaVal = bojaDisplay ? trim(bojaDisplay.value) : '';
+      var bojaVal = kbToStorage(kbEl ? kbEl.value : '');
       var aktivnostVal = aktivnostEl && aktivnostEl.checked ? 1 : 0;
       if (nazivVal === '') return;
       var jeIzmjena = this.classList.contains('kontrola-btn--crud-izmjeni');

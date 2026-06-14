@@ -34,15 +34,14 @@
                 </div>
                 <div class="clanovi-zastavice-crud__edit-row__boja-wrap">
                     <div class="clanovi-zastavice-crud__cell clanovi-zastavice-crud__cell--boja">
-                        <label class="kontrola-labela mb-0" for="boja_display">Boja</label>
-                        <input id="boja_display" type="text" class="kontrola-edit clanovi-zastavice-crud__boja-display" readonly aria-label="Odabrana boja">
-                    </div>
-                    <div class="clanovi-zastavice-crud__cell clanovi-zastavice-crud__cell--icon">
-                        <button type="button" id="boja_picker_btn" class="clanovi-zastavice-crud__boja-icon-btn" aria-label="Odaberi boju">
-                            <svg class="clanovi-zastavice-crud__boja-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.38 3.39a15.995 15.995 0 0 0 4.769-4.769 3.39 3.39 0 0 0-3.39-3.39 15.995 15.995 0 0 0-4.77 4.77 3.39 3.39 0 0 0 3.39 3.39z"/>
-                            </svg>
-                        </button>
+                        <label class="kontrola-labela mb-0" for="boja_kb">Boja</label>
+                        <div class="kontrola-boja" data-boja-za="boja_kb" data-boja-nullable="1">
+                            <button type="button" id="boja_kb_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju">
+                                <span class="kontrola-icon--paleta" aria-hidden="true"></span>
+                            </button>
+                            <input id="boja_kb" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" readonly aria-label="Odabrana boja (hex)">
+                            <span class="kontrola-boja__swatch" aria-hidden="true"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -65,23 +64,6 @@
             <div class="clanovi-zastavice-crud__footer-right">
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
             </div>
-        </div>
-    </div>
-</div>
-<!-- Skriveni color+alpha picker (otvara se klikom na ikonu) -->
-<div id="boja_picker_modal" class="clanovi-zastavice-crud__picker-modal" role="dialog" aria-label="Odabir boje" aria-modal="true" hidden>
-    <div class="clanovi-zastavice-crud__picker-backdrop"></div>
-    <div class="clanovi-zastavice-crud__picker-box">
-        <p class="clanovi-zastavice-crud__picker-label">Boja</p>
-        <input type="color" id="boja_picker_color" value="#000000" class="clanovi-zastavice-crud__picker-color">
-        <p class="clanovi-zastavice-crud__picker-label">Prozirnost</p>
-        <input type="range" id="boja_picker_alpha" min="0" max="255" value="255" class="clanovi-zastavice-crud__picker-alpha">
-        <p class="clanovi-zastavice-crud__picker-label">Pregled</p>
-        <div id="boja_picker_preview" class="clanovi-zastavice-crud__picker-preview" aria-hidden="true"></div>
-        <p class="clanovi-zastavice-crud__picker-hex" id="boja_picker_hex"></p>
-        <div class="clanovi-zastavice-crud__picker-actions">
-            <button type="button" id="boja_picker_ok" class="kontrola-btn" autofocus><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">U redu</span></span></span></button>
-            <button type="button" id="boja_picker_cancel" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
         </div>
     </div>
 </div>
