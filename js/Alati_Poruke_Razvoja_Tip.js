@@ -30,8 +30,6 @@
   var onCrudSelectionChange = null;
   /** Redovi iz API-ja za sinkron panel ↔ tablica */
   var bojeRawData = [];
-  /** 'fg' | 'bg' – koji se input puni iz modala pickera */
-  var pickerTarget = 'fg';
 
   CommonCRUD.initTablica('tablicaContainer', AlatiPorukeRazvojaTip, {
     getRowId: function (row) { return row != null && row.length > 0 ? row[0] : null; },
@@ -152,18 +150,24 @@
   }
 
   /** Puni readonly input + vizual pozadine (jedna boja po polju). */
-  function applyBojaToDisplay(displayEl, storageVal) {
-    if (!displayEl) return;
-    if (!storageVal || trim(storageVal) === '') {
-      displayEl.value = '';
-      displayEl.style.backgroundColor = '';
-      displayEl.style.color = '';
-      return;
-    }
-    var parsed = bojaFromStorage(storageVal);
-    displayEl.value = storageVal;
-    displayEl.style.backgroundColor = hexAlphaToRgba(parsed.hex, parsed.alpha);
-    displayEl.style.color = '';
+  /* Konverzije dijeljeni picker (kontrola-boja: 6-hex opaque / 8-hex prozirno) ↔ pohrana (#RRGGBBAA). */
+  function storageToKb(storageVal) {
+    if (!storageVal || trim(storageVal) === '') return '';
+    var p = bojaFromStorage(storageVal);
+    if (p.alpha >= 255) return p.hex.toUpperCase();
+    var aa = (p.alpha < 16 ? '0' : '') + p.alpha.toString(16).toUpperCase();
+    return (p.hex + aa).toUpperCase();
+  }
+  function kbToStorage(kbVal) {
+    if (!kbVal || trim(kbVal) === '') return '';
+    var p = bojaFromStorage(kbVal);
+    return bojaToStorage(p.hex, p.alpha);
+  }
+  function setKbBoja(targetId, kbVal) {
+    var el = document.getElementById(targetId);
+    if (!el) return;
+    el.value = kbVal || '';
+    if (window.KontroleBojaRefresh) KontroleBojaRefresh(targetId);
   }
 
   /** Stupac „Boja teksta“: cijela ćelija = fg (kao uzorak boje). */
@@ -228,8 +232,8 @@
     var fgEl = document.getElementById('fg_boja_display');
     var bgEl = document.getElementById('bg_boja_display');
     if (redEl) redEl.value = '0';
-    if (fgEl) applyBojaToDisplay(fgEl, '');
-    if (bgEl) applyBojaToDisplay(bgEl, '');
+    setKbBoja('fg_boja_display', '');
+    setKbBoja('bg_boja_display', '');
   }
 
   onCrudSelectionChange = function () {
@@ -258,8 +262,8 @@
         var bgEl = document.getElementById('bg_boja_display');
         var redVal = raw && raw.redosljed != null ? safeInt(raw.redosljed, 0) : safeInt(row[1], 0);
         if (redEl) redEl.value = String(Math.max(0, Math.min(255, redVal)));
-        if (fgEl) applyBojaToDisplay(fgEl, raw && raw.fg_boja != null ? String(raw.fg_boja) : (row[2] != null ? String(row[2]) : ''));
-        if (bgEl) applyBojaToDisplay(bgEl, raw && raw.bg_boja != null ? String(raw.bg_boja) : (row[3] != null ? String(row[3]) : ''));
+        setKbBoja('fg_boja_display', storageToKb(raw && raw.fg_boja != null ? String(raw.fg_boja) : (row[2] != null ? String(row[2]) : '')));
+        setKbBoja('bg_boja_display', storageToKb(raw && raw.bg_boja != null ? String(raw.bg_boja) : (row[3] != null ? String(row[3]) : '')));
         break;
       }
       updateCrudUpisiState();
@@ -296,92 +300,18 @@
     redosljedEdit.addEventListener('change', updateCrudUpisiState);
   }
 
-  (function instalirajPickerModal() {
-    var fgDisplay = document.getElementById('fg_boja_display');
-    var bgDisplay = document.getElementById('bg_boja_display');
-    var btnFg = document.getElementById('fg_boja_picker_btn');
-    var btnBg = document.getElementById('bg_boja_picker_btn');
-    var modal = document.getElementById('boja_picker_modal');
-    var pickerColor = document.getElementById('boja_picker_color');
-    var pickerAlpha = document.getElementById('boja_picker_alpha');
-    var pickerHex = document.getElementById('boja_picker_hex');
-    var pickerOk = document.getElementById('boja_picker_ok');
-    var pickerCancel = document.getElementById('boja_picker_cancel');
-    var pickerPreview = document.getElementById('boja_picker_preview');
-    var pickerTitle = document.getElementById('boja_picker_title');
-
-    function getActiveDisplay() {
-      return pickerTarget === 'bg' ? bgDisplay : fgDisplay;
-    }
-
-    function openPicker() {
-      var currentEl = getActiveDisplay();
-      var current = (currentEl && currentEl.value) ? currentEl.value.trim() : '';
-      var parsed = bojaFromStorage(current);
-      if (pickerColor) pickerColor.value = parsed.hex;
-      if (pickerAlpha) pickerAlpha.value = String(parsed.alpha);
-      if (pickerTitle) pickerTitle.textContent = pickerTarget === 'bg' ? 'Boja podloge' : 'Boja teksta';
-      updatePickerHex();
-      updatePickerPreview();
-      if (modal) { modal.hidden = false; modal.removeAttribute('hidden'); }
-      if (pickerOk) pickerOk.focus();
-    }
-
-    function closePicker() {
-      if (modal) { modal.hidden = true; modal.setAttribute('hidden', ''); }
-    }
-
-    function updatePickerHex() {
-      var hex = pickerColor ? pickerColor.value : '#000000';
-      var a = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
-      if (isNaN(a)) a = 255;
-      var storage = bojaToStorage(hex, a);
-      if (pickerHex) pickerHex.textContent = storage || '—';
-    }
-
-    function updatePickerPreview() {
-      if (!pickerPreview) return;
-      var hex = pickerColor ? pickerColor.value : '#000000';
-      var a = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
-      if (isNaN(a)) a = 255;
-      pickerPreview.style.backgroundColor = hexAlphaToRgba(hex, a);
-    }
-
-    function applyFromPicker() {
-      var hex = pickerColor ? pickerColor.value : '#000000';
-      var a = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
-      if (isNaN(a)) a = 255;
-      var storage = bojaToStorage(hex, a);
-      var el = getActiveDisplay();
-      if (el) applyBojaToDisplay(el, storage);
-      closePicker();
-      updateCrudUpisiState();
-    }
-
-    if (btnFg) {
-      btnFg.addEventListener('click', function () {
-        pickerTarget = 'fg';
-        openPicker();
-      });
-    }
-    if (btnBg) {
-      btnBg.addEventListener('click', function () {
-        pickerTarget = 'bg';
-        openPicker();
-      });
-    }
-    if (pickerColor) pickerColor.addEventListener('input', function () { updatePickerHex(); updatePickerPreview(); });
-    if (pickerAlpha) pickerAlpha.addEventListener('input', function () { updatePickerHex(); updatePickerPreview(); });
-    if (pickerOk) pickerOk.addEventListener('click', applyFromPicker);
-    if (pickerCancel) pickerCancel.addEventListener('click', closePicker);
-  })();
+  /* Boju biraju dijeljeni pickeri (kontrola-boja, auto-init u 0-Kontrole.js); na promjenu osvježi Upiši stanje. */
+  ['fg_boja_display', 'bg_boja_display'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateCrudUpisiState);
+  });
 
   if (btnUpisi) {
     btnUpisi.addEventListener('click', function () {
       var fgEl = document.getElementById('fg_boja_display');
       var bgEl = document.getElementById('bg_boja_display');
-      var fgVal = fgEl ? trim(fgEl.value) : '';
-      var bgVal = bgEl ? trim(bgEl.value) : '';
+      var fgVal = kbToStorage(fgEl ? fgEl.value : '');
+      var bgVal = kbToStorage(bgEl ? bgEl.value : '');
       var redVal = redosljedIzPolja();
       var jeIzmjena = this.classList.contains('kontrola-btn--crud-izmjeni');
       if (jeIzmjena) {
