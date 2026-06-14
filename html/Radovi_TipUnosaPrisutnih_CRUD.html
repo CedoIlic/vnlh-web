@@ -40,13 +40,14 @@
                     <div class="radovi-tip-unosa-pris-crud__boja-wrap">
                         <div class="radovi-tip-unosa-pris-crud__polje radovi-tip-unosa-pris-crud__polje--boja">
                             <label class="kontrola-labela mb-0" for="edit_boja_prikaza">Boja prikaza</label>
-                            <input id="edit_boja_prikaza" type="text" class="kontrola-edit kontrola-edit--readonly radovi-tip-unosa-pris-crud__boja-display" readonly tabindex="-1" aria-readonly="true" aria-label="Boja prikaza (izbornik ili prazno)">
+                            <div class="kontrola-boja" data-boja-za="edit_boja_prikaza" data-boja-nullable="1">
+                                <button type="button" id="edit_boja_prikaza_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju prikaza">
+                                    <span class="kontrola-icon--paleta" aria-hidden="true"></span>
+                                </button>
+                                <input id="edit_boja_prikaza" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" readonly aria-label="Boja prikaza (hex)">
+                                <span class="kontrola-boja__swatch" aria-hidden="true"></span>
+                            </div>
                         </div>
-                        <button type="button" id="radovi_tip_pris_boja_picker_btn" class="radovi-tip-unosa-pris-crud__boja-icon-btn" aria-label="Odaberi boju prikaza" title="Paleta boje">
-                            <svg class="radovi-tip-unosa-pris-crud__boja-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-5.78 1.128 2.25 2.25 0 0 1-2.4 2.245 4.5 4.5 0 0 0 8.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 0 0 3.388-1.62m-5.043-.025a15.994 15.994 0 0 1 1.622-3.395m3.38 3.39a15.995 15.995 0 0 0 4.769-4.769 3.39 3.39 0 0 0-3.39-3.39 15.995 15.995 0 0 0-4.77 4.77 3.39 3.39 0 0 0 3.39 3.39z"/>
-                            </svg>
-                        </button>
                     </div>
                 </div>
                 <div class="radovi-tip-unosa-pris-crud__duznosnik-red">
@@ -67,23 +68,6 @@
             <div class="radovi-tip-unosa-pris-crud__footer-right">
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
             </div>
-        </div>
-    </div>
-</div>
-
-<div id="radovi_tip_pris_boja_modal" class="radovi-tip-unosa-pris-picker__modal" role="dialog" aria-label="Odabir boje prikaza" aria-modal="true" hidden>
-    <div class="radovi-tip-unosa-pris-picker__backdrop"></div>
-    <div class="radovi-tip-unosa-pris-picker__box">
-        <p class="radovi-tip-unosa-pris-picker__label">Boja</p>
-        <input type="color" id="radovi_tip_pris_boja_picker_color" value="#000000" class="radovi-tip-unosa-pris-picker__color">
-        <p class="radovi-tip-unosa-pris-picker__label">Prozirnost</p>
-        <input type="range" id="radovi_tip_pris_boja_picker_alpha" min="0" max="255" value="255" class="radovi-tip-unosa-pris-picker__alpha">
-        <p class="radovi-tip-unosa-pris-picker__label">Pregled</p>
-        <div id="radovi_tip_pris_boja_picker_preview" class="radovi-tip-unosa-pris-picker__preview" aria-hidden="true"></div>
-        <p class="radovi-tip-unosa-pris-picker__hex" id="radovi_tip_pris_boja_picker_hex"></p>
-        <div class="radovi-tip-unosa-pris-picker__actions">
-            <button type="button" id="radovi_tip_pris_boja_picker_ok" class="kontrola-btn" autofocus><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">U redu</span></span></span></button>
-            <button type="button" id="radovi_tip_pris_boja_picker_cancel" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
         </div>
     </div>
 </div>

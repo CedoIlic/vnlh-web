@@ -97,18 +97,24 @@
   }
 
   /** Polje „Boja prikaza”: prikaz zapisane vrijednosti + bg pregled boje (read-only). */
-  function applyBojaToBojaDisplayField(storageVal) {
-    if (!editBojaPrikaza) return;
-    if (!storageVal || trim(storageVal) === '') {
-      editBojaPrikaza.value = '';
-      editBojaPrikaza.style.backgroundColor = '';
-      editBojaPrikaza.style.color = '';
-      return;
-    }
-    var parsed = bojaFromStorage(storageVal);
-    editBojaPrikaza.value = storageVal;
-    editBojaPrikaza.style.backgroundColor = hexAlphaToRgba(parsed.hex, parsed.alpha);
-    editBojaPrikaza.style.color = '';
+  /* Konverzije dijeljeni picker (kontrola-boja: 6-hex opaque / 8-hex prozirno) ↔ pohrana (#RRGGBBAA). */
+  function storageToKb(storageVal) {
+    if (!storageVal || trim(storageVal) === '') return '';
+    var p = bojaFromStorage(storageVal);
+    if (p.alpha >= 255) return p.hex.toUpperCase();
+    var aa = (p.alpha < 16 ? '0' : '') + p.alpha.toString(16).toUpperCase();
+    return (p.hex + aa).toUpperCase();
+  }
+  function kbToStorage(kbVal) {
+    if (!kbVal || trim(kbVal) === '') return '';
+    var p = bojaFromStorage(kbVal);
+    return bojaToStorage(p.hex, p.alpha);
+  }
+  function setKbBoja(targetId, kbVal) {
+    var el = document.getElementById(targetId);
+    if (!el) return;
+    el.value = kbVal || '';
+    if (window.KontroleBojaRefresh) KontroleBojaRefresh(targetId);
   }
 
   /** Boja teksta u polju „Naziv” = odabrana boja prikaza (za pregled u formi). */
@@ -141,7 +147,7 @@
     if (editSlobodanUnos) editSlobodanUnos.disabled = dis;
     if (editSviClanoviObedijncije) editSviClanoviObedijncije.disabled = dis;
     if (editBojaPrikaza) editBojaPrikaza.disabled = dis;
-    var pickerBtn = document.getElementById('radovi_tip_pris_boja_picker_btn');
+    var pickerBtn = document.getElementById('edit_boja_prikaza_trigger');
     if (pickerBtn) pickerBtn.disabled = dis;
     if (editPanel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(editPanel);
   }
@@ -157,7 +163,7 @@
     if (editDuznosnikOk) editDuznosnikOk.checked = false;
     if (editSlobodanUnos) editSlobodanUnos.checked = false;
     if (editSviClanoviObedijncije) editSviClanoviObedijncije.checked = false;
-    applyBojaToBojaDisplayField('');
+    setKbBoja('edit_boja_prikaza', '');
     applyFgNazivFromBoja('');
     syncEditPanelDisabledState();
   }
@@ -178,7 +184,7 @@
               editRedosljed.value = (r != null && r !== '' && Number(r) > 0) ? String(r) : '';
             }
             var bojaStr = data[i][2] != null ? String(data[i][2]) : '';
-            applyBojaToBojaDisplayField(trim(bojaStr) === '' ? '' : bojaStr);
+            setKbBoja('edit_boja_prikaza', storageToKb(trim(bojaStr) === '' ? '' : bojaStr));
             applyFgNazivFromBoja(trim(bojaStr) === '' ? '' : bojaStr);
             if (editSviClanoviObedijncije) {
               var sv = data[i][3];
@@ -211,7 +217,7 @@
       if (editDuznosnikOk) editDuznosnikOk.checked = false;
       if (editSlobodanUnos) editSlobodanUnos.checked = false;
       if (editSviClanoviObedijncije) editSviClanoviObedijncije.checked = false;
-      applyBojaToBojaDisplayField('');
+      setKbBoja('edit_boja_prikaza', '');
       applyFgNazivFromBoja('');
       if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
       syncEditPanelDisabledState();
@@ -236,7 +242,7 @@
   }
 
   function bojaPrikazaZaPost() {
-    return editBojaPrikaza ? trim(editBojaPrikaza.value) : '';
+    return kbToStorage(editBojaPrikaza ? editBojaPrikaza.value : '');
   }
 
   function updateCrudUpisiState() {
@@ -270,82 +276,11 @@
     editSviClanoviObedijncije.addEventListener('change', updateCrudUpisiState);
   }
 
-  /* --- Modal izbor boje (isto ponašanje kao Clanovi_Zastavice_CRUD) --- */
-  (function initBojaPickerModal() {
-    var pickerBtn = document.getElementById('radovi_tip_pris_boja_picker_btn');
-    var modal = document.getElementById('radovi_tip_pris_boja_modal');
-    var pickerColor = document.getElementById('radovi_tip_pris_boja_picker_color');
-    var pickerAlpha = document.getElementById('radovi_tip_pris_boja_picker_alpha');
-    var pickerHex = document.getElementById('radovi_tip_pris_boja_picker_hex');
-    var pickerPreview = document.getElementById('radovi_tip_pris_boja_picker_preview');
-    var pickerOk = document.getElementById('radovi_tip_pris_boja_picker_ok');
-    var pickerCancel = document.getElementById('radovi_tip_pris_boja_picker_cancel');
-    if (!pickerBtn || !modal || !pickerColor || !pickerAlpha) return;
-
-    function openPicker() {
-      var current = editBojaPrikaza ? trim(editBojaPrikaza.value) : '';
-      var parsed = bojaFromStorage(current);
-      pickerColor.value = parsed.hex;
-      pickerAlpha.value = String(parsed.alpha);
-      updatePickerHex();
-      updatePickerPreview();
-      modal.removeAttribute('hidden');
-      document.body.style.overflow = 'hidden';
-      if (pickerOk) pickerOk.focus();
-    }
-
-    function closePicker() {
-      modal.setAttribute('hidden', '');
-      document.body.style.overflow = '';
-    }
-
-    function updatePickerHex() {
-      var hex = pickerColor ? pickerColor.value : '#000000';
-      var a = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
-      if (isNaN(a)) a = 255;
-      var storage = bojaToStorage(hex, a);
-      if (pickerHex) pickerHex.textContent = storage || '—';
-    }
-
-    function updatePickerPreview() {
-      if (!pickerPreview) return;
-      var hex = pickerColor ? pickerColor.value : '#000000';
-      var a = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
-      if (isNaN(a)) a = 255;
-      pickerPreview.style.backgroundColor = hexAlphaToRgba(hex, a);
-    }
-
-    function applyFromPicker() {
-      var hex = pickerColor ? pickerColor.value : '#000000';
-      var a = parseInt(pickerAlpha ? pickerAlpha.value : '255', 10);
-      if (isNaN(a)) a = 255;
-      var storage = bojaToStorage(hex, a);
-      applyBojaToBojaDisplayField(storage);
-      applyFgNazivFromBoja(storage);
-      closePicker();
-    }
-
-    pickerBtn.addEventListener('click', function () {
-      if (pickerBtn.disabled) return;
-      openPicker();
-    });
-    if (pickerColor) {
-      pickerColor.addEventListener('input', function () {
-        updatePickerHex();
-        updatePickerPreview();
-      });
-    }
-    if (pickerAlpha) {
-      pickerAlpha.addEventListener('input', function () {
-        updatePickerHex();
-        updatePickerPreview();
-      });
-    }
-    if (pickerOk) pickerOk.addEventListener('click', applyFromPicker);
-    if (pickerCancel) pickerCancel.addEventListener('click', closePicker);
-    var backdrop = modal.querySelector('.radovi-tip-unosa-pris-picker__backdrop');
-    if (backdrop) backdrop.addEventListener('click', closePicker);
-  })();
+  /* Boju bira dijeljeni picker (kontrola-boja, auto-init u 0-Kontrole.js); vrijednost u #edit_boja_prikaza.
+     Na promjenu (picker OK) osvježi boju teksta u polju Naziv. */
+  if (editBojaPrikaza) editBojaPrikaza.addEventListener('change', function () {
+    applyFgNazivFromBoja(editBojaPrikaza.value);
+  });
 
   if (btnUpisi) {
     btnUpisi.addEventListener('click', function () {
