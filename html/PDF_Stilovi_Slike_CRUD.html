@@ -1,0 +1,253 @@
+<!-- =========================================================
+     PDF_Stilovi_Slike_CRUD.html
+     CRUD pdf_slika_stil: tablica stilova + edit panel (tab kontrola:
+     Osnovno / Pozicioniranje / Okvir) + preview panel (test-slika).
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Stilovi slike</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole_Tab.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/PDF_Stilovi_Slike_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Stilovi slike</h2></div>
+<div class="page-container pdf-stilovi-slike-crud">
+
+    <div class="pdf-stilovi-slike-crud__gornji-red">
+
+    <!-- Panel 1: tablica postojećih stilova (lijevo) -->
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3 pdf-stilovi-slike-crud__panel-tablica" data-resize-sync-group="pdf-stilovi-slike">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+
+    <!-- Panel 2: edit (desno) — visinu sinkronizira sync-group s tablicom -->
+    <div class="kontrola-panel mb-3 pdf-stilovi-slike-crud__panel-edit" id="edit_panel" data-resize-sync-group="pdf-stilovi-slike">
+        <div class="kontrola-panel__body pdf-stilovi-slike-crud__edit-body">
+
+            <!-- Naziv stila: uvijek vidljiv iznad tabova -->
+            <div class="pdf-stilovi-slike-crud__naziv-red">
+                <div class="pdf-stilovi-slike-crud__naziv-polje">
+                    <label class="kontrola-labela mb-0" for="edit_naziv">Naziv stila</label>
+                    <div class="kontrola-edit-delete pdf-stilovi-slike-crud__naziv-kontrola">
+                        <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="npr. Logo 3x3, Zaglavlje lijevo" maxlength="50" autocomplete="off">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    </div>
+                </div>
+                <div class="pdf-stilovi-slike-crud__naslijedi-polje" id="naslijediWrap" hidden>
+                    <label class="kontrola-labela mb-0" for="edit_naslijedi">Nasljedi stil</label>
+                    <div class="kontrola-select pdf-stilovi-slike-crud__naslijedi">
+                        <select id="edit_naslijedi" aria-label="Nasljedi stil">
+                            <option value="">— odaberi —</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab kontrola -->
+            <div class="kontrola-tab pdf-stilovi-slike-crud__tab" id="slikeTab" role="tablist" aria-label="Postavke stila slike">
+                <div class="kontrola-tab__traka" role="presentation">
+                    <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="slikeTabKart0" aria-selected="true" aria-controls="slikeTabPanel0" data-tab-index="0">Osnovno</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="slikeTabKart1" aria-selected="false" aria-controls="slikeTabPanel1" data-tab-index="1" tabindex="-1">Pozicioniranje</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="slikeTabKart2" aria-selected="false" aria-controls="slikeTabPanel2" data-tab-index="2" tabindex="-1">Okvir</button>
+                </div>
+                <div class="kontrola-tab__tijelo" role="presentation">
+
+                    <!-- TAB 0: Osnovno -->
+                    <div class="kontrola-tab__panel" role="tabpanel" id="slikeTabPanel0" aria-labelledby="slikeTabKart0">
+                        <div class="pdf-stilovi-slike-crud__red">
+                            <div class="pdf-stilovi-slike-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_sirina_mm">Širina</label>
+                                <div class="pdf-stilovi-slike-crud__unos-mjera">
+                                    <input id="edit_sirina_mm" type="text" class="kontrola-edit pdf-stilovi-slike-crud__num" inputmode="decimal" placeholder="0" aria-label="Širina okvira slike u mm">
+                                    <span class="pdf-stilovi-slike-crud__mjera" aria-hidden="true">mm</span>
+                                </div>
+                            </div>
+                            <div class="pdf-stilovi-slike-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_visina_mm">Visina</label>
+                                <div class="pdf-stilovi-slike-crud__unos-mjera">
+                                    <input id="edit_visina_mm" type="text" class="kontrola-edit pdf-stilovi-slike-crud__num" inputmode="decimal" placeholder="0" aria-label="Visina okvira slike u mm">
+                                    <span class="pdf-stilovi-slike-crud__mjera" aria-hidden="true">mm</span>
+                                </div>
+                            </div>
+                            <div class="pdf-stilovi-slike-crud__polje pdf-stilovi-slike-crud__polje--skaliranje">
+                                <label class="kontrola-labela mb-0" for="edit_skaliranje">Skaliranje</label>
+                                <div class="kontrola-select">
+                                    <select id="edit_skaliranje" aria-label="Skaliranje slike">
+                                        <option value="uklopi">Uklopi (čuva proporcije)</option>
+                                        <option value="razvuci">Razvuci (popuni okvir)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pdf-stilovi-slike-crud__red">
+                            <div class="pdf-stilovi-slike-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_prozirnost">Prozirnost</label>
+                                <div class="pdf-stilovi-slike-crud__unos-mjera">
+                                    <input id="edit_prozirnost" type="text" class="kontrola-edit pdf-stilovi-slike-crud__num" inputmode="numeric" value="100" aria-label="Prozirnost slike 0-100%">
+                                    <span class="pdf-stilovi-slike-crud__mjera" aria-hidden="true">%</span>
+                                </div>
+                            </div>
+                            <div class="pdf-stilovi-slike-crud__polje pdf-stilovi-slike-crud__polje--sloj">
+                                <label class="kontrola-labela mb-0" for="edit_sloj">Sloj</label>
+                                <div class="kontrola-select">
+                                    <select id="edit_sloj" aria-label="Sloj slike u odnosu na sadržaj">
+                                        <option value="iznad">Postavi sliku iznad</option>
+                                        <option value="ispod">Postavi sliku ispod</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="pdf-stilovi-slike-crud__hint">Prozirnost ima ograničenu podršku u pdfmake — provjeriti u stvarnom PDF-u.</p>
+                    </div>
+
+                    <!-- TAB 1: Pozicioniranje -->
+                    <div class="kontrola-tab__panel" role="tabpanel" id="slikeTabPanel1" aria-labelledby="slikeTabKart1" hidden>
+                        <div class="pdf-stilovi-slike-crud__red">
+                            <div class="pdf-stilovi-slike-crud__polje pdf-stilovi-slike-crud__polje--pozicioniranje">
+                                <label class="kontrola-labela mb-0" for="edit_pozicioniranje">Pozicioniranje</label>
+                                <div class="kontrola-select">
+                                    <select id="edit_pozicioniranje" aria-label="Način pozicioniranja slike">
+                                        <option value="u_tijeku">U tijeku teksta</option>
+                                        <option value="usidreno">Usidreno (zona)</option>
+                                        <option value="apsolutno">Apsolutno (x/y)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Poravnanja: H (u_tijeku/usidreno), V (usidreno) -->
+                        <div class="pdf-stilovi-slike-crud__red" id="slike_poravnanja_red">
+                            <div class="pdf-stilovi-slike-crud__polje" id="slike_poravnanje_h_wrap">
+                                <label class="kontrola-labela mb-0" for="edit_poravnanje_h">Poravnanje vodoravno</label>
+                                <div class="kontrola-select">
+                                    <select id="edit_poravnanje_h" aria-label="Horizontalno poravnanje">
+                                        <option value="lijevo">Lijevo</option>
+                                        <option value="centar">Centar</option>
+                                        <option value="desno">Desno</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="pdf-stilovi-slike-crud__polje" id="slike_poravnanje_v_wrap">
+                                <label class="kontrola-labela mb-0" for="edit_poravnanje_v">Poravnanje okomito</label>
+                                <div class="kontrola-select">
+                                    <select id="edit_poravnanje_v" aria-label="Vertikalno poravnanje">
+                                        <option value="gore">Gore</option>
+                                        <option value="centar">Centar</option>
+                                        <option value="dolje">Dolje</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Apsolutne koordinate -->
+                        <div class="pdf-stilovi-slike-crud__red" id="slike_apsolutno_red">
+                            <div class="pdf-stilovi-slike-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_pozicija_x_mm">Pozicija X</label>
+                                <div class="pdf-stilovi-slike-crud__unos-mjera">
+                                    <input id="edit_pozicija_x_mm" type="text" class="kontrola-edit pdf-stilovi-slike-crud__num" inputmode="decimal" placeholder="0" aria-label="X koordinata gornjeg lijevog kuta u mm">
+                                    <span class="pdf-stilovi-slike-crud__mjera" aria-hidden="true">mm</span>
+                                </div>
+                            </div>
+                            <div class="pdf-stilovi-slike-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_pozicija_y_mm">Pozicija Y</label>
+                                <div class="pdf-stilovi-slike-crud__unos-mjera">
+                                    <input id="edit_pozicija_y_mm" type="text" class="kontrola-edit pdf-stilovi-slike-crud__num" inputmode="decimal" placeholder="0" aria-label="Y koordinata gornjeg lijevog kuta u mm">
+                                    <span class="pdf-stilovi-slike-crud__mjera" aria-hidden="true">mm</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Potiskuje (usidreno/apsolutno) -->
+                        <div class="pdf-stilovi-slike-crud__red pdf-stilovi-slike-crud__red--cekboxi" id="slike_potiskuje_wrap">
+                            <span class="pdf-stilovi-slike-crud__cb">
+                                <input type="checkbox" id="edit_potiskuje" class="kontrola-checkbox" value="1" aria-label="Slika gura ostali sadržaj">
+                                <label class="kontrola-labela mb-0" for="edit_potiskuje">Gura ostali sadržaj (isključeno = lebdi)</label>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Okvir -->
+                    <div class="kontrola-tab__panel" role="tabpanel" id="slikeTabPanel2" aria-labelledby="slikeTabKart2" hidden>
+                        <div class="pdf-stilovi-slike-crud__red pdf-stilovi-slike-crud__red--cekboxi">
+                            <span class="pdf-stilovi-slike-crud__cb">
+                                <input type="checkbox" id="edit_okvir" class="kontrola-checkbox" value="1" aria-label="Slika ima okvir">
+                                <label class="kontrola-labela mb-0" for="edit_okvir">Slika ima okvir</label>
+                            </span>
+                        </div>
+                        <div class="pdf-stilovi-slike-crud__red" id="slike_okvir_polja_red">
+                            <div class="pdf-stilovi-slike-crud__polje pdf-stilovi-slike-crud__polje--boja pdf-stilovi-slike-crud__polje--boja-red">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_boja">Boja okvira</label>
+                                <div class="kontrola-boja" data-boja-za="edit_okvir_boja" data-boja-nullable="0">
+                                    <button type="button" id="edit_okvir_boja_trigger" class="kontrola-boja__trigger" aria-label="Izaberi boju okvira">
+                                        <span class="kontrola-icon--paleta" aria-hidden="true"></span>
+                                    </button>
+                                    <input id="edit_okvir_boja" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="#000000" readonly aria-label="Boja okvira (hex)">
+                                    <span class="kontrola-boja__swatch" aria-hidden="true"></span>
+                                </div>
+                            </div>
+                            <div class="pdf-stilovi-slike-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_okvir_debljina_mm">Debljina okvira</label>
+                                <div class="pdf-stilovi-slike-crud__unos-mjera">
+                                    <input id="edit_okvir_debljina_mm" type="text" class="kontrola-edit pdf-stilovi-slike-crud__num" inputmode="decimal" placeholder="0,50" aria-label="Debljina okvira u mm">
+                                    <span class="pdf-stilovi-slike-crud__mjera" aria-hidden="true">mm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Napomena: uvijek vidljiva dolje -->
+            <div class="pdf-stilovi-slike-crud__napomena-red">
+                <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+            </div>
+        </div>
+
+        <div class="kontrola-panel__footer pdf-stilovi-slike-crud__edit-footer">
+            <div class="pdf-stilovi-slike-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="pdf-stilovi-slike-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+
+    </div><!-- /gornji-red -->
+
+    <!-- Panel 3: preview (pdfmake, test-slika) — ispod, puna širina -->
+    <div class="kontrola-panel kontrola-panel--resize-y mb-3 pdf-stilovi-slike-crud__preview-panel">
+        <div class="kontrola-panel__header pdf-stilovi-slike-crud__preview-header">
+            <span>Pregled</span>
+        </div>
+        <div class="kontrola-panel__body pdf-stilovi-slike-crud__preview-body">
+            <div id="slikePreview" class="pdf-stilovi-slike-crud__preview" aria-label="Pregled stila slike">
+                <div id="slikePreviewSadrzaj" class="pdf-stilovi-slike-crud__preview-sadrzaj"></div>
+                <div id="slikePreviewSpiner" class="kontrola-spiner-overlay" aria-hidden="true">
+                    <span class="kontrola-spiner kontrola-spiner--segment" role="status" aria-label="Učitavanje"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole_Tab.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/PDF_Stilovi_Slike_CRUD.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>

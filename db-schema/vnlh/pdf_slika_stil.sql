@@ -14,6 +14,7 @@ CREATE TABLE `pdf_slika_stil` (
   `pozicija_x_mm`      decimal(6,2) DEFAULT NULL COMMENT 'X koordinata u mm (apsolutno)',
   `pozicija_y_mm`      decimal(6,2) DEFAULT NULL COMMENT 'Y koordinata u mm (apsolutno)',
   `potiskuje`          tinyint(1) NOT NULL DEFAULT 1 COMMENT '1=gura sadržaj; 0=lebdi',
+  `sloj`               enum('ispod','iznad') NOT NULL DEFAULT 'iznad' COMMENT 'Sloj slike u odnosu na sadržaj: ispod (iza, vodeni žig) ili iznad (ispred); bitno kod lebdećih/apsolutnih slika',
   `napomena`           varchar(1024) DEFAULT NULL COMMENT 'Slobodna bilješka administratora',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

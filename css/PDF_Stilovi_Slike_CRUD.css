@@ -1,0 +1,247 @@
+/* PDF_Stilovi_Slike_CRUD — stilovi slika (pdf_slika_stil). Desktop only. */
+
+/* PDF okvir koristi 6-hex boju bez prozirnosti → gasimo alpha klizač (default je 1 u 0-Common).
+   Override na :root jer JS čita token s document.documentElement; CSS se učitava samo na ovoj stranici. */
+:root { --kontrola_boja_alpha: 0; }
+
+/* Globalni raspored: tablica lijevo, edit desno (isti red), preview ispod preko cijele širine. */
+.pdf-stilovi-slike-crud__gornji-red {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.pdf-stilovi-slike-crud__panel-tablica {
+  flex: 0 0 24rem;
+  min-height: 20rem;
+  margin-bottom: 0;
+}
+.pdf-stilovi-slike-crud #edit_panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 20rem;
+  margin-bottom: 0;
+}
+
+/* Aktivni tab u „negativu" */
+.pdf-stilovi-slike-crud__tab .kontrola-tab__kartica--aktivna:not(:disabled) {
+  background: var(--tab_kontrola_header_text);
+  color: var(--tab_kontrola_body_bg);
+  -webkit-text-fill-color: var(--tab_kontrola_body_bg);
+  border-color: var(--tab_kontrola_header_text);
+}
+
+/* Disabled kartica (bez naziva) */
+.pdf-stilovi-slike-crud__tab .kontrola-tab__kartica:disabled {
+  opacity: 1;
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+  cursor: not-allowed;
+}
+
+/* Edit panel tijelo */
+.pdf-stilovi-slike-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Naziv stila (iznad tabova) — puna širina panela */
+.pdf-stilovi-slike-crud__naziv-red {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+.pdf-stilovi-slike-crud__naziv-polje,
+.pdf-stilovi-slike-crud__naslijedi-polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* [hidden] mora nadjačati display:flex (skrivanje praznog selekta) */
+.pdf-stilovi-slike-crud__naslijedi-polje[hidden] { display: none; }
+.pdf-stilovi-slike-crud__naziv-kontrola { width: 100%; }
+.pdf-stilovi-slike-crud__naslijedi { width: 100%; }
+
+/* Redovi polja unutar tab-panela */
+.pdf-stilovi-slike-crud__red {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.pdf-stilovi-slike-crud__red:last-child {
+  margin-bottom: 0;
+}
+.pdf-stilovi-slike-crud__red--cekboxi {
+  align-items: center;
+  gap: 1.5rem;
+}
+/* Uvjetni redovi/polja: [hidden] mora nadjačati display:flex */
+.pdf-stilovi-slike-crud__red[hidden],
+.pdf-stilovi-slike-crud__polje[hidden] { display: none; }
+
+/* Pojedinačno polje: labela iznad kontrole */
+.pdf-stilovi-slike-crud__polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.pdf-stilovi-slike-crud__polje--skaliranje {
+  flex: 0 0 auto;
+  width: 14rem;
+}
+.pdf-stilovi-slike-crud__polje--pozicioniranje {
+  flex: 0 0 auto;
+  width: 14rem;
+}
+.pdf-stilovi-slike-crud__polje--sloj {
+  flex: 0 0 auto;
+  width: 14rem;
+}
+/* Polje boje s oznakom u istom redu (lijevo od kontrole) */
+.pdf-stilovi-slike-crud__polje--boja-red {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Numerički input (mm, %) */
+.pdf-stilovi-slike-crud__num {
+  width: 6rem;
+  text-align: right;
+}
+/* Input + jedinica mjere (mm, %) u istoj liniji */
+.pdf-stilovi-slike-crud__unos-mjera {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.pdf-stilovi-slike-crud__mjera {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 0.9em;
+  opacity: 0.75;
+}
+
+/* Kontrola boje puni polje; hex edit se širi (ikona i swatch fiksni) */
+.pdf-stilovi-slike-crud__polje--boja .kontrola-boja {
+  display: flex;
+}
+.pdf-stilovi-slike-crud__polje--boja .kontrola-boja__hex {
+  width: 8rem;
+}
+
+/* Otvoreni select smije „izaći" iz tab kontrole (inače ga overflow:hidden reže). */
+.pdf-stilovi-slike-crud__tab:has(.kontrola-select--open),
+.pdf-stilovi-slike-crud__tab .kontrola-tab__tijelo:has(.kontrola-select--open),
+.pdf-stilovi-slike-crud__tab .kontrola-tab__panel:has(.kontrola-select--open) {
+  overflow: visible;
+}
+
+/* Svi fontovi u tabovima jednaki — tokeni --tab_kontrola_body_font_* (0-Common). */
+.pdf-stilovi-slike-crud__tab .kontrola-tab__tijelo,
+.pdf-stilovi-slike-crud__tab .kontrola-tab__tijelo .kontrola-labela,
+.pdf-stilovi-slike-crud__tab .kontrola-tab__tijelo .kontrola-edit,
+.pdf-stilovi-slike-crud__tab .kontrola-tab__tijelo .kontrola-select select,
+.pdf-stilovi-slike-crud__tab .kontrola-tab__tijelo .pdf-stilovi-slike-crud__hint {
+  font-family: var(--tab_kontrola_body_font_family);
+  font-size: var(--tab_kontrola_body_font_size);
+  font-weight: var(--tab_kontrola_body_font_weight);
+  font-style: normal;
+}
+
+/* Checkbox + labela u istom redu */
+.pdf-stilovi-slike-crud__cb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+}
+.pdf-stilovi-slike-crud__cb .kontrola-labela {
+  white-space: nowrap;
+}
+
+/* Hint (npr. ograničenje prozirnosti) */
+.pdf-stilovi-slike-crud__hint {
+  margin: 0.5rem 0 0;
+  color: var(--label_text, #333);
+  opacity: 0.85;
+}
+
+/* Napomena dolje */
+.pdf-stilovi-slike-crud__napomena-red {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Footer */
+.pdf-stilovi-slike-crud__edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pdf-stilovi-slike-crud__footer-left,
+.pdf-stilovi-slike-crud__footer-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Preview panel */
+.pdf-stilovi-slike-crud__preview-header {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.pdf-stilovi-slike-crud__preview-panel {
+  height: 19.5rem;
+  min-height: 19.5rem;
+}
+/* Disabled (bez naziva): neproziran, zasivljen. */
+.pdf-stilovi-slike-crud__preview-panel--disabled .pdf-stilovi-slike-crud__preview {
+  background: var(--edit_bg_disabled, #e9ecef);
+}
+.pdf-stilovi-slike-crud__preview-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+.pdf-stilovi-slike-crud__preview {
+  position: relative;                /* sidro za spiner overlay */
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-gray-100, #f2f2f2);
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+.pdf-stilovi-slike-crud__preview-sadrzaj {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--label_text_disabled, #888);
+  font-style: italic;
+}
+.pdf-stilovi-slike-crud__preview-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+  border-radius: var(--edit_radius, 6px);
+}
