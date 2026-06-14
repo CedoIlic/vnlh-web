@@ -1991,6 +1991,57 @@
   }
 
   /**
+   * Generičko premještanje modala povlačenjem zaglavlja — za bilo koji apsolutno/fiksno pozicioniran
+   * dijalog. Na prvom povlačenju izračuna px left/top iz trenutnog položaja i ukine centriranje
+   * (transform/margin). Ne hvata povlačenje na kontrolama u zaglavlju (input/select/button…).
+   * Izloženo kao global.KontroleModalDrag(dialog, headerEl).
+   */
+  function attachModalDrag(dialog, headerEl) {
+    if (!dialog || !headerEl || headerEl._modalDragInit) return;
+    headerEl._modalDragInit = true;
+    headerEl.style.cursor = 'move';
+    function osiguramPoziciju() {
+      if (dialog.style.left && dialog.style.left.indexOf('px') >= 0) return;
+      var r = dialog.getBoundingClientRect();
+      var op = dialog.offsetParent ? dialog.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+      dialog.style.left = (r.left - op.left) + 'px';
+      dialog.style.top = (r.top - op.top) + 'px';
+      dialog.style.transform = 'none';
+      dialog.style.margin = '0';
+    }
+    function start(e) {
+      if (e.target && e.target.closest && e.target.closest('input, select, textarea, button, a, .kontrola-select')) return;
+      if (e.button !== undefined && e.button !== 0 && !e.touches) return;
+      osiguramPoziciju();
+      var startX = e.touches ? e.touches[0].clientX : e.clientX;
+      var startY = e.touches ? e.touches[0].clientY : e.clientY;
+      var baseLeft = parseFloat(dialog.style.left) || 0;
+      var baseTop = parseFloat(dialog.style.top) || 0;
+      function move(ev) {
+        var x = ev.touches ? ev.touches[0].clientX : ev.clientX;
+        var y = ev.touches ? ev.touches[0].clientY : ev.clientY;
+        dialog.style.left = (baseLeft + (x - startX)) + 'px';
+        dialog.style.top = (baseTop + (y - startY)) + 'px';
+        if (ev.cancelable) ev.preventDefault();
+      }
+      function stop() {
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', stop);
+        document.removeEventListener('touchmove', move);
+        document.removeEventListener('touchend', stop);
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', stop);
+      document.addEventListener('touchmove', move, { passive: false });
+      document.addEventListener('touchend', stop);
+      if (e.cancelable) e.preventDefault();
+    }
+    headerEl.addEventListener('mousedown', start);
+    headerEl.addEventListener('touchstart', start, { passive: false });
+  }
+  global.KontroleModalDrag = attachModalDrag;
+
+  /**
    * Modal tablica: modal s tablicom, zaglavlje (drag), tijelo (tablica + resize traka), podnožje (tipke).
    * Resize: donji desni kut (širina i visina modala), vertikalna traka ispod tablice (visina tijela).
    * Pozicija i veličina se pamte u localStorage po storageKey.
@@ -2764,6 +2815,12 @@
           ['Narančasta', '#FB8C00'], ['Tamnonarančasta', '#F4511E'],
           ['Smeđa', '#6D4C41'], ['Plavosiva', '#546E7A'], ['Tamnoljubičasta', '#5E35B1']
         ],
+        /* Dodatni red boja (9): nullable koristi 8 (uz „Bez boje" ćeliju = pun red), non-nullable svih 9. */
+        BOJE_EKSTRA: [
+          ['Koraljna', '#FF7043'], ['Breskva', '#FFAB91'], ['Zlatna', '#FFD54F'], ['Maslinasta', '#9E9D24'],
+          ['Mentol', '#26A69A'], ['Nebeskoplava', '#4FC3F7'], ['Lavanda', '#B39DDB'], ['Magenta', '#D500F9'],
+          ['Fuksija', '#EC407A']
+        ],
         osvjeziSwatch: function (targetId) {
           var wrap = document.querySelector('.kontrola-boja[data-boja-za="' + targetId + '"]');
           if (!wrap) return;
@@ -2778,7 +2835,11 @@
           if (!this.paleta) return;
           var html = '';
           if (this.nullable) html += '<button type="button" class="kontrola-boja-modal__swatch kontrola-boja__swatch--prazno" data-bez="1" title="Bez boje (sistemska)" aria-label="Bez boje"></button>';
-          this.BOJE.forEach(function (b, i) {
+          /* Zadnji red uvijek pun: „Bez boje" (nullable) zauzima ćeliju pa nullable treba 8 dodatnih,
+             non-nullable nema tu ćeliju pa treba 9 — u oba slučaja nema slobodnog mjesta. */
+          var brEkstra = this.nullable ? 8 : 9;
+          var lista = this.BOJE.concat(this.BOJE_EKSTRA.slice(0, brEkstra));
+          lista.forEach(function (b, i) {
             html += '<button type="button" class="kontrola-boja-modal__swatch" data-hex="' + b[1] + '" title="' + b[0] + '" aria-label="' + b[0] + '" style="background:' + b[1] + '"></button>';
             if (i === 1) html += '<span class="kontrola-boja-modal__placeholder" aria-hidden="true"></span>';
           });
@@ -2865,7 +2926,10 @@
             this.rgb = '#' + base.substr(1, 6);
             this.a = (this.alphaOn && jeHex8(base)) ? parseInt(base.substr(7, 2), 16) : 255;
           }
-          this.postaviNacin('paleta');
+          /* Svako otvaranje: re-centriraj dijalog (poništi prethodni drag) */
+          if (this.dialog) { this.dialog.style.left = ''; this.dialog.style.top = ''; this.dialog.style.transform = ''; this.dialog.style.margin = ''; }
+          /* Default mod: alpha klizač aktivan (ekranske boje) → Korisnička; neaktivan (tisak) → Paleta */
+          this.postaviNacin(this.alphaOn ? 'korisnik' : 'paleta');
           this.prikaziSve();
           this.modal.classList.add('kontrola-boja-modal--open');
           this.modal.setAttribute('aria-hidden', 'false');
@@ -2918,6 +2982,9 @@
           this.korAlphaVal = byId('bojaModalKorAlphaVal');
           this.korPregled = byId('bojaModalKorPregled');
           if (typeof initCustomSelect === 'function') initCustomSelect(m);
+          this.dialog = m.querySelector('.kontrola-boja-modal__dialog');
+          var zagl = m.querySelector('.kontrola-boja-modal__zaglavlje');
+          if (this.dialog && zagl && typeof attachModalDrag === 'function') attachModalDrag(this.dialog, zagl);
           this.alphaOn = (getComputedStyle(document.documentElement).getPropertyValue('--kontrola_boja_alpha').trim() === '1');
           this.primijeniAlphaStanje();
           if (this.nacin) this.nacin.addEventListener('change', function () { self.postaviNacin(self.nacin.value); });
