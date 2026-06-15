@@ -124,31 +124,50 @@
 
   var PREVIEW_FONT = null;   /* { porodica, kljuc } — prvi aktivni font (samo da pdfmake ima registriran font) */
 
-  /* ===== Test-slika: canvas uzorak (nesimetričan 4:3, markeri) — jasno pokaže uklopi/razvuci i prozirnost ===== */
-  var _testSlika = null;
-  function testSlika() {
-    if (_testSlika) return _testSlika;
+  /* ===== Test-slika: canvas uzorak (nesimetričan 4:3) sa strelicama orijentacije ===== */
+  /* Jedna vodoravna (lijevo/desno) + jedna okomita (gore/dolje) strelica prate poravnanje;
+     'centar' = točka; null = strelica se ne crta (npr. apsolutno → x/y umjesto strelica). */
+  var _testSlikaCache = {};
+  function crtajStrelica(x, cx, cy, smjer) {
+    var Lh = 108, Lv = 70, hh = 17;
+    var dx = 0, dy = 0, L = 0;
+    if (smjer === 'lijevo') { dx = -1; L = Lh; }
+    else if (smjer === 'desno') { dx = 1; L = Lh; }
+    else if (smjer === 'gore') { dy = -1; L = Lv; }
+    else if (smjer === 'dolje') { dy = 1; L = Lv; }
+    else { x.beginPath(); x.arc(cx, cy, 8, 0, 2 * Math.PI); x.fill(); return; }  /* centar */
+    var ex = cx + dx * L, ey = cy + dy * L;
+    x.beginPath(); x.moveTo(cx, cy); x.lineTo(ex, ey); x.stroke();
+    var px = -dy, py = dx;   /* okomito na smjer — krila vrha */
+    x.beginPath();
+    x.moveTo(ex, ey);
+    x.lineTo(ex - dx * hh + px * hh * 0.6, ey - dy * hh + py * hh * 0.6);
+    x.lineTo(ex - dx * hh - px * hh * 0.6, ey - dy * hh - py * hh * 0.6);
+    x.closePath(); x.fill();
+  }
+  function fmtMm(n) { return String(n).replace('.', ','); }
+  function testSlika(hArrow, vArrow, wMm, hMm) {
+    var key = (hArrow || '-') + '|' + (vArrow || '-') + '|' + wMm + 'x' + hMm;
+    if (_testSlikaCache[key]) return _testSlikaCache[key];
     var c = document.createElement('canvas');
     c.width = 320; c.height = 240;
     var x = c.getContext('2d');
     var g = x.createLinearGradient(0, 0, 320, 240);
     g.addColorStop(0, '#7bb3e0'); g.addColorStop(1, '#21577f');
     x.fillStyle = g; x.fillRect(0, 0, 320, 240);
-    /* dijagonale */
-    x.strokeStyle = 'rgba(255,255,255,0.35)'; x.lineWidth = 2;
-    x.beginPath(); x.moveTo(0, 0); x.lineTo(320, 240); x.moveTo(320, 0); x.lineTo(0, 240); x.stroke();
     /* kutni markeri */
     x.fillStyle = '#e53935';
     [[14, 14], [306, 14], [14, 226], [306, 226]].forEach(function (p) { x.beginPath(); x.arc(p[0], p[1], 9, 0, 2 * Math.PI); x.fill(); });
-    /* strelica „gore" (orijentacija) */
-    x.strokeStyle = '#fff'; x.lineWidth = 4; x.lineCap = 'round';
-    x.beginPath(); x.moveTo(160, 78); x.lineTo(160, 44); x.moveTo(147, 58); x.lineTo(160, 44); x.lineTo(173, 58); x.stroke();
-    /* tekst */
+    /* oznake (izvan zone strelica) */
     x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.font = 'bold 30px sans-serif'; x.fillText('SLIKA', 160, 120);
-    x.font = '16px sans-serif'; x.fillText('320 × 240', 160, 152);
-    _testSlika = c.toDataURL('image/png');
-    return _testSlika;
+    x.font = 'bold 22px sans-serif'; x.fillText('SLIKA', 160, 30);
+    x.font = '14px sans-serif'; x.fillText('(' + fmtMm(wMm) + ' × ' + fmtMm(hMm) + ' mm)', 160, 212);
+    /* strelice orijentacije (iz centra) */
+    x.strokeStyle = '#fff'; x.fillStyle = '#fff'; x.lineWidth = 6; x.lineCap = 'round'; x.lineJoin = 'round';
+    if (hArrow) crtajStrelica(x, 160, 120, hArrow);
+    if (vArrow) crtajStrelica(x, 160, 120, vArrow);
+    _testSlikaCache[key] = c.toDataURL('image/png');
+    return _testSlikaCache[key];
   }
 
   /* ===== Preview (pdfmake → iframe) ===== */
@@ -222,7 +241,12 @@
     if (vEdit('skaliranje') === 'razvuci') { imgW = boxW; imgH = boxH; }
     else { var r = Math.min(boxW / NAT_W, boxH / NAT_H); imgW = NAT_W * r; imgH = NAT_H * r; }
 
-    var img = { image: testSlika(), width: imgW, height: imgH, opacity: op / 100 };
+    /* Strelice orijentacije: vodoravna (poravnanje_h) i okomita (poravnanje_v) prema pozicioniranju.
+       u_tijeku → samo vodoravna; usidreno → obje; apsolutno → bez strelica (pozicija ide kroz x/y). */
+    var poz = vEdit('pozicioniranje'), hA = null, vA = null;
+    if (poz === 'usidreno') { hA = vEdit('poravnanje_h'); vA = vEdit('poravnanje_v'); }
+    else if (poz === 'u_tijeku') { hA = vEdit('poravnanje_h'); }
+    var img = { image: testSlika(hA, vA, wMm, hMm), width: imgW, height: imgH, opacity: op / 100 };
 
     var node = img, bw = 0;
     if (cEdit('okvir')) {
@@ -429,20 +453,29 @@
     postaviGrupaDisabled('slike_potiskuje_wrap', !(usidreno || apsolutno)); /* potiskuje: usidreno/apsolutno */
   }
 
-  /* Bez naziva sve kontrole u tabovima disable; s nazivom enable + primijeni dinamiku. */
+  var _imaDimPrije = false;   /* zadnje poznato stanje "širina i visina unesene" — za guard na input dimenzija */
+
+  /* Gating: bez naziva sve disable; s nazivom širina/visina ostaju aktivne (na tabu Osnovno);
+     ostale kontrole u tabovima enable tek kad su unesene i širina i visina. */
   function azurirajDisableTaba() {
     var nazivEl = byId('edit_naziv');
     var imaNaziv = nazivEl ? trim(nazivEl.value) !== '' : false;
+    var imaDim = vBroj('sirina_mm') > 0 && vBroj('visina_mm') > 0;
     var tijelo = document.querySelector('.pdf-stilovi-slike-crud__tab .kontrola-tab__tijelo');
     if (tijelo) {
       var kontrole = tijelo.querySelectorAll('input, select, button, textarea');
-      Array.prototype.forEach.call(kontrole, function (el) { el.disabled = !imaNaziv; });
+      Array.prototype.forEach.call(kontrole, function (el) {
+        if (!imaNaziv) { el.disabled = true; return; }
+        if (el.id === 'edit_sirina_mm' || el.id === 'edit_visina_mm') { el.disabled = false; return; } /* dimenzije uvijek aktivne */
+        el.disabled = !imaDim;
+      });
     }
     var tabRoot = byId('slikeTab');
     if (tabRoot) {
       var kartice = tabRoot.querySelectorAll('.kontrola-tab__kartica');
-      Array.prototype.forEach.call(kartice, function (k) { k.disabled = !imaNaziv; });
-      if (!imaNaziv && typeof kontrolaTabPostaviAktivni === 'function') {
+      /* bez naziva sve disable; s nazivom bez dimenzija samo „Osnovno" (tab 0, gdje su širina/visina) */
+      Array.prototype.forEach.call(kartice, function (k, i) { k.disabled = !imaNaziv || (!imaDim && i !== 0); });
+      if ((!imaNaziv || !imaDim) && typeof kontrolaTabPostaviAktivni === 'function') {
         kontrolaTabPostaviAktivni(tabRoot, 0);
         requestAnimationFrame(prilagodiVisinuEdita);
       }
@@ -450,7 +483,7 @@
     var nap = byId('edit_napomena'); if (nap) nap.disabled = !imaNaziv;
     var nasl = byId('edit_naslijedi'); if (nasl) { nasl.disabled = !imaNaziv; refreshSelect('edit_naslijedi'); }
     postaviPreviewDisabled(!imaNaziv);
-    if (imaNaziv) { azurirajOkvir(); azurirajPozicioniranje(); }
+    if (imaNaziv && imaDim) { azurirajOkvir(); azurirajPozicioniranje(); }
     else azurirajPreviewPlaceholder();
     refreshSelect('edit_skaliranje');
     refreshSelect('edit_sloj');
@@ -458,6 +491,7 @@
     refreshSelect('edit_poravnanje_h');
     refreshSelect('edit_poravnanje_v');
     syncLabele();
+    _imaDimPrije = imaDim;
   }
 
   /* ---- Punjenje / skupljanje / čišćenje ---- */
@@ -590,10 +624,14 @@
       popuniIzObjekta(o, true);
       updateCrudUpisiState();
     });
-    /* dimenzije -> Upiši stanje na živo */
+    /* dimenzije -> Upiši stanje na živo; re-gate ostalih kontrola tek na promjenu stanja "obje unesene" */
     ['sirina_mm', 'visina_mm'].forEach(function (col) {
       var el = byId('edit_' + col);
-      if (el) el.addEventListener('input', updateCrudUpisiState);
+      if (el) el.addEventListener('input', function () {
+        updateCrudUpisiState();
+        var imaDim = vBroj('sirina_mm') > 0 && vBroj('visina_mm') > 0;
+        if (imaDim !== _imaDimPrije) azurirajDisableTaba();
+      });
     });
     /* prozirnost: samo cijeli broj 0-100 */
     var prozEl = byId('edit_prozirnost');
