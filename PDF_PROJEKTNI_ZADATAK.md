@@ -76,6 +76,10 @@ whitelist izvora kojeg uređuje administrator.
 - *Dinamički* — stavka zna izvor (`izvor_id`), ali **id retka dolazi iz konteksta** pri
   generiranju (frontend šalje npr. `{ loza_id: 57 }`). Stavka nosi `kontekst_kljuc`
   (npr. `loza_id`). Primjer: logo lože `loze.logotip` — id ovisi o trenutno izabranoj loži.
+- *Po vrijednosti* — stavka zna izvor (`izvor_id`) i **traži redak po sadržaju kolone**:
+  `trazi_kolona` = `trazi_vrijednost` (točno podudaranje, `ORDER BY id LIMIT 1`).
+  Primjer: slika iz `blokovi.slika` gdje je `blokovi.naziv = 'Logo VNLH'`. Vrijednost ide kao
+  **bound parametar**; `trazi_kolona` se validira (postoji u tablici, kao i `kolona`).
 - Dokument prima **više kontekstnih vrijednosti istovremeno**.
 
 **Slike u bazi.** Slike su pohranjene kao BLOB (uz mogući prateći MIME stupac, npr. `slika`/`slika_mime`).
@@ -348,9 +352,11 @@ CREATE TABLE pdf_dokument_stavke (
   vrsta             ENUM('tekst','slika') NOT NULL           COMMENT 'Vrsta stavke: tekst ili slika',
 
   izvor_id          INT NOT NULL                             COMMENT 'FK na pdf_dozvoljeni_izvori — whitelist tablice i kolone iz koje se čita sadržaj',
-  izvor_tip         ENUM('staticki','dinamicki') NOT NULL    COMMENT 'staticki=fiksni izvor_red_id; dinamicki=id iz konteksta po kontekst_kljuc',
+  izvor_tip         ENUM('staticki','dinamicki','po_vrijednosti') NOT NULL COMMENT 'staticki=fiksni izvor_red_id; dinamicki=id iz konteksta; po_vrijednosti=redak po vrijednosti kolone',
   izvor_red_id      INT NULL                                 COMMENT 'Fiksni id retka u izvoru (kad izvor_tip=staticki)',
   kontekst_kljuc    VARCHAR(64) NULL                         COMMENT 'Ključ konteksta iz kojeg dolazi id pri generiranju, npr. "loza_id" (kad izvor_tip=dinamicki)',
+  trazi_kolona      VARCHAR(64) NULL                         COMMENT 'Kolona po kojoj se traži redak (kad izvor_tip=po_vrijednosti)',
+  trazi_vrijednost  VARCHAR(255) NULL                        COMMENT 'Tražena vrijednost u trazi_kolona — točno podudaranje, ORDER BY id LIMIT 1 (kad izvor_tip=po_vrijednosti)',
 
   paragraf_id       INT NULL                                 COMMENT 'FK na pdf_paragraf — stil teksta (kad vrsta=tekst)',
   slika_stil_id     INT NULL                                 COMMENT 'FK na pdf_slika_stil — stil slike (kad vrsta=slika)',
@@ -370,8 +376,9 @@ CREATE TABLE pdf_dokument_stavke (
     (vrsta = 'slika' AND slika_stil_id IS NOT NULL AND paragraf_id IS NULL)
   ),
   CONSTRAINT chk_izvor_po_tipu CHECK (
-    (izvor_tip = 'staticki'  AND izvor_red_id IS NOT NULL AND kontekst_kljuc IS NULL) OR
-    (izvor_tip = 'dinamicki' AND kontekst_kljuc IS NOT NULL AND izvor_red_id IS NULL)
+    (izvor_tip = 'staticki'       AND izvor_red_id IS NOT NULL AND kontekst_kljuc IS NULL AND trazi_kolona IS NULL AND trazi_vrijednost IS NULL) OR
+    (izvor_tip = 'dinamicki'      AND kontekst_kljuc IS NOT NULL AND izvor_red_id IS NULL AND trazi_kolona IS NULL AND trazi_vrijednost IS NULL) OR
+    (izvor_tip = 'po_vrijednosti' AND trazi_kolona IS NOT NULL AND trazi_vrijednost IS NOT NULL AND izvor_red_id IS NULL AND kontekst_kljuc IS NULL)
   ),
   CONSTRAINT fk_stavka_dokument
     FOREIGN KEY (dokument_id) REFERENCES pdf_dokument(id) ON DELETE CASCADE,
@@ -501,12 +508,13 @@ i zatvara prije prelaska na sljedeću.
 - Glavna forma: kreiranje dokumenta (naziv, izbor templatea, opis, aktivan) i uređivanje
   njegovih **stavki**.
 - Uređivač stavki: dodavanje/uklanjanje/**preslagivanje redoslijeda** (drag-and-drop);
-  po stavci: zona, vrsta (tekst/slika), izvor (birač iz `pdf_dozvoljeni_izvori`, statički id
-  ili dinamički kontekst_kljuc), te stil (paragraf ili slika-stil ovisno o vrsti).
+  po stavci: zona, vrsta (tekst/slika), izvor (birač iz `pdf_dozvoljeni_izvori`) + način dohvata
+  retka — **statički** (fiksni id), **dinamički** (kontekst_kljuc) ili **po vrijednosti**
+  (`trazi_kolona` + `trazi_vrijednost`), te stil (paragraf ili slika-stil ovisno o vrsti).
 - **Funkcionalnost:** forma poštuje CHECK pravila (tekst→paragraf, slika→slika_stil;
-  statički→id, dinamički→kontekst_kljuc) — sakriva/prikazuje polja prema izboru. Popis
-  dostupnih kontekst-ključeva (npr. `loza_id`). Izvor se bira iz padajućeg popisa
-  `pdf_dozvoljeni_izvori` — ne slobodni unos.
+  statički→id, dinamički→kontekst_kljuc, po_vrijednosti→trazi_kolona+trazi_vrijednost) —
+  prikazuje/disable polja prema izboru. Popis kontekst-ključeva (npr. `loza_id`). Izvor i
+  `trazi_kolona` biraju se iz padajućeg popisa — ne slobodni unos.
 
 ### 2.7 — Generator PDF-a (jezgra)
 - Backend: sastavljanje JSON paketa (tijek iz 1.5) — čitanje dokumenta, templatea, stavki;
