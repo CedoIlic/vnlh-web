@@ -1,0 +1,314 @@
+<!-- =========================================================
+     PDF_Template_CRUD.html
+     CRUD pdf_template: lijevo (1/3) panel tablica (Naziv opisa + Nasljedi opis u
+     zaglavlju) + edit panel s tabovima; desno (2/3) HTML/CSS shema stranice.
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Opis stranice</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole_Tab.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/PDF_Template_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Opis stranice</h2></div>
+<div class="page-container pdf-template-crud">
+    <div class="pdf-template-crud__layout">
+
+        <!-- ===== Lijevi stupac (1/3): tablica + edit ===== -->
+        <div class="pdf-template-crud__lijevo">
+
+            <!-- Panel tablica (Naziv opisa + Nasljedi opis u zaglavlju) -->
+            <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-0 pdf-template-crud__panel-tablica">
+                <div class="kontrola-panel__header pdf-template-crud__tablica-header">
+                    <div class="pdf-template-crud__naziv-polje">
+                        <label class="kontrola-labela mb-0" for="edit_naziv">Naziv opisa</label>
+                        <div class="kontrola-edit-delete pdf-template-crud__naziv-kontrola">
+                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="npr. A4 dopis, A5 letak" maxlength="50" autocomplete="off">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
+                    </div>
+                    <div class="pdf-template-crud__naslijedi-polje" id="naslijediWrap" hidden>
+                        <label class="kontrola-labela mb-0" for="edit_naslijedi">Nasljedi opis</label>
+                        <div class="kontrola-select pdf-template-crud__naslijedi">
+                            <select id="edit_naslijedi" aria-label="Nasljedi opis">
+                                <option value="">— odaberi —</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="kontrola-panel__body">
+                    <div id="tablicaContainer" class="kontrola-tablica"></div>
+                </div>
+            </div>
+
+            <!-- Edit panel (tabovi) -->
+            <div class="kontrola-panel mb-0 pdf-template-crud__panel-edit" id="edit_panel">
+                <div class="kontrola-panel__body pdf-template-crud__edit-body">
+
+                    <div class="kontrola-tab pdf-template-crud__tab" id="templateTab" role="tablist" aria-label="Postavke opisa stranice">
+                        <div class="kontrola-tab__traka" role="presentation">
+                            <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="templateTabKart0" aria-selected="true" aria-controls="templateTabPanel0" data-tab-index="0">Stranica</button>
+                            <button type="button" class="kontrola-tab__kartica" role="tab" id="templateTabKart1" aria-selected="false" aria-controls="templateTabPanel1" data-tab-index="1" tabindex="-1">Zaglavlje / Podnožje</button>
+                            <button type="button" class="kontrola-tab__kartica" role="tab" id="templateTabKart2" aria-selected="false" aria-controls="templateTabPanel2" data-tab-index="2" tabindex="-1">Brojač / Naslovna</button>
+                        </div>
+                        <div class="kontrola-tab__tijelo" role="presentation">
+
+                            <!-- TAB 0: Stranica -->
+                            <div class="kontrola-tab__panel" role="tabpanel" id="templateTabPanel0" aria-labelledby="templateTabKart0">
+                                <div class="pdf-template-crud__dva-stupca">
+                                    <!-- Lijevi: format + orijentacija -->
+                                    <div class="pdf-template-crud__stupac">
+                                        <div class="pdf-template-crud__polje pdf-template-crud__polje--rastegni">
+                                            <label class="kontrola-labela mb-0" for="edit_format_papira">Format papira</label>
+                                            <div class="kontrola-select">
+                                                <select id="edit_format_papira" aria-label="Format papira">
+                                                    <option value="A4">A4</option>
+                                                    <option value="A5">A5</option>
+                                                    <option value="A3">A3</option>
+                                                    <option value="Letter">Letter</option>
+                                                    <option value="Legal">Legal</option>
+                                                    <option value="custom">Korisnička</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="pdf-template-crud__polje pdf-template-crud__polje--rastegni">
+                                            <label class="kontrola-labela mb-0" for="edit_orijentacija">Orijentacija</label>
+                                            <div class="kontrola-select">
+                                                <select id="edit_orijentacija" aria-label="Orijentacija stranice">
+                                                    <option value="portrait">Uspravno</option>
+                                                    <option value="landscape">Položeno</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Desni: korisničke dimenzije -->
+                                    <div class="pdf-template-crud__stupac" id="tmpl_custom_red">
+                                        <div class="pdf-template-crud__polje pdf-template-crud__polje--rastegni">
+                                            <label class="kontrola-labela mb-0" for="edit_sirina_mm">Širina (Korisnička)</label>
+                                            <div class="pdf-template-crud__unos-mjera">
+                                                <input id="edit_sirina_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Širina papira u mm (Korisnička)">
+                                                <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                            </div>
+                                        </div>
+                                        <div class="pdf-template-crud__polje pdf-template-crud__polje--rastegni">
+                                            <label class="kontrola-labela mb-0" for="edit_visina_mm">Visina (Korisnička)</label>
+                                            <div class="pdf-template-crud__unos-mjera">
+                                                <input id="edit_visina_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Visina papira u mm (Korisnička)">
+                                                <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pdf-template-crud__red pdf-template-crud__red--margine">
+                                    <span class="pdf-template-crud__margine-naslov">Margine</span>
+                                    <div class="pdf-template-crud__polje">
+                                        <label class="kontrola-labela mb-0" for="edit_margina_gore_mm">Gore</label>
+                                        <div class="pdf-template-crud__unos-mjera">
+                                            <input id="edit_margina_gore_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Gornja margina u mm">
+                                            <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                        </div>
+                                    </div>
+                                    <div class="pdf-template-crud__polje">
+                                        <label class="kontrola-labela mb-0" for="edit_margina_dolje_mm">Dolje</label>
+                                        <div class="pdf-template-crud__unos-mjera">
+                                            <input id="edit_margina_dolje_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Donja margina u mm">
+                                            <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                        </div>
+                                    </div>
+                                    <div class="pdf-template-crud__polje">
+                                        <label class="kontrola-labela mb-0" for="edit_margina_lijevo_mm">Lijevo</label>
+                                        <div class="pdf-template-crud__unos-mjera">
+                                            <input id="edit_margina_lijevo_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Lijeva margina u mm">
+                                            <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                        </div>
+                                    </div>
+                                    <div class="pdf-template-crud__polje">
+                                        <label class="kontrola-labela mb-0" for="edit_margina_desno_mm">Desno</label>
+                                        <div class="pdf-template-crud__unos-mjera">
+                                            <input id="edit_margina_desno_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Desna margina u mm">
+                                            <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAB 1: Zaglavlje / Podnožje -->
+                            <div class="kontrola-tab__panel" role="tabpanel" id="templateTabPanel1" aria-labelledby="templateTabKart1" hidden>
+                                <div class="pdf-template-crud__red pdf-template-crud__red--zona">
+                                    <span class="pdf-template-crud__cb pdf-template-crud__cb--stog">
+                                        <input type="checkbox" id="edit_zaglavlje" class="kontrola-checkbox" value="1" aria-label="Dokument ima zaglavlje">
+                                        <label class="kontrola-labela mb-0" for="edit_zaglavlje">Zaglavlje</label>
+                                    </span>
+                                    <div class="pdf-template-crud__polje">
+                                        <label class="kontrola-labela mb-0" for="edit_zaglavlje_visina_mm">Visina</label>
+                                        <div class="pdf-template-crud__unos-mjera">
+                                            <input id="edit_zaglavlje_visina_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Visina zaglavlja u mm">
+                                            <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                        </div>
+                                    </div>
+                                    <div class="pdf-template-crud__polje">
+                                        <label class="kontrola-labela mb-0" for="edit_zaglavlje_padding_mm">Razmak</label>
+                                        <div class="pdf-template-crud__unos-mjera">
+                                            <input id="edit_zaglavlje_padding_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Pomak tijela ispod zaglavlja u mm (može biti negativan)">
+                                            <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                        </div>
+                                    </div>
+                                    <div class="pdf-template-crud__polje pdf-template-crud__polje--rastegni">
+                                        <label class="kontrola-labela mb-0" for="edit_zaglavlje_primjena">Primjena</label>
+                                        <div class="kontrola-select">
+                                            <select id="edit_zaglavlje_primjena" aria-label="Zaglavlje na prvoj ili svakoj stranici">
+                                                <option value="svaka">Na svakoj stranici</option>
+                                                <option value="prva">Samo na prvoj</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pdf-template-crud__sekcija-naslov">Podnožje</div>
+                                <hr class="pdf-template-crud__sekcija-linija">
+                                <div class="pdf-template-crud__red pdf-template-crud__red--zona">
+                                    <span class="pdf-template-crud__cb pdf-template-crud__cb--stog">
+                                        <input type="checkbox" id="edit_podnozje" class="kontrola-checkbox" value="1" aria-label="Dokument ima podnožje">
+                                        <label class="kontrola-labela mb-0" for="edit_podnozje">Podnožje</label>
+                                    </span>
+                                    <div class="pdf-template-crud__polje">
+                                        <label class="kontrola-labela mb-0" for="edit_podnozje_visina_mm">Visina</label>
+                                        <div class="pdf-template-crud__unos-mjera">
+                                            <input id="edit_podnozje_visina_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Visina podnožja u mm">
+                                            <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                        </div>
+                                    </div>
+                                    <div class="pdf-template-crud__polje">
+                                        <label class="kontrola-labela mb-0" for="edit_podnozje_padding_mm">Razmak</label>
+                                        <div class="pdf-template-crud__unos-mjera">
+                                            <input id="edit_podnozje_padding_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Pomak tijela iznad podnožja u mm (može biti negativan)">
+                                            <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                        </div>
+                                    </div>
+                                    <div class="pdf-template-crud__polje">
+                                        <label class="kontrola-labela mb-0" for="edit_podnozje_od_stranice">Od stranice</label>
+                                        <input id="edit_podnozje_od_stranice" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="numeric" placeholder="0" aria-label="Od koje stranice se prikazuje podnožje">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- TAB 2: Brojač / Naslovna -->
+                            <div class="kontrola-tab__panel" role="tabpanel" id="templateTabPanel2" aria-labelledby="templateTabKart2" hidden>
+                                <div class="pdf-template-crud__red">
+                                    <span class="pdf-template-crud__cb pdf-template-crud__cb--stog">
+                                        <input type="checkbox" id="edit_broj_stranice" class="kontrola-checkbox" value="1" aria-label="Prikaži brojač stranica">
+                                        <label class="kontrola-labela mb-0" for="edit_broj_stranice">Brojač stranica</label>
+                                    </span>
+                                    <div class="pdf-template-crud__polje pdf-template-crud__polje--rastegni">
+                                        <label class="kontrola-labela mb-0" for="edit_broj_stranice_format">Format</label>
+                                        <input id="edit_broj_stranice_format" type="text" class="kontrola-edit pdf-template-crud__format-edit" maxlength="100" placeholder="Stranica #S (trenutna) od #U (ukupno)" aria-label="Format brojača stranica">
+                                    </div>
+                                </div>
+                                <div class="pdf-template-crud__red">
+                                    <div class="pdf-template-crud__polje pdf-template-crud__polje--rastegni">
+                                        <label class="kontrola-labela mb-0" for="edit_broj_stranice_zona">Zona</label>
+                                        <div class="kontrola-select">
+                                            <select id="edit_broj_stranice_zona" aria-label="Zona brojača">
+                                                <option value="podnozje">Podnožje</option>
+                                                <option value="zaglavlje">Zaglavlje</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="pdf-template-crud__polje pdf-template-crud__polje--rastegni">
+                                        <label class="kontrola-labela mb-0" for="edit_broj_stranice_poravnanje">Poravnanje</label>
+                                        <div class="kontrola-select">
+                                            <select id="edit_broj_stranice_poravnanje" aria-label="Poravnanje brojača">
+                                                <option value="lijevo">Lijevo</option>
+                                                <option value="centar">Centar</option>
+                                                <option value="desno">Desno</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pdf-template-crud__dva-stupca">
+                                    <!-- Lijevo: naslovna -->
+                                    <div class="pdf-template-crud__stupac">
+                                        <span class="pdf-template-crud__cb pdf-template-crud__cb--stog">
+                                            <input type="checkbox" id="edit_naslovna_stranica" class="kontrola-checkbox" value="1" aria-label="Dokument ima naslovnu stranicu">
+                                            <label class="kontrola-labela mb-0" for="edit_naslovna_stranica">Naslovna stranica</label>
+                                        </span>
+                                    </div>
+                                    <!-- Desno: buduće (dvostrani + vezna margina), uvijek disabled -->
+                                    <div class="pdf-template-crud__stupac pdf-template-crud__stupac--usko" id="tmpl_buduce_red">
+                                        <div class="pdf-template-crud__red">
+                                            <span class="pdf-template-crud__cb pdf-template-crud__cb--stog">
+                                                <input type="checkbox" id="edit_dvostran" class="kontrola-checkbox" value="1" aria-label="Dvostrani ispis (buduće)">
+                                                <label class="kontrola-labela mb-0" for="edit_dvostran">Dvostrano</label>
+                                            </span>
+                                            <div class="pdf-template-crud__polje">
+                                                <label class="kontrola-labela mb-0" for="edit_vezna_margina_mm">Vezna margina</label>
+                                                <div class="pdf-template-crud__unos-mjera">
+                                                    <input id="edit_vezna_margina_mm" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Vezna margina u mm (buduće)">
+                                                    <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="pdf-template-crud__napomena-red">
+                        <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                        <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+                    </div>
+                </div>
+
+                <div class="kontrola-panel__footer pdf-template-crud__edit-footer">
+                    <div class="pdf-template-crud__footer-left">
+                        <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                        <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+                    </div>
+                    <div class="pdf-template-crud__footer-right">
+                        <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===== Desni stupac (2/3): pregled ===== -->
+        <div class="pdf-template-crud__desno">
+            <div class="kontrola-panel pdf-template-crud__preview-panel">
+                <div class="kontrola-panel__header pdf-template-crud__preview-header">
+                    <span>Pregled</span>
+                    <span class="pdf-template-crud__preview-akcije">
+                        <button type="button" id="templateDemoToggle" class="pdf-template-crud__preview-toggle" aria-label="Demo tekst" title="Demo tekst — popuni / očisti"></button>
+                        <button type="button" id="templatePreviewToggle" class="pdf-template-crud__preview-toggle" aria-label="Prikaži drugu stranicu" title="Prva / druga stranica"></button>
+                    </span>
+                </div>
+                <div class="kontrola-panel__body pdf-template-crud__preview-body">
+                    <div id="templatePreview" class="pdf-template-crud__preview" aria-label="Shema stranice">
+                        <div id="templatePreviewArea" class="pdf-template-crud__preview-area"></div>
+                        <div id="templatePreviewPrazno" class="pdf-template-crud__preview-prazno">(upišite naziv opisa)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole_Tab.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/PDF_Template_CRUD.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>

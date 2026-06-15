@@ -1,0 +1,311 @@
+/* PDF_Template_CRUD — opis stranice (pdf_template). Desktop only. Bez boja → bez kontrola-boja. */
+
+/* ===== Raspored: lijevo 1/3 (tablica + edit), desno 2/3 (pregled) ===== */
+.pdf-template-crud__layout {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+.pdf-template-crud__lijevo {
+  flex: 1 1 0;            /* 1/2 */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.pdf-template-crud__desno {
+  flex: 1 1 0;            /* 1/2 */
+  min-width: 0;
+  display: flex;
+}
+/* Panel tablice: visina = zaglavlje (naziv/nasljedi) + tablica (N redova), bez rezanja */
+.pdf-template-crud__panel-tablica {
+  flex: 0 0 auto;
+}
+.pdf-template-crud #edit_panel {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Zaglavlje panela tablice: Naziv opisa + Nasljedi opis */
+.pdf-template-crud__tablica-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: stretch;
+}
+.pdf-template-crud__naziv-polje,
+.pdf-template-crud__naslijedi-polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.pdf-template-crud__naslijedi-polje[hidden] { display: none; }
+.pdf-template-crud__naziv-kontrola,
+.pdf-template-crud__naslijedi { width: 100%; }
+
+/* ===== Tab kontrola ===== */
+.pdf-template-crud__tab .kontrola-tab__kartica--aktivna:not(:disabled) {
+  background: var(--tab_kontrola_header_text);
+  color: var(--tab_kontrola_body_bg);
+  -webkit-text-fill-color: var(--tab_kontrola_body_bg);
+  border-color: var(--tab_kontrola_header_text);
+}
+.pdf-template-crud__tab .kontrola-tab__kartica:disabled {
+  opacity: 1;
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  cursor: not-allowed;
+}
+/* Otvoreni select smije „izaći" iz tab kontrole */
+.pdf-template-crud__tab:has(.kontrola-select--open),
+.pdf-template-crud__tab .kontrola-tab__tijelo:has(.kontrola-select--open),
+.pdf-template-crud__tab .kontrola-tab__panel:has(.kontrola-select--open) {
+  overflow: visible;
+}
+/* Jednaki fontovi u tabovima */
+.pdf-template-crud__tab .kontrola-tab__tijelo,
+.pdf-template-crud__tab .kontrola-tab__tijelo .kontrola-labela,
+.pdf-template-crud__tab .kontrola-tab__tijelo .kontrola-edit,
+.pdf-template-crud__tab .kontrola-tab__tijelo .kontrola-select select,
+.pdf-template-crud__tab .kontrola-tab__tijelo .pdf-template-crud__hint {
+  font-family: var(--tab_kontrola_body_font_family);
+  font-size: var(--tab_kontrola_body_font_size);
+  font-weight: var(--tab_kontrola_body_font_weight);
+  font-style: normal;
+}
+
+.pdf-template-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ===== Redovi / polja ===== */
+.pdf-template-crud__red {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+.pdf-template-crud__red:last-child { margin-bottom: 0; }
+.pdf-template-crud__red--cekboxi { align-items: center; }
+.pdf-template-crud__red[hidden] { display: none; }
+
+.pdf-template-crud__polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.pdf-template-crud__polje--rastegni { min-width: 0; }
+.pdf-template-crud__polje--rastegni .kontrola-select { width: 100%; }
+.pdf-template-crud__polje--rastegni .pdf-template-crud__unos-mjera { width: 100%; }
+.pdf-template-crud__polje--rastegni .pdf-template-crud__num { flex: 1 1 auto; width: auto; min-width: 0; }
+/* U redu: rastegnuta polja dijele širinu reda (u stupcu se NE rastežu vertikalno) */
+.pdf-template-crud__red > .pdf-template-crud__polje--rastegni { flex: 1 1 0; }
+
+/* Gornji dio taba u dva stupca s pregradnom linijom */
+.pdf-template-crud__dva-stupca { display: flex; align-items: stretch; margin-bottom: 0.85rem; }
+.pdf-template-crud__stupac {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.pdf-template-crud__stupac:first-child {
+  padding-right: 0.9rem;
+  border-right: 1px solid var(--edit_border, #ced4da);
+}
+.pdf-template-crud__stupac:last-child { padding-left: 0.9rem; }
+/* Stupac širine sadržaja (kontrole popune red); drugi stupac preuzme ostatak */
+.pdf-template-crud__stupac--usko { flex: 0 1 auto; }
+/* Buduće (dvostrano + vezna margina): Vezna podignuta uz checkbox */
+#tmpl_buduce_red .pdf-template-crud__red { align-items: center; }
+
+/* Numerički input + jedinica */
+.pdf-template-crud__num { width: 5rem; text-align: right; }
+.pdf-template-crud__unos-mjera { display: flex; align-items: center; gap: 0.3rem; }
+.pdf-template-crud__mjera { flex: 0 0 auto; white-space: nowrap; font-size: 0.9em; opacity: 0.75; }
+.pdf-template-crud__format-edit { width: 100%; box-sizing: border-box; }
+
+/* Margine u jednom redu: vodeća labela „Margine" + 4 edita (gore/dolje/lijevo/desno) koja popune red */
+.pdf-template-crud__red--margine {
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 0.4rem 0.5rem;
+}
+.pdf-template-crud__red--margine .pdf-template-crud__polje { flex: 1 1 0; min-width: 0; }
+.pdf-template-crud__red--margine .pdf-template-crud__unos-mjera { width: 100%; }
+.pdf-template-crud__red--margine .pdf-template-crud__num { flex: 1 1 auto; width: auto; min-width: 0; }
+.pdf-template-crud__margine-naslov {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  padding-bottom: 0.45rem;
+  white-space: nowrap;
+  color: var(--label_text, inherit);
+}
+.pdf-template-crud__margine-naslov--disabled { color: var(--label_text_disabled, #999); }
+/* Red zone (zaglavlje/podnožje): checkbox + visina + razmak + primjena/od stranice u jednom redu */
+.pdf-template-crud__red--zona { flex-wrap: nowrap; gap: 0.5rem; }
+.pdf-template-crud__red--zona .pdf-template-crud__num { width: 3.5rem; }
+/* Checkbox „stog": kućica gore, tekst centriran ispod */
+.pdf-template-crud__cb--stog {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
+}
+.pdf-template-crud__cb--stog .kontrola-labela { white-space: normal; }
+
+.pdf-template-crud__cb { display: inline-flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
+.pdf-template-crud__cb .kontrola-labela { white-space: nowrap; }
+
+.pdf-template-crud__sekcija-naslov { font-weight: 600; margin: 0.3rem 0 0; }
+.pdf-template-crud__sekcija-linija { border: 0; border-top: 1px solid var(--edit_border, #ced4da); margin: 0.3rem 0 0.6rem; }
+.pdf-template-crud__hint { margin: 0.1rem 0 0.5rem; color: var(--label_text, #333); opacity: 0.85; }
+
+.pdf-template-crud__napomena-red { display: flex; flex-direction: column; gap: 0.2rem; }
+
+/* Footer */
+.pdf-template-crud__edit-footer { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.pdf-template-crud__footer-left, .pdf-template-crud__footer-right { display: flex; gap: 0.5rem; }
+
+/* ===== Pregled (HTML/CSS shema stranice) ===== */
+.pdf-template-crud__preview-panel { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 24rem; }
+.pdf-template-crud__preview-header {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.pdf-template-crud__preview-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--edit_bg, #fff);
+  color: var(--label_text, #333);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .pdf-template-crud__preview-toggle:hover { background: var(--c-gray-100, #eee); }
+}
+.pdf-template-crud__preview-toggle svg { display: block; }
+.pdf-template-crud__preview-toggle--aktivan { background: var(--c-gray-100, #e9ecef); }
+.pdf-template-crud__preview-toggle:disabled {
+  background: var(--edit_bg_disabled, #e9ecef);
+  border-color: var(--edit_border_disabled, #ddd);
+  color: var(--label_text_disabled, #999);
+  cursor: not-allowed;
+}
+.pdf-template-crud__preview-akcije { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+/* Demo tekst u tijelu stranice (pravi lorem, skaliran na pt; prikaz razmaka od zaglavlja/podnožja) */
+.pdf-template-crud__demo-tekst {
+  position: absolute;
+  overflow: hidden;
+  color: #5a6672;
+  text-align: justify;
+  font-family: 'Times New Roman', Georgia, serif;
+  pointer-events: none;
+}
+.pdf-template-crud__preview-body { flex: 1 1 auto; min-height: 0; display: flex; }
+.pdf-template-crud__preview {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  background: var(--c-gray-100, #f2f2f2);
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+}
+.pdf-template-crud__preview-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.pdf-template-crud__preview-prazno {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--label_text_disabled, #888);
+  font-style: italic;
+}
+
+/* Shema stranice (dimenzije postavlja JS) */
+.pdf-template-crud__stranica {
+  position: relative;
+  background: #fff;
+  border: 1px solid #9aa3ad;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  box-sizing: border-box;
+}
+/* Okvir margina (iscrtkano) */
+.pdf-template-crud__margine {
+  position: absolute;
+  border: 1px dashed #2d6da3;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+/* Zone zaglavlja/podnožja */
+.pdf-template-crud__zona {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: rgba(45, 109, 163, 0.12);
+  border-top: 1px solid rgba(45, 109, 163, 0.4);
+  border-bottom: 1px solid rgba(45, 109, 163, 0.4);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.pdf-template-crud__zona-oznaka {
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  font-size: 9px;
+  line-height: 1.2;
+  color: #1d4e74;
+  opacity: 0.8;
+}
+/* Brojač stranica (oznaka u zoni) */
+.pdf-template-crud__brojac {
+  position: absolute;
+  font-size: 10px;
+  color: #222;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0 2px;
+}
+/* Naznaka naslovne stranice */
+.pdf-template-crud__naslovna-oznaka {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-18deg);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(45, 109, 163, 0.45);
+  border: 2px solid rgba(45, 109, 163, 0.35);
+  border-radius: 6px;
+  padding: 2px 8px;
+  pointer-events: none;
+}
