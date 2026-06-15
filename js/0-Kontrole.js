@@ -1075,6 +1075,38 @@
     listEl.style.maxHeight = maxH + 'px';
   }
 
+  /* Stilizirani popup za opciju selecta (umjesto native title): pokazuje opis kad opcija ima data-opis. */
+  var _selectTooltip = null;
+  function osiguramSelectTooltip() {
+    if (_selectTooltip) return _selectTooltip;
+    var t = document.createElement('div');
+    t.className = 'kontrola-select__tooltip';
+    t.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(t);
+    _selectTooltip = t;
+    return t;
+  }
+  function sakrijSelectTooltip() {
+    if (_selectTooltip) _selectTooltip.style.display = 'none';
+  }
+  function prikaziSelectTooltip(optEl) {
+    var opis = optEl && optEl.dataset ? optEl.dataset.opis : '';
+    if (!opis) { sakrijSelectTooltip(); return; }
+    var t = osiguramSelectTooltip();
+    t.textContent = opis;
+    t.style.display = 'block';
+    var r = optEl.getBoundingClientRect();
+    var tw = t.offsetWidth, th = t.offsetHeight;
+    var x = r.right + 8;
+    if (x + tw > window.innerWidth - 8) x = r.left - tw - 8;   /* nema mjesta desno → lijevo */
+    if (x < 8) x = 8;
+    var y = r.top;
+    if (y + th > window.innerHeight - 8) y = window.innerHeight - th - 8;
+    if (y < 8) y = 8;
+    t.style.left = x + 'px';
+    t.style.top = y + 'px';
+  }
+
   function initCustomSelect(root) {
     if (typeof document === 'undefined') return;
     var scope = root || document;
@@ -1082,6 +1114,7 @@
     // Jednokratni globalni handler za zatvaranje svih otvorenih selecta na klik izvan.
     if (!document._kontrolaSelectDocClickBound) {
       document.addEventListener('click', function (e) {
+        sakrijSelectTooltip();
         var wraps = document.querySelectorAll('.kontrola-select.kontrola-select--open');
         wraps.forEach(function (wrap) {
           if (!wrap.contains(e.target)) {
@@ -1132,6 +1165,14 @@
         list.className = 'kontrola-select__list';
         wrap.appendChild(list);
       }
+      /* Popup opisa opcije (data-opis) na hover */
+      list.addEventListener('mouseover', function (e) {
+        var o = e.target && e.target.closest ? e.target.closest('.kontrola-select__option') : null;
+        if (o && o.dataset && o.dataset.opis) prikaziSelectTooltip(o);
+        else sakrijSelectTooltip();
+      });
+      list.addEventListener('mouseleave', sakrijSelectTooltip);
+      list.addEventListener('scroll', sakrijSelectTooltip);
       // Unutarnji span za tekst (da eventualni budući scroll ne \"jede\" padding)
       var displayInner = display.querySelector('.kontrola-select__display-inner');
       if (!displayInner) {
@@ -1182,6 +1223,7 @@
           optEl.id = 'kontrola-select-opt-' + (++_customSelectOptionIdCounter);
           optEl.textContent = opt.textContent;
           optEl.dataset.value = opt.value;
+          if (opt.title) optEl.dataset.opis = opt.title;   /* opis za stilizirani popup (npr. SQL COMMENT kolone) */
           optEl.setAttribute('role', 'option');
           optEl.setAttribute('aria-selected', opt.value === nativeSel.value ? 'true' : 'false');
           /* Inline boja na <option> (npr. paleta u Alati_Poruke_Razvoja_Tip) – prikaži u padajućoj listi. */

@@ -1809,6 +1809,25 @@ body {
   background: var(--select_option_bg_hover);
 }
 
+/* Popup opisa opcije (npr. SQL COMMENT kolone) — pokazuje se na hover, pozicionira JS */
+.kontrola-select__tooltip {
+  position: fixed;
+  display: none;
+  z-index: 10000;
+  max-width: 24rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--panel_bg, #fff);
+  color: var(--label_text, #222);
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  font-family: var(--font_family);
+  font-size: 0.85rem;
+  line-height: 1.35;
+  white-space: normal;
+  pointer-events: none;
+}
+
 .kontrola-select__option--selected,
 .kontrola-select__option--selected:hover {
   background: var(--select_option_bg_selected);
