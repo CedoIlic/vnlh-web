@@ -1,0 +1,43 @@
+/* PDF_Whitelist_CRUD — dozvoljeni izvori (pdf_dozvoljeni_izvori). Desktop only. Bez boja. */
+
+.pdf-whitelist-crud__panel-tablica {
+  height: 18rem;
+  min-height: 12rem;
+}
+
+.pdf-whitelist-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* 2×2 mreža: Naziv | Tablica / Tip podatka | Kolona */
+.pdf-whitelist-crud__mreza {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  align-items: end;
+}
+.pdf-whitelist-crud__polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.pdf-whitelist-crud__polje .kontrola-select { width: 100%; }
+.pdf-whitelist-crud__naziv-kontrola { width: 100%; }
+
+.pdf-whitelist-crud__napomena-red {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pdf-whitelist-crud__edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pdf-whitelist-crud__footer-left,
+.pdf-whitelist-crud__footer-right { display: flex; gap: 0.5rem; }

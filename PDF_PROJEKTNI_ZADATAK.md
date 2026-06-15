@@ -78,8 +78,10 @@ whitelist izvora kojeg uređuje administrator.
   (npr. `loza_id`). Primjer: logo lože `loze.logotip` — id ovisi o trenutno izabranoj loži.
 - Dokument prima **više kontekstnih vrijednosti istovremeno**.
 
-**Slike u bazi.** Slike su pohranjene kao BLOB s pratećim MIME poljem. Backend pri
-sastavljanju JSON-a pretvara BLOB + MIME u base64 data URL koji pdfmake koristi.
+**Slike u bazi.** Slike su pohranjene kao BLOB (uz mogući prateći MIME stupac, npr. `slika`/`slika_mime`).
+Backend pretvara BLOB u base64 **data URL**, a **MIME detektira iz prvih bajtova** (magic numbers: PNG/JPEG/GIF/WebP).
+Spremljeni `_mime` stupac se **ne koristi** (odluka: konvencija imenovanja nije zajamčena u svim tablicama).
+Whitelist (`pdf_dozvoljeni_izvori`) zato za sliku drži samo BLOB kolonu — bez MIME stupca.
 
 **Prikaz po vrsti.** Tekst-stavka koristi `paragraf_id` (→ `pdf_paragraf`); slika-stavka
 koristi `slika_stil_id` (→ `pdf_slika_stil`). CHECK ograničenja jamče da se popunjava ispravan.
@@ -509,7 +511,7 @@ i zatvara prije prelaska na sljedeću.
 ### 2.7 — Generator PDF-a (jezgra)
 - Backend: sastavljanje JSON paketa (tijek iz 1.5) — čitanje dokumenta, templatea, stavki;
   dohvat sadržaja po izvoru (statički/dinamički + kontekst) iz whitelistanih tablica;
-  BLOB → base64 data URL za slike; razbijanje teksta po `\n`; mapiranje stilova u pdfmake;
+  BLOB → base64 data URL za slike (**MIME iz magic-bytes**, ne iz `_mime` stupca); razbijanje teksta po `\n`; mapiranje stilova u pdfmake;
   mm→pt konverzije; raspoređivanje po zonama (tijelo/zaglavlje/podnožje/naslovna); brojač
   stranica prema zoni i poravnanju iz templatea.
 - Frontend: primanje JSON-a, `pdfMake.createPdf(...)`, prikaz (preview), spremanje, ispis.

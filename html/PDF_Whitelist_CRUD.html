@@ -1,0 +1,96 @@
+<!-- =========================================================
+     PDF_Whitelist_CRUD.html
+     CRUD pdf_dozvoljeni_izvori: panel tablica (postojeći izvori) + edit panel.
+     Tablica/kolona biraju se kaskadno iz baze (information_schema).
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dozvoljeni izvori</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/PDF_Whitelist_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Dozvoljeni izvori</h2></div>
+<div class="page-container pdf-whitelist-crud">
+
+    <!-- Panel 1: tablica postojećih izvora -->
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3 pdf-whitelist-crud__panel-tablica">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+
+    <!-- Panel 2: edit -->
+    <div class="kontrola-panel mb-3 pdf-whitelist-crud__panel-edit" id="edit_panel">
+        <div class="kontrola-panel__body pdf-whitelist-crud__edit-body">
+
+            <!-- 2×2: Naziv | Tablica / Tip podatka | Kolona -->
+            <div class="pdf-whitelist-crud__mreza">
+                <div class="pdf-whitelist-crud__polje">
+                    <label class="kontrola-labela mb-0" for="edit_naziv">Naziv</label>
+                    <div class="kontrola-edit-delete pdf-whitelist-crud__naziv-kontrola">
+                        <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="npr. Logo lože, Ime lože" maxlength="100" autocomplete="off">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    </div>
+                </div>
+                <div class="pdf-whitelist-crud__polje">
+                    <label class="kontrola-labela mb-0" for="edit_tablica">Tablica</label>
+                    <div class="kontrola-select">
+                        <select id="edit_tablica" aria-label="Tablica izvora">
+                            <option value="">— odaberi tablicu —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pdf-whitelist-crud__polje">
+                    <label class="kontrola-labela mb-0" for="edit_tip_podatka">Tip podatka</label>
+                    <div class="kontrola-select">
+                        <select id="edit_tip_podatka" aria-label="Tip podatka">
+                            <option value="tekst">Tekst</option>
+                            <option value="slika">Slika</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pdf-whitelist-crud__polje">
+                    <label class="kontrola-labela mb-0" for="edit_kolona">Kolona</label>
+                    <div class="kontrola-select">
+                        <select id="edit_kolona" aria-label="Kolona izvora">
+                            <option value="">— odaberi kolonu —</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pdf-whitelist-crud__napomena-red">
+                <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+            </div>
+        </div>
+
+        <div class="kontrola-panel__footer pdf-whitelist-crud__edit-footer">
+            <div class="pdf-whitelist-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="pdf-whitelist-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/PDF_Whitelist_CRUD.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>
