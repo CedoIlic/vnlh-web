@@ -312,7 +312,26 @@
   function osvjeziTablicu() {
     ucitajPodatkeTablica(function (rows) {
       CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, PDF_TemplateCRUD.Tablica_Zaglavlje);
+      requestAnimationFrame(fiksirajMinVisinuTablice);
     });
+  }
+
+  /* Donji pod resizea = PRIRODNA visina (zaglavlje + tablica). Mjeri se s temp height:auto da
+     ovisi o sadržaju (npr. kad se pojavi „Nasljedi opis" selekt → zaglavlje naraste), a NE o
+     trenutnoj/ručno-resizeanoj visini. Preračunava se i kad se podaci promijene. */
+  function fiksirajMinVisinuTablice() {
+    var panel = document.querySelector('.pdf-template-crud__panel-tablica');
+    if (!panel) return;
+    var pH = panel.style.height, pMin = panel.style.minHeight;
+    panel.style.height = 'auto';
+    panel.style.minHeight = '0';
+    var h = Math.round(panel.offsetHeight || 0);
+    panel.style.height = pH;
+    panel.style.minHeight = pMin;
+    if (h > 0) {
+      panel.style.minHeight = h + 'px';
+      panel.setAttribute('data-resize-min-px', String(h));
+    }
   }
 
   /* ---- Dinamička polja (disable, ne skrivanje) ---- */
@@ -564,6 +583,7 @@
   if (typeof KontroleTabInit === 'function') KontroleTabInit(byId('templateTab'));
   ucitajPodatkeTablica(function (rows) {
     CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, PDF_TemplateCRUD.Tablica_Zaglavlje);
+    requestAnimationFrame(fiksirajMinVisinuTablice);
   });
   clearForm();
   updateCrudUpisiState();
@@ -587,18 +607,7 @@
     else window.addEventListener('load', function () { requestAnimationFrame(renderPreview); });
   })();
 
-  /* Donji pod resizea panela tablice = inicijalna visina (zaglavlje + tablica); ne dozvoli ispod toga. */
-  (function () {
-    function fiksirajMinVisinuTablice() {
-      var panel = document.querySelector('.pdf-template-crud__panel-tablica');
-      if (!panel) return;
-      var h = Math.round(panel.offsetHeight || 0);
-      if (h > 0) {
-        panel.style.minHeight = h + 'px';
-        panel.setAttribute('data-resize-min-px', String(h));
-      }
-    }
-    if (document.readyState === 'complete') requestAnimationFrame(fiksirajMinVisinuTablice);
-    else window.addEventListener('load', function () { requestAnimationFrame(fiksirajMinVisinuTablice); });
-  })();
+  /* Donji pod resizea panela tablice — postavi pri učitavanju (i preračunava se pri promjeni podataka). */
+  if (document.readyState === 'complete') requestAnimationFrame(fiksirajMinVisinuTablice);
+  else window.addEventListener('load', function () { requestAnimationFrame(fiksirajMinVisinuTablice); });
 })();
