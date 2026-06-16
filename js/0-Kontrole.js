@@ -3178,32 +3178,8 @@
         document.body.appendChild(modalEl);
       }
 
-      /* --- Blok: Modal – URL PNG ikone (korijen aplikacije + /slike/; pouzdanije od CSS var u ::before) --- */
-      function modalIconSrcForStanje(stanje) {
-        var s = String(stanje || '').toLowerCase();
-        var fileByStanje = {
-          ok: 'Check.png',
-          error: 'Error.png',
-          forbidden: 'Forbidden.png',
-          information: 'information.png',
-          warning: 'Warning.png'
-        };
-        var name = fileByStanje[s] || fileByStanje.information;
-        if (typeof window.vnlhAppBasePathname === 'function') {
-          var base = window.vnlhAppBasePathname();
-          if (base !== '') {
-            var pathname = base.replace(/\/$/, '') + '/slike/' + name;
-            pathname = pathname.replace(/\/{2,}/g, '/');
-            if (pathname.charAt(0) !== '/') pathname = '/' + pathname;
-            return pathname;
-          }
-        }
-        try {
-          return new URL('../slike/' + name, window.location.href).href;
-        } catch (e) {
-          return '../slike/' + name;
-        }
-      }
+      /* Ikona modala po stanju: window.modalIconSrcForStanje (0-Poruke_Tekstovi.js) –
+         servira BLOB iz baze (sustav_slike_tekstovi) preko php/modal_ikona.php uz browser cache. */
 
       function parseModalMessage(raw) {
         if (raw == null) raw = '';
@@ -3269,7 +3245,9 @@
         var imgPng = document.createElement('img');
         imgPng.className = 'kontrola-modal__image-png';
         imgPng.alt = '';
-        imgPng.src = modalIconSrcForStanje(msg.stanje);
+        imgPng.onerror = function () { imgPng.style.display = 'none'; };   /* nema zapisa (404) -> bez ikone */
+        var ikonaSrc = (typeof window.modalIconSrcForStanje === 'function') ? window.modalIconSrcForStanje(msg.stanje) : '';
+        if (ikonaSrc) { imgPng.src = ikonaSrc; } else { imgPng.style.display = 'none'; }
         imageEl.appendChild(imgPng);
         ['ok', 'error', 'forbidden', 'information', 'warning'].forEach(function (s) {
           modalEl.classList.remove('kontrola-modal--' + s);

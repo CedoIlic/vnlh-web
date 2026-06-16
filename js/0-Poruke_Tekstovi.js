@@ -87,3 +87,46 @@ var MODAL_MESSAGES = {
   '156': '156|Odgovori razvoja||ok||Svi odgovori su uklonjeni; poruka je snimljena bez sufiksnih odgovora.',   /* Gumb „Ukloni sve odgovore“: očisti #kod*tekst# i UPDATE polja poruka */
   '200': '200|Poruka SQL baze|(OK)|error||Greška SQL baze podataka, kod: #1'             /* SQL greška; #1 = sql kod(ovi) */
 };
+
+/* --- MODAL – IKONE PO STANJU ----------------------------------------------
+   Ikona se bira po `stanje` polju poruke. Servira se iz baze (sustav_slike_tekstovi)
+   preko php/modal_ikona.php (admin-editable) uz browser cache (ETag + max-age).
+   Nema zapisa -> 404 -> bez ikone. Preload svih 5 na učitavanju (cache-aware:
+   preglednik dohvati samo ono što nije već u cacheu). showPorukaModal (0-Kontrole.js)
+   koristi window.modalIconSrcForStanje. --- */
+(function (global) {
+  'use strict';
+  var STANJA = ['ok', 'error', 'forbidden', 'information', 'warning'];
+
+  function modalIconSrcForStanje(stanje) {
+    var s = String(stanje || '').toLowerCase();
+    if (STANJA.indexOf(s) < 0) s = 'information';
+    var rel = 'php/modal_ikona.php?stanje=' + encodeURIComponent(s);
+    if (typeof global.vnlhAppBasePathname === 'function') {
+      var base = global.vnlhAppBasePathname();
+      if (base !== '') {
+        var pathname = base.replace(/\/$/, '') + '/' + rel;
+        pathname = pathname.replace(/\/{2,}/g, '/');
+        if (pathname.charAt(0) !== '/') pathname = '/' + pathname;
+        return pathname;
+      }
+    }
+    try {
+      return new URL('../' + rel, global.location.href).href;
+    } catch (e) {
+      return '../' + rel;
+    }
+  }
+  global.modalIconSrcForStanje = modalIconSrcForStanje;
+
+  function preloadModalIkone() {
+    for (var i = 0; i < STANJA.length; i++) {
+      try { var im = new Image(); im.src = modalIconSrcForStanje(STANJA[i]); } catch (e) {}
+    }
+  }
+  if (global.document && global.document.readyState === 'loading') {
+    global.document.addEventListener('DOMContentLoaded', preloadModalIkone);
+  } else {
+    preloadModalIkone();
+  }
+})(typeof window !== 'undefined' ? window : this);

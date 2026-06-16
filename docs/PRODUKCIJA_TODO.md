@@ -25,3 +25,23 @@ zasebno; ovdje su stvari koje se NE rješavaju kroz Skeemu ni kroz git.
   3. **Verifikacija:** `SELECT @@max_allowed_packet;` → `67108864`; zatim test upisa i prikaza
      veće slike (> 1 MB) kroz formu.
 - **Vrijedi i za upis i za čitanje** — podizanjem parametra riješeno je oboje, bez izmjene PHP-a.
+
+---
+
+## 2. Seed: 5 ikona modala u `sustav_slike_tekstovi`
+
+- **Dodano:** 2026-06-16
+- **Kontekst:** Ikone modala poruka servira se iz baze preko `php/modal_ikona.php`
+  (helper `window.modalIconSrcForStanje` u 0-Poruke_Tekstovi.js). Endpoint mapira
+  `stanje → rezervirani naziv`. Nema retka → 404 → **bez ikone** (modal i dalje radi).
+- **Podatak, ne shema:** ovih 5 redaka NE migrira kroz Skeemu — treba ih unijeti ručno
+  na produkciji (kroz formu „Slike, tekstovi, blokovi" ili INSERT-om), inače modali na
+  produkciji nemaju ikone.
+- **Točni nazivi (moraju se podudarati s mapom u `php/modal_ikona.php`):**
+  `Modal ikona OK`, `Modal ikona Greska` (bez „š"), `Modal ikona Zabranjeno`,
+  `Modal ikona Informacija`, `Modal ikona Upozorenje` — svi `tip_podatka = Slika PNG`.
+- **Izvor slika:** `slike-arhiva/Check_mali.png`, `Error_mali.png`, `Forbidden_mali.png`,
+  `information_mali.png`, `Warning_mali.png` (PNG, ~20–30 KB svaki; arhivirano iz `slike/` jer
+  se ikone sad serviraju iz baze).
+- **Verifikacija:** otvoriti `…/php/modal_ikona.php?stanje=ok|error|forbidden|information|warning`
+  → svaki vraća PNG (200); zatim okinuti modal svakog stanja.
