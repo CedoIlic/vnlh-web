@@ -13,6 +13,20 @@
 .pdf-dokument-crud__lijevo .kontrola-select,
 .pdf-dokument-crud__lijevo .kontrola-edit { width: 100%; box-sizing: border-box; }
 
+/* Tablica dokumenata: resize traka iz panel-tablica kontrole, ali bez vidljivog panel-okvira
+   (vidi se samo tablica s vlastitim okvirom + traka ispod) → bez efekta „panel u panelu”. */
+.pdf-dokument-crud__tablica-resize {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  overflow: visible;
+}
+.pdf-dokument-crud__tablica-resize > .kontrola-panel__body {
+  padding: 0;
+  background: transparent;
+}
+
 /* ===== Tab Podaci: dvostupčani edit stavke ===== */
 .pdf-dokument-crud__dva-stupca { display: flex; gap: 1rem; align-items: flex-start; }
 .pdf-dokument-crud__stupac { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }

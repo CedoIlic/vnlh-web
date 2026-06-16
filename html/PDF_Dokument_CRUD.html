@@ -39,8 +39,12 @@
 
             <!-- Lijeva kolona -->
             <div class="pdf-dokument-crud__lijevo">
-                <!-- Tablica dokumenata -->
-                <div id="dokTablica" class="kontrola-tablica mb-2"></div>
+                <!-- Tablica dokumenata + resize traka (panel-tablica mehanizam, bez vidljivog panel-okvira) -->
+                <div class="kontrola-panel kontrola-panel-tablica kontrola-panel--resize-y pdf-dokument-crud__tablica-resize mb-2">
+                    <div class="kontrola-panel__body">
+                        <div id="dokTablica" class="kontrola-tablica"></div>
+                    </div>
+                </div>
                 <div class="pdf-dokument-crud__polje">
                     <label class="kontrola-labela mb-0" for="edit_naziv">Naziv dokumenta</label>
                     <div class="kontrola-edit-delete">

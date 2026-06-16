@@ -94,17 +94,16 @@
 
   /* ---- Tablica dokumenata + „Nasljedi dokument" ---- */
   var DOK_CFG = {
-    Broj_Kolona: 2,
+    Broj_Kolona: 1,
     Reload_Ikona: 0,
     CrudCssPrefix: 'pdf-dokument-crud',
     Tablica_Zaglavlje: [
-      { key: 'naziv', title: 'Dokument', SQL_Naziv: 'naziv', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
-      { key: 'template', title: 'Stranica', SQL_Naziv: 'template', sortable: 0, sortable_icon: 0, type: 't', width: -40, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
+      { key: 'naziv', title: 'Dokument', SQL_Naziv: 'naziv', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
     ]
   };
   var dokApi = null;
   CommonCRUD.initTablica('dokTablica', DOK_CFG, {
-    getRowId: function (row) { return row && row[2] != null ? row[2] : null; },
+    getRowId: function (row) { return row && row[1] != null ? row[1] : null; },
     onReady: function (api) { dokApi = api; },
     onSelectionChange: function () { naDokSelekcija(); }
   });
@@ -131,7 +130,7 @@
         try {
           var arr = JSON.parse(t || '[]');
           arr.sort(function (a, b) { return String(a.naziv).localeCompare(String(b.naziv), 'hr', { sensitivity: 'base' }); });
-          arr.forEach(function (o) { docPoId[String(o.id)] = o; rows.push([o.naziv != null ? o.naziv : ('#' + o.id), o.template_naziv != null ? o.template_naziv : '', o.id]); });
+          arr.forEach(function (o) { docPoId[String(o.id)] = o; rows.push([o.naziv != null ? o.naziv : ('#' + o.id), o.id]); });
         } catch (e) {}
       } else { porukaIzKoda(t); }
       CommonCRUD.setDataTablica(dokApi, 'dokTablica', rows, DOK_CFG.Tablica_Zaglavlje);
