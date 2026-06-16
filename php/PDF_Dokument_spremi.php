@@ -1,0 +1,101 @@
+<?php
+require_once __DIR__ . '/require_login_api.php';
+// Spremanje cijelog dokumenta (zaglavlje + stavke) u transakciji.
+// Ulaz: POST JSON { id?, naziv, template_id, opis, aktivan, napomena, stavke:[ {zona,vrsta,izvor_id,izvor_tip,...,paragraf_id|slika_stil_id,napomena}, ... ] }
+// Stavke se REPLACE-aju (delete + insert po redoslijedu). FK + CHECK u bazi čuvaju integritet.
+$db_ret = require_once __DIR__ . '/00_db.php';
+if ($db_ret !== -1) {
+    echo $db_ret;
+    exit;
+}
+
+$raw = file_get_contents('php://input');
+$u = json_decode($raw, true);
+if (!is_array($u)) {
+    echo '105';
+    exit;
+}
+
+$id = isset($u['id']) ? (int) $u['id'] : 0;
+$naziv = trim((string) ($u['naziv'] ?? ''));
+$template_id = isset($u['template_id']) ? (int) $u['template_id'] : 0;
+$opis = trim((string) ($u['opis'] ?? ''));
+$aktivan = !empty($u['aktivan']) ? 1 : 0;
+$napomena = trim((string) ($u['napomena'] ?? ''));
+$stavke = (isset($u['stavke']) && is_array($u['stavke'])) ? $u['stavke'] : [];
+
+if ($naziv === '' || mb_strlen($naziv, 'UTF-8') > 100 || $template_id <= 0) {
+    echo '105';
+    exit;
+}
+$opisV = ($opis === '') ? null : $opis;
+$napV = ($napomena === '') ? null : $napomena;
+
+try {
+    $mysqli->begin_transaction();
+
+    if ($id > 0) {
+        $stmt = $mysqli->prepare('UPDATE pdf_dokument SET naziv = ?, template_id = ?, opis = ?, aktivan = ?, napomena = ? WHERE id = ?');
+        $stmt->bind_param('sisisi', $naziv, $template_id, $opisV, $aktivan, $napV, $id);
+        $stmt->execute();
+        $stmt->close();
+    } else {
+        $stmt = $mysqli->prepare('INSERT INTO pdf_dokument (naziv, template_id, opis, aktivan, napomena) VALUES (?, ?, ?, ?, ?)');
+        $stmt->bind_param('sisis', $naziv, $template_id, $opisV, $aktivan, $napV);
+        $stmt->execute();
+        $id = (int) $mysqli->insert_id;
+        $stmt->close();
+    }
+
+    // Zamjena stavki
+    $del = $mysqli->prepare('DELETE FROM pdf_dokument_stavke WHERE dokument_id = ?');
+    $del->bind_param('i', $id);
+    $del->execute();
+    $del->close();
+
+    if (!empty($stavke)) {
+        $dok = 0; $red = 0; $zona = ''; $vrsta = ''; $izvorId = 0; $izTip = '';
+        $izRed = null; $kkljuc = null; $tkol = null; $tvrij = null; $parId = null; $sslik = null; $nap = null;
+        $ins = $mysqli->prepare(
+            'INSERT INTO pdf_dokument_stavke
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, trazi_kolona, trazi_vrijednost, paragraf_id, slika_stil_id, napomena)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        $ins->bind_param('iissisisssiis', $dok, $red, $zona, $vrsta, $izvorId, $izTip, $izRed, $kkljuc, $tkol, $tvrij, $parId, $sslik, $nap);
+        $dok = $id;
+        $i = 0;
+        foreach ($stavke as $s) {
+            $i++;
+            $red = isset($s['redoslijed']) ? (int) $s['redoslijed'] : $i;
+            $zona = in_array(($s['zona'] ?? ''), ['tijelo', 'zaglavlje', 'podnozje', 'naslovna'], true) ? $s['zona'] : 'tijelo';
+            $vrsta = in_array(($s['vrsta'] ?? ''), ['tekst', 'slika'], true) ? $s['vrsta'] : '';
+            $izvorId = (int) ($s['izvor_id'] ?? 0);
+            $izTip = in_array(($s['izvor_tip'] ?? ''), ['staticki', 'dinamicki', 'po_vrijednosti'], true) ? $s['izvor_tip'] : '';
+            if ($vrsta === '' || $izvorId <= 0 || $izTip === '') {
+                throw new RuntimeException('stavka_nevaljana');
+            }
+            // Parametri po načinu dohvata (ostali NULL → zadovolji chk_izvor_po_tipu)
+            $izRed = ($izTip === 'staticki' && (int) ($s['izvor_red_id'] ?? 0) > 0) ? (int) $s['izvor_red_id'] : null;
+            $kkljuc = ($izTip === 'dinamicki' && trim((string) ($s['kontekst_kljuc'] ?? '')) !== '') ? trim((string) $s['kontekst_kljuc']) : null;
+            $tkol = ($izTip === 'po_vrijednosti' && trim((string) ($s['trazi_kolona'] ?? '')) !== '') ? trim((string) $s['trazi_kolona']) : null;
+            $tvrij = ($izTip === 'po_vrijednosti') ? (string) ($s['trazi_vrijednost'] ?? '') : null;
+            // Stil po vrsti (drugi NULL → zadovolji chk_prikaz_po_vrsti)
+            $parId = ($vrsta === 'tekst' && (int) ($s['paragraf_id'] ?? 0) > 0) ? (int) $s['paragraf_id'] : null;
+            $sslik = ($vrsta === 'slika' && (int) ($s['slika_stil_id'] ?? 0) > 0) ? (int) $s['slika_stil_id'] : null;
+            $n = trim((string) ($s['napomena'] ?? ''));
+            $nap = ($n === '') ? null : $n;
+            $ins->execute();
+        }
+        $ins->close();
+    }
+
+    $mysqli->commit();
+    echo 'OK,' . $id;
+} catch (mysqli_sql_exception $e) {
+    $mysqli->rollback();
+    echo '200,' . $e->getCode();
+} catch (RuntimeException $e) {
+    $mysqli->rollback();
+    echo '105';
+}
+$mysqli->close();
