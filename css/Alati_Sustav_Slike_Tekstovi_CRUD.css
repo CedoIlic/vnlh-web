@@ -1,0 +1,130 @@
+/* Alati_Sustav_Slike_Tekstovi_CRUD — sustavske slike/tekstovi/blokovi. Desktop only. */
+
+.alati-sst-crud__panel-tablica {
+  height: 20rem;
+  min-height: 12rem;
+}
+/* Edit panel: 20% viši od tablice; min = inicijalna visina (nema smanjivanja ispod nje, samo rast) */
+.alati-sst-crud__panel-edit {
+  height: 24rem;
+  min-height: 24rem;
+}
+
+/* Zaglavlje panela: labela „Pretraži" + edit-delete s lupom lijevo */
+.alati-sst-crud__tablica-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.alati-sst-crud__pretraga {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.alati-sst-crud__pretraga-lupa {
+  position: absolute;
+  left: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.05rem;
+  height: 1.05rem;
+  opacity: 0.55;
+  pointer-events: none;
+  mask-size: contain;
+  -webkit-mask-size: contain;
+}
+.alati-sst-crud__pretraga-input { padding-left: 1.95rem; }
+
+/* Edit panel: dva stupca (lijevo 1/3 naziv/tip/napomena, desno 2/3 sadržaj) */
+.alati-sst-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+/* Puni visinu tijela panela; stupci (i napomena/slika u njima) se rastežu na dostupno */
+.alati-sst-crud__dva-stupca { display: flex; align-items: stretch; flex: 1 1 auto; min-height: 0; }
+.alati-sst-crud__stupac {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.alati-sst-crud__stupac--lijevi {
+  flex: 1 1 0;
+  padding-right: 1rem;
+  border-right: 1px solid var(--edit_border, #ced4da);
+}
+.alati-sst-crud__stupac--desni { flex: 2 1 0; padding-left: 1rem; }
+.alati-sst-crud__polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.alati-sst-crud__naziv-kontrola { width: 100%; }
+.alati-sst-crud__stupac--lijevi .kontrola-select,
+.alati-sst-crud__stupac--lijevi .kontrola-napomena { width: 100%; }
+/* Napomena puni preostalu visinu lijevog stupca */
+.alati-sst-crud__polje--rast { flex: 1 1 auto; min-height: 0; }
+.alati-sst-crud__polje--rast .kontrola-napomena { flex: 1 1 auto; min-height: 0; height: auto; resize: none; }
+
+/* Sadržaj (slika ILI tekst) — puni visinu desnog stupca */
+.alati-sst-crud__sadrzaj { display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 auto; min-height: 0; }
+.alati-sst-crud__sadrzaj-slika,
+.alati-sst-crud__sadrzaj-tekst {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.alati-sst-crud__sadrzaj-slika { flex: 1 1 auto; min-height: 0; }
+.alati-sst-crud__sadrzaj-tekst { flex: 1 1 auto; min-height: 0; }
+.alati-sst-crud__sadrzaj-tekst .alati-sst-crud__tekst { flex: 1 1 auto; min-height: 0; height: auto; resize: none; }
+.alati-sst-crud__sadrzaj-slika[hidden],
+.alati-sst-crud__sadrzaj-tekst[hidden] { display: none; }
+
+/* Kontrola slike (0-Kontrole .kontrola-slika): prikaz; 0-Obrada_Slike modal puni okvir, snima se na Upiši/Izmijeni.
+   Okvir/sjena/podloga/focus dolaze iz tokena .kontrola-slika; ovdje samo punjenje stupca + delete overlay. */
+.alati-sst-crud__slika {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 4rem;
+  cursor: pointer;
+}
+.alati-sst-crud__slika.kontrola-slika--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.alati-sst-crud__edit-image-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--edit_bg, #fff);
+  color: var(--label_text, #333);
+  cursor: pointer;
+}
+.alati-sst-crud__edit-image-delete:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.alati-sst-crud__edit-image-delete span { width: 1rem; height: 1rem; }
+
+.alati-sst-crud__tekst { width: 100%; box-sizing: border-box; min-height: 9rem; }
+
+/* Footer */
+.alati-sst-crud__edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.alati-sst-crud__footer-left,
+.alati-sst-crud__footer-right { display: flex; gap: 0.5rem; }

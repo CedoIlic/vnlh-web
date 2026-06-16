@@ -1,0 +1,114 @@
+<!-- =========================================================
+     Alati_Sustav_Slike_Tekstovi_CRUD.html
+     CRUD sustav_slike_tekstovi: panel tablica (s pretragom po nazivu u zaglavlju) +
+     edit panel. Sadržaj se mijenja po tip_podatka: slika (0-Obrada_Slike) ili textarea.
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Slike, tekstovi, blokovi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Obrada_Slike.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/Alati_Sustav_Slike_Tekstovi_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Slike, tekstovi, blokovi</h2></div>
+<div class="page-container alati-sst-crud">
+
+    <!-- Panel tablica (pretraga po nazivu u zaglavlju) -->
+    <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-one-row kontrola-panel kontrola-panel--resize-y mb-3 alati-sst-crud__panel-tablica">
+        <div class="kontrola-panel__header alati-sst-crud__tablica-header">
+            <label class="kontrola-labela mb-0" for="sst_pretraga">Pretraži</label>
+            <div class="kontrola-edit-delete alati-sst-crud__pretraga">
+                <span class="kontrola-icon--magnifying-glass alati-sst-crud__pretraga-lupa" aria-hidden="true"></span>
+                <input id="sst_pretraga" type="text" class="kontrola-edit-delete__input alati-sst-crud__pretraga-input" placeholder="Pretraži po nazivu..." autocomplete="off">
+                <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši pretragu">×</button>
+            </div>
+        </div>
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+
+    <!-- Edit panel -->
+    <div class="kontrola-panel kontrola-panel--resize-y kontrola-panel--traka-desktop mb-3 alati-sst-crud__panel-edit" id="edit_panel">
+        <div class="kontrola-panel__body alati-sst-crud__edit-body">
+            <div class="alati-sst-crud__dva-stupca">
+
+                <!-- Lijevi stupac (1/3): naziv, tip, napomena -->
+                <div class="alati-sst-crud__stupac alati-sst-crud__stupac--lijevi">
+                    <div class="alati-sst-crud__polje">
+                        <label class="kontrola-labela mb-0" for="edit_naziv">Naziv</label>
+                        <div class="kontrola-edit-delete alati-sst-crud__naziv-kontrola">
+                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="npr. Logo VNLH" maxlength="150" autocomplete="off">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
+                    </div>
+                    <div class="alati-sst-crud__polje">
+                        <label class="kontrola-labela mb-0" for="edit_tip_podatka">Tip podatka</label>
+                        <div class="kontrola-select">
+                            <select id="edit_tip_podatka" aria-label="Tip podatka">
+                                <option value="Slika JPG">Slika JPG</option>
+                                <option value="Slika PNG">Slika PNG</option>
+                                <option value="Slika WEBP">Slika WEBP</option>
+                                <option value="Tekst">Tekst</option>
+                                <option value="PDF blok">PDF blok</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="alati-sst-crud__polje alati-sst-crud__polje--rast">
+                        <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                        <textarea id="edit_napomena" class="kontrola-napomena" rows="3" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+                    </div>
+                </div>
+
+                <!-- Desni stupac (2/3): podatak — slika (0-Obrada_Slike) ILI textarea -->
+                <div class="alati-sst-crud__stupac alati-sst-crud__stupac--desni">
+                    <div class="alati-sst-crud__sadrzaj">
+                        <div class="alati-sst-crud__sadrzaj-slika" id="sst_sadrzaj_slika">
+                            <label class="kontrola-labela mb-0" id="sst_slika_labela">Slika</label>
+                            <div class="kontrola-slika alati-sst-crud__slika" id="sst_image_area" data-placeholder="dvoklik za učitavanje/uređivanje" aria-label="Prostor za sliku – dvoklik za uređivanje" tabindex="0">
+                                <button type="button" id="sst_image_delete_btn" class="alati-sst-crud__edit-image-delete" aria-label="Obriši sliku" title="Obriši sliku" disabled><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
+                                <img id="sst_image_preview" class="kontrola-slika__img" src="" alt="" aria-hidden="true" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="alati-sst-crud__sadrzaj-tekst" id="sst_sadrzaj_tekst" hidden>
+                            <label class="kontrola-labela mb-0" for="edit_podatak_tekst">Sadržaj</label>
+                            <textarea id="edit_podatak_tekst" class="kontrola-napomena alati-sst-crud__tekst" rows="8" placeholder="Tekst ili PDF blok (stilizirani tekst)..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="kontrola-panel__footer alati-sst-crud__edit-footer">
+            <div class="alati-sst-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="alati-sst-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal obrade slike (učitava se iz 0-Obrada_Slike.html) -->
+<div id="obrada_slika_mount"></div>
+
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Obrada_Slike.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/Alati_Sustav_Slike_Tekstovi_CRUD.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>
