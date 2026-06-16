@@ -62,93 +62,17 @@
   function byId(id) { return document.getElementById(id); }
   function elOf(f) { return byId('edit_' + f.col); }
 
-  /* ===== Lazy učitavanje pdfmake biblioteke (js/vendor/pdfmake.min.js) =====
-     Učita se jednom, na prvi zahtjev; svi pozivi prije završetka čekaju u redu. */
-  var Pdf = {
-    _ucitano: false,
-    _ucitavanje: false,
-    _cekaci: [],
-    spreman: function () { return this._ucitano && !!window.pdfMake; },
-    ucitaj: function (cb, errCb) {
-      if (this.spreman()) { if (cb) cb(); return; }
-      if (cb) this._cekaci.push(cb);
-      if (this._ucitavanje) return;
-      this._ucitavanje = true;
-      var self = this;
-      var s = document.createElement('script');
-      s.src = '../js/vendor/pdfmake.min.js';
-      s.async = true;
-      s.onload = function () {
-        self._ucitano = true; self._ucitavanje = false;
-        var red = self._cekaci; self._cekaci = [];
-        red.forEach(function (f) { try { f(); } catch (e) {} });
-      };
-      s.onerror = function () {
-        self._ucitavanje = false; self._cekaci = [];
-        if (errCb) errCb();
-      };
-      document.head.appendChild(s);
-    }
-  };
-
-  /* ===== Fontovi za pdfmake — lazy-load (porodica → 4×.ttf → vfs/fonts, keš) ===== */
+  /* pdfmake biblioteka + fontovi: dijeljeni lazy-loaderi (js/pdf-render.js). */
+  var Pdf = PdfRender.Pdf;
+  var Fontovi = PdfRender.Fontovi;
   var FONT_MAP = {};   /* font_id → { porodica, kljuc, tip } (puni ga ucitajFontove) */
-
-  var Fontovi = {
-    _ucitani: {},      /* pdfmake_kljuc → true */
-    _uTijeku: {},      /* pdfmake_kljuc → [cb...] */
-    _abBase64: function (buf) {
-      var bytes = new Uint8Array(buf), bin = '', chunk = 0x8000, i;
-      for (i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-      return btoa(bin);
-    },
-    spreman: function (kljuc) { return !!this._ucitani[kljuc]; },
-    /* Osigura da je font (kljuc/porodica) registriran u pdfMake.vfs/.fonts; cb() kad spreman. */
-    osiguraj: function (kljuc, porodica, cb, errCb) {
-      if (!window.pdfMake || !kljuc || !porodica) { if (errCb) errCb(); return; }
-      if (this._ucitani[kljuc]) { if (cb) cb(); return; }
-      if (this._uTijeku[kljuc]) { if (cb) this._uTijeku[kljuc].push(cb); return; }
-      this._uTijeku[kljuc] = cb ? [cb] : [];
-      var self = this;
-      var mapa = { normal: 'Regular', bold: 'Bold', italics: 'Italic', bolditalics: 'BoldItalic' };
-      var stilovi = ['normal', 'bold', 'italics', 'bolditalics'];
-      var files = {};
-      var preostalo = stilovi.length, greska = false;
-      pdfMake.vfs = pdfMake.vfs || {};
-      function gotovo() {
-        if (--preostalo > 0) return;
-        var red = self._uTijeku[kljuc] || []; delete self._uTijeku[kljuc];
-        if (greska) { if (errCb) errCb(); return; }
-        pdfMake.fonts = pdfMake.fonts || {};
-        pdfMake.fonts[kljuc] = { normal: files.normal, bold: files.bold, italics: files.italics, bolditalics: files.bolditalics };
-        self._ucitani[kljuc] = true;
-        red.forEach(function (f) { try { f(); } catch (e) {} });
-      }
-      stilovi.forEach(function (stil) {
-        var file = porodica + '-' + mapa[stil] + '.ttf';
-        files[stil] = file;
-        if (pdfMake.vfs[file]) { gotovo(); return; }
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '../fontovi/' + file, true);
-        xhr.responseType = 'arraybuffer';
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState !== 4) return;
-          if (xhr.status >= 200 && xhr.status < 300 && xhr.response) {
-            try { pdfMake.vfs[file] = self._abBase64(xhr.response); } catch (e) { greska = true; }
-          } else { greska = true; }
-          gotovo();
-        };
-        xhr.send();
-      });
-    }
-  };
 
   /* ===== Preview (pdfmake → iframe) ===== */
   var LOREM_1 = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
   /* Dva manja odlomka (mod „odlomak") — da se vidi razmak između odlomaka. */
   var LOREM_A = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
   var LOREM_B = 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit.';
-  var MM_PT = 2.83465;             /* mm → pt */
+  var MM_PT = PdfRender.MM_PT;     /* mm → pt (dijeljeno) */
   var _brojRedaka = 5;             /* toggle: 1 ili 5 redaka */
   var _frames = null;              /* dvostruki bafer iframe-ova [a, b] */
   var _aktivni = 0;                /* indeks vidljivog */
@@ -156,13 +80,17 @@
 
   function vEdit(col) { var el = byId('edit_' + col); return el ? el.value : ''; }
   function cEdit(col) { var el = byId('edit_' + col); return !!(el && el.checked); }
-  function vBroj(col) { return parseFloat(String(vEdit(col)).replace(',', '.')) || 0; }  /* podnosi i decimalni zarez */
-  function mmPt(col) { return vBroj(col) * MM_PT; }
-  function okvirImaLiniju() {
-    return ['gore', 'dolje', 'lijevo', 'desno'].some(function (s) {
-      return vBroj('okvir_debljina_' + s + '_mm') > 0;
+  /* Stil-objekt iz trenutnih form polja (isti oblik kao pdf_paragraf redak) → dijeljeni mapper. */
+  function stilIzForme() {
+    var stil = {};
+    FIELDS.forEach(function (f) {
+      var el = elOf(f);
+      if (!el) { stil[f.col] = ''; return; }
+      stil[f.col] = (f.type === 'check') ? (el.checked ? 1 : 0) : el.value;
     });
+    return stil;
   }
+  function okvirImaLiniju() { return PdfRender.okvirImaLiniju(stilIzForme()); }
 
   function _revoke(u) { if (u) { try { URL.revokeObjectURL(u); } catch (e) {} } }
 
@@ -212,72 +140,9 @@
     f.src = url;
   }
 
-  /* Jedan odlomak (s margin = razmaci/uvlake; okvir ili pozadina ga omotaju u tablicu).
-     opts.fillGapBelow: ispuna pozadine produžena prema dolje da popuni razmak do sljedećeg odlomka (gornji dominira).
-     opts.noGapAbove: gornji razmak preuzeo prethodni odlomak (popunio ga svojom pozadinom) → ovaj nema gornju marginu. */
+  /* Jedan odlomak preko dijeljenog mappera (PdfRender) — stil iz trenutnih form polja. */
   function sastaviOdlomak(kljuc, tekst, opts) {
-    opts = opts || {};
-    var par = {
-      text: tekst,
-      font: kljuc,
-      fontSize: vBroj('velicina_pt') || 12,
-      bold: cEdit('bold'),
-      italics: cEdit('italic'),
-      lineHeight: vBroj('prored') || 1,
-      alignment: vEdit('poravnanje') || 'left',
-      color: vEdit('boja') || '#000000'
-    };
-    if (cEdit('podcrtano')) par.decoration = 'underline';
-    var uvlPrvi = mmPt('uvlaka_prvi_red_mm'); if (uvlPrvi) par.leadingIndent = uvlPrvi;  /* uvlaka prvog retka */
-
-    var mL = mmPt('uvlaka_lijevo_mm'), mR = mmPt('uvlaka_desno_mm');
-    var mT = mmPt('razmak_prije_mm'), mB = mmPt('razmak_poslije_mm');
-    var marT = opts.noGapAbove ? 0 : mT;     /* gornji razmak (0 ako ga je popunio prethodni) */
-    var marB = opts.fillGapBelow ? 0 : mB;   /* donji razmak (0 ako ispuna preuzima razmak) */
-
-    if (okvirImaLiniju()) {
-      /* Okvir dominira: tablica s 1 ćelijom (border po stranama, podloga = okvir_boja_podloge, padding okvira). */
-      var oG = mmPt('okvir_debljina_gore_mm'), oD = mmPt('okvir_debljina_dolje_mm'),
-          oL = mmPt('okvir_debljina_lijevo_mm'), oR = mmPt('okvir_debljina_desno_mm');
-      var oBoja = vEdit('okvir_boja') || '#000000';
-      var podloga = vEdit('okvir_boja_podloge') || null;
-      if (podloga) par.fillColor = podloga;
-      return {
-        table: { widths: ['*'], body: [[par]] },
-        layout: {
-          hLineWidth: function (i) { return i === 0 ? oG : oD; },
-          vLineWidth: function (i) { return i === 0 ? oL : oR; },
-          hLineColor: function () { return oBoja; },
-          vLineColor: function () { return oBoja; },
-          paddingLeft: function () { return mmPt('okvir_padding_lijevo_mm'); },
-          paddingRight: function () { return mmPt('okvir_padding_desno_mm'); },
-          paddingTop: function () { return mmPt('okvir_padding_gore_mm'); },
-          paddingBottom: function () { return mmPt('okvir_padding_dolje_mm'); }
-        },
-        margin: [cEdit('okvir_do_lijeve_margine') ? 0 : mL, marT, cEdit('okvir_do_desne_margine') ? 0 : mR, marB]
-      };
-    }
-    if (vEdit('boja_pozadine')) {
-      /* Pozadina retka: tablica s 1 ćelijom (fill = boja_pozadine, padding trake; puna traka = '*').
-         fillGapBelow → ispunu produžimo prema dolje za (razmak poslije + razmak prije sljedećeg) i nemamo donju marginu. */
-      par.fillColor = vEdit('boja_pozadine');
-      var puna = cEdit('pozadina_cijeli_red');
-      var dodatakDolje = opts.fillGapBelow ? (mT + mB) : 0;
-      return {
-        table: { widths: [puna ? '*' : 'auto'], body: [[par]] },
-        layout: {
-          hLineWidth: function () { return 0; },
-          vLineWidth: function () { return 0; },
-          paddingLeft: function () { return mmPt('traka_padding_lijevo_mm'); },
-          paddingRight: function () { return mmPt('traka_padding_desno_mm'); },
-          paddingTop: function () { return mmPt('traka_padding_gore_mm'); },
-          paddingBottom: function () { return mmPt('traka_padding_dolje_mm') + dodatakDolje; }
-        },
-        margin: [mL, marT, mR, marB]
-      };
-    }
-    par.margin = [mL, marT, mR, marB];
-    return par;
+    return PdfRender.sastaviOdlomak(stilIzForme(), kljuc, tekst, opts);
   }
 
   function sastaviDocDefinition(kljuc) {
