@@ -19,6 +19,30 @@
   function bool(v) { return v === 1 || v === '1' || v === true; }
   function str(v) { var s = (v == null ? '' : String(v)).trim(); return s !== '' ? s : null; }
 
+  /* Korijen aplikacije izveden iz VLASTITE <script> lokacije (js/pdf-render.js) — radi iz svake dubine
+     (root test.html ili html/ forme), neovisno o vnlhAppBasePathname. */
+  var _appBase = (function () {
+    if (typeof document === 'undefined') return null;
+    var src = (document.currentScript && document.currentScript.src) || '';
+    if (!src) {
+      var ss = document.getElementsByTagName('script');
+      for (var i = 0; i < ss.length; i++) {
+        if (ss[i].src && /\/pdf-render\.js(?:[?#]|$)/i.test(ss[i].src)) { src = ss[i].src; break; }
+      }
+    }
+    var m = src.match(/^(.*\/)js\/pdf-render\.js(?:[?#].*)?$/i);
+    return m ? m[1] : null;   /* npr. "http://localhost/vnlh/" */
+  })();
+
+  function appUrl(rel) {
+    if (_appBase) return _appBase + rel;
+    if (typeof global.vnlhAppBasePathname === 'function') {
+      var base = global.vnlhAppBasePathname();
+      if (base !== '') return (base.replace(/\/$/, '') + '/' + rel).replace(/([^:])\/{2,}/g, '$1/');
+    }
+    return '../' + rel;   /* zadnji fallback */
+  }
+
   function okvirImaLiniju(stil) {
     return ['gore', 'dolje', 'lijevo', 'desno'].some(function (s) {
       return broj(stil['okvir_debljina_' + s + '_mm']) > 0;
@@ -91,6 +115,125 @@
     return par;
   }
 
+  /* Slika-stavka → pdfmake image element (dataurl + dimenzije/poravnanje iz pdf_slika_stil). */
+  function sastaviSliku(stil, dataurl) {
+    var img = { image: dataurl };
+    if (stil) {
+      var w = mm(stil, 'sirina_mm'), h = mm(stil, 'visina_mm');
+      if (w > 0 && h > 0) {
+        if (str(stil.skaliranje) === 'razvuci') { img.width = w; img.height = h; }
+        else { img.fit = [w, h]; }              /* uklopi = čuva proporcije */
+      } else if (w > 0) { img.width = w; }
+      var ph = str(stil.poravnanje_h);
+      if (ph === 'centar') img.alignment = 'center';
+      else if (ph === 'desno') img.alignment = 'right';
+      else if (ph === 'lijevo') img.alignment = 'left';
+    } else {
+      img.fit = [200, 200];                     /* bez stila: razuman default okvir */
+    }
+    return img;
+  }
+
+  /* Render model (iz PDF_Generator_resolve.php) → pdfmake docDefinition.
+     Zone: zaglavlje→header, podnožje→footer (+ brojač), naslovna/tijelo→content. */
+  function sastaviDocDefinition(model) {
+    model = model || {};
+    var t = model.template || {};
+    var parStilovi = model.stilovi_paragraf || {};
+    var slikaStilovi = model.stilovi_slika || {};
+    var stavke = (model.stavke || []).slice().sort(function (a, b) {
+      return (a.redoslijed || 0) - (b.redoslijed || 0);
+    });
+
+    /* Jedna stavka → niz pdfmake elemenata (tekst = više odlomaka; slika = jedan). */
+    function elementi(s) {
+      if (!s || s.greska) return [];
+      if (s.vrsta === 'slika') {
+        if (!s.dataurl) return [];
+        var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
+        return [sastaviSliku(ss, s.dataurl)];
+      }
+      if (s.vrsta === 'tekst') {
+        var ps = (s.paragraf_id && parStilovi[s.paragraf_id]) ? parStilovi[s.paragraf_id] : {};
+        var kljuc = s.font_kljuc || undefined;
+        var odlomci = s.odlomci || [];
+        return odlomci.map(function (runovi) { return sastaviOdlomak(ps, kljuc, runovi, {}); });
+      }
+      return [];
+    }
+
+    var content = [], header = [], footer = [];
+    stavke.forEach(function (s) {
+      var el = elementi(s);
+      if (!el.length) return;
+      if (s.zona === 'zaglavlje') header = header.concat(el);
+      else if (s.zona === 'podnozje') footer = footer.concat(el);
+      else content = content.concat(el);        /* tijelo + (zasad) naslovna */
+    });
+
+    var dd = {
+      pageOrientation: (str(t.orijentacija) === 'landscape') ? 'landscape' : 'portrait',
+      pageMargins: [mm(t, 'margina_lijevo_mm'), mm(t, 'margina_gore_mm'), mm(t, 'margina_desno_mm'), mm(t, 'margina_dolje_mm')],
+      content: content,
+      /* pdfmake treba default font i za doc bez teksta (npr. footer brojač / inače Roboto kojeg nema u vfs). */
+      defaultStyle: { font: str(model.default_font) || 'DejaVuSans' }
+    };
+
+    var fmt = str(t.format_papira) || 'A4';
+    if (fmt === 'custom') dd.pageSize = { width: mm(t, 'sirina_mm'), height: mm(t, 'visina_mm') };
+    else dd.pageSize = fmt.toUpperCase();        /* pdfmake: A4/A5/A3/LETTER/LEGAL */
+
+    /* Zaglavlje: poštuj lijevu/desnu marginu stranice + gornji razmak (inače flush uz rub). */
+    if (header.length) dd.header = { stack: header, margin: [mm(t, 'margina_lijevo_mm'), mm(t, 'margina_gore_mm') / 2, mm(t, 'margina_desno_mm'), 0] };
+
+    var brojStr = bool(t.broj_stranice);
+    var poravBroj = ({ lijevo: 'left', centar: 'center', desno: 'right' })[str(t.broj_stranice_poravnanje)] || 'center';
+    if (footer.length || brojStr) {
+      dd.footer = function (currentPage, pageCount) {
+        var arr = footer.slice();
+        if (brojStr) {
+          var txt = (str(t.broj_stranice_format) || 'Stranica #S od #U')
+            .split('#S').join(currentPage).split('#U').join(pageCount);
+          arr.push({ text: txt, alignment: poravBroj, margin: [40, 4, 40, 0] });
+        }
+        return arr;
+      };
+    }
+    return dd;
+  }
+
+  /* pdfmake (pdfkit) podržava samo PNG/JPEG. Ostalo (WebP/GIF…) → PNG preko canvasa (async). */
+  function uPngDataUrl(dataurl, cb) {
+    if (typeof dataurl !== 'string' || /^data:image\/(png|jpeg);/i.test(dataurl)) { cb(dataurl); return; }
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var c = document.createElement('canvas');
+        c.width = img.naturalWidth || img.width;
+        c.height = img.naturalHeight || img.height;
+        c.getContext('2d').drawImage(img, 0, 0);
+        cb(c.toDataURL('image/png'));
+      } catch (e) { cb(null); }
+    };
+    img.onerror = function () { cb(null); };
+    img.src = dataurl;
+  }
+
+  /* Pripremi sve slike modela za pdfmake (ne-PNG/JPEG → PNG); cb(model) kad gotovo. */
+  function pripremiSlike(model, cb) {
+    var stavke = (model && model.stavke) || [];
+    var slike = stavke.filter(function (s) { return s && s.vrsta === 'slika' && s.dataurl; });
+    if (!slike.length) { cb(model); return; }
+    var preostalo = slike.length;
+    slike.forEach(function (s) {
+      uPngDataUrl(s.dataurl, function (png) {
+        if (png) s.dataurl = png;
+        else { s.dataurl = null; s.greska = s.greska || 'Slika se ne može konvertirati.'; }
+        if (--preostalo === 0) cb(model);
+      });
+    });
+  }
+
   /* ===== Lazy učitavanje pdfmake biblioteke (js/vendor/pdfmake.min.js) ===== */
   var Pdf = {
     _ucitano: false,
@@ -104,7 +247,7 @@
       this._ucitavanje = true;
       var self = this;
       var s = document.createElement('script');
-      s.src = '../js/vendor/pdfmake.min.js';
+      s.src = appUrl('js/vendor/pdfmake.min.js');
       s.async = true;
       s.onload = function () {
         self._ucitano = true; self._ucitavanje = false;
@@ -155,7 +298,7 @@
         files[stil] = file;
         if (pdfMake.vfs[file]) { gotovo(); return; }
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '../fontovi/' + file, true);
+        xhr.open('GET', appUrl('fontovi/' + file), true);
         xhr.responseType = 'arraybuffer';
         xhr.onreadystatechange = function () {
           if (xhr.readyState !== 4) return;
@@ -177,6 +320,9 @@
     str: str,
     okvirImaLiniju: okvirImaLiniju,
     sastaviOdlomak: sastaviOdlomak,
+    sastaviSliku: sastaviSliku,
+    sastaviDocDefinition: sastaviDocDefinition,
+    pripremiSlike: pripremiSlike,
     Pdf: Pdf,
     Fontovi: Fontovi
   };

@@ -271,7 +271,8 @@ foreach ($fontPoId as $f) {
     $k = $f['pdfmake_kljuc'];
     if (!isset($videni[$k])) { $videni[$k] = true; $fontoviOut[] = ['kljuc' => $k, 'porodica' => $f['porodica']]; }
 }
-if ($trebaFallback && !isset($videni[$kljucFallback])) {
+// DejaVuSans uvijek (default font za pdfmake — i kad nema teksta; inače Roboto kojeg nema u vfs).
+if (!isset($videni[$kljucFallback])) {
     $fontoviOut[] = ['kljuc' => $kljucFallback, 'porodica' => $porodicaFallback];
 }
 
@@ -282,5 +283,6 @@ echo json_encode([
     'stavke' => $out,
     'stilovi_paragraf' => $parStilovi,
     'stilovi_slika' => $slikaStilovi,
-    'fontovi' => $fontoviOut
+    'fontovi' => $fontoviOut,
+    'default_font' => $kljucFallback
 ], JSON_UNESCAPED_UNICODE);
