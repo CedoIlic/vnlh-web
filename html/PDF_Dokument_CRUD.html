@@ -39,12 +39,8 @@
 
             <!-- Lijeva kolona -->
             <div class="pdf-dokument-crud__lijevo">
-                <!-- Tablica dokumenata (resize) -->
-                <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-2 pdf-dokument-crud__doc-panel">
-                    <div class="kontrola-panel__body">
-                        <div id="dokTablica" class="kontrola-tablica"></div>
-                    </div>
-                </div>
+                <!-- Tablica dokumenata -->
+                <div id="dokTablica" class="kontrola-tablica mb-2"></div>
                 <div class="pdf-dokument-crud__polje">
                     <label class="kontrola-labela mb-0" for="edit_naziv">Naziv dokumenta</label>
                     <div class="kontrola-edit-delete">
@@ -132,6 +128,9 @@
                                 </select></div>
                             </div>
                             <div class="pdf-dokument-crud__polje">
+                                <label class="kontrola-checkbox-labela"><input id="edit_aktivan" type="checkbox" class="kontrola-checkbox"> Aktivan</label>
+                            </div>
+                            <div class="pdf-dokument-crud__polje">
                                 <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
                                 <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
                             </div>
@@ -152,15 +151,9 @@
 
         <!-- ===== Tab 1: DOKUMENT (postavke + popis stavki) ===== -->
         <div class="kontrola-tab__panel" role="tabpanel" id="dokTabPanel1" aria-labelledby="dokTabKart1" data-tab-index="1" hidden>
-            <div class="pdf-dokument-crud__zaglavlje">
-                <div class="pdf-dokument-crud__polje pdf-dokument-crud__polje--check">
-                    <label class="kontrola-checkbox-labela"><input id="edit_aktivan" type="checkbox" class="kontrola-checkbox"> Aktivan</label>
-                </div>
-            </div>
 
             <!-- Popis stavki -->
             <div class="pdf-dokument-crud__stavke-traka">
-                <span class="kontrola-labela">Stavke (redom renderiranja)</span>
                 <div class="pdf-dokument-crud__stavke-akcije">
                     <button type="button" id="btnStavkaDodaj" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
                     <button type="button" id="btnStavkaObrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Obriši</span></span></span></button>
@@ -168,11 +161,7 @@
                     <button type="button" id="btnStavkaDolje" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▼</span></span></span></button>
                 </div>
             </div>
-            <div class="kontrola-panel pdf-dokument-crud__stavke-panel">
-                <div class="kontrola-panel__body">
-                    <div id="stavkeTablica" class="kontrola-tablica"></div>
-                </div>
-            </div>
+            <div id="stavkeTablica" class="kontrola-tablica"></div>
         </div>
 
         <!-- ===== Tab 2: PDF (živi preview) ===== -->
