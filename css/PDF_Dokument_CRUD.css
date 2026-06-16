@@ -5,6 +5,22 @@
 /* Tab paneli: malo zraka */
 .pdf-dokument-crud__tab .kontrola-tab__panel { padding: 0.75rem; }
 
+/* Aktivna kartica „u negativu" (usklađeno s PDF_Template) */
+.pdf-dokument-crud__tab .kontrola-tab__kartica--aktivna:not(:disabled) {
+  background: var(--tab_kontrola_header_text);
+  color: var(--tab_kontrola_body_bg);
+  -webkit-text-fill-color: var(--tab_kontrola_body_bg);
+  border-color: var(--tab_kontrola_header_text);
+}
+.pdf-dokument-crud__tab .kontrola-tab__kartica:disabled {
+  opacity: 1;
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  cursor: not-allowed;
+}
+
 /* Tab Podaci: lijevo (dokumenti + naziv + nasljedi) | desno (edit stavke) */
 .pdf-dokument-crud__podaci { display: flex; gap: 1rem; align-items: stretch; }
 .pdf-dokument-crud__lijevo { flex: 0 0 22rem; max-width: 42%; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
@@ -52,7 +68,45 @@
 /* ===== Tab PDF: preview ===== */
 .pdf-dokument-crud__preview-traka { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
 .pdf-dokument-crud__preview-info { color: var(--label_text_muted, #6c757d); font-size: 0.9em; }
-.pdf-dokument-crud__preview-okvir { width: 100%; height: 70vh; border: 1px solid var(--edit_border, #ced4da); border-radius: var(--edit_radius, 6px); }
+.pdf-dokument-crud__preview-okvir { width: 100%; height: 70vh; border: 1px solid var(--edit_border, #ced4da); border-radius: var(--edit_radius, 6px); box-sizing: border-box; }
+
+/* Toggle-ikona: vodilice u PDF-u. Flat gumb po presedanu kolor-trigger gumba
+   (sjena/hover/klik/disable iz 0-Common tokena). SVG koristi currentColor gumba. */
+.pdf-dokument-crud__blok-toggle {
+  flex: 0 0 auto;
+  margin-left: auto;                                          /* gurni desno */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--edit_height, 2.25rem);
+  height: var(--edit_height, 2.25rem);
+  padding: 0;
+  border: 1px solid var(--kontrola_boja_trigger_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--kontrola_boja_trigger_bg, #fff);
+  color: var(--label_text, #495057);
+  box-shadow: var(--kontrola_boja_trigger_sjena, none);
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, background-color 0.15s ease;
+}
+@media (hover: hover) {
+  .pdf-dokument-crud__blok-toggle:hover:not(:disabled) {
+    background: var(--kontrola_boja_trigger_hover_bg, #eee);
+    box-shadow: var(--kontrola_boja_trigger_hover_sjena, none);
+  }
+}
+.pdf-dokument-crud__blok-toggle:active:not(:disabled) { box-shadow: var(--kontrola_boja_trigger_active_sjena, none); }
+.pdf-dokument-crud__blok-toggle:disabled {
+  background: var(--kontrola_boja_trigger_disabled_bg, #e9ecef);
+  border-color: var(--kontrola_boja_trigger_disabled_border, #ddd);
+  color: var(--label_text_disabled, #999);
+  box-shadow: var(--kontrola_boja_trigger_disabled_sjena, none);
+  cursor: not-allowed;
+}
+.pdf-dokument-crud__blok-toggle svg { display: block; height: 1.3rem; width: auto; }
+.pdf-dokument-crud__blok-toggle--aktivan { color: #2d6da3; border-color: #2d6da3; }
+/* Druga ikona (1./2. stranica) sjedi uz prvu (bez margin-left:auto) */
+.pdf-dokument-crud__blok-stranica { margin-left: 0.4rem; }
 
 /* ===== Footer ===== */
 .pdf-dokument-crud__footer {

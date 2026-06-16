@@ -136,8 +136,36 @@
 
   /* Render model (iz PDF_Generator_resolve.php) → pdfmake docDefinition.
      Zone: zaglavlje→header, podnožje→footer (+ brojač), naslovna/tijelo→content. */
-  function sastaviDocDefinition(model) {
+  /* Vodilice (margine + zone zaglavlja/podnožja) iscrtane u SAMOM PDF-u kao background —
+     za provjeru poravnanja elemenata u odnosu na margine. pageSize iz pdfmake je u pt i već orijentiran. */
+  function vodiliceBackground(t, stranica) {
+    stranica = (stranica === 2) ? 2 : 1;
+    var mL = mm(t, 'margina_lijevo_mm'), mT = mm(t, 'margina_gore_mm'),
+        mR = mm(t, 'margina_desno_mm'), mB = mm(t, 'margina_dolje_mm');
+    /* Zone po pravilima stranice: zaglavlje (primjena=svaka → svaka, inače samo 1.); podnožje od_stranice. */
+    var zaglNaStr = bool(t.zaglavlje) && broj(t.zaglavlje_visina_mm) > 0 && (stranica === 1 || str(t.zaglavlje_primjena) === 'svaka');
+    var podnNaStr = bool(t.podnozje) && broj(t.podnozje_visina_mm) > 0 && (stranica >= (broj(t.podnozje_od_stranice) || 1));
+    var zv = zaglNaStr ? mm(t, 'zaglavlje_visina_mm') : 0;
+    var pv = podnNaStr ? mm(t, 'podnozje_visina_mm') : 0;
+    var BOJA = '#2d6da3';
+    return function (currentPage, pageSize) {
+      var W = pageSize.width, H = pageSize.height;
+      var canvas = [
+        /* okvir margina (tijelo) — iscrtkano */
+        { type: 'rect', x: mL, y: mT, w: W - mL - mR, h: H - mT - mB, lineColor: BOJA, lineWidth: 0.6, dash: { length: 3 } }
+      ];
+      if (zv > 0) canvas.push({ type: 'rect', x: mL, y: 0, w: W - mL - mR, h: zv, color: BOJA, fillOpacity: 0.15, lineColor: BOJA, lineWidth: 0.4 });
+      if (pv > 0) canvas.push({ type: 'rect', x: mL, y: H - pv, w: W - mL - mR, h: pv, color: BOJA, fillOpacity: 0.15, lineColor: BOJA, lineWidth: 0.4 });
+      var out = [{ canvas: canvas }];
+      if (zv > 0) out.push({ text: 'Zaglavlje', font: 'DejaVuSans', fontSize: 6, color: '#1d4e74', absolutePosition: { x: mL + 2, y: 1 } });
+      if (pv > 0) out.push({ text: 'Podnožje', font: 'DejaVuSans', fontSize: 6, color: '#1d4e74', absolutePosition: { x: mL + 2, y: H - pv + 1 } });
+      return out;
+    };
+  }
+
+  function sastaviDocDefinition(model, opts) {
     model = model || {};
+    opts = opts || {};
     var t = model.template || {};
     var parStilovi = model.stilovi_paragraf || {};
     var slikaStilovi = model.stilovi_slika || {};
@@ -199,6 +227,7 @@
         return arr;
       };
     }
+    if (opts.vodilice) dd.background = vodiliceBackground(t, opts.stranica);
     return dd;
   }
 

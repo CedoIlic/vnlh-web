@@ -54,6 +54,8 @@
   var stavke = [];             /* niz stavki u memoriji */
   var tidSeq = 1;              /* client temp-id za stavke */
   var odabranaStavka = null;   /* _tid odabrane stavke */
+  var prikaziBlokove = false;   /* toggle: vodilice (margine/zone) u PDF-u */
+  var blokStranica = 1;         /* referentna stranica za pravila zona (1 / 2) */
   /* Lookup mape (id → naziv) za prikaz u tablici stavki */
   var mapaIzvor = {}, mapaIzvorTip = {}, mapaParagraf = {}, mapaSlika = {}, mapaTemplate = {};
 
@@ -362,6 +364,19 @@
   /* ---- Spremi / Izbriši ---- */
   function azurirajSpremiStanje() {
     var ok = trim(val('edit_naziv')) !== '' && trim(val('edit_template_id')) !== '';
+    /* Selekt Stranica (template): disabled bez izabranog dokumenta (nema naziva). */
+    var imaDok = trim(val('edit_naziv')) !== '';
+    var tpl = byId('edit_template_id');
+    if (tpl && typeof KontroleSetControlEnabled === 'function') KontroleSetControlEnabled(tpl, imaDok);
+    /* PDF tab: enable kad je odabran template (selekt ima vrijednost). */
+    var imaTemplate = trim(val('edit_template_id')) !== '';
+    var pdfKart = byId('dokTabKart2');
+    if (pdfKart) {
+      pdfKart.disabled = !imaTemplate;
+      if (!imaTemplate && pdfKart.classList.contains('kontrola-tab__kartica--aktivna') && typeof kontrolaTabPostaviAktivni === 'function') {
+        kontrolaTabPostaviAktivni(byId('dokTab'), 0);
+      }
+    }
     var b = byId('btnSpremi');
     if (b) {
       var jeIzmjena = tekuciId > 0;
@@ -371,6 +386,14 @@
       b.disabled = !ok;
     }
     var bi = byId('btnIzbrisi'); if (bi) bi.disabled = tekuciId <= 0;
+    /* Vodilice: dostupne samo kad postoji dokument (template) za preview. */
+    var bb = byId('btnBlokovi');
+    if (bb) {
+      var mozeVodilice = trim(val('edit_template_id')) !== '';
+      bb.disabled = !mozeVodilice;
+      if (!mozeVodilice && prikaziBlokove) { prikaziBlokove = false; postaviBlokIkonu(); }
+    }
+    if (typeof postaviBlokStranicaIkonu === 'function') postaviBlokStranicaIkonu();
   }
   byId('edit_naziv').addEventListener('input', azurirajSpremiStanje);
   byId('edit_template_id').addEventListener('change', azurirajSpremiStanje);
@@ -443,7 +466,7 @@
       info.textContent = 'Pripremam slike…';
       PdfRender.pripremiSlike(model, function (model) {
         info.textContent = 'Gradim PDF…';
-        var dd = PdfRender.sastaviDocDefinition(model);
+        var dd = PdfRender.sastaviDocDefinition(model, { vodilice: prikaziBlokove, stranica: blokStranica });
         PdfRender.Pdf.ucitaj(function () {
           ucitajFontove(model.fontovi, function () {
             try {
@@ -468,6 +491,47 @@
       if (k && k.getAttribute('data-tab-index') === '2') generirajPreview();
     });
   })();
+
+  /* ---- Vodilice u PDF-u (margine + zone; toggle ponovno renderira) ---- */
+  var SVG_BLOK =
+    '<svg viewBox="-2 -2 28 32" width="18" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="0" y="0" width="24" height="28" rx="2" fill="none"/>' +
+    '<rect x="0" y="0" width="24" height="5" fill="currentColor" opacity="0.25" stroke="none"/>' +
+    '<rect x="0" y="23" width="24" height="5" fill="currentColor" opacity="0.25" stroke="none"/>' +
+    '<rect x="4" y="8" width="16" height="12" stroke-dasharray="2 2" stroke-width="1.4"/>' +
+    '</svg>';
+  /* Ikone 1./2. stranice — kopirano iz PDF_Template_CRUD (prikaz pravila zona po stranici). */
+  var SVG_STR1 = '<svg viewBox="-3 -3 34 50" width="19" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="0" y="0" width="28" height="44" rx="2" fill="#fff"/><line x1="6" y1="20" x2="22" y2="20"/><line x1="6" y1="27" x2="22" y2="27"/><line x1="6" y1="34" x2="18" y2="34"/></svg>';
+  var SVG_STR2 = '<svg viewBox="-3 -3 50 60" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="0" y="0" width="30" height="40" rx="2" fill="#fff"/><rect x="7" y="7" width="30" height="40" rx="2" fill="#fff"/><rect x="14" y="14" width="30" height="40" rx="2" fill="#fff"/><line x1="20" y1="26" x2="38" y2="26"/><line x1="20" y1="33" x2="38" y2="33"/><line x1="20" y1="40" x2="32" y2="40"/></svg>';
+  function postaviBlokIkonu() {
+    var btn = byId('btnBlokovi');
+    if (!btn) return;
+    if (btn.innerHTML.indexOf('<svg') === -1) btn.innerHTML = SVG_BLOK;
+    btn.classList.toggle('pdf-dokument-crud__blok-toggle--aktivan', prikaziBlokove);
+    btn.setAttribute('aria-pressed', prikaziBlokove ? 'true' : 'false');
+    btn.setAttribute('aria-label', prikaziBlokove ? 'Sakrij vodilice stranice' : 'Prikaži vodilice stranice (margine, zaglavlje, podnožje)');
+    postaviBlokStranicaIkonu();
+  }
+  function postaviBlokStranicaIkonu() {
+    var btn = byId('btnBlokStranica');
+    if (!btn) return;
+    btn.innerHTML = (blokStranica === 1) ? SVG_STR1 : SVG_STR2;
+    btn.disabled = !prikaziBlokove || trim(val('edit_template_id')) === '';
+    btn.setAttribute('aria-label', blokStranica === 1 ? 'Pravila za 1. stranicu — klik za 2.' : 'Pravila za 2. stranicu — klik za 1.');
+    btn.title = blokStranica === 1 ? '1. stranica' : '2. stranica';
+  }
+  postaviBlokIkonu();
+  byId('btnBlokovi').addEventListener('click', function () {
+    prikaziBlokove = !prikaziBlokove;
+    postaviBlokIkonu();
+    generirajPreview();
+  });
+  byId('btnBlokStranica').addEventListener('click', function () {
+    if (!prikaziBlokove) return;
+    blokStranica = (blokStranica === 1) ? 2 : 1;
+    postaviBlokStranicaIkonu();
+    generirajPreview();
+  });
 
   /* ---- Povratak ---- */
   byId('btnPovratak').addEventListener('click', function () {

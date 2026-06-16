@@ -28,7 +28,7 @@
         <div class="kontrola-tab__traka" role="presentation">
             <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="dokTabKart0" aria-selected="true" aria-controls="dokTabPanel0" data-tab-index="0">Podaci</button>
             <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart1" aria-selected="false" aria-controls="dokTabPanel1" data-tab-index="1" tabindex="-1">Dokument</button>
-            <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart2" aria-selected="false" aria-controls="dokTabPanel2" data-tab-index="2" tabindex="-1">PDF</button>
+            <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart2" aria-selected="false" aria-controls="dokTabPanel2" data-tab-index="2" tabindex="-1" disabled>PDF</button>
         </div>
 
         <div class="kontrola-tab__tijelo">
@@ -173,6 +173,8 @@
             <div class="pdf-dokument-crud__preview-traka">
                 <button type="button" id="btnPreview" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Osvježi</span></span></span></button>
                 <span id="previewInfo" class="pdf-dokument-crud__preview-info"></span>
+                <button type="button" id="btnBlokovi" class="pdf-dokument-crud__blok-toggle" aria-pressed="false" title="Prikaži vodilice stranice (margine, zaglavlje, podnožje)" disabled></button>
+                <button type="button" id="btnBlokStranica" class="pdf-dokument-crud__blok-toggle pdf-dokument-crud__blok-stranica" title="Prikaz pravila za 1. / 2. stranicu" disabled></button>
             </div>
             <iframe id="previewOkvir" class="pdf-dokument-crud__preview-okvir" title="PDF pregled"></iframe>
         </div>
