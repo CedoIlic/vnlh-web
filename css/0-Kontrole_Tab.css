@@ -17,6 +17,10 @@
   overflow: hidden;                                     /* reže podlogu djece uz zaobljenje; inače tijelo/kartice „cure” u kutovima */
   isolation: isolate;                                    /* jasniji painting order naspram sjenke/susjeda */
 }
+/* Otvorena custom-select lista smije viriti preko ruba taba (kao i kod .kontrola-panel). */
+.kontrola-tab:has(.kontrola-select--open) {
+  overflow: visible;
+}
 
 /* --- Blok: traka s karticama (logički „header”) --- */
 .kontrola-tab__traka {

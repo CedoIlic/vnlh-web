@@ -1,0 +1,67 @@
+/* PDF_Dokument_CRUD — forma „Dokumenti". Desktop. Prefiks: pdf-dokument-crud. */
+
+.pdf-dokument-crud { display: flex; flex-direction: column; gap: 0.75rem; }
+
+/* Tab paneli: malo zraka */
+.pdf-dokument-crud__tab .kontrola-tab__panel { padding: 0.75rem; }
+
+/* Tab Podaci: lijevo (dokumenti + naziv + nasljedi) | desno (edit stavke) */
+.pdf-dokument-crud__podaci { display: flex; gap: 1rem; align-items: stretch; }
+.pdf-dokument-crud__lijevo { flex: 0 0 22rem; max-width: 42%; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.pdf-dokument-crud__desno { flex: 1 1 0; min-width: 0; padding-left: 1rem; border-left: 1px solid var(--edit_border, #ced4da); }
+.pdf-dokument-crud__lijevo-akcije { display: flex; }
+.pdf-dokument-crud__doc-panel { height: 14rem; min-height: 8rem; }
+.pdf-dokument-crud__lijevo .kontrola-edit-delete,
+.pdf-dokument-crud__lijevo .kontrola-select,
+.pdf-dokument-crud__lijevo .kontrola-edit { width: 100%; box-sizing: border-box; }
+
+/* ===== Tab Podaci: dvostupčani edit stavke ===== */
+.pdf-dokument-crud__dva-stupca { display: flex; gap: 1rem; align-items: flex-start; }
+.pdf-dokument-crud__stupac { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.pdf-dokument-crud__stupac:first-child { padding-right: 1rem; border-right: 1px solid var(--edit_border, #ced4da); }
+.pdf-dokument-crud__polje { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.pdf-dokument-crud__stupac .kontrola-select,
+.pdf-dokument-crud__stupac .kontrola-edit,
+.pdf-dokument-crud__stupac .kontrola-napomena { width: 100%; box-sizing: border-box; }
+.pdf-dokument-crud__polje[hidden] { display: none; }
+
+.pdf-dokument-crud__stavka-hint { margin-top: 0.6rem; color: var(--label_text_muted, #6c757d); font-size: 0.9em; }
+
+/* ===== Tab Dokument: zaglavlje + stavke ===== */
+.pdf-dokument-crud__zaglavlje {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.pdf-dokument-crud__polje--naziv { grid-column: 1 / -1; }
+.pdf-dokument-crud__polje--check { align-self: end; }
+.pdf-dokument-crud__zaglavlje .kontrola-select,
+.pdf-dokument-crud__zaglavlje .kontrola-edit,
+.pdf-dokument-crud__zaglavlje .kontrola-edit-delete,
+.pdf-dokument-crud__zaglavlje .kontrola-napomena { width: 100%; box-sizing: border-box; }
+
+.pdf-dokument-crud__stavke-traka {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.pdf-dokument-crud__stavke-akcije { display: flex; gap: 0.4rem; }
+.pdf-dokument-crud__stavke-panel { height: 16rem; min-height: 8rem; }
+
+/* ===== Tab PDF: preview ===== */
+.pdf-dokument-crud__preview-traka { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.pdf-dokument-crud__preview-info { color: var(--label_text_muted, #6c757d); font-size: 0.9em; }
+.pdf-dokument-crud__preview-okvir { width: 100%; height: 70vh; border: 1px solid var(--edit_border, #ced4da); border-radius: var(--edit_radius, 6px); }
+
+/* ===== Footer ===== */
+.pdf-dokument-crud__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pdf-dokument-crud__footer-left,
+.pdf-dokument-crud__footer-right { display: flex; gap: 0.5rem; }
