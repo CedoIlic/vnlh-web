@@ -3240,7 +3240,7 @@
 
         imageEl.setAttribute('aria-hidden', 'false');
         imageEl.className =
-          'kontrola-modal__image kontrola-modal__image--' + msg.stanje + ' kontrola-modal__image--has-png';
+          'kontrola-modal__image kontrola-modal__image--' + msg.stanje;
         imageEl.innerHTML = '';
         var imgPng = document.createElement('img');
         imgPng.className = 'kontrola-modal__image-png';

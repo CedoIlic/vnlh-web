@@ -957,23 +957,7 @@ body {
   justify-content: center;
   color: var(--c-white);
 }
-.kontrola-modal__image::before {
-  content: '';
-  position: absolute;
-  width: 3.75rem;
-  height: 3.75rem;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-/* Kad JS učita <img>, ne crtati dupli sloj iz CSS var (keš / putanja od CSS datoteke). */
-.kontrola-modal__image--has-png::before {
-  content: none;
-  display: none;
-}
+/* Ikona modala je <img> (.kontrola-modal__image-png) iz baze; po stanju samo boja podloge. */
 .kontrola-modal__image-png {
   position: relative;
   z-index: 1;
@@ -983,15 +967,10 @@ body {
   object-fit: contain;
 }
 .kontrola-modal__image--ok { background-color: var(--modal_image_bg_ok); }
-.kontrola-modal__image--ok::before { background-image: var(--modal_image_ok); }
 .kontrola-modal__image--error { background-color: var(--modal_image_bg_error); }
-.kontrola-modal__image--error::before { background-image: var(--modal_image_error); }
 .kontrola-modal__image--forbidden { background-color: var(--modal_image_bg_forbidden); }
-.kontrola-modal__image--forbidden::before { background-image: var(--modal_image_forbidden); }
 .kontrola-modal__image--information { background-color: var(--modal_image_bg_information); }
-.kontrola-modal__image--information::before { background-image: var(--modal_image_information); }
 .kontrola-modal__image--warning { background-color: var(--modal_image_bg_warning); }
-.kontrola-modal__image--warning::before { background-image: var(--modal_image_warning); }
 
 .kontrola-modal__content {
   flex: 1 1 auto;
