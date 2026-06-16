@@ -59,6 +59,45 @@
     var fixedRatioY = options.fixedRatioY != null ? parseFloat(options.fixedRatioY) : NaN;
     var ratioInputsDisabled = options.ratioInputsDisabled === true;
     var enableRoundThumb = options.enableRoundThumb === true;
+    /* Dozvoljeni format(i) pri učitavanju: funkcija → 'jpg'|'png'|'webp' ili niz; bez nje = staro ponašanje (jpg+png). */
+    var dozvoljeniFormatiFn = typeof options.dozvoljeniFormati === 'function' ? options.dozvoljeniFormati : null;
+    var porukaFormatKod = options.porukaFormatKod != null ? String(options.porukaFormatKod) : '011';
+    /* Bez ograničenja veličine: Spremi se ne gasi zbog KB, nema "preko" indikatora (npr. SST forma – o veličini brine admin). */
+    var neogranicenaVelicina = options.neogranicenaVelicina === true;
+
+    /* Tablica podržanih formata: accept (file picker), mime varijante i provjera magic bytes. */
+    var OBRADA_FORMATI = {
+      jpg:  { accept: 'image/jpeg,.jpg,.jpeg', mimes: ['image/jpeg', 'image/jpg'],
+              magic: function (b) { return b.length >= 3 && b[0] === 0xFF && b[1] === 0xD8 && b[2] === 0xFF; } },
+      png:  { accept: 'image/png,.png', mimes: ['image/png'],
+              magic: function (b) { return b.length >= 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47 && b[4] === 0x0D && b[5] === 0x0A && b[6] === 0x1A && b[7] === 0x0A; } },
+      webp: { accept: 'image/webp,.webp', mimes: ['image/webp'],
+              magic: function (b) { return b.length >= 12 && b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50; } }
+    };
+    function obradaDozvoljeniFormati() {
+      var r = null;
+      if (dozvoljeniFormatiFn) { try { r = dozvoljeniFormatiFn(); } catch (e) { r = null; } }
+      if (typeof r === 'string') r = [r];
+      if (!r || !r.length) r = ['jpg', 'png'];
+      return r.filter(function (k) { return OBRADA_FORMATI[k]; });
+    }
+    function obradaPostaviAccept(inp) {
+      if (!inp || !dozvoljeniFormatiFn) return;   /* accept mijenjamo samo ako je format eksplicitno zadan */
+      var acc = obradaDozvoljeniFormati().map(function (k) { return OBRADA_FORMATI[k].accept; }).join(',');
+      if (acc) inp.accept = acc;
+    }
+    function obradaMimeOk(mime) {
+      mime = (mime || '').toLowerCase();
+      return obradaDozvoljeniFormati().some(function (k) { return OBRADA_FORMATI[k].mimes.indexOf(mime) >= 0; });
+    }
+    function obradaMagicOk(bytes) {
+      return obradaDozvoljeniFormati().some(function (k) { return OBRADA_FORMATI[k].magic(bytes); });
+    }
+    function obradaPrikaziGreskuFormat() {
+      if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[porukaFormatKod] && typeof window.showPorukaModal === 'function') {
+        window.showPorukaModal(porukaFormatKod, [], null);
+      }
+    }
 
     function doInit() {
     function id(suffix) { return document.getElementById(idPrefix + suffix); }
@@ -93,6 +132,7 @@
     }
 
     function getMaxKb() {
+      if (neogranicenaVelicina) return Infinity;
       var val = null;
       try { val = getComputedStyle(document.documentElement).getPropertyValue('--slika_obrada_max_kb'); } catch (e) {}
       val = val != null ? trim(val) : '';
@@ -804,7 +844,7 @@
     var modalImg = id('_img');
 
     var ikonaUcitaj = id('_ikona_ucitaj');
-    if (ikonaUcitaj && fileInput) ikonaUcitaj.addEventListener('click', function () { fileInput.click(); });
+    if (ikonaUcitaj && fileInput) ikonaUcitaj.addEventListener('click', function () { obradaPostaviAccept(fileInput); fileInput.click(); });
 
     var ikonaObrisi = id('_ikona_obrisi');
     if (ikonaObrisi && modalImg && fileInput) {
@@ -1211,32 +1251,23 @@
           return;
         }
         var file = files[0];
-        var mime = (file.type || '').toLowerCase();
-        if (mime !== 'image/jpeg' && mime !== 'image/jpg' && mime !== 'image/png') {
+        if (!obradaMimeOk(file.type)) {
           fileInput.value = '';
-          if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['011'] && typeof window.showPorukaModal === 'function') {
-            window.showPorukaModal('011', [], null);
-          }
+          obradaPrikaziGreskuFormat();
           return;
         }
         var reader = new FileReader();
         reader.onload = function () {
           var buf = reader.result;
-          if (!(buf instanceof ArrayBuffer) || buf.byteLength < 8) {
+          if (!(buf instanceof ArrayBuffer)) {
             fileInput.value = '';
-            if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['011'] && typeof window.showPorukaModal === 'function') {
-              window.showPorukaModal('011', [], null);
-            }
+            obradaPrikaziGreskuFormat();
             return;
           }
-          var bytes = new Uint8Array(buf, 0, 8);
-          var isJpg = (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF);
-          var isPng = (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47 && bytes[4] === 0x0D && bytes[5] === 0x0A && bytes[6] === 0x1A && bytes[7] === 0x0A);
-          if (!isJpg && !isPng) {
+          var bytes = new Uint8Array(buf);
+          if (!obradaMagicOk(bytes)) {
             fileInput.value = '';
-            if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['011'] && typeof window.showPorukaModal === 'function') {
-              window.showPorukaModal('011', [], null);
-            }
+            obradaPrikaziGreskuFormat();
             return;
           }
           updateFileinfo(file);

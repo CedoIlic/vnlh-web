@@ -1522,6 +1522,32 @@ body {
   object-fit: contain;
 }
 
+/* --- Blok: Slika – centrirani placeholder (data-placeholder) dok nema slike ---
+   Pokriva oba obrasca kontrole slike: .kontrola-slika (0-Kontrole) i
+   .obrada-slika__preview-wrap (host okvir uz 0-Obrada_Slike: Loze/Clanovi/Stupnjevi…). */
+.kontrola-slika[data-placeholder]::after,
+.obrada-slika__preview-wrap[data-placeholder]::after {
+  content: attr(data-placeholder);
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--slika_placeholder_padding);
+  color: var(--slika_placeholder_boja);
+  font-family: var(--font_family);
+  font-size: var(--slika_placeholder_font_size);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+/* Čim u kontroli postoji učitana slika (img sa src-om), placeholder se skriva */
+.kontrola-slika[data-placeholder]:has(.kontrola-slika__img[src]:not([src=""]))::after,
+.obrada-slika__preview-wrap[data-placeholder]:has(.obrada-slika__img[src]:not([src=""]))::after {
+  display: none;
+}
+
 /* =========================================================
    KONTROLA SELECT – custom select + caret podloga
    ========================================================= */

@@ -596,6 +596,9 @@
   --slika_okvir_sjena: var(--kontrole_sjena_tablica);                /* Sjena okvira slike (kao ostale kontrole) */
   --slika_okvir_sjena_disabled: none;                                /* Sjena okvira slike kada je kontrola disabled */
   --slika_okvir_focus_boja: var(--edit_border_focus);                 /* Boja okvira pri fokusu – ista kao edit (samo mijenja boju obruba) */
+  --slika_placeholder_boja: var(--label_text_muted);                  /* Boja centriranog placeholder teksta (data-placeholder) kad nema slike */
+  --slika_placeholder_font_size: 0.85rem;                            /* Veličina placeholder teksta u kontroli slike */
+  --slika_placeholder_padding: 0.75rem;                              /* Unutarnji razmak placeholder teksta (da ne dira rub) */
 
   /* =========================================================
      GRUPA: KONTROLA OBRADA SLIKE (alatna traka modala – podloga, ikone; veličina slike)

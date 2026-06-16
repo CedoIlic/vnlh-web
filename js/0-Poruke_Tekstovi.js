@@ -56,6 +56,7 @@ var MODAL_MESSAGES = {
   '027': '027|Korisničko sučelje|(OK)|error||Izmijenite korisničko ime, ovo nije dozvoljeno.',   /* Login promjena lozinke: novo korisničko ime već postoji u bazi */
   '028': '028|Korisničko sučelje|OK,(Cancel)|warning||Učitavanje će izbrisati postojeće podatke, jeste li sigurni?',  /* Odabir postojećeg zapisa: forma već ima podatke – upozorenje prije zamjene */
   '029': '029|Korisničko sučelje|OK,(Cancel)|warning||Bilo kakva izmjena loža učesnica izbrisati će popis svih prisutnih članova, opravdano odsutnih i dužnosnika na radovima. Potrebno ih je ponovo upisati. Jesi li siguran da to želiš učiniti?',  /* Zapisnik: promjena loža učesnica uz postojeće prisustvo/dužnosnike */
+  '030': '030|Korisničko sučelje|(OK)|error||Format dokumenta nije ispravan.',   /* 0-Obrada_Slike: učitana datoteka ne odgovara odabranom formatu (tip_podatka) */
   '100': '100|Poruka servera|(OK)|error||Nije moguće povezivanje sa bazom podataka.',   /* Greška konekcije (00_db.php) */
   '101': '101|Poruka servera|(OK)|error||Neočekivani odgovor poslužitelja. Pokušajte ponovno.',   /* Nepoznat kod odgovora (npr. PHP greška) */
   '105': '105|Poruka servera|(OK)|error||Podaci poslani na upis nisu ispravni.',         /* Nevaljani ulaz (npr. id <= 0) */
