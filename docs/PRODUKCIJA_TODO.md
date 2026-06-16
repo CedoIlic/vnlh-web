@@ -45,3 +45,17 @@ zasebno; ovdje su stvari koje se NE rješavaju kroz Skeemu ni kroz git.
   se ikone sad serviraju iz baze).
 - **Verifikacija:** otvoriti `…/php/modal_ikona.php?stanje=ok|error|forbidden|information|warning`
   → svaki vraća PNG (200); zatim okinuti modal svakog stanja.
+
+---
+
+## 3. Seed: logo VNLH u `sustav_slike_tekstovi`
+
+- **Dodano:** 2026-06-16
+- **Kontekst:** Logo na glavnom meniju (`body.meni-glavni::before`, token
+  `--vnlh_logo_meni_url`) više se NE čita iz `slike/VNLH_Logo.webp` nego iz baze
+  preko `php/sustav_slika.php?naziv=VNLH%20Logo` (uz login; ETag + `no-cache`).
+- **Podatak, ne shema:** redak NE migrira kroz Skeemu — mora postojati u produkcijskoj
+  bazi, inače logo na meniju nestane (404 → bez pozadinske slike).
+- **Točan naziv:** `VNLH Logo` (tip `Slika WEBP`, mime `image/webp`). Izvor: `slike-arhiva/VNLH_Logo.webp`.
+- **Verifikacija:** prijavljen otvoriti `…/php/sustav_slika.php?naziv=VNLH%20Logo` → vraća WEBP (200);
+  zatim otvoriti glavni meni → logo u pozadini.

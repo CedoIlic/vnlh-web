@@ -214,7 +214,7 @@
   --vnlh_logo_meni_ime_datoteke: VNLH_Logo.webp;                      /* ime datoteke u folderu slike */
   --vnlh_logo_meni_staza_od_css: ../slike/VNLH_Logo.webp;            /* relativna staza od css/ (npr. 0-Common.css, Meni.css) */
   --vnlh_logo_meni_staza_od_html: ../slike/VNLH_Logo.webp;           /* relativna staza od html/Meni.html */
-  --vnlh_logo_meni_url: url("../slike/VNLH_Logo.webp");              /* body.meni-glavni::before background-image */
+  --vnlh_logo_meni_url: url("../php/sustav_slika.php?naziv=VNLH%20Logo");  /* body.meni-glavni::before background-image (BLOB iz baze: sustav_slike_tekstovi, naziv „VNLH Logo") */
   --vnlh_logo_meni_sirina: 560px;                                    /* širina u pozadini (800px − 30%); background-size */
   --vnlh_logo_meni_prozirnost: 0.7;                                  /* opacity: 0.7 ≈ 70 % vidljivosti loga na Meni */
   --vnlh_logo_meni_sjena: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.22)); /* body.meni-glavni::before filter; none = bez sjene */
