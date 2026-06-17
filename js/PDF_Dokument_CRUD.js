@@ -393,9 +393,19 @@
     ocistiStavkaEdit();
     azurirajSpremiStanje();
   }
+  /* Ponovni dohvat selekata stilova (Stil teksta / Stil slike) — npr. stil dodan u drugoj kartici. */
+  function ucitajStilSelekte() {
+    xhrGet(API + 'PDF_Stilovi_CRUD_sve.php', function (t) {
+      try { var a = JSON.parse(t || '[]'); mapaParagraf = {}; a.forEach(function (o) { mapaParagraf[String(o.id)] = o; }); napuniSelekt('st_paragraf_id', a, null, true); } catch (e) {}
+    });
+    xhrGet(API + 'PDF_Stilovi_Slike_CRUD_sve.php', function (t) {
+      try { var a = JSON.parse(t || '[]'); mapaSlika = {}; a.forEach(function (o) { mapaSlika[String(o.id)] = o; }); napuniSelekt('st_slika_stil_id', a, null, true); } catch (e) {}
+    });
+  }
   function noviDokument() {
     if (dokApi && typeof dokApi.clearSelection === 'function') { try { dokApi.clearSelection(); } catch (e) {} }
     popuniDokument(null, []);
+    ucitajStilSelekte();   /* osvježi stilove (upiši/izmjeni/izbriši/X/čišćenje svi prolaze ovuda) */
   }
 
   /* X na „Naziv dokumenta" → novi (čisti polja + deselektira tablicu) = upis mod. */
