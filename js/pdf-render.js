@@ -94,22 +94,32 @@
       };
     }
     if (str(stil.boja_pozadine)) {
-      /* Pozadina retka: tablica s 1 ćelijom (fill = boja_pozadine, padding trake; puna traka = '*'). */
+      /* Pozadina retka: tablica s 1 ćelijom (fill = boja_pozadine, padding trake). */
       par.fillColor = str(stil.boja_pozadine);
       var puna = bool(stil.pozadina_cijeli_red);
       var dodatakDolje = opts.fillGapBelow ? (mT + mB) : 0;
-      return {
-        table: { widths: [puna ? '*' : 'auto'], body: [[par]] },
-        layout: {
-          hLineWidth: function () { return 0; },
-          vLineWidth: function () { return 0; },
-          paddingLeft: function () { return mm(stil, 'traka_padding_lijevo_mm'); },
-          paddingRight: function () { return mm(stil, 'traka_padding_desno_mm'); },
-          paddingTop: function () { return mm(stil, 'traka_padding_gore_mm'); },
-          paddingBottom: function () { return mm(stil, 'traka_padding_dolje_mm') + dodatakDolje; }
-        },
-        margin: [mL, marT, mR, marB]
+      var layoutTraka = {
+        hLineWidth: function () { return 0; },
+        vLineWidth: function () { return 0; },
+        paddingLeft: function () { return mm(stil, 'traka_padding_lijevo_mm'); },
+        paddingRight: function () { return mm(stil, 'traka_padding_desno_mm'); },
+        paddingTop: function () { return mm(stil, 'traka_padding_gore_mm'); },
+        paddingBottom: function () { return mm(stil, 'traka_padding_dolje_mm') + dodatakDolje; }
       };
+      if (puna) {
+        return { table: { widths: ['*'], body: [[par]] }, layout: layoutTraka, margin: [mL, marT, mR, marB] };
+      }
+      /* Auto-širina (pozadina samo iza teksta): pdfmake tablica nema alignment pa bi ostala lijevo.
+         Za center/right omotamo „traku" u columns sa spacerima da bude centrirana/desno poravnata. */
+      var por = str(stil.poravnanje) || 'left';
+      if (por === 'center' || por === 'right') {
+        var trakaCol = { width: 'auto', table: { widths: ['auto'], body: [[par]] }, layout: layoutTraka };
+        var cols = (por === 'center')
+          ? [{ width: '*', text: '' }, trakaCol, { width: '*', text: '' }]
+          : [{ width: '*', text: '' }, trakaCol];
+        return { columns: cols, columnGap: 0, margin: [mL, marT, mR, marB] };
+      }
+      return { table: { widths: ['auto'], body: [[par]] }, layout: layoutTraka, margin: [mL, marT, mR, marB] };
     }
     par.margin = [mL, marT, mR, marB];
     return par;
@@ -278,12 +288,20 @@
     if (headerImgEls.length) dd.header = { stack: headerImgEls };
 
     /* Tekst zaglavlja → background (bez reza), SAM (slike su u dd.header pa ne guraju tekst).
-       pdfmake u backgroundu centrira tekst u regiji [x, pageWidth] i ZANEMARUJE width (vidi test C/D).
-       Zato x biramo tako da centar te regije padne na centar slobodnog prostora:
-       x = mL − mR + resL − resR  (simetrične margine bez potiska → x=0 → centar stranice). */
-    var textX = mLpt - mRpt + resL - resR;
-    var headerTextItem = headerTxt.length
-      ? { stack: headerTxt, width: dimPt.w, absolutePosition: { x: textX, y: 0 } } : null;
+       pdfmake zanemaruje width na običnom/stack elementu (dijagnostika), pa tekst omotamo u TABLICU
+       fiksne širine = širina BLOKA zaglavlja (zona sadržaja, umanjena za slike koje potiskuju).
+       Tablice poštuju zadane širine → sva poravnanja (left/center/right/justify) su u odnosu na blok;
+       ako se margine promijene, blok i poravnanja prate. Pozicija = lijeva margina (+ rezervacija lijevo). */
+    var blokW = dimPt.w - mLpt - mRpt - resL - resR;
+    var headerTextItem = (headerTxt.length && blokW > 0) ? {
+      table: { widths: [blokW], body: [[{ stack: headerTxt }]] },
+      layout: {
+        hLineWidth: function () { return 0; }, vLineWidth: function () { return 0; },
+        paddingLeft: function () { return 0; }, paddingRight: function () { return 0; },
+        paddingTop: function () { return 0; }, paddingBottom: function () { return 0; }
+      },
+      absolutePosition: { x: mLpt + resL, y: 0 }
+    } : null;
     var vodiliceFn = opts.vodilice ? vodiliceBackground(t, opts.stranica) : null;
     if (headerTextItem || vodiliceFn) {
       dd.background = function (currentPage, pageSize) {
