@@ -57,7 +57,6 @@
   var odabranaStavka = null;   /* _tid odabrane stavke */
   var prikaziBlokove = false;   /* toggle: vodilice (margine/zone) u PDF-u */
   var blokStranica = 1;         /* referentna stranica za pravila zona (1 / 2) */
-  var _bezAutoPrebacivanja = false;  /* spriječi auto-prebacivanje na tab Podaci pri internim re-selekcijama (▲/▼) */
   /* Lookup mape (id → naziv) za prikaz u tablici stavki */
   var mapaIzvor = {}, mapaIzvorTip = {}, mapaParagraf = {}, mapaSlika = {}, mapaTemplate = {};
   var mapaMetaKolone = {};   /* { tablica: [ {kolona, blob, komentar}, ... ] } iz information_schema (za selekt Traži kolonu) */
@@ -295,7 +294,7 @@
   /* Obriši/▲/▼ disable bez selekcije; tipka Dodaj/Izmijeni prati selekciju (mod). */
   function azurirajStavkaAkcije() {
     var ima = CommonCRUD.getSelectedRowId(stavkeApi) != null;
-    ['btnStavkaObrisi', 'btnStavkaGore', 'btnStavkaDolje'].forEach(function (id) {
+    ['btnStavkaDeselekt', 'btnStavkaObrisi', 'btnStavkaGore', 'btnStavkaDolje'].forEach(function (id) {
       var b = byId(id); if (b) b.disabled = !ima;
     });
     var bu = byId('btnStavkaUpis');
@@ -332,8 +331,7 @@
     odabranaStavka = s._tid;
     popuniStavkaEdit(s);
     azurirajStavkaAkcije();
-    /* odabir reda → prebaci na tab Podaci za uređivanje (osim internih re-selekcija, npr. ▲/▼) */
-    if (!_bezAutoPrebacivanja && typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(byId('dokTab'), 0);
+    /* Bez auto-prebacivanja na tab Podaci — selekcija samo puni editor; korisnik sam mijenja tab. */
   }
 
   /* Promjene u editu stavke → samo prikaz/skrivanje ovisnih polja (bez live-write u stavku). */
@@ -384,13 +382,14 @@
     if (i < 0 || j < 0 || j >= stavke.length) return;
     var tmp = stavke[i]; stavke[i] = stavke[j]; stavke[j] = tmp;
     osvjeziTablicuStavki();
-    /* zadrži selekciju nakon premještanja, ali ne prebacuj na tab Podaci */
-    _bezAutoPrebacivanja = true;
-    if (stavkeApi && typeof stavkeApi.setSelectedRowId === 'function') { try { stavkeApi.setSelectedRowId(tid); } catch (e) {} }
-    setTimeout(function () { _bezAutoPrebacivanja = false; }, 0);
+    /* zadrži selekciju nakon premještanja (API ima setSelectedRowIds — množina) */
+    if (stavkeApi && typeof stavkeApi.setSelectedRowIds === 'function') { try { stavkeApi.setSelectedRowIds([tid]); } catch (e) {} }
   }
   byId('btnStavkaGore').addEventListener('click', function () { pomakni(-1); });
   byId('btnStavkaDolje').addEventListener('click', function () { pomakni(1); });
+  byId('btnStavkaDeselekt').addEventListener('click', function () {
+    if (stavkeApi && typeof stavkeApi.clearSelection === 'function') { try { stavkeApi.clearSelection(); } catch (e) {} }
+  });
 
   /* ---- Punjenje / čišćenje dokumenta ---- */
   function popuniDokument(dok, lstStavke, samoSadrzaj) {
@@ -588,90 +587,86 @@
   }
   byId('btnPreview').addEventListener('click', generirajPreview);
 
-  /* ---- Modal „Izbor ID za test" (za dinamičke izvore) ---- */
+  /* ---- Modal „Izbor ID za test" (za dinamičke izvore) — markup je statički u HTML-u ---- */
   var TEST_ID_MODAL_KEY = 'pdf_dok_test_id_modal_pos';
-  var testIdModal = null;
-  function izgradiTestIdModal() {
-    if (testIdModal) return testIdModal;
-    var root = document.createElement('div');
-    root.className = 'kontrola-modal kontrola-modal--dim';
-    root.id = 'modalTestId';
-    root.setAttribute('aria-hidden', 'true');
-    root.setAttribute('role', 'dialog');
-    root.setAttribute('aria-modal', 'true');
-    root.style.zIndex = '10002';
-    var overlay = document.createElement('div'); overlay.className = 'kontrola-modal__overlay';
-    var dialog = document.createElement('div'); dialog.className = 'kontrola-modal__dialog';
-    var header = document.createElement('div'); header.className = 'kontrola-modal__header'; header.textContent = 'Izbor ID za test';
-    var body = document.createElement('div'); body.className = 'kontrola-modal__body kontrola-modal__body--text-only';
-    var content = document.createElement('div'); content.className = 'kontrola-modal__content';
-    var sel = document.createElement('select'); sel.className = 'kontrola-edit'; sel.setAttribute('aria-label', 'Kolona za pretragu'); sel.style.width = '100%'; sel.style.marginBottom = '.5rem';
-    var red = document.createElement('div'); red.style.display = 'flex'; red.style.gap = '.4rem'; red.style.alignItems = 'center';
-    var idIn = document.createElement('input'); idIn.type = 'text'; idIn.className = 'kontrola-edit'; idIn.readOnly = true; idIn.placeholder = 'ID'; idIn.setAttribute('aria-label', 'ID'); idIn.style.flex = '0 0 6rem';
-    var valIn = document.createElement('input'); valIn.type = 'text'; valIn.className = 'kontrola-edit'; valIn.placeholder = 'Vrijednost'; valIn.setAttribute('aria-label', 'Vrijednost'); valIn.style.flex = '1 1 auto';
-    var btnTrazi = document.createElement('button'); btnTrazi.type = 'button'; btnTrazi.className = 'kontrola-btn kontrola-btn--crud-upisi'; btnTrazi.style.flex = '0 0 auto';
-    btnTrazi.innerHTML = '<span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Traži</span></span></span>';
-    red.appendChild(idIn); red.appendChild(valIn); red.appendChild(btnTrazi);
-    content.appendChild(sel); content.appendChild(red); body.appendChild(content);
-    var footer = document.createElement('div'); footer.className = 'kontrola-modal__footer';
-    var btnOk = document.createElement('button'); btnOk.type = 'button'; btnOk.className = 'kontrola-btn kontrola-btn--primary'; btnOk.disabled = true;
-    btnOk.innerHTML = '<span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span>';
-    var btnCancel = document.createElement('button'); btnCancel.type = 'button'; btnCancel.className = 'kontrola-btn kontrola-btn--crud-povratak';
-    btnCancel.innerHTML = '<span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span>';
-    footer.appendChild(btnOk); footer.appendChild(btnCancel);
-    dialog.appendChild(header); dialog.appendChild(body); dialog.appendChild(footer);
-    root.appendChild(overlay); root.appendChild(dialog);
-    document.body.appendChild(root);
-    if (typeof KontroleModalDrag === 'function') KontroleModalDrag(dialog, header);
+  var tmInit = false;
+  function initTestIdModal() {
+    if (tmInit) return;
+    var root = byId('modalTestId'); if (!root) return;
+    tmInit = true;
+    var dialog = byId('modalTestId_dialog'), header = byId('modalTestId_header'), overlay = byId('modalTestId_overlay');
+    /* Naše kontrole unutar modala */
+    if (typeof KontroleInitCustomSelect === 'function') KontroleInitCustomSelect(root);
+    if (typeof KontroleInitEditDelete === 'function') KontroleInitEditDelete(root);
+    var idIn = byId('tm_id'); if (idIn && typeof KontroleSetControlReadonly === 'function') KontroleSetControlReadonly(idIn, true);
+    if (dialog && header && typeof KontroleModalDrag === 'function') KontroleModalDrag(dialog, header);
 
-    function osvjeziOk() { btnOk.disabled = (trim(idIn.value) === ''); }
+    function osvjeziOk() { byId('tm_ok').disabled = (trim(byId('tm_id').value) === ''); }
+    function ocistiNadjeno() { var n = byId('tm_nadjeno'); if (n) n.textContent = ''; }
     function zatvori() {
       try { if (dialog.style.left) localStorage.setItem(TEST_ID_MODAL_KEY, JSON.stringify({ left: dialog.style.left, top: dialog.style.top })); } catch (e) {}
       root.setAttribute('aria-hidden', 'true');
       root.classList.remove('kontrola-modal--open');
     }
+    root._tmZatvori = zatvori;
+    /* X u „Traženi niz" (kontrola-edit-delete) uz brisanje sadržaja čisti i ID + zaglavnu labelu. */
+    var clearBtn = root.querySelector('.kontrola-edit-delete__clear');
+    if (clearBtn) clearBtn.addEventListener('click', function () { byId('tm_id').value = ''; ocistiNadjeno(); osvjeziOk(); });
     overlay.addEventListener('click', zatvori);
-    btnCancel.addEventListener('click', zatvori);
+    byId('tm_odustani').addEventListener('click', zatvori);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && root.getAttribute('aria-hidden') === 'false') zatvori(); });
-    idIn.addEventListener('input', osvjeziOk);
-    btnTrazi.addEventListener('click', function () {
-      idIn.value = '';                 /* prvo briše ID */
+    byId('tm_trazi').addEventListener('click', function () {
+      byId('tm_id').value = '';        /* prvo briše ID i zaglavnu labelu */
+      ocistiNadjeno();
       osvjeziOk();
       var izvorId = trim(val('st_izvor'));
-      var kolona = sel.value;
+      var kolona = byId('tm_kolona').value;
       if (!izvorId || !kolona) return;
-      btnTrazi.disabled = true;
-      postJson(URL_TRAZI_ID, { izvor_id: parseInt(izvorId, 10), kolona: kolona, vrijednost: valIn.value }, function (res) {
-        btnTrazi.disabled = false;
+      var btn = byId('tm_trazi'); btn.disabled = true;
+      postJson(URL_TRAZI_ID, {
+        izvor_id: parseInt(izvorId, 10), kolona: kolona,
+        vrijednost: byId('tm_vrijednost').value, djelomicno: byId('tm_djelomicno').checked ? 1 : 0
+      }, function (res) {
+        btn.disabled = false;
         var o = null; try { o = JSON.parse(res); } catch (e) {}
-        idIn.value = (o && o.id != null) ? String(o.id) : '';
+        var id = (o && o.id != null) ? o.id : null;
+        var broj = (o && o.broj) ? o.broj : 0;
+        byId('tm_id').value = (id != null) ? String(id) : '';
+        var n = byId('tm_nadjeno'); if (n) n.textContent = (broj > 1) ? ('Pronađeno ' + broj + ' izdvojen prvi') : '';
         osvjeziOk();
       });
     });
-    btnOk.addEventListener('click', function () {
-      if (trim(idIn.value) === '') return;
-      setVal('st_test_id', idIn.value);
+    byId('tm_ok').addEventListener('click', function () {
+      if (trim(byId('tm_id').value) === '') return;
+      setVal('st_test_id', byId('tm_id').value);
       zatvori();
     });
-    testIdModal = { root: root, dialog: dialog, sel: sel, idIn: idIn, valIn: valIn, btnOk: btnOk };
-    return testIdModal;
   }
   function otvoriTestIdModal() {
-    var m = izgradiTestIdModal();
+    initTestIdModal();
+    var root = byId('modalTestId'); if (!root) return;
+    var dialog = byId('modalTestId_dialog');
     var izvorId = trim(val('st_izvor'));
     var izvor = izvorId ? mapaIzvor[izvorId] : null;
     var tablica = izvor ? izvor.tablica : '';
     var kolone = (tablica && mapaMetaKolone[tablica]) ? mapaMetaKolone[tablica] : [];
-    while (m.sel.options.length > 0) m.sel.remove(0);
-    kolone.forEach(function (k) { var opt = document.createElement('option'); opt.value = k.kolona; opt.textContent = k.kolona; m.sel.appendChild(opt); });
-    m.idIn.value = ''; m.valIn.value = ''; m.btnOk.disabled = true;
-    try { var raw = localStorage.getItem(TEST_ID_MODAL_KEY); if (raw) { var p = JSON.parse(raw); if (p && p.left) { m.dialog.style.left = p.left; m.dialog.style.top = p.top; m.dialog.style.transform = 'none'; m.dialog.style.margin = '0'; } } } catch (e) {}
-    m.root.setAttribute('aria-hidden', 'false');
-    m.root.classList.add('kontrola-modal--open');
-    m.valIn.focus();
+    var sel = byId('tm_kolona');
+    while (sel.options.length > 0) sel.remove(0);
+    kolone.forEach(function (k) { var opt = document.createElement('option'); opt.value = k.kolona; opt.textContent = k.kolona; sel.appendChild(opt); });
+    byId('tm_id').value = ''; byId('tm_vrijednost').value = '';
+    var dj = byId('tm_djelomicno'); if (dj) dj.checked = false;
+    var n = byId('tm_nadjeno'); if (n) n.textContent = '';
+    byId('tm_ok').disabled = true;
+    try { var raw = localStorage.getItem(TEST_ID_MODAL_KEY); if (raw) { var p = JSON.parse(raw); if (p && p.left) { dialog.style.left = p.left; dialog.style.top = p.top; dialog.style.transform = 'none'; dialog.style.margin = '0'; } } } catch (e) {}
+    root.setAttribute('aria-hidden', 'false');
+    root.classList.add('kontrola-modal--open');
+    if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('tm_kolona'); } catch (e) {} }
+    var v = byId('tm_vrijednost'); if (v) v.focus();
   }
   var _btnTestIdModal = byId('btnTestIdModal');
   if (_btnTestIdModal) _btnTestIdModal.addEventListener('click', otvoriTestIdModal);
+  /* „Testni ID" je RO — vrijednost se postavlja samo kroz modal („…"). */
+  (function () { var t = byId('st_test_id'); if (t && typeof KontroleSetControlReadonly === 'function') KontroleSetControlReadonly(t, true); })();
 
   /* auto-render pri ulasku na tab PDF */
   (function () {

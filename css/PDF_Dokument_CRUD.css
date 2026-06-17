@@ -136,3 +136,66 @@
 }
 .pdf-dokument-crud__footer-left,
 .pdf-dokument-crud__footer-right { display: flex; gap: 0.5rem; }
+
+/* Testni ID: edit + elipsis ikona (kanon: Clanovi_CRUD; tokeni iz 0-Common) */
+.pdf-dokument-crud__edit-with-ellipsis {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  width: 100%;
+}
+.pdf-dokument-crud__edit-with-ellipsis .kontrola-edit {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+.pdf-dokument-crud__ellipsis-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.pdf-dokument-crud__ellipsis-btn:hover:not(:disabled) {
+  background: var(--c-gray-100, #eee);
+  box-shadow: var(--kontrole_sjena_slaba_1);
+}
+.pdf-dokument-crud__ellipsis-btn:active:not(:disabled) {
+  box-shadow: inset 0 2px 4px var(--c-shadow-30);
+}
+.pdf-dokument-crud__ellipsis-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: var(--edit_focus_shadow_disabled);
+}
+.pdf-dokument-crud__ellipsis-btn .kontrola-icon--ellipsis-horizontal {
+  width: 1.25rem;
+  height: 1.25rem;
+  mask-size: 1.25rem 1.25rem;
+  -webkit-mask-size: 1.25rem 1.25rem;
+}
+
+/* Modal „Izbor ID za test": više zraka i razmak između redova */
+#modalTestId .kontrola-modal__content {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/* Deselekt ikona-gumb u zaglavlju taba: visina ista kao .kontrola-btn (token), uža širina */
+.pdf-dokument-crud__ellipsis-btn--akcija { width: var(--button_height); height: var(--button_height); }
+.pdf-dokument-crud__ellipsis-btn .kontrola-icon--asterisk {
+  width: 1.1rem;
+  height: 1.1rem;
+  mask-size: 1.1rem 1.1rem;
+  -webkit-mask-size: 1.1rem 1.1rem;
+}

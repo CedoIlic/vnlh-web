@@ -20,7 +20,8 @@ if (!is_array($u)) { echo json_encode(['id' => null]); exit; }
 $izvorId = isset($u['izvor_id']) ? (int) $u['izvor_id'] : 0;
 $kolona = isset($u['kolona']) ? (string) $u['kolona'] : '';
 $vrijednost = isset($u['vrijednost']) ? (string) $u['vrijednost'] : '';
-if ($izvorId <= 0 || !ti_ident_ok($kolona)) { echo json_encode(['id' => null]); exit; }
+$djelomicno = !empty($u['djelomicno']);
+if ($izvorId <= 0 || !ti_ident_ok($kolona)) { echo json_encode(['id' => null, 'broj' => 0]); exit; }
 
 // izvor_id -> tablica (whitelist)
 $stmt = $mysqli->prepare('SELECT tablica FROM pdf_dozvoljeni_izvori WHERE id = ? LIMIT 1');
@@ -29,7 +30,7 @@ $stmt->execute();
 $res = $stmt->get_result();
 $row = $res ? $res->fetch_assoc() : null;
 $stmt->close();
-if (!$row || !ti_ident_ok($row['tablica'])) { echo json_encode(['id' => null]); exit; }
+if (!$row || !ti_ident_ok($row['tablica'])) { echo json_encode(['id' => null, 'broj' => 0]); exit; }
 $tablica = $row['tablica'];
 
 // kolona mora postojati u toj tablici
@@ -39,17 +40,24 @@ $stmt->execute();
 $r2 = $stmt->get_result();
 $ok = $r2 && $r2->fetch_row();
 $stmt->close();
-if (!$ok) { echo json_encode(['id' => null]); exit; }
+if (!$ok) { echo json_encode(['id' => null, 'broj' => 0]); exit; }
 
-// Točno podudaranje, najmanji id
-$sql = "SELECT id FROM `$tablica` WHERE `$kolona` = ? ORDER BY id LIMIT 1";
+// broj = COUNT(*); id = MIN(id) ("izdvojen prvi"). Djelomično = LIKE %v% (escape % _ \).
+if ($djelomicno) {
+    $param = '%' . addcslashes($vrijednost, "%_\\") . '%';
+    $sql = "SELECT COUNT(*) AS broj, MIN(id) AS id FROM `$tablica` WHERE `$kolona` LIKE ?";
+} else {
+    $param = $vrijednost;
+    $sql = "SELECT COUNT(*) AS broj, MIN(id) AS id FROM `$tablica` WHERE `$kolona` = ?";
+}
 $stmt = $mysqli->prepare($sql);
-if (!$stmt) { echo json_encode(['id' => null]); exit; }
-$stmt->bind_param('s', $vrijednost);
+if (!$stmt) { echo json_encode(['id' => null, 'broj' => 0]); exit; }
+$stmt->bind_param('s', $param);
 $stmt->execute();
 $res = $stmt->get_result();
 $row = $res ? $res->fetch_assoc() : null;
 $stmt->close();
 $mysqli->close();
 
-echo json_encode(['id' => $row ? (int) $row['id'] : null]);
+$broj = $row ? (int) $row['broj'] : 0;
+echo json_encode(['id' => ($broj > 0 && $row['id'] !== null) ? (int) $row['id'] : null, 'broj' => $broj]);

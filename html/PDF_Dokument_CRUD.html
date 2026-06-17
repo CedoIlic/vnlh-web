@@ -31,6 +31,7 @@
             <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart2" aria-selected="false" aria-controls="dokTabPanel2" data-tab-index="2" tabindex="-1" disabled>PDF</button>
             <!-- Akcije stavki (vidljivo samo na tabu Dokument) – desni rub trake, u ravnini s naslovima -->
             <div class="pdf-dokument-crud__zaglavlje-akcije" id="stavkeAkcijeHeader" hidden>
+                <button type="button" id="btnStavkaDeselekt" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Makni selekciju" aria-label="Makni selekciju"><span class="kontrola-icon--asterisk" aria-hidden="true"></span></button>
                 <button type="button" id="btnStavkaObrisi" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Obriši</span></span></span></button>
                 <button type="button" id="btnStavkaGore" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▲</span></span></span></button>
                 <button type="button" id="btnStavkaDolje" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▼</span></span></span></button>
@@ -130,9 +131,9 @@
                             </div>
                             <div class="pdf-dokument-crud__polje" id="polje_test_id" hidden>
                                 <label class="kontrola-labela mb-0" for="st_test_id">Testni ID (pregled)</label>
-                                <div style="display:flex; gap:.4rem; align-items:center;">
-                                    <input id="st_test_id" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" autocomplete="off" style="flex:1 1 auto;">
-                                    <button type="button" id="btnTestIdModal" class="kontrola-btn kontrola-btn--crud-upisi" style="flex:0 0 auto;" title="Izbor ID za test" aria-label="Izbor ID za test" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">…</span></span></span></button>
+                                <div class="pdf-dokument-crud__edit-with-ellipsis">
+                                    <input id="st_test_id" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" autocomplete="off">
+                                    <button type="button" id="btnTestIdModal" class="pdf-dokument-crud__ellipsis-btn" title="Izbor ID za test" aria-label="Izbor ID za test" disabled><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
                                 </div>
                             </div>
                             <div class="pdf-dokument-crud__polje" id="polje_trazi_kolona" hidden>
@@ -214,6 +215,44 @@
     </div>
   </div>
 
+</div>
+
+<!-- Modal: Izbor ID za test (dinamički izvor) -->
+<div class="kontrola-modal kontrola-modal--dim" id="modalTestId" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="modalTestId_overlay"></div>
+    <div class="kontrola-modal__dialog" id="modalTestId_dialog">
+        <div class="kontrola-modal__header" id="modalTestId_header" style="display:flex; align-items:center; gap:.5rem;">
+            <span>Izbor ID za test</span>
+            <span id="tm_nadjeno" style="margin-left:auto; font-weight:normal; font-size:.85em; opacity:.9;"></span>
+        </div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content">
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="tm_kolona">Kolona tabele</label>
+                    <div class="kontrola-select"><select id="tm_kolona" aria-label="Kolona tabele"></select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="tm_vrijednost">Traženi niz</label>
+                    <div class="kontrola-edit-delete">
+                        <input id="tm_vrijednost" type="text" class="kontrola-edit-delete__input" placeholder="Traženi niz..." autocomplete="off">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    </div>
+                </div>
+                <div style="display:flex; gap:.75rem; align-items:flex-end;">
+                    <div class="pdf-dokument-crud__polje" style="flex:0 0 auto;">
+                        <label class="kontrola-labela mb-0" for="tm_id">ID</label>
+                        <input id="tm_id" type="text" class="kontrola-edit" style="width:6rem;" autocomplete="off">
+                    </div>
+                    <label class="kontrola-checkbox-labela" style="margin-bottom:.4rem;"><input id="tm_djelomicno" type="checkbox" class="kontrola-checkbox"> Djelomično ok</label>
+                    <button type="button" id="tm_trazi" class="kontrola-btn" style="margin-bottom:.15rem; margin-left:auto;"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Traži</span></span></span></button>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="tm_ok" class="kontrola-btn kontrola-btn--primary" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+            <button type="button" id="tm_odustani" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
+        </div>
+    </div>
 </div>
 
 <script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>

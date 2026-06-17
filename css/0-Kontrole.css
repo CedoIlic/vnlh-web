@@ -3085,6 +3085,22 @@ input.kontrola-checkbox[type="checkbox"].kontrola-checkbox--readonly:checked::af
   -webkit-mask-repeat: no-repeat;
 }
 
+/* asterisk – zvjezdica (korišteno: PDF_Dokument – makni selekciju retka) */
+.kontrola-icon--asterisk {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 5v14M5 8l14 8M19 8L5 16'/%3E%3C/svg%3E");
+  mask-size: 24px 24px;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 5v14M5 8l14 8M19 8L5 16'/%3E%3C/svg%3E");
+  -webkit-mask-size: 24px 24px;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+
 /* scissors – izrezivanje (modal obrada slike); Heroicons outline, viewBox s marginom da se ne reže */
 .kontrola-icon--scissors {
   display: inline-block;

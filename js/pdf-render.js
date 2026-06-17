@@ -160,13 +160,14 @@
     if (!(h > 0)) h = 60;
     var okvirW = (bool(stil.okvir) && mm(stil, 'okvir_debljina_mm') > 0) ? mm(stil, 'okvir_debljina_mm') : 0;
     var okvirBoja = str(stil.okvir_boja) || '#000000';
+    var fs = (opts && opts.veliki) ? 13 : 8;   /* uz prikazane vodilice tekst placeholdera je veći (čitljiv) */
     var cell = {
       text: str(tekst) || '',
-      fontSize: 8,
+      fontSize: fs,
       color: '#555555',
       alignment: 'center',
       fillColor: '#cccccc',
-      margin: [2, Math.max(0, (h - 11) / 2), 2, 0]   /* grubo vertikalno centriranje ključa */
+      margin: [2, Math.max(0, (h - (fs + 3)) / 2), 2, 0]   /* grubo vertikalno centriranje ključa */
     };
     var box = {
       table: { widths: [w], heights: [h], body: [[cell]] },
@@ -251,7 +252,7 @@
         if (s.zona === 'zaglavlje') origin = { x: mm(t, 'margina_lijevo_mm'), y: 0 };
         else if (s.zona === 'podnozje') origin = { x: mm(t, 'margina_lijevo_mm'), y: dimPt.h - mm(t, 'podnozje_visina_mm') };
         else origin = { x: 0, y: 0 };
-        if (s.placeholder) return [sastaviPlaceholder(ss, s.kontekst_kljuc, { origin: origin })];
+        if (s.placeholder) return [sastaviPlaceholder(ss, s.kontekst_kljuc, { origin: origin, veliki: !!opts.vodilice })];
         if (!s.dataurl) return [];
         return [sastaviSliku(ss, s.dataurl, { origin: origin })];
       }
@@ -272,7 +273,7 @@
           var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
           var hOrigin = { x: mm(t, 'margina_lijevo_mm'), y: 0 };
           var hEl = s.placeholder
-            ? sastaviPlaceholder(ss, s.kontekst_kljuc, { origin: hOrigin })
+            ? sastaviPlaceholder(ss, s.kontekst_kljuc, { origin: hOrigin, veliki: !!opts.vodilice })
             : (s.dataurl ? sastaviSliku(ss, s.dataurl, { origin: hOrigin }) : null);
           if (!hEl) return;
           headerSlike.push({ el: hEl, stil: ss || {}, placeholder: !!s.placeholder });
