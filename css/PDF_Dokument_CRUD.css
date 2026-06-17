@@ -7,7 +7,7 @@
 
 /* Svi tabovi imaju visinu prvog (JS fiksira .kontrola-tab__tijelo);
    tab Dokument i tab PDF razvuku glavni sadržaj na dostupnu visinu. */
-#dokTabPanel1 { display: flex; flex-direction: column; }
+#dokTabPanel1 { display: flex; flex-direction: column; padding: 0; }
 #dokTabPanel1 #stavkeTablica {
   flex: 1 1 auto;
   height: auto;
