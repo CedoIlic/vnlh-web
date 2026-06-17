@@ -130,7 +130,10 @@
                             </div>
                             <div class="pdf-dokument-crud__polje" id="polje_test_id" hidden>
                                 <label class="kontrola-labela mb-0" for="st_test_id">Testni ID (pregled)</label>
-                                <input id="st_test_id" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" autocomplete="off">
+                                <div style="display:flex; gap:.4rem; align-items:center;">
+                                    <input id="st_test_id" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" autocomplete="off" style="flex:1 1 auto;">
+                                    <button type="button" id="btnTestIdModal" class="kontrola-btn kontrola-btn--crud-upisi" style="flex:0 0 auto;" title="Izbor ID za test" aria-label="Izbor ID za test" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">…</span></span></span></button>
+                                </div>
                             </div>
                             <div class="pdf-dokument-crud__polje" id="polje_trazi_kolona" hidden>
                                 <label class="kontrola-labela mb-0" for="st_trazi_kolona">Traži kolonu (po vrijednosti)</label>

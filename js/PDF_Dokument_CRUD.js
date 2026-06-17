@@ -14,6 +14,7 @@
   var URL_SPREMI = API + 'PDF_Dokument_spremi.php';
   var URL_BRISANJE = API + 'PDF_Dokument_brisanje.php';
   var URL_RESOLVE = API + 'PDF_Generator_resolve.php';
+  var URL_TRAZI_ID = API + 'PDF_Dokument_trazi_id.php';
 
   function byId(id) { return document.getElementById(id); }
   function val(id) { var e = byId(id); return e ? e.value : ''; }
@@ -214,6 +215,11 @@
     byId('polje_izvor_red_id').hidden = (tip !== 'staticki');
     byId('polje_kontekst_kljuc').hidden = (tip !== 'dinamicki');
     byId('polje_test_id').hidden = (tip !== 'dinamicki');
+    /* Testni ID + "…" gumb: omogućeni samo kad je dinamički i odabran whitelist izvor. */
+    var testOmoguci = (tip === 'dinamicki' && trim(val('st_izvor')) !== '');
+    var tEl = byId('st_test_id'), tBtn = byId('btnTestIdModal');
+    if (tEl) { if (typeof KontroleSetControlEnabled === 'function') KontroleSetControlEnabled(tEl, testOmoguci); else tEl.disabled = !testOmoguci; }
+    if (tBtn) tBtn.disabled = !testOmoguci;
     byId('polje_trazi_kolona').hidden = (tip !== 'po_vrijednosti');
     byId('polje_trazi_vrijednost').hidden = (tip !== 'po_vrijednosti');
     byId('polje_literal_tekst').hidden = !korisnicki;
@@ -284,6 +290,7 @@
       else if (e) { e.disabled = !en; if (e.tagName === 'SELECT') refreshSelect(id); }
     });
     var bu = byId('btnStavkaUpis'); if (bu) bu.disabled = !en;
+    azurirajVidljivostStavke();   /* dorefiniraj „Testni ID" + „…" (ovise o dinamički + odabran izvor) */
   }
   /* Obriši/▲/▼ disable bez selekcije; tipka Dodaj/Izmijeni prati selekciju (mod). */
   function azurirajStavkaAkcije() {
@@ -335,7 +342,7 @@
     if (!e) return;
     var ev = (e.tagName === 'SELECT' || e.type === 'checkbox') ? 'change' : 'input';
     e.addEventListener(ev, function () {
-      if (id === 'st_izvor_tip' || id === 'st_vrsta') azurirajVidljivostStavke();
+      if (id === 'st_izvor_tip' || id === 'st_vrsta' || id === 'st_izvor') azurirajVidljivostStavke();
       if (id === 'st_izvor') popuniTraziKolonu();   /* promjena izvora → kolone iz njegove tablice */
     });
   });
@@ -580,6 +587,92 @@
     });
   }
   byId('btnPreview').addEventListener('click', generirajPreview);
+
+  /* ---- Modal „Izbor ID za test" (za dinamičke izvore) ---- */
+  var TEST_ID_MODAL_KEY = 'pdf_dok_test_id_modal_pos';
+  var testIdModal = null;
+  function izgradiTestIdModal() {
+    if (testIdModal) return testIdModal;
+    var root = document.createElement('div');
+    root.className = 'kontrola-modal kontrola-modal--dim';
+    root.id = 'modalTestId';
+    root.setAttribute('aria-hidden', 'true');
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-modal', 'true');
+    root.style.zIndex = '10002';
+    var overlay = document.createElement('div'); overlay.className = 'kontrola-modal__overlay';
+    var dialog = document.createElement('div'); dialog.className = 'kontrola-modal__dialog';
+    var header = document.createElement('div'); header.className = 'kontrola-modal__header'; header.textContent = 'Izbor ID za test';
+    var body = document.createElement('div'); body.className = 'kontrola-modal__body kontrola-modal__body--text-only';
+    var content = document.createElement('div'); content.className = 'kontrola-modal__content';
+    var sel = document.createElement('select'); sel.className = 'kontrola-edit'; sel.setAttribute('aria-label', 'Kolona za pretragu'); sel.style.width = '100%'; sel.style.marginBottom = '.5rem';
+    var red = document.createElement('div'); red.style.display = 'flex'; red.style.gap = '.4rem'; red.style.alignItems = 'center';
+    var idIn = document.createElement('input'); idIn.type = 'text'; idIn.className = 'kontrola-edit'; idIn.readOnly = true; idIn.placeholder = 'ID'; idIn.setAttribute('aria-label', 'ID'); idIn.style.flex = '0 0 6rem';
+    var valIn = document.createElement('input'); valIn.type = 'text'; valIn.className = 'kontrola-edit'; valIn.placeholder = 'Vrijednost'; valIn.setAttribute('aria-label', 'Vrijednost'); valIn.style.flex = '1 1 auto';
+    var btnTrazi = document.createElement('button'); btnTrazi.type = 'button'; btnTrazi.className = 'kontrola-btn kontrola-btn--crud-upisi'; btnTrazi.style.flex = '0 0 auto';
+    btnTrazi.innerHTML = '<span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Traži</span></span></span>';
+    red.appendChild(idIn); red.appendChild(valIn); red.appendChild(btnTrazi);
+    content.appendChild(sel); content.appendChild(red); body.appendChild(content);
+    var footer = document.createElement('div'); footer.className = 'kontrola-modal__footer';
+    var btnOk = document.createElement('button'); btnOk.type = 'button'; btnOk.className = 'kontrola-btn kontrola-btn--primary'; btnOk.disabled = true;
+    btnOk.innerHTML = '<span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span>';
+    var btnCancel = document.createElement('button'); btnCancel.type = 'button'; btnCancel.className = 'kontrola-btn kontrola-btn--crud-povratak';
+    btnCancel.innerHTML = '<span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span>';
+    footer.appendChild(btnOk); footer.appendChild(btnCancel);
+    dialog.appendChild(header); dialog.appendChild(body); dialog.appendChild(footer);
+    root.appendChild(overlay); root.appendChild(dialog);
+    document.body.appendChild(root);
+    if (typeof KontroleModalDrag === 'function') KontroleModalDrag(dialog, header);
+
+    function osvjeziOk() { btnOk.disabled = (trim(idIn.value) === ''); }
+    function zatvori() {
+      try { if (dialog.style.left) localStorage.setItem(TEST_ID_MODAL_KEY, JSON.stringify({ left: dialog.style.left, top: dialog.style.top })); } catch (e) {}
+      root.setAttribute('aria-hidden', 'true');
+      root.classList.remove('kontrola-modal--open');
+    }
+    overlay.addEventListener('click', zatvori);
+    btnCancel.addEventListener('click', zatvori);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && root.getAttribute('aria-hidden') === 'false') zatvori(); });
+    idIn.addEventListener('input', osvjeziOk);
+    btnTrazi.addEventListener('click', function () {
+      idIn.value = '';                 /* prvo briše ID */
+      osvjeziOk();
+      var izvorId = trim(val('st_izvor'));
+      var kolona = sel.value;
+      if (!izvorId || !kolona) return;
+      btnTrazi.disabled = true;
+      postJson(URL_TRAZI_ID, { izvor_id: parseInt(izvorId, 10), kolona: kolona, vrijednost: valIn.value }, function (res) {
+        btnTrazi.disabled = false;
+        var o = null; try { o = JSON.parse(res); } catch (e) {}
+        idIn.value = (o && o.id != null) ? String(o.id) : '';
+        osvjeziOk();
+      });
+    });
+    btnOk.addEventListener('click', function () {
+      if (trim(idIn.value) === '') return;
+      setVal('st_test_id', idIn.value);
+      zatvori();
+    });
+    testIdModal = { root: root, dialog: dialog, sel: sel, idIn: idIn, valIn: valIn, btnOk: btnOk };
+    return testIdModal;
+  }
+  function otvoriTestIdModal() {
+    var m = izgradiTestIdModal();
+    var izvorId = trim(val('st_izvor'));
+    var izvor = izvorId ? mapaIzvor[izvorId] : null;
+    var tablica = izvor ? izvor.tablica : '';
+    var kolone = (tablica && mapaMetaKolone[tablica]) ? mapaMetaKolone[tablica] : [];
+    while (m.sel.options.length > 0) m.sel.remove(0);
+    kolone.forEach(function (k) { var opt = document.createElement('option'); opt.value = k.kolona; opt.textContent = k.kolona; m.sel.appendChild(opt); });
+    m.idIn.value = ''; m.valIn.value = ''; m.btnOk.disabled = true;
+    try { var raw = localStorage.getItem(TEST_ID_MODAL_KEY); if (raw) { var p = JSON.parse(raw); if (p && p.left) { m.dialog.style.left = p.left; m.dialog.style.top = p.top; m.dialog.style.transform = 'none'; m.dialog.style.margin = '0'; } } } catch (e) {}
+    m.root.setAttribute('aria-hidden', 'false');
+    m.root.classList.add('kontrola-modal--open');
+    m.valIn.focus();
+  }
+  var _btnTestIdModal = byId('btnTestIdModal');
+  if (_btnTestIdModal) _btnTestIdModal.addEventListener('click', otvoriTestIdModal);
+
   /* auto-render pri ulasku na tab PDF */
   (function () {
     var tab = byId('dokTab');
