@@ -29,12 +29,22 @@
             <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="dokTabKart0" aria-selected="true" aria-controls="dokTabPanel0" data-tab-index="0">Podaci</button>
             <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart1" aria-selected="false" aria-controls="dokTabPanel1" data-tab-index="1" tabindex="-1">Dokument</button>
             <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart2" aria-selected="false" aria-controls="dokTabPanel2" data-tab-index="2" tabindex="-1" disabled>PDF</button>
+            <!-- Akcija: Dodaj stavku (vidljivo samo na tabu Podaci, gdje se stavka uređuje) -->
+            <div class="pdf-dokument-crud__zaglavlje-akcije" id="podaciAkcijeHeader" hidden>
+                <button type="button" id="btnStavkaDodaj" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
+            </div>
             <!-- Akcije stavki (vidljivo samo na tabu Dokument) – desni rub trake, u ravnini s naslovima -->
             <div class="pdf-dokument-crud__zaglavlje-akcije" id="stavkeAkcijeHeader" hidden>
-                <button type="button" id="btnStavkaDodaj" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
-                <button type="button" id="btnStavkaObrisi" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Obriši</span></span></span></button>
-                <button type="button" id="btnStavkaGore" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▲</span></span></span></button>
-                <button type="button" id="btnStavkaDolje" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▼</span></span></span></button>
+                <button type="button" id="btnStavkaObrisi" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Obriši</span></span></span></button>
+                <button type="button" id="btnStavkaGore" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▲</span></span></span></button>
+                <button type="button" id="btnStavkaDolje" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▼</span></span></span></button>
+            </div>
+            <!-- Akcije PDF preview-a (vidljivo samo na tabu PDF) – desni rub trake -->
+            <div class="pdf-dokument-crud__zaglavlje-akcije" id="pdfAkcijeHeader" hidden>
+                <span id="previewInfo" class="pdf-dokument-crud__preview-info"></span>
+                <button type="button" id="btnPreview" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Osvježi</span></span></span></button>
+                <button type="button" id="btnBlokovi" class="pdf-dokument-crud__blok-toggle" aria-pressed="false" title="Prikaži vodilice stranice (margine, zaglavlje, podnožje)" disabled></button>
+                <button type="button" id="btnBlokStranica" class="pdf-dokument-crud__blok-toggle pdf-dokument-crud__blok-stranica" title="Prikaz pravila za 1. / 2. stranicu" disabled></button>
             </div>
         </div>
 
@@ -168,12 +178,7 @@
 
         <!-- ===== Tab 2: PDF (živi preview) ===== -->
         <div class="kontrola-tab__panel" role="tabpanel" id="dokTabPanel2" aria-labelledby="dokTabKart2" data-tab-index="2" hidden>
-            <div class="pdf-dokument-crud__preview-traka">
-                <button type="button" id="btnPreview" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Osvježi</span></span></span></button>
-                <span id="previewInfo" class="pdf-dokument-crud__preview-info"></span>
-                <button type="button" id="btnBlokovi" class="pdf-dokument-crud__blok-toggle" aria-pressed="false" title="Prikaži vodilice stranice (margine, zaglavlje, podnožje)" disabled></button>
-                <button type="button" id="btnBlokStranica" class="pdf-dokument-crud__blok-toggle pdf-dokument-crud__blok-stranica" title="Prikaz pravila za 1. / 2. stranicu" disabled></button>
-            </div>
+            <!-- Kontrole su u zaglavlju taba -->
             <iframe id="previewOkvir" class="pdf-dokument-crud__preview-okvir" title="PDF pregled"></iframe>
         </div>
 

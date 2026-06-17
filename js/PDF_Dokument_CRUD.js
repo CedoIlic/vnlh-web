@@ -246,11 +246,20 @@
     });
     if (!en) { var hint = byId('stavkaHint'); if (hint) hint.hidden = false; }
   }
+  /* Obriši / ▲ / ▼ nemaju smisla bez selekcije u tablici stavki → disable. Dodaj ostaje uvijek. */
+  function azurirajStavkaAkcije() {
+    var ima = CommonCRUD.getSelectedRowId(stavkeApi) != null;
+    ['btnStavkaObrisi', 'btnStavkaGore', 'btnStavkaDolje'].forEach(function (id) {
+      var b = byId(id); if (b) b.disabled = !ima;
+    });
+  }
+
   function ocistiStavkaEdit() {
     odabranaStavka = null;
     STAVKA_POLJA.forEach(function (id) { var e = byId(id); if (e) { if (e.tagName === 'SELECT') { e.selectedIndex = 0; refreshSelect(id); } else e.value = ''; } });
     azurirajVidljivostStavke();
     postaviStavkaEnabled(false);
+    azurirajStavkaAkcije();
   }
 
   function naStavkaSelekcija() {
@@ -260,6 +269,7 @@
     if (!s) { ocistiStavkaEdit(); return; }
     odabranaStavka = s._tid;
     popuniStavkaEdit(s);
+    azurirajStavkaAkcije();
   }
 
   /* Promjene u editu stavke → upiši u objekt + osvježi tablicu */
@@ -413,12 +423,12 @@
     };
     postJson(URL_SPREMI, payload, function (res) {
       if (res.indexOf('OK') === 0) {
-        var noviId = 0; var c = res.indexOf(','); if (c >= 0) noviId = parseInt(res.slice(c + 1), 10) || 0;
+        /* nakon upisa/izmjene: osvježi listu pa očisti formu (kao klik na X). */
         if (window.showPorukaModal) {
           window.showPorukaModal(tekuciId > 0 ? '004' : '001', [], function () {
-            ucitajDokumente(function () { if (noviId && dokApi && typeof dokApi.setSelectedRowId === 'function') { try { dokApi.setSelectedRowId(noviId); } catch (e) {} naDokSelekcija(); } });
+            ucitajDokumente(function () { noviDokument(); });
           });
-        } else { ucitajDokumente(); }
+        } else { ucitajDokumente(function () { noviDokument(); }); }
       } else { porukaIzKoda(res, res.indexOf('002') === 0 ? ['Naziv'] : null); }
     });
   });
@@ -559,16 +569,17 @@
     _mjerimVisinu = false;
   }
 
-  /* Akcije stavki u zaglavlju: vidljive samo dok je tab Dokument (panel 1) aktivan. */
+  /* Akcije u zaglavlju taba: svaka grupa vidljiva samo dok je njezin panel aktivan. */
   (function () {
-    var grupa = byId('stavkeAkcijeHeader');
-    var panel1 = byId('dokTabPanel1');
-    if (!grupa || !panel1) return;
-    function osvjezi() { grupa.hidden = panel1.hasAttribute('hidden'); }
-    if (typeof MutationObserver !== 'undefined') {
-      new MutationObserver(osvjezi).observe(panel1, { attributes: true, attributeFilter: ['hidden'] });
-    }
-    osvjezi();
+    [['podaciAkcijeHeader', 'dokTabPanel0'], ['stavkeAkcijeHeader', 'dokTabPanel1'], ['pdfAkcijeHeader', 'dokTabPanel2']].forEach(function (par) {
+      var grupa = byId(par[0]), panel = byId(par[1]);
+      if (!grupa || !panel) return;
+      function osvjezi() { grupa.hidden = panel.hasAttribute('hidden'); }
+      if (typeof MutationObserver !== 'undefined') {
+        new MutationObserver(osvjezi).observe(panel, { attributes: true, attributeFilter: ['hidden'] });
+      }
+      osvjezi();
+    });
   })();
 
   /* ---- Init ---- */

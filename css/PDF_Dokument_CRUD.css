@@ -19,8 +19,7 @@
   height: auto;
   min-height: calc(var(--tablica_row_h) * var(--tablica_vidljivih_redova));
 }
-#dokTabPanel2 { display: flex; flex-direction: column; }
-#dokTabPanel2 .pdf-dokument-crud__preview-traka { flex: 0 0 auto; }
+#dokTabPanel2 { display: flex; flex-direction: column; padding: 0; }
 #dokTabPanel2 .pdf-dokument-crud__preview-okvir { flex: 1 1 auto; height: auto; min-height: 0; }
 
 /* Akcije stavki u zaglavlju taba (desni rub trake, centrirano po visini s naslovima).
@@ -89,15 +88,13 @@
 .pdf-dokument-crud__stavka-hint { margin-top: 0.6rem; color: var(--label_text_muted, #6c757d); font-size: 0.9em; }
 
 /* ===== Tab PDF: preview ===== */
-.pdf-dokument-crud__preview-traka { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
 .pdf-dokument-crud__preview-info { color: var(--label_text_muted, #6c757d); font-size: 0.9em; }
-.pdf-dokument-crud__preview-okvir { width: 100%; height: 70vh; border: 1px solid var(--edit_border, #ced4da); border-radius: var(--edit_radius, 6px); box-sizing: border-box; }
+.pdf-dokument-crud__preview-okvir { width: 100%; height: 70vh; border: 1px solid var(--edit_border, #ced4da); border-radius: var(--edit_radius, 6px); box-shadow: var(--tablica_sjena); box-sizing: border-box; }
 
 /* Toggle-ikona: vodilice u PDF-u. Flat gumb po presedanu kolor-trigger gumba
    (sjena/hover/klik/disable iz 0-Common tokena). SVG koristi currentColor gumba. */
 .pdf-dokument-crud__blok-toggle {
   flex: 0 0 auto;
-  margin-left: auto;                                          /* gurni desno */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -128,8 +125,6 @@
 }
 .pdf-dokument-crud__blok-toggle svg { display: block; height: 1.3rem; width: auto; }
 .pdf-dokument-crud__blok-toggle--aktivan { color: #2d6da3; border-color: #2d6da3; }
-/* Druga ikona (1./2. stranica) sjedi uz prvu (bez margin-left:auto) */
-.pdf-dokument-crud__blok-stranica { margin-left: 0.4rem; }
 
 /* ===== Footer ===== */
 .pdf-dokument-crud__footer {
