@@ -59,6 +59,7 @@
   var _bezAutoPrebacivanja = false;  /* spriječi auto-prebacivanje na tab Podaci pri internim re-selekcijama (▲/▼) */
   /* Lookup mape (id → naziv) za prikaz u tablici stavki */
   var mapaIzvor = {}, mapaIzvorTip = {}, mapaParagraf = {}, mapaSlika = {}, mapaTemplate = {};
+  var mapaMetaKolone = {};   /* { tablica: [ {kolona, blob, komentar}, ... ] } iz information_schema (za selekt Traži kolonu) */
 
   /* ---- Selekti (template / izvor / stilovi) ---- */
   function napuniSelekt(selId, arr, mapa, opcijaPrazno) {
@@ -75,8 +76,12 @@
     refreshSelect(selId);
   }
   function ucitajSveSelekte(cb) {
-    var preostalo = 4;
+    var preostalo = 5;
     function gotovo() { if (--preostalo === 0 && cb) cb(); }
+    xhrGet(API + 'PDF_Whitelist_CRUD_meta.php', function (t) {
+      try { mapaMetaKolone = JSON.parse(t || '{}') || {}; } catch (e) { mapaMetaKolone = {}; }
+      gotovo();
+    });
     xhrGet(API + 'PDF_Template_CRUD_sve.php', function (t) {
       try { var a = JSON.parse(t || '[]'); a.forEach(function (o) { mapaTemplate[String(o.id)] = o; }); napuniSelekt('edit_template_id', a, null, true); } catch (e) {}
       gotovo();
@@ -206,6 +211,26 @@
     byId('polje_slika_stil').hidden = (vrsta !== 'slika');
   }
 
+  /* Selekt „Traži kolonu": kolone tablice izabranog whitelist izvora (zadrži vrijednost ako još postoji). */
+  function popuniTraziKolonu() {
+    var sel = byId('st_trazi_kolona');
+    if (!sel) return;
+    var izvorId = trim(val('st_izvor'));
+    var izvor = izvorId ? mapaIzvor[izvorId] : null;
+    var tablica = izvor ? izvor.tablica : '';
+    var kolone = (tablica && mapaMetaKolone[tablica]) ? mapaMetaKolone[tablica] : [];
+    var trenutno = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    kolone.forEach(function (k) {
+      var opt = document.createElement('option');
+      opt.value = k.kolona; opt.textContent = k.kolona;
+      sel.appendChild(opt);
+    });
+    sel.value = trenutno;
+    if (sel.value !== trenutno) sel.value = '';   /* prijašnja kolona ne postoji u novoj tablici */
+    refreshSelect('st_trazi_kolona');
+  }
+
   function popuniStavkaEdit(s) {
     setVal('st_zona', s.zona || 'tijelo'); refreshSelect('st_zona');
     setVal('st_vrsta', s.vrsta || 'tekst'); refreshSelect('st_vrsta');
@@ -213,7 +238,8 @@
     setVal('st_izvor_tip', s.izvor_tip || 'staticki'); refreshSelect('st_izvor_tip');
     setVal('st_izvor_red_id', s.izvor_red_id || '');
     setVal('st_kontekst_kljuc', s.kontekst_kljuc || '');
-    setVal('st_trazi_kolona', s.trazi_kolona || '');
+    popuniTraziKolonu();   /* opcije ovise o izabranom izvoru — prije postavljanja vrijednosti */
+    setVal('st_trazi_kolona', s.trazi_kolona || ''); refreshSelect('st_trazi_kolona');
     setVal('st_trazi_vrijednost', s.trazi_vrijednost != null ? s.trazi_vrijednost : '');
     setVal('st_paragraf_id', s.paragraf_id || ''); refreshSelect('st_paragraf_id');
     setVal('st_slika_stil_id', s.slika_stil_id || ''); refreshSelect('st_slika_stil_id');
@@ -260,6 +286,7 @@
   function ocistiStavkaEdit() {
     odabranaStavka = null;
     STAVKA_POLJA.forEach(function (id) { var e = byId(id); if (e) { if (e.tagName === 'SELECT') { e.selectedIndex = 0; refreshSelect(id); } else e.value = ''; } });
+    popuniTraziKolonu();
     azurirajVidljivostStavke();
     azurirajStavkaAkcije();
   }
@@ -269,6 +296,7 @@
       var e = byId(id); if (!e) return;
       if (e.tagName === 'SELECT') { e.selectedIndex = 0; refreshSelect(id); } else e.value = '';
     });
+    popuniTraziKolonu();
     azurirajVidljivostStavke();
   }
 
@@ -291,6 +319,7 @@
     var ev = (e.tagName === 'SELECT' || e.type === 'checkbox') ? 'change' : 'input';
     e.addEventListener(ev, function () {
       if (id === 'st_izvor_tip' || id === 'st_vrsta') azurirajVidljivostStavke();
+      if (id === 'st_izvor') popuniTraziKolonu();   /* promjena izvora → kolone iz njegove tablice */
     });
   });
 
