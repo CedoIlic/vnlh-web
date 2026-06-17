@@ -235,9 +235,6 @@
     if (fmt === 'custom') dd.pageSize = { width: mm(t, 'sirina_mm'), height: mm(t, 'visina_mm') };
     else dd.pageSize = fmt.toUpperCase();        /* pdfmake: A4/A5/A3/LETTER/LEGAL */
 
-    /* Zaglavlje: poštuj lijevu/desnu marginu stranice + gornji razmak (inače flush uz rub). */
-    if (header.length) dd.header = { stack: header, margin: [mm(t, 'margina_lijevo_mm'), mm(t, 'margina_gore_mm') / 2, mm(t, 'margina_desno_mm'), 0] };
-
     var brojStr = bool(t.broj_stranice);
     var poravBroj = ({ lijevo: 'left', centar: 'center', desno: 'right' })[str(t.broj_stranice_poravnanje)] || 'center';
     if (footer.length || brojStr) {
@@ -251,7 +248,24 @@
         return arr;
       };
     }
-    if (opts.vodilice) dd.background = vodiliceBackground(t, opts.stranica);
+
+    /* Zaglavlje kroz background — pdfmake NE reže background (dd.header se reže na pojas gornje margine).
+       Tekst (flow) ide u stack s absolutePosition (zadrži „razmak prije" iznutra, ali bez reza);
+       slike već nose vlastiti absolutePosition. Poštuje lijevu/desnu marginu i širinu sadržaja. */
+    var mLpt = mm(t, 'margina_lijevo_mm'), mRpt = mm(t, 'margina_desno_mm');
+    var headerAbs = [], headerFlow = [];
+    header.forEach(function (e) { if (e && e.absolutePosition) headerAbs.push(e); else headerFlow.push(e); });
+    var headerBgItems = [];
+    if (headerFlow.length) headerBgItems.push({ stack: headerFlow, width: dimPt.w - mLpt - mRpt, absolutePosition: { x: mLpt, y: 0 } });
+    headerBgItems = headerBgItems.concat(headerAbs);
+    var vodiliceFn = opts.vodilice ? vodiliceBackground(t, opts.stranica) : null;
+    if (headerBgItems.length || vodiliceFn) {
+      dd.background = function (currentPage, pageSize) {
+        var out = [];
+        if (vodiliceFn) { var v = vodiliceFn(currentPage, pageSize); if (v) out = out.concat(v); }
+        return out.concat(headerBgItems);
+      };
+    }
     return dd;
   }
 
