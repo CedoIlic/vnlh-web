@@ -118,4 +118,5 @@ $html = str_replace(
 $html = vnlh_apply_asset_token_to_html($html);
 $html = vnlh_inject_chat_flag_script($html);
 $html = vnlh_inject_app_base_path_script($html);
-echo vnlh_inject_sesija_pracenje_aktivnosti_script($html);
+$html = vnlh_inject_sesija_pracenje_aktivnosti_script($html);
+echo vnlh_inject_samo_desktop($html, $basename);

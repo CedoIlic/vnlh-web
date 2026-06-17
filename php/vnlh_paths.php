@@ -151,6 +151,48 @@ function vnlh_inject_sesija_pracenje_aktivnosti_script(string $html): string
 }
 
 /**
+ * device vrijednost (meni.device) za zadanu html datoteku: 0=svi uređaji, 1=samo desktop, 2=samo mobitel.
+ * Static cache po requestu; čita živo iz baze (promjena meni.device → vrijedi na sljedećem serviranju forme).
+ */
+function vnlh_meni_device_za_html(string $htmlFajl): int {
+    static $cache = [];
+    $key = strtolower(trim($htmlFajl));
+    if ($key === '') return 0;
+    if (array_key_exists($key, $cache)) return $cache[$key];
+    $device = 0;
+    require_once __DIR__ . '/vnlh_db_connect.php';
+    $db = vnlh_db_connect();
+    if ($db !== false) {
+        $stmt = $db->prepare('SELECT device FROM meni WHERE LOWER(html_fajl) = ? LIMIT 1');
+        if ($stmt) {
+            $stmt->bind_param('s', $key);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            if ($res && ($row = $res->fetch_assoc())) $device = (int) $row['device'];
+            $stmt->close();
+        }
+        $db->close();
+    }
+    return $cache[$key] = $device;
+}
+
+/**
+ * Forme za samo desktop (meni.device=1): doda klasu vnlh-samo-desktop na <body>
+ * (CSS body.vnlh-samo-desktop { min-width } → bez sažimanja po širini). Inače nepromijenjeno.
+ */
+function vnlh_inject_samo_desktop(string $html, string $htmlFajl): string {
+    if (vnlh_meni_device_za_html($htmlFajl) !== 1) {
+        return $html;
+    }
+    if (preg_match('/<body\b[^>]*\bclass\s*=\s*"/i', $html)) {
+        $out = preg_replace('/(<body\b[^>]*\bclass\s*=\s*")/i', '$1vnlh-samo-desktop ', $html, 1);
+    } else {
+        $out = preg_replace('/<body\b/i', '<body class="vnlh-samo-desktop"', $html, 1);
+    }
+    return is_string($out) ? $out : $html;
+}
+
+/**
  * Učitaj html/<ime>, zamijeni __VNLH_ASSET_V__ i ispiši (umjesto readfile na statičkom HTML-u).
  *
  * @param string $htmlBasename npr. "Clanovi_CRUD.html" (koristi basename radi sigurnosti)
@@ -167,7 +209,8 @@ function vnlh_emit_html_file(string $htmlBasename): void {
     $html = vnlh_apply_asset_token_to_html($raw !== false ? $raw : '');
     $html = vnlh_inject_chat_flag_script($html);
     $html = vnlh_inject_app_base_path_script($html);
-    echo vnlh_inject_sesija_pracenje_aktivnosti_script($html);
+    $html = vnlh_inject_sesija_pracenje_aktivnosti_script($html);
+    echo vnlh_inject_samo_desktop($html, $basename);
 }
 
 /**
@@ -183,5 +226,6 @@ function vnlh_emit_html_absolute(string $absolutePath): void {
     $html = vnlh_apply_asset_token_to_html($raw !== false ? $raw : '');
     $html = vnlh_inject_chat_flag_script($html);
     $html = vnlh_inject_app_base_path_script($html);
-    echo vnlh_inject_sesija_pracenje_aktivnosti_script($html);
+    $html = vnlh_inject_sesija_pracenje_aktivnosti_script($html);
+    echo vnlh_inject_samo_desktop($html, basename($absolutePath));
 }

@@ -137,6 +137,7 @@
   --page_spacing_mb_4: 1.5rem;                                       /* ekv. Bootstrap mb-4 */
   --page_breakpoint_wide: 768px;                                     /* od ove širine veći padding / ponašanje */
   --page_breakpoint_narrow: 640px;                                   /* ispod ove širine mobitel prikaz; u CSS: var(--page_breakpoint_narrow, 640px); u JS: getPageBreakpointNarrow() (0-Common.js). Lista.css / Lista.js ostaju na fiksnom 640px. Alati_Meni_Test.css (hamburger vs horizontalni meni) koristi literal 640px/641px u @media – pri promjeni ovog tokena uskladiti i tamo. */
+  --page_samo_desktop_min_width: calc(var(--page_container_max_width) + 2 * var(--page_container_padding_x_wide)); /* ~1188px; granica ispod koje desktop-only forma (meni.device=1) ne sažima nego horizontalni scroll. Forma može override-ati u svom CSS-u (:root). */
 
   /* Clanovi CRUD – širina viewporta ispod koje se redovi (Datum rođenja/Spol/Šifra, Datum inicijacije/Porijeklo, Datum stupnja/Na prijedlog) preslože u po jedan red po kontroli; editi tada 100% stupca (media query, ne container query) */
   --clanovi_crud_edit_stack_viewport_breakpoint: 700px;
@@ -927,6 +928,18 @@ body {
   box-sizing: border-box;
   margin: 0;
   min-height: 100vh;
+}
+
+/* Desktop-only forme (meni.device=1): bez sažimanja po širini — ispod min-width nastaje
+   horizontalni scroll umjesto stiskanja layouta. Klasu dodaje server (vnlh_inject_samo_desktop). */
+body.vnlh-samo-desktop {
+  min-width: var(--page_samo_desktop_min_width);
+}
+/* I naslovna traka forme drži istu min-širinu — da naslov i ikone (desno) ostanu poravnati
+   sa sadržajem pri horizontalnom scrollu (inače traka prati uži viewport). */
+body.vnlh-samo-desktop .naslov-forme {
+  min-width: var(--page_samo_desktop_min_width);
+  box-sizing: border-box;
 }
 
 /* Glavni kontejner stranice – centriran, max-width, horizontalni padding (responsive) */
