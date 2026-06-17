@@ -214,12 +214,22 @@
       return [];
     }
 
-    var content = [], header = [], footer = [];
+    var content = [], headerTxt = [], headerSlike = [], footer = [];   /* headerSlike: { el, stil } radi potiskuje */
     stavke.forEach(function (s) {
+      if (!s || s.greska) return;
+      if (s.zona === 'zaglavlje') {
+        if (s.vrsta === 'slika') {
+          if (!s.dataurl) return;
+          var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
+          headerSlike.push({ el: sastaviSliku(ss, s.dataurl, { origin: { x: mm(t, 'margina_lijevo_mm'), y: 0 } }), stil: ss || {} });
+        } else {
+          headerTxt = headerTxt.concat(elementi(s));
+        }
+        return;
+      }
       var el = elementi(s);
       if (!el.length) return;
-      if (s.zona === 'zaglavlje') header = header.concat(el);
-      else if (s.zona === 'podnozje') footer = footer.concat(el);
+      if (s.zona === 'podnozje') footer = footer.concat(el);
       else content = content.concat(el);        /* tijelo + (zasad) naslovna */
     });
 
@@ -250,20 +260,37 @@
     }
 
     /* Zaglavlje kroz background — pdfmake NE reže background (dd.header se reže na pojas gornje margine).
-       Tekst (flow) ide u stack s absolutePosition (zadrži „razmak prije" iznutra, ali bez reza);
-       slike već nose vlastiti absolutePosition. Poštuje lijevu/desnu marginu i širinu sadržaja. */
+       potiskuje=1 (ne-apsolutna slika) rezervira širinu na svojoj strani → tekst u slobodan prostor;
+       potiskuje=0 / apsolutno = overlay (tekst ga ignorira i centrira se preko cijelog zaglavlja). */
     var mLpt = mm(t, 'margina_lijevo_mm'), mRpt = mm(t, 'margina_desno_mm');
-    var headerAbs = [], headerFlow = [];
-    header.forEach(function (e) { if (e && e.absolutePosition) headerAbs.push(e); else headerFlow.push(e); });
-    var headerBgItems = [];
-    if (headerFlow.length) headerBgItems.push({ stack: headerFlow, width: dimPt.w - mLpt - mRpt, absolutePosition: { x: mLpt, y: 0 } });
-    headerBgItems = headerBgItems.concat(headerAbs);
+    /* Slike zaglavlja → dd.header. absolutePosition izbjegava rez zaglavlja i NE rezervira prostor tekstu.
+       potiskuje=1 (ne-apsolutna slika) rezervira širinu pa se tekst centrira u slobodnom prostoru. */
+    var resL = 0, resR = 0, headerImgEls = [];
+    headerSlike.forEach(function (hi) {
+      var ss = hi.stil || {};
+      var imgW = broj(ss.sirina_mm) > 0 ? mm(ss, 'sirina_mm') : 0;
+      var desno = str(ss.poravnanje_h) === 'desno';
+      var potiskuje = bool(ss.potiskuje) && str(ss.pozicioniranje) !== 'apsolutno';
+      if (!hi.el.absolutePosition) hi.el.absolutePosition = { x: desno ? (dimPt.w - mRpt - imgW) : mLpt, y: 0 };
+      if (potiskuje && imgW > 0) { if (desno) resR += imgW; else resL += imgW; }
+      headerImgEls.push(hi.el);
+    });
+    if (headerImgEls.length) dd.header = { stack: headerImgEls };
+
+    /* Tekst zaglavlja → background (bez reza), SAM (slike su u dd.header pa ne guraju tekst).
+       pdfmake u backgroundu centrira tekst u regiji [x, pageWidth] i ZANEMARUJE width (vidi test C/D).
+       Zato x biramo tako da centar te regije padne na centar slobodnog prostora:
+       x = mL − mR + resL − resR  (simetrične margine bez potiska → x=0 → centar stranice). */
+    var textX = mLpt - mRpt + resL - resR;
+    var headerTextItem = headerTxt.length
+      ? { stack: headerTxt, width: dimPt.w, absolutePosition: { x: textX, y: 0 } } : null;
     var vodiliceFn = opts.vodilice ? vodiliceBackground(t, opts.stranica) : null;
-    if (headerBgItems.length || vodiliceFn) {
+    if (headerTextItem || vodiliceFn) {
       dd.background = function (currentPage, pageSize) {
         var out = [];
         if (vodiliceFn) { var v = vodiliceFn(currentPage, pageSize); if (v) out = out.concat(v); }
-        return out.concat(headerBgItems);
+        if (headerTextItem) out.push(headerTextItem);
+        return out;
       };
     }
     return dd;
