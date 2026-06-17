@@ -118,10 +118,8 @@
       .sort(function (a, b) { return String(a.naziv).localeCompare(String(b.naziv), 'hr', { sensitivity: 'base' }); });
     lista.forEach(function (o) { var opt = document.createElement('option'); opt.value = String(o.id); opt.textContent = o.naziv != null ? o.naziv : ('#' + o.id); sel.appendChild(opt); });
     sel.value = '';
-    /* prazna baza → trajno disable; inače enable */
-    if (typeof KontroleSetControlEnabled === 'function') KontroleSetControlEnabled(sel, lista.length > 0);
-    else sel.disabled = lista.length === 0;
     refreshSelect('edit_naslijedi_dok');
+    azurirajSpremiStanje();   /* enable/disable nasljedi+template+opis prema nazivu i postojanju dokumenata */
   }
 
   function ucitajDokumente(cb) {
@@ -364,8 +362,7 @@
           var o = JSON.parse(t || '{}');
           if (o.greska) return;
           popuniDokument(o.dokument, o.stavke || [], true);   /* samoSadrzaj: zadrži naziv + tekući mod */
-          naslEl.value = ''; refreshSelect('edit_naslijedi_dok');
-          azurirajSpremiStanje();
+          azurirajSpremiStanje();                              /* selekt ostaje na izabranom dokumentu */
         } catch (e) {}
       });
     });
@@ -374,10 +371,15 @@
   /* ---- Spremi / Izbriši ---- */
   function azurirajSpremiStanje() {
     var ok = trim(val('edit_naziv')) !== '' && trim(val('edit_template_id')) !== '';
-    /* Selekt Stranica (template): disabled bez izabranog dokumenta (nema naziva). */
+    /* Nasljedi / Stranica (template) / Opis: disabled dok nema sadržaja u nazivu (edit-delete).
+       Nasljedi dodatno traži da postoje dokumenti u bazi. */
     var imaDok = trim(val('edit_naziv')) !== '';
-    var tpl = byId('edit_template_id');
-    if (tpl && typeof KontroleSetControlEnabled === 'function') KontroleSetControlEnabled(tpl, imaDok);
+    var docExists = Object.keys(docPoId).length > 0;
+    if (typeof KontroleSetControlEnabled === 'function') {
+      var tpl = byId('edit_template_id'); if (tpl) KontroleSetControlEnabled(tpl, imaDok);
+      var opis = byId('edit_opis'); if (opis) KontroleSetControlEnabled(opis, imaDok);
+      var nasl = byId('edit_naslijedi_dok'); if (nasl) KontroleSetControlEnabled(nasl, imaDok && docExists);
+    }
     /* PDF tab: enable kad je odabran template (selekt ima vrijednost). */
     var imaTemplate = trim(val('edit_template_id')) !== '';
     var pdfKart = byId('dokTabKart2');
