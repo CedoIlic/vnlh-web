@@ -255,14 +255,27 @@
     if (fmt === 'custom') dd.pageSize = { width: mm(t, 'sirina_mm'), height: mm(t, 'visina_mm') };
     else dd.pageSize = fmt.toUpperCase();        /* pdfmake: A4/A5/A3/LETTER/LEGAL */
 
+    /* Efektivna stranica: kad su vodilice uključene, pregled VJERNO simulira odabranu stranicu
+       (opts.stranica 1/2) umjesto stvarnog pdfmake currentPage-a (koji je u jednostraničnom
+       pregledu uvijek 1). Bez vodilica (običan pregled / stvarni izlaz) vrijedi pravi currentPage. */
+    var simStr = opts.vodilice ? (opts.stranica === 2 ? 2 : 1) : null;
+    function efektivnaStr(currentPage) { return simStr || currentPage; }
+    function zaglNaStr(currentPage) {
+      var p = efektivnaStr(currentPage);
+      return str(t.zaglavlje_primjena) === 'svaka' || p === 1;
+    }
+    function podnNaStr(currentPage) {
+      return efektivnaStr(currentPage) >= (broj(t.podnozje_od_stranice) || 1);
+    }
+
     var brojStr = bool(t.broj_stranice);
     var poravBroj = ({ lijevo: 'left', centar: 'center', desno: 'right' })[str(t.broj_stranice_poravnanje)] || 'center';
     if (footer.length || brojStr) {
       dd.footer = function (currentPage, pageCount) {
-        var arr = footer.slice();
+        var arr = podnNaStr(currentPage) ? footer.slice() : [];   /* podnožje od_stranice (i simulacija) */
         if (brojStr) {
           var txt = (str(t.broj_stranice_format) || 'Stranica #S od #U')
-            .split('#S').join(currentPage).split('#U').join(pageCount);
+            .split('#S').join(efektivnaStr(currentPage)).split('#U').join(pageCount);
           arr.push({ text: txt, alignment: poravBroj, margin: [40, 4, 40, 0] });
         }
         return arr;
@@ -285,7 +298,10 @@
       if (potiskuje && imgW > 0) { if (desno) resR += imgW; else resL += imgW; }
       headerImgEls.push(hi.el);
     });
-    if (headerImgEls.length) dd.header = { stack: headerImgEls };
+    /* Zaglavlje samo na stranicama gdje vrijedi (zaglNaStr, gore): 'svaka' → sve; inače samo 1. stranica. */
+    if (headerImgEls.length) {
+      dd.header = function (currentPage) { return zaglNaStr(currentPage) ? { stack: headerImgEls } : null; };
+    }
 
     /* Tekst zaglavlja → background (bez reza), SAM (slike su u dd.header pa ne guraju tekst).
        pdfmake zanemaruje width na običnom/stack elementu (dijagnostika), pa tekst omotamo u TABLICU
@@ -307,7 +323,7 @@
       dd.background = function (currentPage, pageSize) {
         var out = [];
         if (vodiliceFn) { var v = vodiliceFn(currentPage, pageSize); if (v) out = out.concat(v); }
-        if (headerTextItem) out.push(headerTextItem);
+        if (headerTextItem && zaglNaStr(currentPage)) out.push(headerTextItem);
         return out;
       };
     }
