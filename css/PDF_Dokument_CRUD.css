@@ -5,6 +5,25 @@
 /* Tab paneli: malo zraka */
 .pdf-dokument-crud__tab .kontrola-tab__panel { padding: 0.75rem; }
 
+/* Svi tabovi imaju visinu prvog (JS fiksira .kontrola-tab__tijelo);
+   tab Dokument i tab PDF razvuku glavni sadržaj na dostupnu visinu. */
+#dokTabPanel1 { display: flex; flex-direction: column; }
+#dokTabPanel1 .pdf-dokument-crud__stavke-traka { flex: 0 0 auto; }
+#dokTabPanel1 #stavkeTablica {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: calc(var(--tablica_head_h) + (var(--tablica_row_h) * var(--tablica_vidljivih_redova)) + var(--tablica_extra));
+  max-height: none;
+}
+#dokTabPanel1 #stavkeTablica .kontrola-tablica__scroll-wrap {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: calc(var(--tablica_row_h) * var(--tablica_vidljivih_redova));
+}
+#dokTabPanel2 { display: flex; flex-direction: column; }
+#dokTabPanel2 .pdf-dokument-crud__preview-traka { flex: 0 0 auto; }
+#dokTabPanel2 .pdf-dokument-crud__preview-okvir { flex: 1 1 auto; height: auto; min-height: 0; }
+
 /* Aktivna kartica „u negativu" (usklađeno s PDF_Template) */
 .pdf-dokument-crud__tab .kontrola-tab__kartica--aktivna:not(:disabled) {
   background: var(--tab_kontrola_header_text);

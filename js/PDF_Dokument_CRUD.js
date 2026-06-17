@@ -542,9 +542,34 @@
     window.location.href = new URL('Meni.php', window.location.href).href;
   });
 
+  /* ---- Visina tabova: svi tabovi visine prvog (Podaci) ---- */
+  var _mjerimVisinu = false;
+  function uskladiVisinuTabova() {
+    if (_mjerimVisinu) return;
+    var tab = byId('dokTab');
+    if (!tab) return;
+    var tijelo = tab.querySelector('.kontrola-tab__tijelo');
+    var panel0 = byId('dokTabPanel0');
+    if (!tijelo || !panel0 || panel0.hasAttribute('hidden')) return;   /* mjeri samo dok je tab Podaci aktivan */
+    _mjerimVisinu = true;
+    var prev = tijelo.style.height;
+    tijelo.style.height = 'auto';                                       /* prirodna visina taba Podaci */
+    var h = tijelo.offsetHeight;
+    tijelo.style.height = (h > 0 ? h + 'px' : prev);
+    _mjerimVisinu = false;
+  }
+
   /* ---- Init ---- */
   if (typeof KontroleTabInit === 'function') KontroleTabInit(byId('dokTab'));
   ucitajSveSelekte(function () {
-    ucitajDokumente(function () { noviDokument(); });
+    ucitajDokumente(function () { noviDokument(); uskladiVisinuTabova(); });
   });
+  /* Osvježi visinu kad se promijeni sadržaj taba Podaci (npr. resize tablice dokumenata) ili prozor. */
+  (function () {
+    var podaci = byId('dokTabPanel0') ? byId('dokTabPanel0').querySelector('.pdf-dokument-crud__podaci') : null;
+    if (podaci && typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(function () { uskladiVisinuTabova(); }).observe(podaci);
+    }
+    window.addEventListener('resize', uskladiVisinuTabova);
+  })();
 })();
