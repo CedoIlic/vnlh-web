@@ -559,6 +559,18 @@
     _mjerimVisinu = false;
   }
 
+  /* Akcije stavki u zaglavlju: vidljive samo dok je tab Dokument (panel 1) aktivan. */
+  (function () {
+    var grupa = byId('stavkeAkcijeHeader');
+    var panel1 = byId('dokTabPanel1');
+    if (!grupa || !panel1) return;
+    function osvjezi() { grupa.hidden = panel1.hasAttribute('hidden'); }
+    if (typeof MutationObserver !== 'undefined') {
+      new MutationObserver(osvjezi).observe(panel1, { attributes: true, attributeFilter: ['hidden'] });
+    }
+    osvjezi();
+  })();
+
   /* ---- Init ---- */
   if (typeof KontroleTabInit === 'function') KontroleTabInit(byId('dokTab'));
   ucitajSveSelekte(function () {

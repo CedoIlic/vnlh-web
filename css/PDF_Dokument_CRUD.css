@@ -8,7 +8,6 @@
 /* Svi tabovi imaju visinu prvog (JS fiksira .kontrola-tab__tijelo);
    tab Dokument i tab PDF razvuku glavni sadržaj na dostupnu visinu. */
 #dokTabPanel1 { display: flex; flex-direction: column; }
-#dokTabPanel1 .pdf-dokument-crud__stavke-traka { flex: 0 0 auto; }
 #dokTabPanel1 #stavkeTablica {
   flex: 1 1 auto;
   height: auto;
@@ -23,6 +22,21 @@
 #dokTabPanel2 { display: flex; flex-direction: column; }
 #dokTabPanel2 .pdf-dokument-crud__preview-traka { flex: 0 0 auto; }
 #dokTabPanel2 .pdf-dokument-crud__preview-okvir { flex: 1 1 auto; height: auto; min-height: 0; }
+
+/* Akcije stavki u zaglavlju taba (desni rub trake, centrirano po visini s naslovima).
+   Apsolutno pozicionirano da gumbi (viši od kartica) ne naduvaju redak trake. */
+.pdf-dokument-crud__tab .kontrola-tab__traka { position: relative; }
+.pdf-dokument-crud__zaglavlje-akcije {
+  position: absolute;
+  top: 50%;
+  right: var(--tab_kontrola_header_padding_x, 0.5rem);
+  transform: translateY(-50%) scale(0.8);   /* ~20% manje, proporcionalno (3D izgled netaknut) */
+  transform-origin: right center;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.pdf-dokument-crud__zaglavlje-akcije[hidden] { display: none; }
 
 /* Aktivna kartica „u negativu" (usklađeno s PDF_Template) */
 .pdf-dokument-crud__tab .kontrola-tab__kartica--aktivna:not(:disabled) {
@@ -73,16 +87,6 @@
 .pdf-dokument-crud__polje[hidden] { display: none; }
 
 .pdf-dokument-crud__stavka-hint { margin-top: 0.6rem; color: var(--label_text_muted, #6c757d); font-size: 0.9em; }
-
-/* ===== Tab Dokument: popis stavki ===== */
-.pdf-dokument-crud__stavke-traka {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.4rem;
-}
-.pdf-dokument-crud__stavke-akcije { display: flex; gap: 0.4rem; }
 
 /* ===== Tab PDF: preview ===== */
 .pdf-dokument-crud__preview-traka { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
