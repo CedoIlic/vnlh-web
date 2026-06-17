@@ -116,7 +116,7 @@
   }
 
   /* Slika-stavka → pdfmake image element (dataurl + dimenzije/poravnanje iz pdf_slika_stil). */
-  function sastaviSliku(stil, dataurl) {
+  function sastaviSliku(stil, dataurl, opts) {
     var img = { image: dataurl };
     if (stil) {
       var w = mm(stil, 'sirina_mm'), h = mm(stil, 'visina_mm');
@@ -128,10 +128,25 @@
       if (ph === 'centar') img.alignment = 'center';
       else if (ph === 'desno') img.alignment = 'right';
       else if (ph === 'lijevo') img.alignment = 'left';
+      /* Apsolutno pozicioniranje: x/y (mm→pt) od ishodišta zone (opts.origin), zadano gornji-lijevi rub stranice. */
+      if (str(stil.pozicioniranje) === 'apsolutno') {
+        var o = (opts && opts.origin) || { x: 0, y: 0 };
+        img.absolutePosition = { x: (o.x || 0) + mm(stil, 'pozicija_x_mm'), y: (o.y || 0) + mm(stil, 'pozicija_y_mm') };
+      }
     } else {
       img.fit = [200, 200];                     /* bez stila: razuman default okvir */
     }
     return img;
+  }
+
+  /* Dimenzije stranice u pt (s orijentacijom). Za izračun ishodišta apsolutnih slika (npr. podnožje). */
+  var FORMATI_MM = { A4: [210, 297], A5: [148, 210], A3: [297, 420], Letter: [215.9, 279.4], Legal: [215.9, 355.6] };
+  function dimsPt(t) {
+    var fmt = str(t.format_papira) || 'A4', w, h, d;
+    if (fmt === 'custom') { w = broj(t.sirina_mm); h = broj(t.visina_mm); }
+    else { d = FORMATI_MM[fmt] || FORMATI_MM.A4; w = d[0]; h = d[1]; }
+    if (str(t.orijentacija) === 'landscape') { var tmp = w; w = h; h = tmp; }
+    return { w: w * MM_PT, h: h * MM_PT };
   }
 
   /* Render model (iz PDF_Generator_resolve.php) → pdfmake docDefinition.
@@ -167,6 +182,7 @@
     model = model || {};
     opts = opts || {};
     var t = model.template || {};
+    var dimPt = dimsPt(t);
     var parStilovi = model.stilovi_paragraf || {};
     var slikaStilovi = model.stilovi_slika || {};
     var stavke = (model.stavke || []).slice().sort(function (a, b) {
@@ -179,7 +195,15 @@
       if (s.vrsta === 'slika') {
         if (!s.dataurl) return [];
         var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
-        return [sastaviSliku(ss, s.dataurl)];
+        /* Apsolutno — ishodište po zoni:
+           zaglavlje = gornji-lijevi kut zaglavlja (lijeva margina, vrh stranice);
+           podnožje  = gornji-lijevi kut podnožja (lijeva margina, visina stranice − visina podnožja);
+           tijelo/naslovna = gornji-lijevi rub stranice. */
+        var origin;
+        if (s.zona === 'zaglavlje') origin = { x: mm(t, 'margina_lijevo_mm'), y: 0 };
+        else if (s.zona === 'podnozje') origin = { x: mm(t, 'margina_lijevo_mm'), y: dimPt.h - mm(t, 'podnozje_visina_mm') };
+        else origin = { x: 0, y: 0 };
+        return [sastaviSliku(ss, s.dataurl, { origin: origin })];
       }
       if (s.vrsta === 'tekst') {
         var ps = (s.paragraf_id && parStilovi[s.paragraf_id]) ? parStilovi[s.paragraf_id] : {};

@@ -29,10 +29,6 @@
             <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="dokTabKart0" aria-selected="true" aria-controls="dokTabPanel0" data-tab-index="0">Podaci</button>
             <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart1" aria-selected="false" aria-controls="dokTabPanel1" data-tab-index="1" tabindex="-1">Dokument</button>
             <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart2" aria-selected="false" aria-controls="dokTabPanel2" data-tab-index="2" tabindex="-1" disabled>PDF</button>
-            <!-- Akcija: Dodaj stavku (vidljivo samo na tabu Podaci, gdje se stavka uređuje) -->
-            <div class="pdf-dokument-crud__zaglavlje-akcije" id="podaciAkcijeHeader" hidden>
-                <button type="button" id="btnStavkaDodaj" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
-            </div>
             <!-- Akcije stavki (vidljivo samo na tabu Dokument) – desni rub trake, u ravnini s naslovima -->
             <div class="pdf-dokument-crud__zaglavlje-akcije" id="stavkeAkcijeHeader" hidden>
                 <button type="button" id="btnStavkaObrisi" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Obriši</span></span></span></button>
@@ -127,15 +123,6 @@
                                 <label class="kontrola-labela mb-0" for="st_izvor_red_id">ID retka (statički)</label>
                                 <input id="st_izvor_red_id" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" autocomplete="off">
                             </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_paragraf">
-                                <label class="kontrola-labela mb-0" for="st_paragraf_id">Stil teksta</label>
-                                <div class="kontrola-select"><select id="st_paragraf_id" aria-label="Stil teksta">
-                                    <option value="">— odaberi —</option>
-                                </select></div>
-                            </div>
-                        </div>
-
-                        <div class="pdf-dokument-crud__stupac">
                             <div class="pdf-dokument-crud__polje" id="polje_kontekst_kljuc">
                                 <label class="kontrola-labela mb-0" for="st_kontekst_kljuc">Ključ konteksta (dinamički)</label>
                                 <input id="st_kontekst_kljuc" type="text" class="kontrola-edit" placeholder="npr. loza_id" maxlength="64" autocomplete="off">
@@ -148,12 +135,11 @@
                                 <label class="kontrola-labela mb-0" for="st_trazi_vrijednost">Tražena vrijednost</label>
                                 <input id="st_trazi_vrijednost" type="text" class="kontrola-edit" placeholder="npr. VNLH Logo" maxlength="255" autocomplete="off">
                             </div>
-                            <div class="pdf-dokument-crud__polje">
-                                <label class="kontrola-checkbox-labela"><input id="edit_aktivan" type="checkbox" class="kontrola-checkbox"> Aktivan</label>
-                            </div>
-                            <div class="pdf-dokument-crud__polje">
-                                <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
-                                <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+                            <div class="pdf-dokument-crud__polje" id="polje_paragraf">
+                                <label class="kontrola-labela mb-0" for="st_paragraf_id">Stil teksta</label>
+                                <div class="kontrola-select"><select id="st_paragraf_id" aria-label="Stil teksta">
+                                    <option value="">— odaberi —</option>
+                                </select></div>
                             </div>
                             <div class="pdf-dokument-crud__polje" id="polje_slika_stil">
                                 <label class="kontrola-labela mb-0" for="st_slika_stil_id">Stil slike</label>
@@ -161,9 +147,22 @@
                                     <option value="">— odaberi —</option>
                                 </select></div>
                             </div>
+                            <!-- Dodaj / Izmijeni stavku (mod prati selekciju u tablici stavki) -->
+                            <div class="pdf-dokument-crud__polje pdf-dokument-crud__stavka-upis">
+                                <button type="button" id="btnStavkaUpis" class="kontrola-btn kontrola-btn--crud-upisi" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
+                            </div>
+                        </div>
+
+                        <div class="pdf-dokument-crud__stupac">
+                            <div class="pdf-dokument-crud__polje">
+                                <label class="kontrola-checkbox-labela"><input id="edit_aktivan" type="checkbox" class="kontrola-checkbox"> Aktivan</label>
+                            </div>
+                            <div class="pdf-dokument-crud__polje">
+                                <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                                <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+                            </div>
                         </div>
                     </div>
-                    <div class="pdf-dokument-crud__stavka-hint" id="stavkaHint">(odaberi stavku u tabu „Dokument" ili dodaj novu)</div>
                 </div>
             </div>
 

@@ -76,16 +76,17 @@
 }
 
 /* ===== Tab Podaci: dvostupčani edit stavke ===== */
-.pdf-dokument-crud__dva-stupca { display: flex; gap: 1rem; align-items: flex-start; }
+.pdf-dokument-crud__dva-stupca { display: flex; gap: 1rem; align-items: stretch; }
 .pdf-dokument-crud__stupac { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+/* Tipka Dodaj/Izmijeni gurnuta na dno srednjeg stupca; sadržajna širina (bez razvlačenja preko stupca).
+   padding-top udvostručuje razmak do kontrole iznad (gap 0.6rem + 0.6rem = 1.2rem). */
+.pdf-dokument-crud__stavka-upis { margin-top: auto; padding-top: 0.6rem; align-items: flex-start; }
 .pdf-dokument-crud__stupac:first-child { padding-right: 1rem; border-right: 1px solid var(--edit_border, #ced4da); }
 .pdf-dokument-crud__polje { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
 .pdf-dokument-crud__stupac .kontrola-select,
 .pdf-dokument-crud__stupac .kontrola-edit,
 .pdf-dokument-crud__stupac .kontrola-napomena { width: 100%; box-sizing: border-box; }
 .pdf-dokument-crud__polje[hidden] { display: none; }
-
-.pdf-dokument-crud__stavka-hint { margin-top: 0.6rem; color: var(--label_text_muted, #6c757d); font-size: 0.9em; }
 
 /* ===== Tab PDF: preview ===== */
 .pdf-dokument-crud__preview-info { color: var(--label_text_muted, #6c757d); font-size: 0.9em; }
