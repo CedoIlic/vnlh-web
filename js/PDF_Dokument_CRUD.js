@@ -159,7 +159,7 @@
 
   /* ---- Tablica stavki ---- */
   var STAVKE_CFG = {
-    Broj_Kolona: 5,
+    Broj_Kolona: 6,
     Reload_Ikona: 0,
     CrudCssPrefix: 'pdf-dokument-crud',
     Tablica_Zaglavlje: [
@@ -167,12 +167,13 @@
       { key: 'zona', title: 'Zona', SQL_Naziv: 'zona', sortable: 0, sortable_icon: 0, type: 't', width: 110, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'vrsta', title: 'Vrsta', SQL_Naziv: 'vrsta', sortable: 0, sortable_icon: 0, type: 't', width: 80, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'izvor', title: 'Izvor', SQL_Naziv: 'izvor', sortable: 0, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
-      { key: 'stil', title: 'Stil', SQL_Naziv: 'stil', sortable: 0, sortable_icon: 0, type: 't', width: -28, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
+      { key: 'stil', title: 'Stil', SQL_Naziv: 'stil', sortable: 0, sortable_icon: 0, type: 't', width: -28, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
+      { key: 'kljuc', title: 'Ključ', SQL_Naziv: 'kljuc', sortable: 0, sortable_icon: 0, type: 't', width: 120, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
     ]
   };
   var stavkeApi = null;
   CommonCRUD.initTablica('stavkeTablica', STAVKE_CFG, {
-    getRowId: function (row) { return row && row[5] != null ? row[5] : null; },
+    getRowId: function (row) { return row && row[6] != null ? row[6] : null; },
     onReady: function (api) { stavkeApi = api; },
     onSelectionChange: function () { naStavkaSelekcija(); }
   });
@@ -182,7 +183,8 @@
     var stil = '';
     if (s.vrsta === 'tekst' && s.paragraf_id && mapaParagraf[String(s.paragraf_id)]) stil = mapaParagraf[String(s.paragraf_id)].naziv;
     if (s.vrsta === 'slika' && s.slika_stil_id && mapaSlika[String(s.slika_stil_id)]) stil = mapaSlika[String(s.slika_stil_id)].naziv;
-    return [String(idx + 1), s.zona || '', s.vrsta || '', izv, stil, s._tid];
+    var kljuc = (s.izvor_tip === 'dinamicki') ? (s.kontekst_kljuc || '') : '';
+    return [String(idx + 1), s.zona || '', s.vrsta || '', izv, stil, kljuc, s._tid];
   }
   function osvjeziTablicuStavki() {
     var rows = stavke.map(stavkaRed);

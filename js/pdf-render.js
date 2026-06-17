@@ -149,6 +149,45 @@
     return img;
   }
 
+  /* Placeholder za NERAZRIJEŠENU dinamičku sliku (npr. uređivanje/pregled bez konteksta):
+     siva ploha dimenzija iz stila (sirina_mm × visina_mm), s ključem konteksta u sredini.
+     Okvir SAMO ako je definiran u stilu (okvir + okvir_debljina_mm), bojom okvir_boja.
+     Pozicioniranje/poravnanje preslikano iz sastaviSliku radi istog položaja kao prava slika. */
+  function sastaviPlaceholder(stil, tekst, opts) {
+    stil = stil || {};
+    var w = mm(stil, 'sirina_mm'), h = mm(stil, 'visina_mm');
+    if (!(w > 0)) w = 120;            /* bez dimenzija u stilu: razuman default okvir */
+    if (!(h > 0)) h = 60;
+    var okvirW = (bool(stil.okvir) && mm(stil, 'okvir_debljina_mm') > 0) ? mm(stil, 'okvir_debljina_mm') : 0;
+    var okvirBoja = str(stil.okvir_boja) || '#000000';
+    var cell = {
+      text: str(tekst) || '',
+      fontSize: 8,
+      color: '#555555',
+      alignment: 'center',
+      fillColor: '#cccccc',
+      margin: [2, Math.max(0, (h - 11) / 2), 2, 0]   /* grubo vertikalno centriranje ključa */
+    };
+    var box = {
+      table: { widths: [w], heights: [h], body: [[cell]] },
+      layout: {
+        hLineWidth: function () { return okvirW; }, vLineWidth: function () { return okvirW; },
+        hLineColor: function () { return okvirBoja; }, vLineColor: function () { return okvirBoja; },
+        paddingLeft: function () { return 0; }, paddingRight: function () { return 0; },
+        paddingTop: function () { return 0; }, paddingBottom: function () { return 0; }
+      }
+    };
+    var ph = str(stil.poravnanje_h);
+    if (ph === 'centar') box.alignment = 'center';
+    else if (ph === 'desno') box.alignment = 'right';
+    else if (ph === 'lijevo') box.alignment = 'left';
+    if (str(stil.pozicioniranje) === 'apsolutno') {
+      var o = (opts && opts.origin) || { x: 0, y: 0 };
+      box.absolutePosition = { x: (o.x || 0) + mm(stil, 'pozicija_x_mm'), y: (o.y || 0) + mm(stil, 'pozicija_y_mm') };
+    }
+    return box;
+  }
+
   /* Dimenzije stranice u pt (s orijentacijom). Za izračun ishodišta apsolutnih slika (npr. podnožje). */
   var FORMATI_MM = { A4: [210, 297], A5: [148, 210], A3: [297, 420], Letter: [215.9, 279.4], Legal: [215.9, 355.6] };
   function dimsPt(t) {
@@ -203,7 +242,6 @@
     function elementi(s) {
       if (!s || s.greska) return [];
       if (s.vrsta === 'slika') {
-        if (!s.dataurl) return [];
         var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
         /* Apsolutno — ishodište po zoni:
            zaglavlje = gornji-lijevi kut zaglavlja (lijeva margina, vrh stranice);
@@ -213,6 +251,8 @@
         if (s.zona === 'zaglavlje') origin = { x: mm(t, 'margina_lijevo_mm'), y: 0 };
         else if (s.zona === 'podnozje') origin = { x: mm(t, 'margina_lijevo_mm'), y: dimPt.h - mm(t, 'podnozje_visina_mm') };
         else origin = { x: 0, y: 0 };
+        if (s.placeholder) return [sastaviPlaceholder(ss, s.kontekst_kljuc, { origin: origin })];
+        if (!s.dataurl) return [];
         return [sastaviSliku(ss, s.dataurl, { origin: origin })];
       }
       if (s.vrsta === 'tekst') {
@@ -229,9 +269,13 @@
       if (!s || s.greska) return;
       if (s.zona === 'zaglavlje') {
         if (s.vrsta === 'slika') {
-          if (!s.dataurl) return;
           var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
-          headerSlike.push({ el: sastaviSliku(ss, s.dataurl, { origin: { x: mm(t, 'margina_lijevo_mm'), y: 0 } }), stil: ss || {} });
+          var hOrigin = { x: mm(t, 'margina_lijevo_mm'), y: 0 };
+          var hEl = s.placeholder
+            ? sastaviPlaceholder(ss, s.kontekst_kljuc, { origin: hOrigin })
+            : (s.dataurl ? sastaviSliku(ss, s.dataurl, { origin: hOrigin }) : null);
+          if (!hEl) return;
+          headerSlike.push({ el: hEl, stil: ss || {}, placeholder: !!s.placeholder });
         } else {
           headerTxt = headerTxt.concat(elementi(s));
         }
@@ -288,7 +332,7 @@
     var mLpt = mm(t, 'margina_lijevo_mm'), mRpt = mm(t, 'margina_desno_mm');
     /* Slike zaglavlja → dd.header. absolutePosition izbjegava rez zaglavlja i NE rezervira prostor tekstu.
        potiskuje=1 (ne-apsolutna slika) rezervira širinu pa se tekst centrira u slobodnom prostoru. */
-    var resL = 0, resR = 0, headerImgEls = [];
+    var resL = 0, resR = 0, headerImgEls = [], headerPhEls = [];
     headerSlike.forEach(function (hi) {
       var ss = hi.stil || {};
       var imgW = broj(ss.sirina_mm) > 0 ? mm(ss, 'sirina_mm') : 0;
@@ -296,7 +340,8 @@
       var potiskuje = bool(ss.potiskuje) && str(ss.pozicioniranje) !== 'apsolutno';
       if (!hi.el.absolutePosition) hi.el.absolutePosition = { x: desno ? (dimPt.w - mRpt - imgW) : mLpt, y: 0 };
       if (potiskuje && imgW > 0) { if (desno) resR += imgW; else resL += imgW; }
-      headerImgEls.push(hi.el);
+      /* Slika apsolutno izbjegava rez dd.header-a; tablica (placeholder) NE — pa placeholder ide u background. */
+      (hi.placeholder ? headerPhEls : headerImgEls).push(hi.el);
     });
     /* Zaglavlje samo na stranicama gdje vrijedi (zaglNaStr, gore): 'svaka' → sve; inače samo 1. stranica. */
     if (headerImgEls.length) {
@@ -319,11 +364,14 @@
       absolutePosition: { x: mLpt + resL, y: 0 }
     } : null;
     var vodiliceFn = opts.vodilice ? vodiliceBackground(t, opts.stranica) : null;
-    if (headerTextItem || vodiliceFn) {
+    if (headerTextItem || vodiliceFn || headerPhEls.length) {
       dd.background = function (currentPage, pageSize) {
         var out = [];
         if (vodiliceFn) { var v = vodiliceFn(currentPage, pageSize); if (v) out = out.concat(v); }
-        if (headerTextItem && zaglNaStr(currentPage)) out.push(headerTextItem);
+        if (zaglNaStr(currentPage)) {
+          for (var i = 0; i < headerPhEls.length; i++) out.push(headerPhEls[i]);   /* placeholderi (tablice) bez reza */
+          if (headerTextItem) out.push(headerTextItem);
+        }
         return out;
       };
     }
@@ -449,6 +497,7 @@
     okvirImaLiniju: okvirImaLiniju,
     sastaviOdlomak: sastaviOdlomak,
     sastaviSliku: sastaviSliku,
+    sastaviPlaceholder: sastaviPlaceholder,
     sastaviDocDefinition: sastaviDocDefinition,
     pripremiSlike: pripremiSlike,
     Pdf: Pdf,

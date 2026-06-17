@@ -230,7 +230,13 @@ foreach ($stavke as $s) {
     if ($vrsta === 'slika') {
         $rec['slika_stil_id'] = !empty($s['slika_stil_id']) ? (int) $s['slika_stil_id'] : null;
         if ($vrijednost === null || $vrijednost === '') {
-            $rec['greska'] = 'Izvor prazan.';
+            if (($s['izvor_tip'] ?? '') === 'dinamicki') {
+                // Dinamička slika bez konteksta (uređivanje/pregled): placeholder za pozicioniranje/stil.
+                $rec['placeholder'] = true;
+                $rec['kontekst_kljuc'] = isset($s['kontekst_kljuc']) ? (string) $s['kontekst_kljuc'] : '';
+            } else {
+                $rec['greska'] = 'Izvor prazan.';
+            }
         } else {
             $mime = pdf_magic_mime($vrijednost);
             if ($mime === null) {
