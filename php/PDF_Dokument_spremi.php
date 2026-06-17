@@ -54,14 +54,15 @@ try {
     $del->close();
 
     if (!empty($stavke)) {
-        $dok = 0; $red = 0; $zona = ''; $vrsta = ''; $izvorId = 0; $izTip = '';
-        $izRed = null; $kkljuc = null; $tkol = null; $tvrij = null; $parId = null; $sslik = null; $nap = null;
+        $dok = 0; $red = 0; $zona = ''; $vrsta = ''; $izParam = null; $izTip = '';
+        $izRed = null; $kkljuc = null; $tid = null; $tkol = null; $tvrij = null; $lit = null;
+        $parId = null; $sslik = null; $bezkraj = 0; $nap = null;
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, trazi_kolona, trazi_vrijednost, paragraf_id, slika_stil_id, napomena)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, napomena)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $ins->bind_param('iissisisssiis', $dok, $red, $zona, $vrsta, $izvorId, $izTip, $izRed, $kkljuc, $tkol, $tvrij, $parId, $sslik, $nap);
+        $ins->bind_param('iissisisisssiiis', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap);
         $dok = $id;
         $i = 0;
         foreach ($stavke as $s) {
@@ -69,19 +70,37 @@ try {
             $red = isset($s['redoslijed']) ? (int) $s['redoslijed'] : $i;
             $zona = in_array(($s['zona'] ?? ''), ['tijelo', 'zaglavlje', 'podnozje', 'naslovna'], true) ? $s['zona'] : 'tijelo';
             $vrsta = in_array(($s['vrsta'] ?? ''), ['tekst', 'slika'], true) ? $s['vrsta'] : '';
-            $izvorId = (int) ($s['izvor_id'] ?? 0);
-            $izTip = in_array(($s['izvor_tip'] ?? ''), ['staticki', 'dinamicki', 'po_vrijednosti'], true) ? $s['izvor_tip'] : '';
-            if ($vrsta === '' || $izvorId <= 0 || $izTip === '') {
+            $izTip = in_array(($s['izvor_tip'] ?? ''), ['staticki', 'dinamicki', 'po_vrijednosti', 'korisnicki'], true) ? $s['izvor_tip'] : '';
+            if ($vrsta === '' || $izTip === '') {
                 throw new RuntimeException('stavka_nevaljana');
             }
-            // Parametri po načinu dohvata (ostali NULL → zadovolji chk_izvor_po_tipu)
-            $izRed = ($izTip === 'staticki' && (int) ($s['izvor_red_id'] ?? 0) > 0) ? (int) $s['izvor_red_id'] : null;
-            $kkljuc = ($izTip === 'dinamicki' && trim((string) ($s['kontekst_kljuc'] ?? '')) !== '') ? trim((string) $s['kontekst_kljuc']) : null;
-            $tkol = ($izTip === 'po_vrijednosti' && trim((string) ($s['trazi_kolona'] ?? '')) !== '') ? trim((string) $s['trazi_kolona']) : null;
-            $tvrij = ($izTip === 'po_vrijednosti') ? (string) ($s['trazi_vrijednost'] ?? '') : null;
+            if ($izTip === 'korisnicki') {
+                // Upisani tekst — samo za tekst stavke; bez izvora (izvor_id NULL), ostala izvor-polja NULL.
+                if ($vrsta !== 'tekst') {
+                    throw new RuntimeException('stavka_nevaljana');
+                }
+                $izParam = null;
+                $lit = trim((string) ($s['literal_tekst'] ?? ''));   // trima se; rubni razmaci preko '^'
+                $izRed = null; $kkljuc = null; $tkol = null; $tvrij = null;
+            } else {
+                $izvorId = (int) ($s['izvor_id'] ?? 0);
+                if ($izvorId <= 0) {
+                    throw new RuntimeException('stavka_nevaljana');
+                }
+                $izParam = $izvorId;
+                $lit = null;
+                // Parametri po načinu dohvata (ostali NULL → zadovolji chk_izvor_po_tipu)
+                $izRed = ($izTip === 'staticki' && (int) ($s['izvor_red_id'] ?? 0) > 0) ? (int) $s['izvor_red_id'] : null;
+                $kkljuc = ($izTip === 'dinamicki' && trim((string) ($s['kontekst_kljuc'] ?? '')) !== '') ? trim((string) $s['kontekst_kljuc']) : null;
+                $tkol = ($izTip === 'po_vrijednosti' && trim((string) ($s['trazi_kolona'] ?? '')) !== '') ? trim((string) $s['trazi_kolona']) : null;
+                $tvrij = ($izTip === 'po_vrijednosti') ? (string) ($s['trazi_vrijednost'] ?? '') : null;
+            }
+            // Testni id retka — samo za dinamicki (pregled bez konteksta); inace NULL.
+            $tid = ($izTip === 'dinamicki' && (int) ($s['test_id'] ?? 0) > 0) ? (int) $s['test_id'] : null;
             // Stil po vrsti (drugi NULL → zadovolji chk_prikaz_po_vrsti)
             $parId = ($vrsta === 'tekst' && (int) ($s['paragraf_id'] ?? 0) > 0) ? (int) $s['paragraf_id'] : null;
             $sslik = ($vrsta === 'slika' && (int) ($s['slika_stil_id'] ?? 0) > 0) ? (int) $s['slika_stil_id'] : null;
+            $bezkraj = (!empty($s['bez_kraja_odlomka']) && $vrsta === 'tekst') ? 1 : 0;
             $n = trim((string) ($s['napomena'] ?? ''));
             $nap = ($n === '') ? null : $n;
             $ins->execute();

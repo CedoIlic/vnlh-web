@@ -159,7 +159,7 @@
 
   /* ---- Tablica stavki ---- */
   var STAVKE_CFG = {
-    Broj_Kolona: 6,
+    Broj_Kolona: 7,
     Reload_Ikona: 0,
     CrudCssPrefix: 'pdf-dokument-crud',
     Tablica_Zaglavlje: [
@@ -168,12 +168,13 @@
       { key: 'vrsta', title: 'Vrsta', SQL_Naziv: 'vrsta', sortable: 0, sortable_icon: 0, type: 't', width: 80, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'izvor', title: 'Izvor', SQL_Naziv: 'izvor', sortable: 0, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'stil', title: 'Stil', SQL_Naziv: 'stil', sortable: 0, sortable_icon: 0, type: 't', width: -28, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
-      { key: 'kljuc', title: 'Ključ', SQL_Naziv: 'kljuc', sortable: 0, sortable_icon: 0, type: 't', width: 120, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
+      { key: 'kljuc', title: 'Ključ', SQL_Naziv: 'kljuc', sortable: 0, sortable_icon: 0, type: 't', width: 120, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
+      { key: 'test', title: 'Test ID', SQL_Naziv: 'test', sortable: 0, sortable_icon: 0, type: 't', width: 70, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
     ]
   };
   var stavkeApi = null;
   CommonCRUD.initTablica('stavkeTablica', STAVKE_CFG, {
-    getRowId: function (row) { return row && row[6] != null ? row[6] : null; },
+    getRowId: function (row) { return row && row[7] != null ? row[7] : null; },
     onReady: function (api) { stavkeApi = api; },
     onSelectionChange: function () { naStavkaSelekcija(); }
   });
@@ -184,7 +185,8 @@
     if (s.vrsta === 'tekst' && s.paragraf_id && mapaParagraf[String(s.paragraf_id)]) stil = mapaParagraf[String(s.paragraf_id)].naziv;
     if (s.vrsta === 'slika' && s.slika_stil_id && mapaSlika[String(s.slika_stil_id)]) stil = mapaSlika[String(s.slika_stil_id)].naziv;
     var kljuc = (s.izvor_tip === 'dinamicki') ? (s.kontekst_kljuc || '') : '';
-    return [String(idx + 1), s.zona || '', s.vrsta || '', izv, stil, kljuc, s._tid];
+    var test = (s.izvor_tip === 'dinamicki' && s.test_id) ? String(s.test_id) : '';
+    return [String(idx + 1), s.zona || '', s.vrsta || '', izv, stil, kljuc, test, s._tid];
   }
   function osvjeziTablicuStavki() {
     var rows = stavke.map(stavkaRed);
@@ -200,17 +202,24 @@
   }
 
   /* ---- Edit stavke (Tab Podaci) ---- */
-  var STAVKA_POLJA = ['st_zona', 'st_vrsta', 'st_izvor', 'st_izvor_tip', 'st_izvor_red_id', 'st_kontekst_kljuc', 'st_trazi_kolona', 'st_trazi_vrijednost', 'st_paragraf_id', 'st_slika_stil_id'];
+  var STAVKA_POLJA = ['st_zona', 'st_vrsta', 'st_izvor', 'st_izvor_tip', 'st_izvor_red_id', 'st_kontekst_kljuc', 'st_test_id', 'st_trazi_kolona', 'st_trazi_vrijednost', 'st_literal_tekst', 'st_paragraf_id', 'st_slika_stil_id', 'st_bez_kraja_odlomka'];
 
   function azurirajVidljivostStavke() {
+    var vrsta = val('st_vrsta');
     var tip = val('st_izvor_tip');
+    /* Korisnički tekst je samo za tekst-stavke; ako je slika odabrana, vrati na statički. */
+    if (vrsta === 'slika' && tip === 'korisnicki') { setVal('st_izvor_tip', 'staticki'); refreshSelect('st_izvor_tip'); tip = 'staticki'; }
+    var korisnicki = (tip === 'korisnicki');
+    byId('polje_izvor').hidden = korisnicki;                 /* korisnički tekst nema whitelist izvor */
     byId('polje_izvor_red_id').hidden = (tip !== 'staticki');
     byId('polje_kontekst_kljuc').hidden = (tip !== 'dinamicki');
+    byId('polje_test_id').hidden = (tip !== 'dinamicki');
     byId('polje_trazi_kolona').hidden = (tip !== 'po_vrijednosti');
     byId('polje_trazi_vrijednost').hidden = (tip !== 'po_vrijednosti');
-    var vrsta = val('st_vrsta');
+    byId('polje_literal_tekst').hidden = !korisnicki;
     byId('polje_paragraf').hidden = (vrsta !== 'tekst');
     byId('polje_slika_stil').hidden = (vrsta !== 'slika');
+    byId('polje_bez_kraja').hidden = (vrsta !== 'tekst');
   }
 
   /* Selekt „Traži kolonu": kolone tablice izabranog whitelist izvora (zadrži vrijednost ako još postoji). */
@@ -240,11 +249,14 @@
     setVal('st_izvor_tip', s.izvor_tip || 'staticki'); refreshSelect('st_izvor_tip');
     setVal('st_izvor_red_id', s.izvor_red_id || '');
     setVal('st_kontekst_kljuc', s.kontekst_kljuc || '');
+    setVal('st_test_id', s.test_id || '');
     popuniTraziKolonu();   /* opcije ovise o izabranom izvoru — prije postavljanja vrijednosti */
     setVal('st_trazi_kolona', s.trazi_kolona || ''); refreshSelect('st_trazi_kolona');
     setVal('st_trazi_vrijednost', s.trazi_vrijednost != null ? s.trazi_vrijednost : '');
+    setVal('st_literal_tekst', s.literal_tekst != null ? s.literal_tekst : '');
     setVal('st_paragraf_id', s.paragraf_id || ''); refreshSelect('st_paragraf_id');
     setVal('st_slika_stil_id', s.slika_stil_id || ''); refreshSelect('st_slika_stil_id');
+    var bz = byId('st_bez_kraja_odlomka'); if (bz) bz.checked = (s.bez_kraja_odlomka == 1 || s.bez_kraja_odlomka === '1' || s.bez_kraja_odlomka === true);
     azurirajVidljivostStavke();
   }
   /* Pročitaj sva polja forme (oba stupca) u zadanu stavku. Bez osvježavanja tablice/selekcije. */
@@ -256,10 +268,13 @@
     s.izvor_tip = val('st_izvor_tip');
     s.izvor_red_id = trim(val('st_izvor_red_id')) ? parseInt(val('st_izvor_red_id'), 10) : null;
     s.kontekst_kljuc = trim(val('st_kontekst_kljuc')) || null;
+    s.test_id = (s.izvor_tip === 'dinamicki' && trim(val('st_test_id'))) ? parseInt(val('st_test_id'), 10) : null;
     s.trazi_kolona = trim(val('st_trazi_kolona')) || null;
     s.trazi_vrijednost = val('st_trazi_vrijednost');
+    s.literal_tekst = (s.izvor_tip === 'korisnicki') ? trim(val('st_literal_tekst')) : null;
     s.paragraf_id = trim(val('st_paragraf_id')) ? parseInt(val('st_paragraf_id'), 10) : null;
     s.slika_stil_id = trim(val('st_slika_stil_id')) ? parseInt(val('st_slika_stil_id'), 10) : null;
+    var bz = byId('st_bez_kraja_odlomka'); s.bez_kraja_odlomka = (bz && bz.checked && s.vrsta === 'tekst') ? 1 : 0;
   }
   /* Edit stavke + tipka Dodaj/Izmijeni: aktivni dok postoji dokument (naziv). Hint vidljiv kad su disabled. */
   function postaviStavkaEnabled(en) {
@@ -287,7 +302,7 @@
   /* Puno čišćenje forme stavke (na učitavanje/„novi"/brisanje). */
   function ocistiStavkaEdit() {
     odabranaStavka = null;
-    STAVKA_POLJA.forEach(function (id) { var e = byId(id); if (e) { if (e.tagName === 'SELECT') { e.selectedIndex = 0; refreshSelect(id); } else e.value = ''; } });
+    STAVKA_POLJA.forEach(function (id) { var e = byId(id); if (e) { if (e.tagName === 'SELECT') { e.selectedIndex = 0; refreshSelect(id); } else if (e.type === 'checkbox') e.checked = false; else e.value = ''; } });
     popuniTraziKolonu();
     azurirajVidljivostStavke();
     azurirajStavkaAkcije();
@@ -296,7 +311,7 @@
   function ocistiSrednjiStupac() {
     STAVKA_POLJA.forEach(function (id) {
       var e = byId(id); if (!e) return;
-      if (e.tagName === 'SELECT') { e.selectedIndex = 0; refreshSelect(id); } else e.value = '';
+      if (e.tagName === 'SELECT') { e.selectedIndex = 0; refreshSelect(id); } else if (e.type === 'checkbox') e.checked = false; else e.value = '';
     });
     popuniTraziKolonu();
     azurirajVidljivostStavke();
@@ -385,9 +400,11 @@
         _tid: tidSeq++,
         zona: r.zona, vrsta: r.vrsta, izvor_id: r.izvor_id ? parseInt(r.izvor_id, 10) : null,
         izvor_tip: r.izvor_tip, izvor_red_id: r.izvor_red_id ? parseInt(r.izvor_red_id, 10) : null,
-        kontekst_kljuc: r.kontekst_kljuc, trazi_kolona: r.trazi_kolona, trazi_vrijednost: r.trazi_vrijednost,
+        kontekst_kljuc: r.kontekst_kljuc, test_id: r.test_id ? parseInt(r.test_id, 10) : null, trazi_kolona: r.trazi_kolona, trazi_vrijednost: r.trazi_vrijednost,
+        literal_tekst: r.literal_tekst,
         paragraf_id: r.paragraf_id ? parseInt(r.paragraf_id, 10) : null,
         slika_stil_id: r.slika_stil_id ? parseInt(r.slika_stil_id, 10) : null,
+        bez_kraja_odlomka: (r.bez_kraja_odlomka == 1 || r.bez_kraja_odlomka === '1') ? 1 : 0,
         napomena: r.napomena
       };
     });
@@ -488,7 +505,7 @@
       aktivan: byId('edit_aktivan').checked ? 1 : 0,
       napomena: trim(val('edit_napomena')),
       stavke: stavke.map(function (s, i) {
-        return { redoslijed: i + 1, zona: s.zona, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, napomena: s.napomena };
+        return { redoslijed: i + 1, zona: s.zona, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, napomena: s.napomena };
       })
     };
     postJson(URL_SPREMI, payload, function (res) {
@@ -537,7 +554,7 @@
     var payload = {
       template_id: parseInt(val('edit_template_id'), 10),
       kontekst: {},
-      stavke: stavke.map(function (s) { return { redoslijed: 0, zona: s.zona, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id }; })
+      stavke: stavke.map(function (s) { return { redoslijed: 0, zona: s.zona, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka }; })
     };
     postJson(URL_RESOLVE, payload, function (res) {
       var model;

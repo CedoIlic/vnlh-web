@@ -106,17 +106,18 @@
                                 </select></div>
                             </div>
                             <div class="pdf-dokument-crud__polje">
-                                <label class="kontrola-labela mb-0" for="st_izvor">Izvor (whitelist)</label>
-                                <div class="kontrola-select"><select id="st_izvor" aria-label="Izvor">
-                                    <option value="">— odaberi —</option>
-                                </select></div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje">
                                 <label class="kontrola-labela mb-0" for="st_izvor_tip">Način dohvata</label>
                                 <div class="kontrola-select"><select id="st_izvor_tip" aria-label="Način dohvata">
                                     <option value="staticki">Statički (fiksni ID)</option>
                                     <option value="dinamicki">Dinamički (iz konteksta)</option>
                                     <option value="po_vrijednosti">Po vrijednosti</option>
+                                    <option value="korisnicki">Korisnički tekst</option>
+                                </select></div>
+                            </div>
+                            <div class="pdf-dokument-crud__polje" id="polje_izvor">
+                                <label class="kontrola-labela mb-0" for="st_izvor">Izvor (whitelist)</label>
+                                <div class="kontrola-select"><select id="st_izvor" aria-label="Izvor">
+                                    <option value="">— odaberi —</option>
                                 </select></div>
                             </div>
                             <div class="pdf-dokument-crud__polje" id="polje_izvor_red_id">
@@ -127,6 +128,10 @@
                                 <label class="kontrola-labela mb-0" for="st_kontekst_kljuc">Ključ konteksta (dinamički)</label>
                                 <input id="st_kontekst_kljuc" type="text" class="kontrola-edit" placeholder="npr. loza_id" maxlength="64" autocomplete="off">
                             </div>
+                            <div class="pdf-dokument-crud__polje" id="polje_test_id" hidden>
+                                <label class="kontrola-labela mb-0" for="st_test_id">Testni ID (pregled)</label>
+                                <input id="st_test_id" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" autocomplete="off">
+                            </div>
                             <div class="pdf-dokument-crud__polje" id="polje_trazi_kolona" hidden>
                                 <label class="kontrola-labela mb-0" for="st_trazi_kolona">Traži kolonu (po vrijednosti)</label>
                                 <div class="kontrola-select"><select id="st_trazi_kolona" aria-label="Traži kolonu">
@@ -136,6 +141,10 @@
                             <div class="pdf-dokument-crud__polje" id="polje_trazi_vrijednost" hidden>
                                 <label class="kontrola-labela mb-0" for="st_trazi_vrijednost">Tražena vrijednost</label>
                                 <input id="st_trazi_vrijednost" type="text" class="kontrola-edit" placeholder="npr. VNLH Logo" maxlength="255" autocomplete="off">
+                            </div>
+                            <div class="pdf-dokument-crud__polje" id="polje_literal_tekst" hidden>
+                                <label class="kontrola-labela mb-0" for="st_literal_tekst">Korisnički tekst (^ = razmak)</label>
+                                <input id="st_literal_tekst" type="text" class="kontrola-edit" placeholder="npr. C∴L∴^" maxlength="1024" autocomplete="off">
                             </div>
                             <div class="pdf-dokument-crud__polje" id="polje_paragraf">
                                 <label class="kontrola-labela mb-0" for="st_paragraf_id">Stil teksta</label>
@@ -148,6 +157,9 @@
                                 <div class="kontrola-select"><select id="st_slika_stil_id" aria-label="Stil slike">
                                     <option value="">— odaberi —</option>
                                 </select></div>
+                            </div>
+                            <div class="pdf-dokument-crud__polje" id="polje_bez_kraja">
+                                <label class="kontrola-checkbox-labela"><input id="st_bez_kraja_odlomka" type="checkbox" class="kontrola-checkbox"> Bez kraja odlomka (spoji sljedeću u isti red)</label>
                             </div>
                             <!-- Dodaj / Izmijeni stavku (mod prati selekciju u tablici stavki) -->
                             <div class="pdf-dokument-crud__polje pdf-dokument-crud__stavka-upis">

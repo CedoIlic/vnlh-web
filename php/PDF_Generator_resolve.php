@@ -58,6 +58,7 @@ function pdf_dohvati_vrijednost($mysqli, $tablica, $kolona, $st, $kontekst)
     } elseif ($tip === 'dinamicki') {
         $kljuc = isset($st['kontekst_kljuc']) ? (string) $st['kontekst_kljuc'] : '';
         $idv = ($kljuc !== '' && isset($kontekst[$kljuc])) ? (int) $kontekst[$kljuc] : 0;
+        if ($idv <= 0 && !empty($st['test_id'])) $idv = (int) $st['test_id'];   // pregled: testni id kad nema konteksta
         if ($idv <= 0) return null;
         $sql = "SELECT `$kolona` AS v FROM `$tablica` WHERE id = ? LIMIT 1";
         $stmt = $mysqli->prepare($sql); if (!$stmt) return null;
@@ -121,6 +122,44 @@ function pdf_tekst_u_odlomke($tekst, $fontGlavni, $fontFallback, $kljucFallback)
         if (empty($runovi)) $runovi = [['text' => '']];
         $out[] = $runovi;
     }
+    return $out;
+}
+
+/** Kao pdf_tekst_u_odlomke, ali iz niza dijelova [{tekst, color}] — run se lomi i po promjeni boje.
+ *  Koristi se kod inline-spajanja kad neki segment treba posebnu boju (npr. sivi placeholder XXXXXXXX). */
+function pdf_odlomci_iz_dijelova($dijelovi, $fontGlavni, $fontFallback, $kljucFallback)
+{
+    $out = [];
+    $runovi = [];
+    $buf = ''; $bufFont = null; $bufColor = null;
+    foreach ($dijelovi as $dio) {
+        $tekst = str_replace("\r\n", "\n", (string) ($dio['tekst'] ?? ''));
+        $color = isset($dio['color']) ? $dio['color'] : null;
+        $len = mb_strlen($tekst, 'UTF-8');
+        for ($i = 0; $i < $len; $i++) {
+            $ch = mb_substr($tekst, $i, 1, 'UTF-8');
+            if ($ch === "\n") {
+                if ($buf !== '') { $r = ['text' => $buf]; if ($bufFont !== null) $r['font'] = $bufFont; if ($bufColor !== null) $r['color'] = $bufColor; $runovi[] = $r; $buf = ''; }
+                if (empty($runovi)) $runovi = [['text' => '']];
+                $out[] = $runovi; $runovi = []; $bufFont = null; $bufColor = null;
+                continue;
+            }
+            $cp = mb_ord($ch, 'UTF-8');
+            if ($cp === false) continue;
+            $koji = null;
+            if ($fontGlavni === null) { $koji = null; }
+            elseif (pdf_font_pokriva_cp($fontGlavni, $cp)) { $koji = null; }
+            elseif ($fontFallback && pdf_font_pokriva_cp($fontFallback, $cp)) { $koji = $kljucFallback; }
+            else { continue; }
+            if ($buf !== '' && ($koji !== $bufFont || $color !== $bufColor)) {
+                $r = ['text' => $buf]; if ($bufFont !== null) $r['font'] = $bufFont; if ($bufColor !== null) $r['color'] = $bufColor; $runovi[] = $r; $buf = '';
+            }
+            $bufFont = $koji; $bufColor = $color; $buf .= $ch;
+        }
+    }
+    if ($buf !== '') { $r = ['text' => $buf]; if ($bufFont !== null) $r['font'] = $bufFont; if ($bufColor !== null) $r['color'] = $bufColor; $runovi[] = $r; }
+    if (!empty($runovi)) $out[] = $runovi;
+    if (empty($out)) $out[] = [['text' => '']];
     return $out;
 }
 
@@ -207,47 +246,48 @@ if (!empty($fontIds)) {
     if ($r) while ($row = $r->fetch_assoc()) $fontPoId[(int) $row['id']] = $row;
 }
 
+/** Vrijednost jednog segmenta: korisnicki -> literal_tekst (^=razmak), inače iz whitelist izvora. */
+function pdf_segment_vrijednost($mysqli, $s, $izvori, $kontekst)
+{
+    if (($s['izvor_tip'] ?? '') === 'korisnicki') {
+        $lit = (string) ($s['literal_tekst'] ?? '');
+        return ['greska' => null, 'vrijednost' => str_replace('^', ' ', $lit)];
+    }
+    $izvorId = isset($s['izvor_id']) ? (int) $s['izvor_id'] : 0;
+    $izvor = isset($izvori[$izvorId]) ? $izvori[$izvorId] : null;
+    if (!$izvor || !pdf_ident_ok($izvor['tablica']) || !pdf_ident_ok($izvor['kolona'])) {
+        return ['greska' => 'Izvor nije u whitelistu.', 'vrijednost' => null];
+    }
+    return ['greska' => null, 'vrijednost' => pdf_dohvati_vrijednost($mysqli, $izvor['tablica'], $izvor['kolona'], $s, $kontekst)];
+}
+
 // --- Razrješavanje stavki -----------------------------------------------
 $out = [];
 $trebaFallback = false;
-foreach ($stavke as $s) {
+$stavke = array_values($stavke);
+$n = count($stavke);
+$i = 0;
+while ($i < $n) {
+    $s = $stavke[$i];
     $vrsta = $s['vrsta'] ?? '';
-    $izvorId = isset($s['izvor_id']) ? (int) $s['izvor_id'] : 0;
-    $rec = [
-        'redoslijed' => isset($s['redoslijed']) ? (int) $s['redoslijed'] : 0,
-        'zona' => $s['zona'] ?? 'tijelo',
-        'vrsta' => $vrsta,
-        'greska' => null
-    ];
-    $izvor = isset($izvori[$izvorId]) ? $izvori[$izvorId] : null;
-    if (!$izvor || !pdf_ident_ok($izvor['tablica']) || !pdf_ident_ok($izvor['kolona'])) {
-        $rec['greska'] = 'Izvor nije u whitelistu.';
-        $out[] = $rec;
-        continue;
-    }
-    $vrijednost = pdf_dohvati_vrijednost($mysqli, $izvor['tablica'], $izvor['kolona'], $s, $kontekst);
+    $zona = $s['zona'] ?? 'tijelo';
 
-    if ($vrsta === 'slika') {
-        $rec['slika_stil_id'] = !empty($s['slika_stil_id']) ? (int) $s['slika_stil_id'] : null;
-        if ($vrijednost === null || $vrijednost === '') {
-            if (($s['izvor_tip'] ?? '') === 'dinamicki') {
-                // Dinamička slika bez konteksta (uređivanje/pregled): placeholder za pozicioniranje/stil.
-                $rec['placeholder'] = true;
-                $rec['kontekst_kljuc'] = isset($s['kontekst_kljuc']) ? (string) $s['kontekst_kljuc'] : '';
-            } else {
-                $rec['greska'] = 'Izvor prazan.';
-            }
-        } else {
-            $mime = pdf_magic_mime($vrijednost);
-            if ($mime === null) {
-                $rec['greska'] = 'Nepoznat format slike.';
-            } else {
-                $rec['dataurl'] = 'data:' . $mime . ';base64,' . base64_encode($vrijednost);
-            }
+    if ($vrsta === 'tekst') {
+        // Lanac inline-spajanja: i..k; svaka (osim zadnje) ima bez_kraja_odlomka=1, sve 'tekst', isti zona.
+        $chain = [];
+        $k = $i;
+        while (true) {
+            $chain[] = $k;
+            if (empty($stavke[$k]['bez_kraja_odlomka'])) break;                 // kraj odlomka ovdje
+            $nx = $k + 1;
+            if ($nx >= $n) break;                                               // nema sljedeće
+            if (($stavke[$nx]['vrsta'] ?? '') !== 'tekst') break;               // ne-tekst prekida lanac
+            if (($stavke[$nx]['zona'] ?? 'tijelo') !== $zona) break;            // promjena zone prekida
+            $k = $nx;
         }
-    } elseif ($vrsta === 'tekst') {
-        $parId = !empty($s['paragraf_id']) ? (int) $s['paragraf_id'] : 0;
-        $rec['paragraf_id'] = $parId ?: null;
+        // Stil/font cijele linije = PRVE stavke u lancu.
+        $first = $stavke[$chain[0]];
+        $parId = !empty($first['paragraf_id']) ? (int) $first['paragraf_id'] : 0;
         $fk = null; $fontGlavni = null;
         if ($parId && isset($parStilovi[$parId]) && !empty($parStilovi[$parId]['font_id'])) {
             $fid = (int) $parStilovi[$parId]['font_id'];
@@ -256,18 +296,83 @@ foreach ($stavke as $s) {
                 $fontGlavni = pdf_font_subtables_cache($fontDir, $fontPoId[$fid]['porodica']);
             }
         }
-        $rec['font_kljuc'] = $fk;
-        if ($vrijednost === null) {
-            $rec['greska'] = 'Izvor prazan.';
+        // Spoji segmente (preskoči prazne). Dinamički bez vrijednosti (nema test_id/konteksta) → sivi XXXXXXXX.
+        $dijelovi = [];
+        $combined = '';
+        $imaPlaceholder = false;
+        $segErr = null;
+        foreach ($chain as $ci) {
+            $seg = $stavke[$ci];
+            $r = pdf_segment_vrijednost($mysqli, $seg, $izvori, $kontekst);
+            if ($r['greska'] !== null && $segErr === null) $segErr = $r['greska'];
+            $val = $r['vrijednost'];
+            if ((($seg['izvor_tip'] ?? '') === 'dinamicki') && ($val === null || $val === '')) {
+                $dijelovi[] = ['tekst' => 'XXXXXXXX', 'color' => '#cccccc'];   // placeholder kao siva ploha
+                $combined .= 'XXXXXXXX';
+                $imaPlaceholder = true;
+            } elseif ($val !== null && $val !== '') {
+                $dijelovi[] = ['tekst' => (string) $val, 'color' => null];
+                $combined .= (string) $val;
+            }
+        }
+        $rec = [
+            'redoslijed' => isset($first['redoslijed']) ? (int) $first['redoslijed'] : 0,
+            'zona' => $zona,
+            'vrsta' => 'tekst',
+            'greska' => null,
+            'paragraf_id' => $parId ?: null,
+            'font_kljuc' => $fk
+        ];
+        if ($combined === '') {
+            $rec['greska'] = (count($chain) === 1 && $segErr !== null) ? $segErr : 'Izvor prazan.';
             $rec['odlomci'] = [];
         } else {
-            $rec['odlomci'] = pdf_tekst_u_odlomke($vrijednost, $fontGlavni, $fontFallback, $kljucFallback);
+            $rec['odlomci'] = $imaPlaceholder
+                ? pdf_odlomci_iz_dijelova($dijelovi, $fontGlavni, $fontFallback, $kljucFallback)
+                : pdf_tekst_u_odlomke($combined, $fontGlavni, $fontFallback, $kljucFallback);
             $trebaFallback = true;
+        }
+        $out[] = $rec;
+        $i = $k + 1;
+        continue;
+    }
+
+    // Slika ili nepoznata vrsta
+    $rec = [
+        'redoslijed' => isset($s['redoslijed']) ? (int) $s['redoslijed'] : 0,
+        'zona' => $zona,
+        'vrsta' => $vrsta,
+        'greska' => null
+    ];
+    if ($vrsta === 'slika') {
+        $r = pdf_segment_vrijednost($mysqli, $s, $izvori, $kontekst);
+        $rec['slika_stil_id'] = !empty($s['slika_stil_id']) ? (int) $s['slika_stil_id'] : null;
+        if ($r['greska'] !== null) {
+            $rec['greska'] = $r['greska'];
+        } else {
+            $vrijednost = $r['vrijednost'];
+            if ($vrijednost === null || $vrijednost === '') {
+                if (($s['izvor_tip'] ?? '') === 'dinamicki') {
+                    // Dinamička slika bez konteksta (uređivanje/pregled): placeholder za pozicioniranje/stil.
+                    $rec['placeholder'] = true;
+                    $rec['kontekst_kljuc'] = isset($s['kontekst_kljuc']) ? (string) $s['kontekst_kljuc'] : '';
+                } else {
+                    $rec['greska'] = 'Izvor prazan.';
+                }
+            } else {
+                $mime = pdf_magic_mime($vrijednost);
+                if ($mime === null) {
+                    $rec['greska'] = 'Nepoznat format slike.';
+                } else {
+                    $rec['dataurl'] = 'data:' . $mime . ';base64,' . base64_encode($vrijednost);
+                }
+            }
         }
     } else {
         $rec['greska'] = 'Nepoznata vrsta stavke.';
     }
     $out[] = $rec;
+    $i++;
 }
 
 // --- Potrebni fontovi (za lazy-load na klijentu) ------------------------
