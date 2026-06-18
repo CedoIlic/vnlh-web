@@ -239,7 +239,7 @@
     modal.setAttribute('aria-modal', 'true');
     modal.style.zIndex = '10002';
     var overlay = document.createElement('div'); overlay.className = 'kontrola-modal__overlay';
-    var dialog = document.createElement('div'); dialog.className = 'kontrola-modal__dialog';
+    var dialog = document.createElement('div'); dialog.className = 'kontrola-modal__dialog pdf-dokument-crud__popup-modal';
     var header = document.createElement('div'); header.className = 'kontrola-modal__header';
     var redni = indexPoTid(s._tid) + 1;   /* pozicija stavke u dokumentu (kao „#" u tablici) */
     var hs = document.createElement('span'); hs.textContent = 'Stavka (' + redni + ')' + (s.naziv_stavke ? ' — ' + s.naziv_stavke : ''); header.appendChild(hs);
@@ -268,6 +268,7 @@
     modal.appendChild(overlay); modal.appendChild(dialog);
     modal.addEventListener('click', function (e) { if (!dialog.contains(e.target)) zatvoriStavkaPopup(); });   /* klik van dijaloga (overlay) zatvara */
     document.body.appendChild(modal);
+    if (typeof KontroleModalDrag === 'function') KontroleModalDrag(dialog, header);   /* premještanje povlačenjem zaglavlja */
   }
   (function () {
     var cont = byId('stavkeTablica');
@@ -380,7 +381,7 @@
   /* Uredi/Obriši/▲/▼/Deselekt disable bez selekcije reda u tablici stavki. */
   function azurirajStavkaAkcije() {
     var ima = CommonCRUD.getSelectedRowId(stavkeApi) != null;
-    ['btnStavkaUredi', 'btnStavkaDeselekt', 'btnStavkaObrisi', 'btnStavkaGore', 'btnStavkaDolje'].forEach(function (id) {
+    ['btnStavkaUredi', 'btnStavkaInfo', 'btnStavkaDeselekt', 'btnStavkaObrisi', 'btnStavkaGore', 'btnStavkaDolje'].forEach(function (id) {
       var b = byId(id); if (b) b.disabled = !ima;
     });
   }
@@ -519,6 +520,7 @@
   (function () {
     var bd = byId('btnStavkaDodaj'); if (bd) bd.addEventListener('click', function () { if (!bd.disabled) otvoriStavkaModal(null); });
     var bu2 = byId('btnStavkaUredi'); if (bu2) bu2.addEventListener('click', function () { if (bu2.disabled) return; var tid = CommonCRUD.getSelectedRowId(stavkeApi); if (tid != null) otvoriStavkaModal(tid); });
+    var bi = byId('btnStavkaInfo'); if (bi) bi.addEventListener('click', function () { if (bi.disabled) return; var tid = CommonCRUD.getSelectedRowId(stavkeApi); var s = (tid != null) ? stavkaPoTid(tid) : null; if (s) prikaziStavkaPopup(s); });
     var bo = byId('btnStavkaOdustani'); if (bo) bo.addEventListener('click', zatvoriStavkaModal);
     var ov = byId('stavkaModal_overlay'); if (ov) ov.addEventListener('click', zatvoriStavkaModal);
     document.addEventListener('keydown', function (e) { var m = byId('stavkaModal'); if (e.key === 'Escape' && m && m.getAttribute('aria-hidden') === 'false') zatvoriStavkaModal(); });

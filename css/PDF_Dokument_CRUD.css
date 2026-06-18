@@ -24,17 +24,24 @@
 
 /* Akcije stavki u zaglavlju taba (desni rub trake, centrirano po visini s naslovima).
    Apsolutno pozicionirano da gumbi (viši od kartica) ne naduvaju redak trake. */
-.pdf-dokument-crud__tab .kontrola-tab__traka { position: relative; }
+/* Viša traka taba (samo ova forma) da stanu ikona-gumbi normalne visine */
+.pdf-dokument-crud__tab .kontrola-tab__traka { position: relative; min-height: calc(var(--button_height) + 0.7rem); }
 .pdf-dokument-crud__zaglavlje-akcije {
   position: absolute;
   top: 50%;
   right: var(--tab_kontrola_header_padding_x, 0.5rem);
-  transform: translateY(-50%) scale(0.8);   /* ~20% manje, proporcionalno (3D izgled netaknut) */
-  transform-origin: right center;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 0.4rem;
 }
+/* Ikone unutar akcija-gumba (inline SVG + trokutići) */
+.pdf-dokument-crud__ellipsis-btn--akcija svg { width: 1.25rem; height: 1.25rem; display: block; }
+.pdf-dokument-crud__ellipsis-btn--akcija .kontrola-icon--trash,
+.pdf-dokument-crud__ellipsis-btn--akcija .kontrola-icon--asterisk {
+  width: 1.2rem; height: 1.2rem; mask-size: 1.2rem 1.2rem; -webkit-mask-size: 1.2rem 1.2rem;
+}
+.pdf-dokument-crud__akcija-trokut { font-size: 0.95rem; line-height: 1; }
 .pdf-dokument-crud__zaglavlje-akcije[hidden] { display: none; }
 
 /* Aktivna kartica „u negativu" (usklađeno s PDF_Template) */
@@ -57,7 +64,7 @@
 .pdf-dokument-crud__podaci { display: flex; gap: 1rem; align-items: stretch; min-height: 60vh; }
 .pdf-dokument-crud__lijevo { flex: 0 0 22rem; max-width: 42%; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
 /* Tablica dokumenata puni cijelu visinu lijevog stupca */
-.pdf-dokument-crud__lijevo > .pdf-dokument-crud__tablica-resize { flex: 1 1 auto; min-height: 0; height: auto; }
+.pdf-dokument-crud__lijevo > .pdf-dokument-crud__tablica-resize { flex: 1 1 auto; min-height: 0; height: auto; display: flex; flex-direction: column; }
 .pdf-dokument-crud__desno { flex: 1 1 0; min-width: 0; padding-left: 1rem; border-left: 1px solid var(--edit_border, #ced4da); display: flex; flex-direction: column; gap: 0.6rem; }
 .pdf-dokument-crud__desno .kontrola-edit-delete,
 .pdf-dokument-crud__desno .kontrola-select,
@@ -81,7 +88,12 @@
 .pdf-dokument-crud__tablica-resize > .kontrola-panel__body {
   padding: 0;
   background: transparent;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
+.pdf-dokument-crud__tablica-resize .kontrola-tablica { flex: 1 1 auto; min-height: 0; }
 
 /* ===== Tab Podaci: dvostupčani edit stavke ===== */
 .pdf-dokument-crud__dva-stupca { display: flex; gap: 1rem; align-items: stretch; }
@@ -250,6 +262,8 @@
 
 /* ===== Popup „sve postavke stavke" (dvoklik na red; klik van zatvara) =====
    Okvir/podloga/sjena/font dolaze iz kanonske .kontrola-modal (0-Kontrole.css); ovdje samo redovi. */
+/* Centriranje preko absolute+transform da drag (KontroleModalDrag) ne skoči pri prvom pomaku. */
+.kontrola-modal__dialog.pdf-dokument-crud__popup-modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; }
 .pdf-dokument-crud__popup-red { display: flex; gap: 0.75rem; padding: 0.2rem 0; }
 .pdf-dokument-crud__popup-labela { flex: 0 0 10rem; color: var(--label_text_muted, #6c757d); }
 .pdf-dokument-crud__popup-vrijednost { flex: 1 1 auto; min-width: 0; word-break: break-word; }

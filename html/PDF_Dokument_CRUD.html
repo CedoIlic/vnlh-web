@@ -31,12 +31,13 @@
             <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart2" aria-selected="false" aria-controls="dokTabPanel2" data-tab-index="2" tabindex="-1" disabled>PDF</button>
             <!-- Akcije stavki (vidljivo samo na tabu Dokument) – desni rub trake, u ravnini s naslovima -->
             <div class="pdf-dokument-crud__zaglavlje-akcije" id="stavkeAkcijeHeader" hidden>
-                <button type="button" id="btnStavkaDodaj" class="kontrola-btn kontrola-btn--crud-upisi" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
-                <button type="button" id="btnStavkaUredi" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Uredi</span></span></span></button>
+                <button type="button" id="btnStavkaDodaj" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Dodaj stavku" aria-label="Dodaj stavku"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h18v2.5H3V4zm0 5.75h10v2.5H3v-2.5z"/><path d="M16 13h2.5v3.5H22V19h-3.5v3.5H16V19h-3.5v-2.5H16V13z"/></svg></button>
+                <button type="button" id="btnStavkaUredi" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Uredi stavku" aria-label="Uredi stavku"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18v2H3V5zm0 4h12v2H3V9zm0 4h8v2H3v-2zm0 4h8v2H3v-2z"/><path d="M21.41 11.59l-2-2a1.5 1.5 0 0 0-2.12 0l-5.79 5.79V19h3.62l5.79-5.79a1.5 1.5 0 0 0 0-2.12l.5.5zm-7.29 5.41h-1v-1l4.79-4.79 1 1L14.12 17z"/></svg></button>
+                <button type="button" id="btnStavkaInfo" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Informacije o stavci" aria-label="Informacije o stavci"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 1.8a8.2 8.2 0 1 1 0 16.4 8.2 8.2 0 0 1 0-16.4z"/><path d="M12 6.2a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8zm1.6 11.3h-3.2v-1.6h.8v-3.6h-.8v-1.6h2.4v5.2h.8v1.6z"/></svg></button>
+                <button type="button" id="btnStavkaGore" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Pomakni gore" aria-label="Pomakni gore"><span class="pdf-dokument-crud__akcija-trokut" aria-hidden="true">▲</span></button>
+                <button type="button" id="btnStavkaDolje" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Pomakni dolje" aria-label="Pomakni dolje"><span class="pdf-dokument-crud__akcija-trokut" aria-hidden="true">▼</span></button>
+                <button type="button" id="btnStavkaObrisi" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Obriši stavku" aria-label="Obriši stavku"><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
                 <button type="button" id="btnStavkaDeselekt" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Makni selekciju" aria-label="Makni selekciju"><span class="kontrola-icon--asterisk" aria-hidden="true"></span></button>
-                <button type="button" id="btnStavkaObrisi" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Obriši</span></span></span></button>
-                <button type="button" id="btnStavkaGore" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▲</span></span></span></button>
-                <button type="button" id="btnStavkaDolje" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▼</span></span></span></button>
             </div>
             <!-- Akcije PDF preview-a (vidljivo samo na tabu PDF) – desni rub trake -->
             <div class="pdf-dokument-crud__zaglavlje-akcije" id="pdfAkcijeHeader" hidden>
@@ -55,7 +56,7 @@
 
             <!-- Lijeva kolona: tablica dokumenata (cijela visina) -->
             <div class="pdf-dokument-crud__lijevo">
-                <div class="kontrola-panel kontrola-panel-tablica kontrola-panel--resize-y pdf-dokument-crud__tablica-resize">
+                <div class="kontrola-panel kontrola-panel-tablica pdf-dokument-crud__tablica-resize">
                     <div class="kontrola-panel__body">
                         <div id="dokTablica" class="kontrola-tablica"></div>
                     </div>
