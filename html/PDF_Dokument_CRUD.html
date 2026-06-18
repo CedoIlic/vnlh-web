@@ -26,11 +26,13 @@
     <!-- Tabovi -->
     <div class="kontrola-tab pdf-dokument-crud__tab" id="dokTab" role="tablist" aria-label="Uređivanje dokumenta">
         <div class="kontrola-tab__traka" role="presentation">
-            <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="dokTabKart0" aria-selected="true" aria-controls="dokTabPanel0" data-tab-index="0">Podaci</button>
-            <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart1" aria-selected="false" aria-controls="dokTabPanel1" data-tab-index="1" tabindex="-1">Dokument</button>
+            <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="dokTabKart0" aria-selected="true" aria-controls="dokTabPanel0" data-tab-index="0">Dokument</button>
+            <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart1" aria-selected="false" aria-controls="dokTabPanel1" data-tab-index="1" tabindex="-1">Lista stavki</button>
             <button type="button" class="kontrola-tab__kartica" role="tab" id="dokTabKart2" aria-selected="false" aria-controls="dokTabPanel2" data-tab-index="2" tabindex="-1" disabled>PDF</button>
             <!-- Akcije stavki (vidljivo samo na tabu Dokument) – desni rub trake, u ravnini s naslovima -->
             <div class="pdf-dokument-crud__zaglavlje-akcije" id="stavkeAkcijeHeader" hidden>
+                <button type="button" id="btnStavkaDodaj" class="kontrola-btn kontrola-btn--crud-upisi" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
+                <button type="button" id="btnStavkaUredi" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Uredi</span></span></span></button>
                 <button type="button" id="btnStavkaDeselekt" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Makni selekciju" aria-label="Makni selekciju"><span class="kontrola-icon--asterisk" aria-hidden="true"></span></button>
                 <button type="button" id="btnStavkaObrisi" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Obriši</span></span></span></button>
                 <button type="button" id="btnStavkaGore" class="kontrola-btn" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▲</span></span></span></button>
@@ -51,14 +53,17 @@
         <div class="kontrola-tab__panel" role="tabpanel" id="dokTabPanel0" aria-labelledby="dokTabKart0" data-tab-index="0">
           <div class="pdf-dokument-crud__podaci">
 
-            <!-- Lijeva kolona -->
+            <!-- Lijeva kolona: tablica dokumenata (cijela visina) -->
             <div class="pdf-dokument-crud__lijevo">
-                <!-- Tablica dokumenata + resize traka (panel-tablica mehanizam, bez vidljivog panel-okvira) -->
-                <div class="kontrola-panel kontrola-panel-tablica kontrola-panel--resize-y pdf-dokument-crud__tablica-resize mb-2">
+                <div class="kontrola-panel kontrola-panel-tablica kontrola-panel--resize-y pdf-dokument-crud__tablica-resize">
                     <div class="kontrola-panel__body">
                         <div id="dokTablica" class="kontrola-tablica"></div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Desna kolona: sva master polja dokumenta (cijela širina) -->
+            <div class="pdf-dokument-crud__desno">
                 <div class="pdf-dokument-crud__polje">
                     <label class="kontrola-labela mb-0" for="edit_naziv">Naziv dokumenta</label>
                     <div class="kontrola-edit-delete">
@@ -82,129 +87,18 @@
                     <label class="kontrola-labela mb-0" for="edit_opis">Opis</label>
                     <input id="edit_opis" type="text" class="kontrola-edit" placeholder="opcionalno" maxlength="255" autocomplete="off">
                 </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="edit_broj_stranice_paragraf_id">Stil podnožja (brojač)</label>
+                    <div class="kontrola-select"><select id="edit_broj_stranice_paragraf_id" aria-label="Stil teksta brojača stranica">
+                        <option value="">— zadano —</option>
+                    </select></div>
+                </div>
                 <div class="pdf-dokument-crud__polje pdf-dokument-crud__polje--razmak-gore">
                     <label class="kontrola-checkbox-labela"><input id="edit_aktivan" type="checkbox" class="kontrola-checkbox"> Aktivan</label>
                 </div>
-            </div>
-
-            <!-- Desna kolona: edit odabrane stavke (preslažemo dalje) -->
-            <div class="pdf-dokument-crud__desno">
-                <div class="pdf-dokument-crud__stavka-edit" id="stavkaEdit">
-                    <div class="pdf-dokument-crud__dva-stupca">
-
-                        <div class="pdf-dokument-crud__stupac">
-                            <div class="pdf-dokument-crud__polje">
-                                <label class="kontrola-labela mb-0" for="st_naziv_stavke">Naziv stavke</label>
-                                <input id="st_naziv_stavke" type="text" class="kontrola-edit" placeholder="npr. logo, naslov" maxlength="255" autocomplete="off">
-                            </div>
-                            <div class="pdf-dokument-crud__polje">
-                                <label class="kontrola-labela mb-0" for="st_zona">Zona</label>
-                                <div class="kontrola-select"><select id="st_zona" aria-label="Zona">
-                                    <option value="tijelo">Tijelo</option>
-                                    <option value="zaglavlje">Zaglavlje</option>
-                                    <option value="podnozje">Podnožje</option>
-                                    <option value="naslovna">Naslovna</option>
-                                </select></div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje">
-                                <label class="kontrola-labela mb-0" for="st_vrsta">Vrsta</label>
-                                <div class="kontrola-select"><select id="st_vrsta" aria-label="Vrsta">
-                                    <option value="tekst">Tekst</option>
-                                    <option value="slika">Slika</option>
-                                </select></div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje">
-                                <label class="kontrola-labela mb-0" for="st_izvor_tip">Način dohvata</label>
-                                <div class="kontrola-select"><select id="st_izvor_tip" aria-label="Način dohvata">
-                                    <option value="staticki">Statički (fiksni ID)</option>
-                                    <option value="dinamicki">Dinamički (iz konteksta)</option>
-                                    <option value="po_vrijednosti">Po vrijednosti</option>
-                                    <option value="korisnicki">Korisnički tekst</option>
-                                </select></div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_izvor">
-                                <label class="kontrola-labela mb-0" for="st_izvor">Izvor (whitelist)</label>
-                                <div class="kontrola-select"><select id="st_izvor" aria-label="Izvor">
-                                    <option value="">— odaberi —</option>
-                                </select></div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_izvor_red_id">
-                                <label class="kontrola-labela mb-0" for="st_izvor_red_id">ID retka (statički)</label>
-                                <input id="st_izvor_red_id" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" autocomplete="off">
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_kontekst_kljuc" hidden>
-                                <label class="kontrola-labela mb-0" for="st_kontekst_kljuc">Ključ konteksta (dinamički)</label>
-                                <input id="st_kontekst_kljuc" type="text" class="kontrola-edit" placeholder="npr. loza_id" maxlength="64" autocomplete="off">
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_test_id" hidden>
-                                <label class="kontrola-labela mb-0" for="st_test_id">Testni ID (pregled)</label>
-                                <div class="pdf-dokument-crud__edit-with-ellipsis">
-                                    <div class="kontrola-edit-delete">
-                                        <input id="st_test_id" type="text" class="kontrola-edit-delete__input" inputmode="numeric" placeholder="0" autocomplete="off">
-                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
-                                    </div>
-                                    <button type="button" id="btnTestIdModal" class="pdf-dokument-crud__ellipsis-btn" title="Izbor ID za test" aria-label="Izbor ID za test" disabled><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
-                                </div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_preko_izvor" hidden>
-                                <label class="kontrola-labela mb-0" for="st_preko_izvor">Veza (preko izvora)</label>
-                                <div class="kontrola-select"><select id="st_preko_izvor" aria-label="Veza (preko izvora)">
-                                    <option value="">— bez veze (direktno) —</option>
-                                </select></div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_trazi_kolona" hidden>
-                                <label class="kontrola-labela mb-0" for="st_trazi_kolona">Traži kolonu (po vrijednosti)</label>
-                                <div class="kontrola-select"><select id="st_trazi_kolona" aria-label="Traži kolonu">
-                                    <option value="">— odaberi —</option>
-                                </select></div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_trazi_vrijednost" hidden>
-                                <label class="kontrola-labela mb-0" for="st_trazi_vrijednost">Tražena vrijednost</label>
-                                <input id="st_trazi_vrijednost" type="text" class="kontrola-edit" placeholder="npr. VNLH Logo" maxlength="255" autocomplete="off">
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_literal_tekst" hidden>
-                                <label class="kontrola-labela mb-0" for="st_literal_tekst">Korisnički tekst (^ = razmak)</label>
-                                <input id="st_literal_tekst" type="text" class="kontrola-edit" placeholder="npr. C∴L∴^" maxlength="1024" autocomplete="off">
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_mapa" hidden>
-                                <label class="kontrola-labela mb-0" for="st_mapa_vrijednosti">Mapa vrijednosti</label>
-                                <input id="st_mapa_vrijednosti" type="text" class="kontrola-edit" placeholder="npr. 0:Brat;1:Sestra" maxlength="255" autocomplete="off">
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_paragraf">
-                                <label class="kontrola-labela mb-0" for="st_paragraf_id">Stil teksta</label>
-                                <div class="kontrola-select"><select id="st_paragraf_id" aria-label="Stil teksta">
-                                    <option value="">— odaberi —</option>
-                                </select></div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_slika_stil" hidden>
-                                <label class="kontrola-labela mb-0" for="st_slika_stil_id">Stil slike</label>
-                                <div class="kontrola-select"><select id="st_slika_stil_id" aria-label="Stil slike">
-                                    <option value="">— odaberi —</option>
-                                </select></div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje" id="polje_bez_kraja">
-                                <label class="kontrola-checkbox-labela"><input id="st_bez_kraja_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u isti red</label>
-                                <label class="kontrola-checkbox-labela"><input id="st_novi_red_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u novi red (isti odlomak)</label>
-                            </div>
-                            <!-- Dodaj / Izmijeni stavku (mod prati selekciju u tablici stavki) -->
-                            <div class="pdf-dokument-crud__polje pdf-dokument-crud__stavka-upis">
-                                <button type="button" id="btnStavkaUpis" class="kontrola-btn kontrola-btn--crud-upisi" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
-                            </div>
-                        </div>
-
-                        <div class="pdf-dokument-crud__stupac">
-                            <div class="pdf-dokument-crud__polje">
-                                <label class="kontrola-labela mb-0" for="edit_broj_stranice_paragraf_id">Stil podnožja (brojač)</label>
-                                <div class="kontrola-select"><select id="edit_broj_stranice_paragraf_id" aria-label="Stil teksta brojača stranica">
-                                    <option value="">— zadano —</option>
-                                </select></div>
-                            </div>
-                            <div class="pdf-dokument-crud__polje">
-                                <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
-                                <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
-                            </div>
-                        </div>
-                    </div>
+                <div class="pdf-dokument-crud__polje pdf-dokument-crud__polje--napomena">
+                    <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                    <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
                 </div>
             </div>
 
@@ -242,6 +136,148 @@
 </div>
 
 <!-- Modal: Izbor ID za test (dinamički izvor) -->
+<!-- ===== Modal: editor stavke (Dodaj/Uredi) ===== -->
+<div class="kontrola-modal kontrola-modal--dim" id="stavkaModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10001;">
+    <div class="kontrola-modal__overlay" id="stavkaModal_overlay"></div>
+    <div class="kontrola-modal__dialog pdf-dokument-crud__stavka-modal">
+        <div class="kontrola-modal__header" style="display:flex; align-items:center; gap:0.75rem;">
+            <span id="stavkaModalNaslov">Stavka</span>
+            <div class="kontrola-select pdf-dokument-crud__tip-select"><select id="st_tip_stavke" aria-label="Vrsta stavke">
+                <option value="tekst|staticki">Tekst — statički</option>
+                <option value="tekst|dinamicki">Tekst — dinamički</option>
+                <option value="tekst|po_vrijednosti">Tekst — po vrijednosti</option>
+                <option value="tekst|korisnicki">Tekst — korisnički (upisani)</option>
+                <option value="slika|staticki">Slika — statička</option>
+                <option value="slika|dinamicki">Slika — dinamička</option>
+                <option value="slika|po_vrijednosti">Slika — po vrijednosti</option>
+            </select></div>
+        </div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content">
+                <!-- skriveno: vrsta + način (sinkano iz kombiniranog selekta „Vrsta stavke") -->
+                <div hidden>
+                    <select id="st_vrsta" aria-hidden="true">
+                        <option value="tekst">Tekst</option>
+                        <option value="slika">Slika</option>
+                    </select>
+                    <select id="st_izvor_tip" aria-hidden="true">
+                        <option value="staticki">Statički</option>
+                        <option value="dinamicki">Dinamički</option>
+                        <option value="po_vrijednosti">Po vrijednosti</option>
+                        <option value="korisnicki">Korisnički tekst</option>
+                    </select>
+                </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="st_naziv_stavke">Naziv stavke</label>
+                    <input id="st_naziv_stavke" type="text" class="kontrola-edit" placeholder="npr. logo, naslov" maxlength="255" autocomplete="off">
+                </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="st_zona">Zona</label>
+                    <div class="kontrola-select"><select id="st_zona" aria-label="Zona">
+                        <option value="tijelo">Tijelo</option>
+                        <option value="zaglavlje">Zaglavlje</option>
+                        <option value="podnozje">Podnožje</option>
+                        <option value="naslovna">Naslovna</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_izvor">
+                    <label class="kontrola-labela mb-0" for="st_izvor">Izvor (whitelist)</label>
+                    <div class="kontrola-select"><select id="st_izvor" aria-label="Izvor">
+                        <option value="">— odaberi —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_izvor_red_id">
+                    <label class="kontrola-labela mb-0" for="st_izvor_red_id">ID retka</label>
+                    <input id="st_izvor_red_id" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" autocomplete="off">
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_kontekst_kljuc" hidden>
+                    <label class="kontrola-labela mb-0" for="st_kontekst_kljuc">Ključ konteksta</label>
+                    <input id="st_kontekst_kljuc" type="text" class="kontrola-edit" placeholder="npr. loza_id" maxlength="64" autocomplete="off">
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_test_id" hidden>
+                    <label class="kontrola-labela mb-0" for="st_test_id">Testni ID (pregled)</label>
+                    <div class="pdf-dokument-crud__edit-with-ellipsis">
+                        <div class="kontrola-edit-delete">
+                            <input id="st_test_id" type="text" class="kontrola-edit-delete__input" inputmode="numeric" placeholder="0" autocomplete="off">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                        </div>
+                        <button type="button" id="btnTestIdModal" class="pdf-dokument-crud__ellipsis-btn" title="Izbor ID za test" aria-label="Izbor ID za test" disabled><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                    </div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_preko_izvor" hidden>
+                    <label class="kontrola-labela mb-0" for="st_preko_izvor">Veza (preko izvora)</label>
+                    <div class="kontrola-select"><select id="st_preko_izvor" aria-label="Veza (preko izvora)">
+                        <option value="">— bez veze (direktno) —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_trazi_kolona" hidden>
+                    <label class="kontrola-labela mb-0" for="st_trazi_kolona">Traži kolonu</label>
+                    <div class="kontrola-select"><select id="st_trazi_kolona" aria-label="Traži kolonu">
+                        <option value="">— odaberi —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_trazi_vrijednost" hidden>
+                    <label class="kontrola-labela mb-0" for="st_trazi_vrijednost">Tražena vrijednost</label>
+                    <input id="st_trazi_vrijednost" type="text" class="kontrola-edit" placeholder="npr. VNLH Logo" maxlength="255" autocomplete="off">
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_literal_tekst" hidden>
+                    <label class="kontrola-labela mb-0" for="st_literal_tekst">Korisnički tekst</label>
+                    <input id="st_literal_tekst" type="text" class="kontrola-edit" placeholder="npr. C∴L∴^" maxlength="1024" autocomplete="off">
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_mapa" hidden>
+                    <label class="kontrola-labela mb-0" for="st_mapa_vrijednosti">Mapa vrijednosti</label>
+                    <div class="pdf-dokument-crud__edit-with-ellipsis">
+                        <textarea id="st_mapa_vrijednosti" class="kontrola-napomena" rows="3" placeholder="npr. 0:Brat;1:Sestra" maxlength="255"></textarea>
+                        <button type="button" id="btnMapaPomoc" class="pdf-dokument-crud__ellipsis-btn" title="Upute / sintaksa" aria-label="Upute za mapu vrijednosti"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                    </div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_paragraf">
+                    <label class="kontrola-labela mb-0" for="st_paragraf_id">Stil teksta</label>
+                    <div class="kontrola-select"><select id="st_paragraf_id" aria-label="Stil teksta">
+                        <option value="">— odaberi —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_slika_stil" hidden>
+                    <label class="kontrola-labela mb-0" for="st_slika_stil_id">Stil slike</label>
+                    <div class="kontrola-select"><select id="st_slika_stil_id" aria-label="Stil slike">
+                        <option value="">— odaberi —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_bez_kraja">
+                    <label class="kontrola-checkbox-labela"><input id="st_bez_kraja_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u isti red</label>
+                    <label class="kontrola-checkbox-labela"><input id="st_novi_red_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u novi red (isti odlomak)</label>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="btnStavkaUpis" class="kontrola-btn kontrola-btn--crud-upisi" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
+            <button type="button" id="btnStavkaOdustani" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Popup: upute za „Mapa vrijednosti" (dopunjava se u radu) ===== -->
+<div class="kontrola-modal kontrola-modal--dim" id="mapaPomocModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="mapaPomocModal_overlay"></div>
+    <div class="kontrola-modal__dialog pdf-dokument-crud__pomoc-modal">
+        <div class="kontrola-modal__header" id="mapaPomocModal_header">Mapa vrijednosti — upute</div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content pdf-dokument-crud__pomoc">
+                <p><strong>Mapiranje vrijednosti</strong> — zamjenjuje dohvaćenu vrijednost zadanim tekstom.</p>
+                <p>Sintaksa: parovi <code>vrijednost:tekst</code>, razdvojeni znakom <code>;</code> ili novim redom.</p>
+                <p>Primjer (spol → oslovljavanje):</p>
+                <pre>0:Brat
+1:Sestra</pre>
+                <p>Ako vrijednost ne odgovara nijednom paru, ostaje izvorna (nepromijenjena).</p>
+                <p class="pdf-dokument-crud__pomoc-todo">Operandi i uvjeti (=, ≠, prazno, nije prazno, …) — u izradi, dopunit ćemo.</p>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="btnMapaPomocOk" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+        </div>
+    </div>
+</div>
+
 <div class="kontrola-modal kontrola-modal--dim" id="modalTestId" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
     <div class="kontrola-modal__overlay" id="modalTestId_overlay"></div>
     <div class="kontrola-modal__dialog" id="modalTestId_dialog">

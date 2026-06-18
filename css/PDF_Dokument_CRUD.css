@@ -54,12 +54,18 @@
 }
 
 /* Tab Podaci: lijevo (dokumenti + naziv + nasljedi) | desno (edit stavke) */
-.pdf-dokument-crud__podaci { display: flex; gap: 1rem; align-items: stretch; }
+.pdf-dokument-crud__podaci { display: flex; gap: 1rem; align-items: stretch; min-height: 60vh; }
 .pdf-dokument-crud__lijevo { flex: 0 0 22rem; max-width: 42%; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
-.pdf-dokument-crud__desno { flex: 1 1 0; min-width: 0; padding-left: 1rem; border-left: 1px solid var(--edit_border, #ced4da); }
-.pdf-dokument-crud__lijevo .kontrola-edit-delete,
-.pdf-dokument-crud__lijevo .kontrola-select,
-.pdf-dokument-crud__lijevo .kontrola-edit { width: 100%; box-sizing: border-box; }
+/* Tablica dokumenata puni cijelu visinu lijevog stupca */
+.pdf-dokument-crud__lijevo > .pdf-dokument-crud__tablica-resize { flex: 1 1 auto; min-height: 0; height: auto; }
+.pdf-dokument-crud__desno { flex: 1 1 0; min-width: 0; padding-left: 1rem; border-left: 1px solid var(--edit_border, #ced4da); display: flex; flex-direction: column; gap: 0.6rem; }
+.pdf-dokument-crud__desno .kontrola-edit-delete,
+.pdf-dokument-crud__desno .kontrola-select,
+.pdf-dokument-crud__desno .kontrola-edit,
+.pdf-dokument-crud__desno .kontrola-napomena { width: 100%; box-sizing: border-box; }
+/* Napomena se rasteže da popuni preostalu visinu desnog stupca */
+.pdf-dokument-crud__polje--napomena { flex: 1 1 auto; min-height: 6rem; }
+.pdf-dokument-crud__polje--napomena .kontrola-napomena { flex: 1 1 auto; resize: vertical; }
 /* Dvostruki razmak iznad (uz flex gap 0.6rem dodaje još 0.6rem = ukupno 1.2rem) */
 .pdf-dokument-crud__polje--razmak-gore { margin-top: 0.6rem; }
 
@@ -202,6 +208,45 @@
   mask-size: 1.1rem 1.1rem;
   -webkit-mask-size: 1.1rem 1.1rem;
 }
+
+/* ===== Modal editor stavke (Dodaj/Uredi) ===== */
+.pdf-dokument-crud__stavka-modal { max-width: 42rem; }
+/* Centriranje preko absolute+transform (umjesto flexa) da drag (KontroleModalDrag) ne skoči pri prvom pomaku. */
+.kontrola-modal__dialog.pdf-dokument-crud__stavka-modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; }
+.pdf-dokument-crud__stavka-modal .kontrola-modal__content { display: flex; flex-direction: column; gap: 0.55rem; }
+/* Labele lijevo od kontrola, u jednom redu (bez prelamanja) */
+.pdf-dokument-crud__stavka-modal .pdf-dokument-crud__polje { flex-direction: row; align-items: center; gap: 0.75rem; }
+.pdf-dokument-crud__stavka-modal .pdf-dokument-crud__polje > .kontrola-labela {
+  flex: 0 0 11rem; margin: 0; white-space: nowrap; text-align: left;
+}
+.pdf-dokument-crud__stavka-modal .pdf-dokument-crud__polje > .kontrola-select,
+.pdf-dokument-crud__stavka-modal .pdf-dokument-crud__polje > .kontrola-edit,
+.pdf-dokument-crud__stavka-modal .pdf-dokument-crud__polje > .pdf-dokument-crud__edit-with-ellipsis { flex: 1 1 auto; min-width: 0; width: auto; }
+/* Checkbox-polje (spajanje) ostaje stupac */
+/* Checkbox-polje (spajanje): poravnato s KONTROLNIM stupcem (ne ispod labela) */
+.pdf-dokument-crud__stavka-modal #polje_bez_kraja { flex-direction: column; align-items: flex-start; gap: 0.3rem; padding-left: calc(11rem + 0.75rem); }
+/* Zaglavlje modala: naslov + select u jednom redu; select se rasteže kao kontrole u tijelu */
+.pdf-dokument-crud__stavka-modal .kontrola-modal__header { flex-wrap: nowrap; padding-left: var(--modal_body_padding_x); }
+/* Naslov = širina labele (11rem) → lijevi rub selekta poravnat s kontrolama u tijelu */
+#stavkaModalNaslov { flex: 0 0 11rem; white-space: nowrap; }
+.pdf-dokument-crud__tip-select { flex: 1 1 auto; min-width: 0; }
+/* Otvoreni select smije preko ruba modala (kao u panelu): privremeno overflow:visible */
+.pdf-dokument-crud__stavka-modal:has(.kontrola-select--open),
+.pdf-dokument-crud__stavka-modal:has(.kontrola-select--open) .kontrola-modal__body,
+.pdf-dokument-crud__stavka-modal:has(.kontrola-select--open) .kontrola-modal__content { overflow: visible; }
+/* Mapa (višeredna): labela i elipsis gumb poravnati uz vrh textarea */
+.pdf-dokument-crud__stavka-modal #polje_mapa { align-items: flex-start; }
+.pdf-dokument-crud__stavka-modal #polje_mapa .pdf-dokument-crud__edit-with-ellipsis { align-items: flex-start; }
+.pdf-dokument-crud__stavka-modal #polje_mapa .kontrola-napomena { flex: 1 1 auto; min-width: 0; box-sizing: border-box; }
+
+/* ===== Popup uputa (Mapa vrijednosti) ===== */
+.pdf-dokument-crud__pomoc-modal { max-width: 32rem; }
+/* Centriranje preko absolute+transform da drag ne skoči pri prvom pomaku (kao kod editora). */
+.kontrola-modal__dialog.pdf-dokument-crud__pomoc-modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; }
+.pdf-dokument-crud__pomoc p { margin: 0 0 0.5rem; }
+.pdf-dokument-crud__pomoc pre { margin: 0 0 0.6rem; padding: 0.5rem 0.6rem; background: var(--c-gray-100, #f1f3f5); border-radius: var(--edit_radius, 6px); white-space: pre-wrap; }
+.pdf-dokument-crud__pomoc code { background: var(--c-gray-100, #f1f3f5); padding: 0 0.25rem; border-radius: 3px; }
+.pdf-dokument-crud__pomoc-todo { color: var(--label_text_muted, #6c757d); font-style: italic; }
 
 /* ===== Popup „sve postavke stavke" (dvoklik na red; klik van zatvara) =====
    Okvir/podloga/sjena/font dolaze iz kanonske .kontrola-modal (0-Kontrole.css); ovdje samo redovi. */

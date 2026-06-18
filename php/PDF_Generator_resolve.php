@@ -76,7 +76,7 @@ function pdf_mapa_primijeni($vrijednost, $mapa)
     $mapa = trim((string) $mapa);
     if ($mapa === '') return $vrijednost;
     $kljuc = trim((string) $vrijednost);
-    foreach (explode(';', $mapa) as $par) {
+    foreach (preg_split('/[;\r\n]+/', $mapa) as $par) {   // razdjelnik: ; ili novi red (višeredna mapa)
         $par = trim($par);
         if ($par === '') continue;
         $p = explode(':', $par, 2);
