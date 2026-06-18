@@ -60,6 +60,8 @@
 .pdf-dokument-crud__lijevo .kontrola-edit-delete,
 .pdf-dokument-crud__lijevo .kontrola-select,
 .pdf-dokument-crud__lijevo .kontrola-edit { width: 100%; box-sizing: border-box; }
+/* Dvostruki razmak iznad (uz flex gap 0.6rem dodaje još 0.6rem = ukupno 1.2rem) */
+.pdf-dokument-crud__polje--razmak-gore { margin-top: 0.6rem; }
 
 /* Tablica dokumenata: resize traka iz panel-tablica kontrole, ali bez vidljivog panel-okvira
    (vidi se samo tablica s vlastitim okvirom + traka ispod) → bez efekta „panel u panelu”. */
