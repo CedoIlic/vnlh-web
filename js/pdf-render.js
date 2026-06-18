@@ -365,13 +365,28 @@
 
     var brojStr = bool(t.broj_stranice);
     var poravBroj = ({ lijevo: 'left', centar: 'center', desno: 'right' })[str(t.broj_stranice_poravnanje)] || 'center';
+    /* Stil teksta brojača (dokument-razina); poravnanje ostaje iz broj_stranice_poravnanje. */
+    var brojStil = (model.broj_stranice_paragraf_id && parStilovi[model.broj_stranice_paragraf_id]) ? parStilovi[model.broj_stranice_paragraf_id] : null;
     if (footer.length || brojStr) {
       dd.footer = function (currentPage, pageCount) {
         var arr = podnNaStr(currentPage) ? footer.slice() : [];   /* podnožje od_stranice (i simulacija) */
         if (brojStr) {
           var txt = (str(t.broj_stranice_format) || 'Stranica #S od #U')
             .split('#S').join(efektivnaStr(currentPage)).split('#U').join(pageCount);
-          arr.push({ text: txt, alignment: poravBroj, margin: [40, 4, 40, 0] });
+          var bel;
+          if (brojStil) {
+            /* Pun stil (okvir/linija, podloga, font…) preko sastaviOdlomak; poravnanje iz broj_stranice_poravnanje. */
+            var bs = {}; for (var bk in brojStil) { if (Object.prototype.hasOwnProperty.call(brojStil, bk)) bs[bk] = brojStil[bk]; }
+            bs.poravnanje = poravBroj;
+            bel = sastaviOdlomak(bs, brojStil.pdfmake_kljuc, txt, {});
+            /* Podnožje nije uvučeno pageMargins-ima → dodaj lijevu/desnu marginu da okvir/tekst poštuje margine. */
+            var mLp = mm(t, 'margina_lijevo_mm'), mRp = mm(t, 'margina_desno_mm');
+            if (bel.margin && bel.margin.length === 4) { bel.margin[0] += mLp; bel.margin[2] += mRp; }
+            else { bel.margin = [mLp, 0, mRp, 0]; }
+          } else {
+            bel = { text: txt, alignment: poravBroj, margin: [40, 4, 40, 0] };
+          }
+          arr.push(bel);
         }
         return arr;
       };

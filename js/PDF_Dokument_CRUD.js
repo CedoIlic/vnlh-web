@@ -91,7 +91,7 @@
       gotovo();
     });
     xhrGet(API + 'PDF_Stilovi_CRUD_sve.php', function (t) {
-      try { var a = JSON.parse(t || '[]'); a.forEach(function (o) { mapaParagraf[String(o.id)] = o; }); napuniSelekt('st_paragraf_id', a, null, true); } catch (e) {}
+      try { var a = JSON.parse(t || '[]'); a.forEach(function (o) { mapaParagraf[String(o.id)] = o; }); napuniSelekt('st_paragraf_id', a, null, true); napuniSelekt('edit_broj_stranice_paragraf_id', a, null, true); } catch (e) {}
       gotovo();
     });
     xhrGet(API + 'PDF_Stilovi_Slike_CRUD_sve.php', function (t) {
@@ -491,6 +491,7 @@
     setVal('edit_opis', dok ? dok.opis : '');
     var ak = byId('edit_aktivan'); if (ak) ak.checked = dok ? (dok.aktivan == 1 || dok.aktivan === '1' || dok.aktivan === true) : true;
     setVal('edit_napomena', dok ? dok.napomena : '');
+    setVal('edit_broj_stranice_paragraf_id', (dok && dok.broj_stranice_paragraf_id) ? dok.broj_stranice_paragraf_id : ''); refreshSelect('edit_broj_stranice_paragraf_id');
     stavke = (lstStavke || []).map(function (r) {
       return {
         _tid: tidSeq++,
@@ -526,7 +527,7 @@
       gotovo();
     });
     xhrGet(API + 'PDF_Stilovi_CRUD_sve.php', function (t) {
-      try { var a = JSON.parse(t || '[]'); mapaParagraf = {}; a.forEach(function (o) { mapaParagraf[String(o.id)] = o; }); napuniSelekt('st_paragraf_id', a, null, true); } catch (e) {}
+      try { var a = JSON.parse(t || '[]'); mapaParagraf = {}; a.forEach(function (o) { mapaParagraf[String(o.id)] = o; }); napuniSelekt('st_paragraf_id', a, null, true); napuniSelekt('edit_broj_stranice_paragraf_id', a, null, true); } catch (e) {}
       gotovo();
     });
     xhrGet(API + 'PDF_Stilovi_Slike_CRUD_sve.php', function (t) {
@@ -582,6 +583,7 @@
     if (typeof KontroleSetControlEnabled === 'function') {
       var tpl = byId('edit_template_id'); if (tpl) KontroleSetControlEnabled(tpl, imaDok);
       var opis = byId('edit_opis'); if (opis) KontroleSetControlEnabled(opis, imaDok);
+      var brSel = byId('edit_broj_stranice_paragraf_id'); if (brSel) KontroleSetControlEnabled(brSel, imaDok);
       var nasl = byId('edit_naslijedi_dok'); if (nasl) KontroleSetControlEnabled(nasl, imaDok && docExists);
     }
     postaviStavkaEnabled(imaDok);   /* edit stavke + tipka Dodaj/Izmijeni aktivni samo dok postoji dokument */
@@ -681,6 +683,7 @@
       opis: trim(val('edit_opis')),
       aktivan: byId('edit_aktivan').checked ? 1 : 0,
       napomena: trim(val('edit_napomena')),
+      broj_stranice_paragraf_id: trim(val('edit_broj_stranice_paragraf_id')) ? parseInt(val('edit_broj_stranice_paragraf_id'), 10) : null,
       stavke: stavke.map(function (s, i) {
         return { redoslijed: i + 1, zona: s.zona, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti };
       })
@@ -743,6 +746,7 @@
     var payload = {
       template_id: parseInt(val('edit_template_id'), 10),
       kontekst: kontekstDebug,
+      broj_stranice_paragraf_id: trim(val('edit_broj_stranice_paragraf_id')) ? parseInt(val('edit_broj_stranice_paragraf_id'), 10) : null,
       stavke: stavke.map(function (s) { return { redoslijed: 0, zona: s.zona, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti }; })
     };
     postJson(URL_RESOLVE, payload, function (res) {

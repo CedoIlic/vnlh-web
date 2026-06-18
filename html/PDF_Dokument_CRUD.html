@@ -82,6 +82,9 @@
                     <label class="kontrola-labela mb-0" for="edit_opis">Opis</label>
                     <input id="edit_opis" type="text" class="kontrola-edit" placeholder="opcionalno" maxlength="255" autocomplete="off">
                 </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-checkbox-labela"><input id="edit_aktivan" type="checkbox" class="kontrola-checkbox"> Aktivan</label>
+                </div>
             </div>
 
             <!-- Desna kolona: edit odabrane stavke (preslažemo dalje) -->
@@ -191,7 +194,10 @@
 
                         <div class="pdf-dokument-crud__stupac">
                             <div class="pdf-dokument-crud__polje">
-                                <label class="kontrola-checkbox-labela"><input id="edit_aktivan" type="checkbox" class="kontrola-checkbox"> Aktivan</label>
+                                <label class="kontrola-labela mb-0" for="edit_broj_stranice_paragraf_id">Stil podnožja (brojač)</label>
+                                <div class="kontrola-select"><select id="edit_broj_stranice_paragraf_id" aria-label="Stil teksta brojača stranica">
+                                    <option value="">— zadano —</option>
+                                </select></div>
                             </div>
                             <div class="pdf-dokument-crud__polje">
                                 <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>

@@ -243,6 +243,7 @@ if (isset($_GET['test']) && $_GET['test'] === 'logo') {
 $template_id = isset($ulaz['template_id']) ? (int) $ulaz['template_id'] : 0;
 $stavke = isset($ulaz['stavke']) && is_array($ulaz['stavke']) ? $ulaz['stavke'] : [];
 $kontekst = isset($ulaz['kontekst']) && is_array($ulaz['kontekst']) ? $ulaz['kontekst'] : [];
+$brojParId = isset($ulaz['broj_stranice_paragraf_id']) ? (int) $ulaz['broj_stranice_paragraf_id'] : 0;   // stil brojača (dokument-razina)
 
 // --- Template -----------------------------------------------------------
 $template = null;
@@ -278,6 +279,7 @@ foreach ($stavke as $s) {
     if (($s['vrsta'] ?? '') === 'tekst' && !empty($s['paragraf_id'])) $parIds[(int) $s['paragraf_id']] = true;
     if (($s['vrsta'] ?? '') === 'slika' && !empty($s['slika_stil_id'])) $slikaIds[(int) $s['slika_stil_id']] = true;
 }
+if ($brojParId > 0) $parIds[$brojParId] = true;   // stil brojača (možda nije referenciran nijednom stavkom)
 function pdf_ucitaj_stilove($mysqli, $tablica, $ids)
 {
     $out = [];
@@ -299,6 +301,11 @@ if (!empty($fontIds)) {
     $in = implode(',', array_map('intval', array_keys($fontIds)));
     $r = $mysqli->query("SELECT id, pdfmake_kljuc, porodica FROM pdf_fontovi WHERE id IN ($in)");
     if ($r) while ($row = $r->fetch_assoc()) $fontPoId[(int) $row['id']] = $row;
+}
+// Pridruži pdfmake_kljuc paragraf-stilovima (render brojača treba font-ključ; stavke ga dobivaju zasebno).
+foreach ($parStilovi as $pid => $prow) {
+    $fid = !empty($prow['font_id']) ? (int) $prow['font_id'] : 0;
+    if ($fid && isset($fontPoId[$fid])) $parStilovi[$pid]['pdfmake_kljuc'] = $fontPoId[$fid]['pdfmake_kljuc'];
 }
 
 /** Vrijednost jednog segmenta: korisnicki -> literal_tekst (^=razmak), inače iz whitelist izvora. */
@@ -478,5 +485,6 @@ echo json_encode([
     'stilovi_paragraf' => $parStilovi,
     'stilovi_slika' => $slikaStilovi,
     'fontovi' => $fontoviOut,
-    'default_font' => $kljucFallback
+    'default_font' => $kljucFallback,
+    'broj_stranice_paragraf_id' => ($brojParId > 0 ? $brojParId : null)
 ], JSON_UNESCAPED_UNICODE);

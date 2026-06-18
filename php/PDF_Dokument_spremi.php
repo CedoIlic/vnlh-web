@@ -30,19 +30,21 @@ if ($naziv === '' || mb_strlen($naziv, 'UTF-8') > 100 || $template_id <= 0) {
 }
 $opisV = ($opis === '') ? null : $opis;
 $napV = ($napomena === '') ? null : $napomena;
+$brojPar = isset($u['broj_stranice_paragraf_id']) ? (int) $u['broj_stranice_paragraf_id'] : 0;
+$brojParV = ($brojPar > 0) ? $brojPar : null;   // stil brojača (dokument-razina); NULL = zadani font
 
 $zadnjiRed = 0;   // redoslijed stavke koja se trenutno ubacuje (za dijagnostiku SQL greške)
 try {
     $mysqli->begin_transaction();
 
     if ($id > 0) {
-        $stmt = $mysqli->prepare('UPDATE pdf_dokument SET naziv = ?, template_id = ?, opis = ?, aktivan = ?, napomena = ? WHERE id = ?');
-        $stmt->bind_param('sisisi', $naziv, $template_id, $opisV, $aktivan, $napV, $id);
+        $stmt = $mysqli->prepare('UPDATE pdf_dokument SET naziv = ?, template_id = ?, opis = ?, aktivan = ?, napomena = ?, broj_stranice_paragraf_id = ? WHERE id = ?');
+        $stmt->bind_param('sisisii', $naziv, $template_id, $opisV, $aktivan, $napV, $brojParV, $id);
         $stmt->execute();
         $stmt->close();
     } else {
-        $stmt = $mysqli->prepare('INSERT INTO pdf_dokument (naziv, template_id, opis, aktivan, napomena) VALUES (?, ?, ?, ?, ?)');
-        $stmt->bind_param('sisis', $naziv, $template_id, $opisV, $aktivan, $napV);
+        $stmt = $mysqli->prepare('INSERT INTO pdf_dokument (naziv, template_id, opis, aktivan, napomena, broj_stranice_paragraf_id) VALUES (?, ?, ?, ?, ?, ?)');
+        $stmt->bind_param('sisisi', $naziv, $template_id, $opisV, $aktivan, $napV, $brojParV);
         $stmt->execute();
         $id = (int) $mysqli->insert_id;
         $stmt->close();
