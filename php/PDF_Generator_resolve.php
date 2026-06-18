@@ -80,7 +80,12 @@ function pdf_dohvati_vrijednost($mysqli, $tablica, $kolona, $st, $kontekst)
     return $row ? $row['v'] : null;
 }
 
-/** Tekst -> niz odlomaka (\n); svaki odlomak = niz pdfmake runova s auto-fallbackom. */
+// Sentinel za "meki" prijelom reda unutar istog odlomka (spajanje stavki, bez_kraja_odlomka=2).
+// Pravi "\n" ostaje prijelom odlomka; ovaj znak postaje prijelom reda (run {text:'\n'}) bez zatvaranja bloka.
+if (!defined('PDF_MEKI_PRIJELOM')) define('PDF_MEKI_PRIJELOM', "\x01");
+
+/** Tekst -> niz odlomaka (\n); svaki odlomak = niz pdfmake runova s auto-fallbackom.
+ *  PDF_MEKI_PRIJELOM unutar teksta = prijelom reda u istom odlomku (ne otvara novi odlomak). */
 function pdf_tekst_u_odlomke($tekst, $fontGlavni, $fontFallback, $kljucFallback)
 {
     $tekst = str_replace("\r\n", "\n", (string) $tekst);
@@ -93,6 +98,12 @@ function pdf_tekst_u_odlomke($tekst, $fontGlavni, $fontFallback, $kljucFallback)
         $len = mb_strlen($od, 'UTF-8');
         for ($i = 0; $i < $len; $i++) {
             $ch = mb_substr($od, $i, 1, 'UTF-8');
+            if ($ch === PDF_MEKI_PRIJELOM) {                     // meki prijelom reda u istom odlomku
+                if ($buf !== '') { $r = ['text' => $buf]; if ($bufFont !== null) $r['font'] = $bufFont; $runovi[] = $r; $buf = ''; }
+                $runovi[] = ['text' => "\n"];
+                $bufFont = null;
+                continue;
+            }
             $cp = mb_ord($ch, 'UTF-8');
             if ($cp === false) continue;
             $koji = null;
@@ -142,6 +153,11 @@ function pdf_odlomci_iz_dijelova($dijelovi, $fontGlavni, $fontFallback, $kljucFa
                 if ($buf !== '') { $r = ['text' => $buf]; if ($bufFont !== null) $r['font'] = $bufFont; if ($bufColor !== null) $r['color'] = $bufColor; $runovi[] = $r; $buf = ''; }
                 if (empty($runovi)) $runovi = [['text' => '']];
                 $out[] = $runovi; $runovi = []; $bufFont = null; $bufColor = null;
+                continue;
+            }
+            if ($ch === PDF_MEKI_PRIJELOM) {                     // meki prijelom reda u istom odlomku
+                if ($buf !== '') { $r = ['text' => $buf]; if ($bufFont !== null) $r['font'] = $bufFont; if ($bufColor !== null) $r['color'] = $bufColor; $runovi[] = $r; $buf = ''; }
+                $runovi[] = ['text' => "\n"]; $bufFont = null; $bufColor = null;
                 continue;
             }
             $cp = mb_ord($ch, 'UTF-8');
@@ -297,23 +313,34 @@ while ($i < $n) {
             }
         }
         // Spoji segmente (preskoči prazne). Dinamički bez vrijednosti (nema test_id/konteksta) → sivi XXXXXXXX.
+        // Separator prema spajanju PRETHODNOG segmenta s vrijednošću: 1=isti red (''), 2=novi red (meki prijelom).
         $dijelovi = [];
         $combined = '';
         $imaPlaceholder = false;
         $segErr = null;
+        $imaPrije = false;     // je li već dodan segment s vrijednošću
+        $zadnjiFlag = 0;       // bez_kraja_odlomka zadnjeg dodanog segmenta
         foreach ($chain as $ci) {
             $seg = $stavke[$ci];
             $r = pdf_segment_vrijednost($mysqli, $seg, $izvori, $kontekst);
             if ($r['greska'] !== null && $segErr === null) $segErr = $r['greska'];
             $val = $r['vrijednost'];
+            $segTekst = null; $segColor = null;
             if ((($seg['izvor_tip'] ?? '') === 'dinamicki') && ($val === null || $val === '')) {
-                $dijelovi[] = ['tekst' => 'XXXXXXXX', 'color' => '#cccccc'];   // placeholder kao siva ploha
-                $combined .= 'XXXXXXXX';
+                $segTekst = 'XXXXXXXX'; $segColor = '#cccccc';   // placeholder kao siva ploha
                 $imaPlaceholder = true;
             } elseif ($val !== null && $val !== '') {
-                $dijelovi[] = ['tekst' => (string) $val, 'color' => null];
-                $combined .= (string) $val;
+                $segTekst = (string) $val; $segColor = null;
             }
+            if ($segTekst === null) continue;                    // prazan segment — preskoči (flag se ne mijenja)
+            if ($imaPrije && $zadnjiFlag === 2) {                 // meki prijelom prema prethodnom segmentu
+                $combined .= PDF_MEKI_PRIJELOM;
+                $dijelovi[] = ['tekst' => PDF_MEKI_PRIJELOM, 'color' => null];
+            }
+            $combined .= $segTekst;
+            $dijelovi[] = ['tekst' => $segTekst, 'color' => $segColor];
+            $imaPrije = true;
+            $zadnjiFlag = (int) ($seg['bez_kraja_odlomka'] ?? 0);
         }
         $rec = [
             'redoslijed' => isset($first['redoslijed']) ? (int) $first['redoslijed'] : 0,

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/require_login_api.php';
 // Spremanje cijelog dokumenta (zaglavlje + stavke) u transakciji.
-// Ulaz: POST JSON { id?, naziv, template_id, opis, aktivan, napomena, stavke:[ {zona,vrsta,izvor_id,izvor_tip,...,paragraf_id|slika_stil_id,napomena}, ... ] }
+// Ulaz: POST JSON { id?, naziv, template_id, opis, aktivan, napomena, stavke:[ {zona,vrsta,izvor_id,izvor_tip,...,paragraf_id|slika_stil_id,naziv_stavke}, ... ] }
 // Stavke se REPLACE-aju (delete + insert po redoslijedu). FK + CHECK u bazi čuvaju integritet.
 $db_ret = require_once __DIR__ . '/00_db.php';
 if ($db_ret !== -1) {
@@ -31,6 +31,7 @@ if ($naziv === '' || mb_strlen($naziv, 'UTF-8') > 100 || $template_id <= 0) {
 $opisV = ($opis === '') ? null : $opis;
 $napV = ($napomena === '') ? null : $napomena;
 
+$zadnjiRed = 0;   // redoslijed stavke koja se trenutno ubacuje (za dijagnostiku SQL greške)
 try {
     $mysqli->begin_transaction();
 
@@ -59,7 +60,7 @@ try {
         $parId = null; $sslik = null; $bezkraj = 0; $nap = null;
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, napomena)
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $ins->bind_param('iissisisisssiiis', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap);
@@ -100,9 +101,11 @@ try {
             // Stil po vrsti (drugi NULL → zadovolji chk_prikaz_po_vrsti)
             $parId = ($vrsta === 'tekst' && (int) ($s['paragraf_id'] ?? 0) > 0) ? (int) $s['paragraf_id'] : null;
             $sslik = ($vrsta === 'slika' && (int) ($s['slika_stil_id'] ?? 0) > 0) ? (int) $s['slika_stil_id'] : null;
-            $bezkraj = (!empty($s['bez_kraja_odlomka']) && $vrsta === 'tekst') ? 1 : 0;
-            $n = trim((string) ($s['napomena'] ?? ''));
+            $bv = (int) ($s['bez_kraja_odlomka'] ?? 0);   // 1=isti red (inline); 2=novi red, isti odlomak
+            $bezkraj = ($vrsta === 'tekst' && in_array($bv, [1, 2], true)) ? $bv : 0;
+            $n = trim((string) ($s['naziv_stavke'] ?? ''));
             $nap = ($n === '') ? null : $n;
+            $zadnjiRed = $red;
             $ins->execute();
         }
         $ins->close();
@@ -112,7 +115,9 @@ try {
     echo 'OK,' . $id;
 } catch (mysqli_sql_exception $e) {
     $mysqli->rollback();
-    echo '200,' . $e->getCode();
+    $info = $e->getCode();
+    if ($zadnjiRed > 0) $info .= ' (stavka redoslijed ' . $zadnjiRed . ')';
+    echo '200,' . $info;
 } catch (RuntimeException $e) {
     $mysqli->rollback();
     echo '105';

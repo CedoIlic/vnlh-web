@@ -201,6 +201,18 @@
 
   /* Render model (iz PDF_Generator_resolve.php) → pdfmake docDefinition.
      Zone: zaglavlje→header, podnožje→footer (+ brojač), naslovna/tijelo→content. */
+  /* Margine tijela (kao PDF_Template, PDF_Template_CRUD.js): margina je UVIJEK tvrda granica; zaglavlje/
+     podnožje, ako vrijedi na stranici, ponaša se kao da je taj prostor već popunjen → tijelo se gura na
+     (visina_zone + padding) ako to prelazi marginu. Padding = razmak iza dna zaglavlja / ispred vrha podnožja. */
+  function gornjaTijela(t, zaglavljeVrijedi) {
+    var mg = mm(t, 'margina_gore_mm');
+    return zaglavljeVrijedi ? Math.max(mg, mm(t, 'zaglavlje_visina_mm') + mm(t, 'zaglavlje_padding_mm')) : mg;
+  }
+  function donjaTijela(t, podnozjeVrijedi) {
+    var md = mm(t, 'margina_dolje_mm');
+    return podnozjeVrijedi ? Math.max(md, mm(t, 'podnozje_visina_mm') + mm(t, 'podnozje_padding_mm')) : md;
+  }
+
   /* Vodilice (margine + zone zaglavlja/podnožja) iscrtane u SAMOM PDF-u kao background —
      za provjeru poravnanja elemenata u odnosu na margine. pageSize iz pdfmake je u pt i već orijentiran. */
   function vodiliceBackground(t, stranica) {
@@ -212,12 +224,17 @@
     var podnNaStr = bool(t.podnozje) && broj(t.podnozje_visina_mm) > 0 && (stranica >= (broj(t.podnozje_od_stranice) || 1));
     var zv = zaglNaStr ? mm(t, 'zaglavlje_visina_mm') : 0;
     var pv = podnNaStr ? mm(t, 'podnozje_visina_mm') : 0;
+    /* Okvir tijela prati efektivne margine (zaglavlje/podnožje); uvjet vrijedi po pravilu stranice. */
+    var zaglMarg = bool(t.zaglavlje) && (stranica === 1 || str(t.zaglavlje_primjena) === 'svaka');
+    var podnMarg = bool(t.podnozje) && (stranica >= (broj(t.podnozje_od_stranice) || 1));
+    var mTef = gornjaTijela(t, zaglMarg);
+    var mBef = donjaTijela(t, podnMarg);
     var BOJA = '#2d6da3';
     return function (currentPage, pageSize) {
       var W = pageSize.width, H = pageSize.height;
       var canvas = [
         /* okvir margina (tijelo) — iscrtkano */
-        { type: 'rect', x: mL, y: mT, w: W - mL - mR, h: H - mT - mB, lineColor: BOJA, lineWidth: 0.6, dash: { length: 3 } }
+        { type: 'rect', x: mL, y: mTef, w: W - mL - mR, h: H - mTef - mBef, lineColor: BOJA, lineWidth: 0.6, dash: { length: 3 } }
       ];
       if (zv > 0) canvas.push({ type: 'rect', x: mL, y: 0, w: W - mL - mR, h: zv, color: BOJA, fillOpacity: 0.15, lineColor: BOJA, lineWidth: 0.4 });
       if (pv > 0) canvas.push({ type: 'rect', x: mL, y: H - pv, w: W - mL - mR, h: pv, color: BOJA, fillOpacity: 0.15, lineColor: BOJA, lineWidth: 0.4 });
@@ -288,9 +305,42 @@
       else content = content.concat(el);        /* tijelo + (zasad) naslovna */
     });
 
+    /* Margine tijela moraju poštovati zaglavlje/podnožje. pdfmake ima JEDNU pageMargins za sve stranice, pa:
+       - preview (vodilice): simuliramo jednu stranicu → margine baš za tu stranicu (vrijedi li zona?).
+       - stvarni izlaz (multipage):
+         · zaglavlje 'svaka' → rezerviraj gore na svim stranicama; 'prva' → baseline + nevidljivi spacer na
+           vrhu sadržaja (gura SAMO 1. stranicu; str. 2+ teku unutar obične margine).
+         · podnožje → rezervira dolje na SVIM stranicama (fiksnu donju marginu ne možemo „od-rezervirati"
+           po stranici; kod od_stranice>1 ranije stranice dobiju malo viška dolje — prihvaćeno ograničenje). */
+    var zaglAktivno = bool(t.zaglavlje);   /* margina ovisi o uključenoj zoni (kao template), ne o visini */
+    var podnAktivno = bool(t.podnozje);
+    var primjenaSvaka = str(t.zaglavlje_primjena) === 'svaka';
+    var podnOd = broj(t.podnozje_od_stranice) || 1;
+    var gornjaMargina, donjaMargina, spacerVisina = 0;
+    if (opts.vodilice) {
+      var simStr2 = (opts.stranica === 2 ? 2 : 1);
+      gornjaMargina = gornjaTijela(t, zaglAktivno && (simStr2 === 1 || primjenaSvaka));
+      donjaMargina = donjaTijela(t, podnAktivno && (simStr2 >= podnOd));
+    } else {
+      if (zaglAktivno && primjenaSvaka) {
+        gornjaMargina = gornjaTijela(t, true);
+      } else if (zaglAktivno) {
+        gornjaMargina = mm(t, 'margina_gore_mm');
+        spacerVisina = gornjaTijela(t, true) - gornjaMargina;   /* rezervacija samo za 1. stranicu */
+      } else {
+        gornjaMargina = mm(t, 'margina_gore_mm');
+      }
+      donjaMargina = donjaTijela(t, podnAktivno);   /* rezervacija na svim stranicama (vidi ograničenje gore) */
+    }
+    if (spacerVisina > 0) {
+      /* Nevidljiva rezervacija visine: bijela ispuna (grana fill → BEZ obruba; bez color pdfmake bi
+         pravokutnik obrubio crnom linijom). Bijelo na bijeloj stranici = nevidljivo. */
+      content.unshift({ canvas: [{ type: 'rect', x: 0, y: 0, w: 1, h: spacerVisina, color: '#ffffff', lineWidth: 0 }] });
+    }
+
     var dd = {
       pageOrientation: (str(t.orijentacija) === 'landscape') ? 'landscape' : 'portrait',
-      pageMargins: [mm(t, 'margina_lijevo_mm'), mm(t, 'margina_gore_mm'), mm(t, 'margina_desno_mm'), mm(t, 'margina_dolje_mm')],
+      pageMargins: [mm(t, 'margina_lijevo_mm'), gornjaMargina, mm(t, 'margina_desno_mm'), donjaMargina],
       content: content,
       /* pdfmake treba default font i za doc bez teksta (npr. footer brojač / inače Roboto kojeg nema u vfs). */
       defaultStyle: { font: str(model.default_font) || 'DejaVuSans' }

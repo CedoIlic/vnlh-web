@@ -199,3 +199,12 @@
   mask-size: 1.1rem 1.1rem;
   -webkit-mask-size: 1.1rem 1.1rem;
 }
+
+/* ===== Popup „sve postavke stavke" (dvoklik na red; klik van zatvara) =====
+   Okvir/podloga/sjena/font dolaze iz kanonske .kontrola-modal (0-Kontrole.css); ovdje samo redovi. */
+.pdf-dokument-crud__popup-red { display: flex; gap: 0.75rem; padding: 0.2rem 0; }
+.pdf-dokument-crud__popup-labela { flex: 0 0 10rem; color: var(--label_text_muted, #6c757d); }
+.pdf-dokument-crud__popup-vrijednost { flex: 1 1 auto; min-width: 0; word-break: break-word; }
+/* Pod-red (uvučeni potpis, npr. Tablica/Whitelist ispod „Način dohvata"); labela uža za 1.5rem da se vrijednosti poravnaju s nadređenima */
+.pdf-dokument-crud__popup-red--pod { padding-left: 1.5rem; font-size: 0.92em; }
+.pdf-dokument-crud__popup-red--pod .pdf-dokument-crud__popup-labela { flex-basis: 8.5rem; }

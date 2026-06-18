@@ -205,19 +205,23 @@
     marg.style.bottom = (md * scale) + 'px';
     stranica.appendChild(marg);
 
-    /* demo tekst: tijelo od (margina gore + razmak zaglavlja) do (margina dolje + razmak podnožja) */
+    /* demo tekst: margina je tvrda granica; zona (zaglavlje/podnožje) gura tijelo na (visina_zone + razmak)
+       ako to prelazi marginu (jednako PdfRender.gornjaTijela/donjaTijela u js/pdf-render.js). */
     if (_demoTekst) {
       var zp = vBroj('zaglavlje_padding_mm'), pp = vBroj('podnozje_padding_mm');
-      var bt = (mg + (zaglNaStr ? zp : 0)) * scale;
-      var bb = Hpx - (md + (podnNaStr ? pp : 0)) * scale;
-      if (bb > bt + 2) {
+      var bt = (zaglNaStr ? Math.max(mg, zv + zp) : mg) * scale;
+      var bb = Hpx - (podnNaStr ? Math.max(md, pv + pp) : md) * scale;
+      var fsPx = DEMO_PT * PT_MM * scale;                       /* 12 pt skalirano kao stranica */
+      var lhPx = fsPx * 1.3;
+      var visinaTijela = Math.floor((bb - bt) / lhPx) * lhPx;   /* cijeli redovi → ne reže pola zadnjeg reda */
+      if (visinaTijela >= lhPx) {
         var dt = el('div', 'pdf-template-crud__demo-tekst');
         dt.style.left = (ml * scale) + 'px';
         dt.style.right = (mr * scale) + 'px';
         dt.style.top = bt + 'px';
-        dt.style.height = (bb - bt) + 'px';
-        dt.style.fontSize = (DEMO_PT * PT_MM * scale) + 'px';   /* 12 pt skalirano kao stranica */
-        dt.style.lineHeight = '1.3';
+        dt.style.height = visinaTijela + 'px';
+        dt.style.fontSize = fsPx + 'px';
+        dt.style.lineHeight = lhPx + 'px';
         dt.textContent = LOREM_DEMO;
         stranica.appendChild(dt);
       }
@@ -229,19 +233,23 @@
       stranica.appendChild(nas);
     }
 
-    /* brojač stranica */
+    /* brojač stranica — kao sadržaj zone, prikazuje se samo kad ta zona vrijedi na prikazanoj stranici
+       (npr. podnožje od 2. stranice → na 1. stranici nema ni brojača). */
     if (cEdit('broj_stranice')) {
       var zona = vEdit('broj_stranice_zona'), por = vEdit('broj_stranice_poravnanje');
-      var b = el('div', 'pdf-template-crud__brojac');
-      b.textContent = formatBrojaca(_stranica);
-      var yMid;
-      if (zona === 'zaglavlje') yMid = (zv > 0 ? zv * scale / 2 : mg * scale / 2);
-      else yMid = Hpx - (pv > 0 ? pv * scale / 2 : md * scale / 2);
-      b.style.top = (yMid - 7) + 'px';
-      if (por === 'lijevo') { b.style.left = (ml * scale + 2) + 'px'; }
-      else if (por === 'desno') { b.style.right = (mr * scale + 2) + 'px'; }
-      else { b.style.left = (ml * scale + (Wpx - (ml + mr) * scale) / 2) + 'px'; b.style.transform = 'translateX(-50%)'; }
-      stranica.appendChild(b);
+      var zonaVrijedi = (zona === 'zaglavlje') ? zaglNaStr : podnNaStr;
+      if (zonaVrijedi) {
+        var b = el('div', 'pdf-template-crud__brojac');
+        b.textContent = formatBrojaca(_stranica);
+        var yMid;
+        if (zona === 'zaglavlje') yMid = (zv > 0 ? zv * scale / 2 : mg * scale / 2);
+        else yMid = Hpx - (pv > 0 ? pv * scale / 2 : md * scale / 2);
+        b.style.top = (yMid - 7) + 'px';
+        if (por === 'lijevo') { b.style.left = (ml * scale + 2) + 'px'; }
+        else if (por === 'desno') { b.style.right = (mr * scale + 2) + 'px'; }
+        else { b.style.left = (ml * scale + (Wpx - (ml + mr) * scale) / 2) + 'px'; b.style.transform = 'translateX(-50%)'; }
+        stranica.appendChild(b);
+      }
     }
 
     area.innerHTML = '';

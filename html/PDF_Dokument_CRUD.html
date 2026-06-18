@@ -91,6 +91,10 @@
 
                         <div class="pdf-dokument-crud__stupac">
                             <div class="pdf-dokument-crud__polje">
+                                <label class="kontrola-labela mb-0" for="st_naziv_stavke">Naziv stavke</label>
+                                <input id="st_naziv_stavke" type="text" class="kontrola-edit" placeholder="npr. logo, naslov" maxlength="255" autocomplete="off">
+                            </div>
+                            <div class="pdf-dokument-crud__polje">
                                 <label class="kontrola-labela mb-0" for="st_zona">Zona</label>
                                 <div class="kontrola-select"><select id="st_zona" aria-label="Zona">
                                     <option value="tijelo">Tijelo</option>
@@ -163,7 +167,8 @@
                                 </select></div>
                             </div>
                             <div class="pdf-dokument-crud__polje" id="polje_bez_kraja">
-                                <label class="kontrola-checkbox-labela"><input id="st_bez_kraja_odlomka" type="checkbox" class="kontrola-checkbox"> Bez kraja odlomka (spoji sljedeću u isti red)</label>
+                                <label class="kontrola-checkbox-labela"><input id="st_bez_kraja_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u isti red</label>
+                                <label class="kontrola-checkbox-labela"><input id="st_novi_red_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u novi red (isti odlomak)</label>
                             </div>
                             <!-- Dodaj / Izmijeni stavku (mod prati selekciju u tablici stavki) -->
                             <div class="pdf-dokument-crud__polje pdf-dokument-crud__stavka-upis">
