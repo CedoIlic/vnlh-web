@@ -144,7 +144,8 @@
   align-items: center;
   width: 100%;
 }
-.pdf-dokument-crud__edit-with-ellipsis .kontrola-edit {
+.pdf-dokument-crud__edit-with-ellipsis .kontrola-edit,
+.pdf-dokument-crud__edit-with-ellipsis .kontrola-edit-delete {
   flex: 1 1 0;
   min-width: 0;
   width: auto;

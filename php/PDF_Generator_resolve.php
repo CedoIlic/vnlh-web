@@ -45,6 +45,47 @@ function pdf_magic_mime($d)
     return null;
 }
 
+/** Bazni id dinamičke stavke: iz konteksta po ključu, inače testni id (preview). 0 ako nema. */
+function pdf_dinamicki_id($st, $kontekst)
+{
+    $kljuc = isset($st['kontekst_kljuc']) ? (string) $st['kontekst_kljuc'] : '';
+    $idv = ($kljuc !== '' && isset($kontekst[$kljuc])) ? (int) $kontekst[$kljuc] : 0;
+    if ($idv <= 0 && !empty($st['test_id'])) $idv = (int) $st['test_id'];   // pregled: testni id kad nema konteksta
+    return $idv;
+}
+
+/** Vrijednost {kolona} iz {tablica} za zadani id (identifikatori moraju biti prethodno provjereni). */
+function pdf_vrijednost_po_id($mysqli, $tablica, $kolona, $id)
+{
+    $id = (int) $id;
+    if ($id <= 0) return null;
+    $sql = "SELECT `$kolona` AS v FROM `$tablica` WHERE id = ? LIMIT 1";
+    $stmt = $mysqli->prepare($sql); if (!$stmt) return null;
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $row = $res ? $res->fetch_assoc() : null;
+    $stmt->close();
+    return $row ? $row['v'] : null;
+}
+
+/** Mapiranje vrijednosti po formatu "v:tekst;v:tekst" (npr. 0:Brat;1:Sestra). Bez poklapanja → original. */
+function pdf_mapa_primijeni($vrijednost, $mapa)
+{
+    if ($vrijednost === null) return null;
+    $mapa = trim((string) $mapa);
+    if ($mapa === '') return $vrijednost;
+    $kljuc = trim((string) $vrijednost);
+    foreach (explode(';', $mapa) as $par) {
+        $par = trim($par);
+        if ($par === '') continue;
+        $p = explode(':', $par, 2);
+        if (count($p) !== 2) continue;
+        if (trim($p[0]) === $kljuc) return trim($p[1]);
+    }
+    return $vrijednost;
+}
+
 /** Dohvati vrijednost {kolona} iz {tablica} prema načinu (staticki/dinamicki/po_vrijednosti). */
 function pdf_dohvati_vrijednost($mysqli, $tablica, $kolona, $st, $kontekst)
 {
@@ -56,9 +97,7 @@ function pdf_dohvati_vrijednost($mysqli, $tablica, $kolona, $st, $kontekst)
         $stmt = $mysqli->prepare($sql); if (!$stmt) return null;
         $stmt->bind_param('i', $idv);
     } elseif ($tip === 'dinamicki') {
-        $kljuc = isset($st['kontekst_kljuc']) ? (string) $st['kontekst_kljuc'] : '';
-        $idv = ($kljuc !== '' && isset($kontekst[$kljuc])) ? (int) $kontekst[$kljuc] : 0;
-        if ($idv <= 0 && !empty($st['test_id'])) $idv = (int) $st['test_id'];   // pregled: testni id kad nema konteksta
+        $idv = pdf_dinamicki_id($st, $kontekst);
         if ($idv <= 0) return null;
         $sql = "SELECT `$kolona` AS v FROM `$tablica` WHERE id = ? LIMIT 1";
         $stmt = $mysqli->prepare($sql); if (!$stmt) return null;
@@ -274,7 +313,24 @@ function pdf_segment_vrijednost($mysqli, $s, $izvori, $kontekst)
     if (!$izvor || !pdf_ident_ok($izvor['tablica']) || !pdf_ident_ok($izvor['kolona'])) {
         return ['greska' => 'Izvor nije u whitelistu.', 'vrijednost' => null];
     }
-    return ['greska' => null, 'vrijednost' => pdf_dohvati_vrijednost($mysqli, $izvor['tablica'], $izvor['kolona'], $s, $kontekst)];
+    $tip = (string) ($s['izvor_tip'] ?? '');
+    $prekoId = isset($s['preko_izvor_id']) ? (int) $s['preko_izvor_id'] : 0;
+    if ($tip === 'dinamicki' && $prekoId > 0) {
+        // Indirektni ključ: bazni id (kontekst/test) -> preko-izvor (FK kolona) -> id ciljnog izvora.
+        $preko = isset($izvori[$prekoId]) ? $izvori[$prekoId] : null;
+        if (!$preko || !pdf_ident_ok($preko['tablica']) || !pdf_ident_ok($preko['kolona'])) {
+            return ['greska' => 'Veza (preko izvora) nije u whitelistu.', 'vrijednost' => null];
+        }
+        $baseId = pdf_dinamicki_id($s, $kontekst);
+        $val = null;
+        if ($baseId > 0) {
+            $fkId = (int) pdf_vrijednost_po_id($mysqli, $preko['tablica'], $preko['kolona'], $baseId);
+            if ($fkId > 0) $val = pdf_vrijednost_po_id($mysqli, $izvor['tablica'], $izvor['kolona'], $fkId);
+        }
+    } else {
+        $val = pdf_dohvati_vrijednost($mysqli, $izvor['tablica'], $izvor['kolona'], $s, $kontekst);
+    }
+    return ['greska' => null, 'vrijednost' => pdf_mapa_primijeni($val, $s['mapa_vrijednosti'] ?? null)];
 }
 
 // --- Razrješavanje stavki -----------------------------------------------

@@ -16,15 +16,20 @@ CREATE TABLE `pdf_dokument_stavke` (
   `slika_stil_id`    int(11) unsigned DEFAULT NULL COMMENT 'FK na pdf_slika_stil (kad vrsta=slika)',
   `bez_kraja_odlomka` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Spajanje sa sljedećom tekst-stavkom iste zone (stil prve): 0=kraj odlomka; 1=isti red (inline); 2=novi red, isti odlomak (meki prijelom, bez razmaka odlomka)',
   `naziv_stavke`     varchar(255) DEFAULT NULL COMMENT 'Naziv/naslov stavke (npr. logo, naslov) — interna oznaka administratora',
+  `preko_izvor_id`   int(11) unsigned DEFAULT NULL COMMENT 'FK na pdf_dozvoljeni_izvori — izvor (tablica.kolona) FK-stupca preko kojeg se dobije id (indirektni ključ, npr. eseji.autor); NULL = direktan dohvat',
+  `mapa_vrijednosti` varchar(255) DEFAULT NULL COMMENT 'Mapiranje konačne vrijednosti, format "v:tekst;v:tekst" (npr. 0:Brat;1:Sestra); NULL = bez mapiranja',
   PRIMARY KEY (`id`),
   KEY `idx_dokument_redoslijed` (`dokument_id`, `redoslijed`),
   KEY `fk_stavka_izvor` (`izvor_id`),
+  KEY `fk_stavka_preko_izvor` (`preko_izvor_id`),
   KEY `fk_stavka_paragraf` (`paragraf_id`),
   KEY `fk_stavka_slika_stil` (`slika_stil_id`),
   CONSTRAINT `fk_stavka_dokument`
     FOREIGN KEY (`dokument_id`) REFERENCES `pdf_dokument` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_izvor`
     FOREIGN KEY (`izvor_id`) REFERENCES `pdf_dozvoljeni_izvori` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_stavka_preko_izvor`
+    FOREIGN KEY (`preko_izvor_id`) REFERENCES `pdf_dozvoljeni_izvori` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_paragraf`
     FOREIGN KEY (`paragraf_id`) REFERENCES `pdf_paragraf` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_slika_stil`

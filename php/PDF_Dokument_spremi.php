@@ -57,13 +57,13 @@ try {
     if (!empty($stavke)) {
         $dok = 0; $red = 0; $zona = ''; $vrsta = ''; $izParam = null; $izTip = '';
         $izRed = null; $kkljuc = null; $tid = null; $tkol = null; $tvrij = null; $lit = null;
-        $parId = null; $sslik = null; $bezkraj = 0; $nap = null;
+        $parId = null; $sslik = null; $bezkraj = 0; $nap = null; $prekoId = null; $mapa = null;
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $ins->bind_param('iissisisisssiiis', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap);
+        $ins->bind_param('iissisisisssiiisis', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa);
         $dok = $id;
         $i = 0;
         foreach ($stavke as $s) {
@@ -105,6 +105,10 @@ try {
             $bezkraj = ($vrsta === 'tekst' && in_array($bv, [1, 2], true)) ? $bv : 0;
             $n = trim((string) ($s['naziv_stavke'] ?? ''));
             $nap = ($n === '') ? null : $n;
+            // Indirektni ključ (samo dinamicki) + mapiranje (svi osim korisnicki)
+            $prekoId = ($izTip === 'dinamicki' && (int) ($s['preko_izvor_id'] ?? 0) > 0) ? (int) $s['preko_izvor_id'] : null;
+            $mv = ($izTip !== 'korisnicki') ? trim((string) ($s['mapa_vrijednosti'] ?? '')) : '';
+            $mapa = ($mv === '') ? null : $mv;
             $zadnjiRed = $red;
             $ins->execute();
         }
