@@ -237,11 +237,18 @@
 /* Checkbox-polje (spajanje) ostaje stupac */
 /* Checkbox-polje (spajanje): poravnato s KONTROLNIM stupcem (ne ispod labela) */
 .pdf-dokument-crud__stavka-modal #polje_bez_kraja { flex-direction: column; align-items: flex-start; gap: 0.3rem; padding-left: calc(11rem + 0.75rem); }
-/* Zaglavlje modala: naslov + select u jednom redu; select se rasteže kao kontrole u tijelu */
-.pdf-dokument-crud__stavka-modal .kontrola-modal__header { flex-wrap: nowrap; padding-left: var(--modal_body_padding_x); }
-/* Naslov = širina labele (11rem) → lijevi rub selekta poravnat s kontrolama u tijelu */
+/* Zaglavlje modala: redovi jedan ispod drugoga („Na temelju stavke" iznad; naslov + „Vrsta stavke" ispod) */
+.pdf-dokument-crud__stavka-modal-header { display: flex; flex-direction: column; align-items: stretch; gap: .5rem; padding-left: var(--modal_body_padding_x); }
+/* Red: naslov + vrsta stavke (select se rasteže kao kontrole u tijelu) */
+.pdf-dokument-crud__naslov-red { display: flex; align-items: center; gap: .75rem; }
+/* Naslov = širina labele (11rem) → lijevi rub selekta poravnat s kontrolama u tijelu (font zaglavlja). */
 #stavkaModalNaslov { flex: 0 0 11rem; white-space: nowrap; }
 .pdf-dokument-crud__tip-select { flex: 1 1 auto; min-width: 0; }
+/* „Na temelju stavke" — predložak (samo pri dodavanju); labela 11rem → selekt poravnat s „Vrsta stavke".
+   Font labele usklađen s naslovom „Nova stavka" (font zaglavlja modala, ne manji label-font). */
+.pdf-dokument-crud__na-temelju:not([hidden]) { display: flex; align-items: center; gap: .75rem; }
+.pdf-dokument-crud__na-temelju .kontrola-labela { flex: 0 0 11rem; white-space: nowrap; margin-bottom: 0; font-family: var(--modal_header_font_family); font-size: var(--modal_header_font_size); font-weight: var(--modal_header_font_weight); }
+.pdf-dokument-crud__na-temelju .kontrola-select { flex: 1 1 auto; min-width: 0; }
 /* Otvoreni select smije preko ruba modala (kao u panelu): privremeno overflow:visible */
 .pdf-dokument-crud__stavka-modal:has(.kontrola-select--open),
 .pdf-dokument-crud__stavka-modal:has(.kontrola-select--open) .kontrola-modal__body,

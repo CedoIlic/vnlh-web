@@ -141,17 +141,25 @@
 <div class="kontrola-modal kontrola-modal--dim" id="stavkaModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10001;">
     <div class="kontrola-modal__overlay" id="stavkaModal_overlay"></div>
     <div class="kontrola-modal__dialog pdf-dokument-crud__stavka-modal">
-        <div class="kontrola-modal__header" style="display:flex; align-items:center; gap:0.75rem;">
-            <span id="stavkaModalNaslov">Stavka</span>
-            <div class="kontrola-select pdf-dokument-crud__tip-select"><select id="st_tip_stavke" aria-label="Vrsta stavke">
-                <option value="tekst|staticki">Tekst — statički</option>
-                <option value="tekst|dinamicki">Tekst — dinamički</option>
-                <option value="tekst|po_vrijednosti">Tekst — po vrijednosti</option>
-                <option value="tekst|korisnicki">Tekst — korisnički (upisani)</option>
-                <option value="slika|staticki">Slika — statička</option>
-                <option value="slika|dinamicki">Slika — dinamička</option>
-                <option value="slika|po_vrijednosti">Slika — po vrijednosti</option>
-            </select></div>
+        <div class="kontrola-modal__header pdf-dokument-crud__stavka-modal-header">
+            <div id="polje_na_temelju" class="pdf-dokument-crud__na-temelju" hidden>
+                <label class="kontrola-labela mb-0" for="st_na_temelju">Na temelju stavke</label>
+                <div class="kontrola-select"><select id="st_na_temelju" aria-label="Na temelju stavke">
+                    <option value="">— odaberi —</option>
+                </select></div>
+            </div>
+            <div class="pdf-dokument-crud__naslov-red">
+                <span id="stavkaModalNaslov">Stavka</span>
+                <div class="kontrola-select pdf-dokument-crud__tip-select"><select id="st_tip_stavke" aria-label="Vrsta stavke">
+                    <option value="tekst|staticki">Tekst — statički</option>
+                    <option value="tekst|dinamicki">Tekst — dinamički</option>
+                    <option value="tekst|po_vrijednosti">Tekst — po vrijednosti</option>
+                    <option value="tekst|korisnicki">Tekst — korisnički (upisani)</option>
+                    <option value="slika|staticki">Slika — statička</option>
+                    <option value="slika|dinamicki">Slika — dinamička</option>
+                    <option value="slika|po_vrijednosti">Slika — po vrijednosti</option>
+                </select></div>
+            </div>
         </div>
         <div class="kontrola-modal__body kontrola-modal__body--text-only">
             <div class="kontrola-modal__content">

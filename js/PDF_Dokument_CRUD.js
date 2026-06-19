@@ -497,9 +497,29 @@
       if (lbl) lbl.textContent = (modalEditTid != null) ? 'Spremi' : 'Dodaj';
     }
   }
+  /* „Na temelju stavke" — predložak za novu stavku: popis postojećih stavki (od zadnje prema prvoj),
+     tekst „(broj) naziv" (ili „(broj)" bez naziva); vrijednost opcije = _tid. */
+  function napuniNaTemeljuSelekt() {
+    var sel = byId('st_na_temelju');
+    if (!sel) return;
+    while (sel.options.length > 1) sel.remove(1);
+    for (var i = stavke.length - 1; i >= 0; i--) {
+      var s = stavke[i];
+      var naziv = (s.naziv_stavke != null && trim(s.naziv_stavke) !== '') ? (' ' + trim(s.naziv_stavke)) : '';
+      var opt = document.createElement('option');
+      opt.value = String(s._tid);
+      opt.textContent = '(' + (i + 1) + ')' + naziv;
+      sel.appendChild(opt);
+    }
+    sel.value = '';
+    refreshSelect('st_na_temelju');
+  }
   function otvoriStavkaModal(tid) {
     modalEditTid = (tid != null) ? tid : null;
     var nas = byId('stavkaModalNaslov'); if (nas) nas.textContent = (modalEditTid != null) ? 'Uredi stavku' : 'Nova stavka';
+    /* „Na temelju stavke" samo pri dodavanju nove stavke (predložak); pri uređivanju skriveno. */
+    var nt = byId('polje_na_temelju');
+    if (nt) { if (modalEditTid == null) { napuniNaTemeljuSelekt(); nt.hidden = false; } else { nt.hidden = true; } }
     osvjeziEditSelekte(function () {
       if (modalEditTid != null) { var s = stavkaPoTid(modalEditTid); if (s) popuniStavkaEdit(s); }
       else { ocistiSrednjiStupac(); setVal('st_tip_stavke', 'tekst|staticki'); refreshSelect('st_tip_stavke'); sinkVrstaIzTipa(); }
@@ -521,6 +541,21 @@
     var bd = byId('btnStavkaDodaj'); if (bd) bd.addEventListener('click', function () { if (!bd.disabled) otvoriStavkaModal(null); });
     var bu2 = byId('btnStavkaUredi'); if (bu2) bu2.addEventListener('click', function () { if (bu2.disabled) return; var tid = CommonCRUD.getSelectedRowId(stavkeApi); if (tid != null) otvoriStavkaModal(tid); });
     var bi = byId('btnStavkaInfo'); if (bi) bi.addEventListener('click', function () { if (bi.disabled) return; var tid = CommonCRUD.getSelectedRowId(stavkeApi); var s = (tid != null) ? stavkaPoTid(tid) : null; if (s) prikaziStavkaPopup(s); });
+    /* „Na temelju stavke" → popuni formu vrijednostima izabrane stavke (naziv se NE kopira). */
+    var nt = byId('st_na_temelju');
+    if (nt) nt.addEventListener('change', function () {
+      var tid = trim(nt.value);
+      if (tid) {
+        var s = stavkaPoTid(tid);
+        if (s) {
+          popuniStavkaEdit(s);
+          setVal('st_naziv_stavke', '');   /* naziv ostaje prazan */
+          sinkTipIzVrste();
+          azurirajStavkaModalStanje();
+        }
+      }
+      nt.value = ''; refreshSelect('st_na_temelju');   /* jednokratna akcija — vrati na „— odaberi —" */
+    });
     var bo = byId('btnStavkaOdustani'); if (bo) bo.addEventListener('click', zatvoriStavkaModal);
     var ov = byId('stavkaModal_overlay'); if (ov) ov.addEventListener('click', zatvoriStavkaModal);
     document.addEventListener('keydown', function (e) { var m = byId('stavkaModal'); if (e.key === 'Escape' && m && m.getAttribute('aria-hidden') === 'false') zatvoriStavkaModal(); });
