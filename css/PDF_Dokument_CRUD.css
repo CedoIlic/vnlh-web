@@ -65,11 +65,23 @@
 .pdf-dokument-crud__lijevo { flex: 0 0 22rem; max-width: 42%; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
 /* Tablica dokumenata puni cijelu visinu lijevog stupca */
 .pdf-dokument-crud__lijevo > .pdf-dokument-crud__tablica-resize { flex: 1 1 auto; min-height: 0; height: auto; display: flex; flex-direction: column; }
+/* Kolone 2+3 gore (sredina + desno), Napomena preko obje ispod */
+.pdf-dokument-crud__edit-area { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.pdf-dokument-crud__gornji-red { flex: 0 0 auto; display: flex; gap: 1rem; align-items: stretch; }
+.pdf-dokument-crud__sredina,
 .pdf-dokument-crud__desno { flex: 1 1 0; min-width: 0; padding-left: 1rem; border-left: 1px solid var(--edit_border, #ced4da); display: flex; flex-direction: column; gap: 0.6rem; }
+/* Napomena preko 2.+3. stupca: lijevi rub poravnat sa srednjom kolonom */
+.pdf-dokument-crud__napomena-puna { padding-left: 1rem; border-left: 1px solid var(--edit_border, #ced4da); }
+.pdf-dokument-crud__napomena-puna .kontrola-napomena { width: 100%; box-sizing: border-box; }
+.pdf-dokument-crud__sredina .kontrola-edit-delete,
+.pdf-dokument-crud__sredina .kontrola-select,
+.pdf-dokument-crud__sredina .kontrola-edit,
+.pdf-dokument-crud__sredina .kontrola-napomena,
 .pdf-dokument-crud__desno .kontrola-edit-delete,
 .pdf-dokument-crud__desno .kontrola-select,
-.pdf-dokument-crud__desno .kontrola-edit,
-.pdf-dokument-crud__desno .kontrola-napomena { width: 100%; box-sizing: border-box; }
+.pdf-dokument-crud__desno .kontrola-edit { width: 100%; box-sizing: border-box; }
+/* Lupa u „Pretraži" edit-delete kontroli (lijevo, ne hvata klik) */
+.pdf-dokument-crud__trazi-lupa { display: flex; align-items: center; padding: 0 .25rem 0 .5rem; color: var(--label_text); pointer-events: none; flex-shrink: 0; }
 /* Napomena se rasteže da popuni preostalu visinu desnog stupca */
 .pdf-dokument-crud__polje--napomena { flex: 1 1 auto; min-height: 6rem; }
 .pdf-dokument-crud__polje--napomena .kontrola-napomena { flex: 1 1 auto; resize: vertical; }

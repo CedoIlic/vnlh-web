@@ -736,6 +736,15 @@
   byId('edit_naziv').addEventListener('input', azurirajSpremiStanje);
   byId('edit_template_id').addEventListener('change', azurirajSpremiStanje);
 
+  /* Razvojna sekcija: tekst uz čekbox ovisi o stanju (čekiran = u razvoju; inače dostupan u app). */
+  (function () {
+    var cb = byId('edit_u_razvoju'), txt = byId('edit_u_razvoju_tekst');
+    if (!cb || !txt) return;
+    function osvjeziRazvojTekst() { txt.textContent = cb.checked ? 'Dokument je u razvoju' : 'Dokument je dostupan u app'; }
+    cb.addEventListener('change', osvjeziRazvojTekst);
+    osvjeziRazvojTekst();
+  })();
+
   /* Provjera stavki prije slanja — preslikava CHECK chk_prikaz_po_vrsti + chk_izvor_po_tipu (samo obavezna
      polja; „prazno mora biti" PHP ionako sam nullira). Vraća niz {tid, tekst}; prazan niz = sve OK. */
   function validirajStavke(lista) {

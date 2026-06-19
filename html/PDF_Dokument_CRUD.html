@@ -63,8 +63,12 @@
                 </div>
             </div>
 
-            <!-- Desna kolona: sva master polja dokumenta (cijela širina) -->
-            <div class="pdf-dokument-crud__desno">
+            <!-- Kolone 2+3 gore (polja dokumenta + razvojni), Napomena preko obje ispod -->
+            <div class="pdf-dokument-crud__edit-area">
+              <div class="pdf-dokument-crud__gornji-red">
+
+            <!-- Srednja kolona: sva master polja dokumenta -->
+            <div class="pdf-dokument-crud__sredina">
                 <div class="pdf-dokument-crud__polje">
                     <label class="kontrola-labela mb-0" for="edit_naziv">Naziv dokumenta</label>
                     <div class="kontrola-edit-delete">
@@ -97,10 +101,51 @@
                 <div class="pdf-dokument-crud__polje pdf-dokument-crud__polje--razmak-gore">
                     <label class="kontrola-checkbox-labela"><input id="edit_aktivan" type="checkbox" class="kontrola-checkbox"> Aktivan</label>
                 </div>
-                <div class="pdf-dokument-crud__polje pdf-dokument-crud__polje--napomena">
-                    <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
-                    <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+            </div>
+
+            <!-- Desna kolona: razvojni podaci (testni kontekst za izgradnju dokumenta) -->
+            <div class="pdf-dokument-crud__desno">
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-checkbox-labela"><input id="edit_u_razvoju" type="checkbox" class="kontrola-checkbox"> <span id="edit_u_razvoju_tekst">Dokument je dostupan u app</span></label>
                 </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="razvoj_tablica">Tablica</label>
+                    <div class="kontrola-select"><select id="razvoj_tablica" aria-label="Tablica">
+                        <option value="">— odaberi —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="razvoj_kolona">Kolona</label>
+                    <div class="kontrola-select"><select id="razvoj_kolona" aria-label="Kolona">
+                        <option value="">— odaberi —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="razvoj_trazi">Pretraži</label>
+                    <div class="kontrola-edit-delete">
+                        <span class="pdf-dokument-crud__trazi-lupa" aria-hidden="true"><span class="kontrola-icon--magnifying-glass"></span></span>
+                        <input id="razvoj_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" maxlength="200" placeholder="">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti pretragu">×</button>
+                    </div>
+                </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="razvoj_vrijednost">Vrijednost</label>
+                    <div class="kontrola-select"><select id="razvoj_vrijednost" aria-label="Vrijednost">
+                        <option value="">— odaberi —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="razvoj_izabrani_id">Izabrani ID</label>
+                    <input id="razvoj_izabrani_id" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" autocomplete="off">
+                </div>
+            </div>
+              </div>
+
+              <!-- Napomena preko 2. i 3. stupca -->
+              <div class="pdf-dokument-crud__polje pdf-dokument-crud__polje--napomena pdf-dokument-crud__napomena-puna">
+                  <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                  <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+              </div>
             </div>
 
           </div>
