@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/require_login_api.php';
 // Spremanje cijelog dokumenta (zaglavlje + stavke) u transakciji.
-// Ulaz: POST JSON { id?, naziv, template_id, opis, aktivan, napomena, stavke:[ {zona,vrsta,izvor_id,izvor_tip,...,paragraf_id|slika_stil_id,naziv_stavke}, ... ] }
+// Ulaz: POST JSON { id?, naziv, template_id, opis, aktivan, napomena, broj_stranice_paragraf_id?, dokument_prored_default_stil?,
+//                   razvoj_aktivan?, razvoj_tablica?, razvoj_kolona?, razvoj_izabrani_id?, stavke:[ {zona,vrsta,izvor_id,izvor_tip,...,paragraf_id|slika_stil_id,naziv_stavke}, ... ] }
 // Stavke se REPLACE-aju (delete + insert po redoslijedu). FK + CHECK u bazi čuvaju integritet.
 $db_ret = require_once __DIR__ . '/00_db.php';
 if ($db_ret !== -1) {
@@ -32,19 +33,29 @@ $opisV = ($opis === '') ? null : $opis;
 $napV = ($napomena === '') ? null : $napomena;
 $brojPar = isset($u['broj_stranice_paragraf_id']) ? (int) $u['broj_stranice_paragraf_id'] : 0;
 $brojParV = ($brojPar > 0) ? $brojPar : null;   // stil brojača (dokument-razina); NULL = zadani font
+$proredStil = isset($u['dokument_prored_default_stil']) ? (int) $u['dokument_prored_default_stil'] : 0;
+$proredStilV = ($proredStil > 0) ? $proredStil : null;   // stil na koji se primjenjuje extra prored; NULL = nije izabran
+// Razvojni/testni kontekst (desni stupac forme)
+$razvojAktivan = !empty($u['razvoj_aktivan']) ? 1 : 0;
+$razvojTablica = trim((string) ($u['razvoj_tablica'] ?? ''));
+$razvojTablicaV = ($razvojTablica === '') ? null : $razvojTablica;
+$razvojKolona = trim((string) ($u['razvoj_kolona'] ?? ''));
+$razvojKolonaV = ($razvojKolona === '') ? null : $razvojKolona;
+$razvojIzId = isset($u['razvoj_izabrani_id']) ? (int) $u['razvoj_izabrani_id'] : 0;
+$razvojIzIdV = ($razvojIzId > 0) ? $razvojIzId : null;
 
 $zadnjiRed = 0;   // redoslijed stavke koja se trenutno ubacuje (za dijagnostiku SQL greške)
 try {
     $mysqli->begin_transaction();
 
     if ($id > 0) {
-        $stmt = $mysqli->prepare('UPDATE pdf_dokument SET naziv = ?, template_id = ?, opis = ?, aktivan = ?, napomena = ?, broj_stranice_paragraf_id = ? WHERE id = ?');
-        $stmt->bind_param('sisisii', $naziv, $template_id, $opisV, $aktivan, $napV, $brojParV, $id);
+        $stmt = $mysqli->prepare('UPDATE pdf_dokument SET naziv = ?, template_id = ?, opis = ?, aktivan = ?, napomena = ?, broj_stranice_paragraf_id = ?, dokument_prored_default_stil = ?, razvoj_aktivan = ?, razvoj_tablica = ?, razvoj_kolona = ?, razvoj_izabrani_id = ? WHERE id = ?');
+        $stmt->bind_param('sisisiiissii', $naziv, $template_id, $opisV, $aktivan, $napV, $brojParV, $proredStilV, $razvojAktivan, $razvojTablicaV, $razvojKolonaV, $razvojIzIdV, $id);
         $stmt->execute();
         $stmt->close();
     } else {
-        $stmt = $mysqli->prepare('INSERT INTO pdf_dokument (naziv, template_id, opis, aktivan, napomena, broj_stranice_paragraf_id) VALUES (?, ?, ?, ?, ?, ?)');
-        $stmt->bind_param('sisisi', $naziv, $template_id, $opisV, $aktivan, $napV, $brojParV);
+        $stmt = $mysqli->prepare('INSERT INTO pdf_dokument (naziv, template_id, opis, aktivan, napomena, broj_stranice_paragraf_id, dokument_prored_default_stil, razvoj_aktivan, razvoj_tablica, razvoj_kolona, razvoj_izabrani_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt->bind_param('sisisiiissi', $naziv, $template_id, $opisV, $aktivan, $napV, $brojParV, $proredStilV, $razvojAktivan, $razvojTablicaV, $razvojKolonaV, $razvojIzIdV);
         $stmt->execute();
         $id = (int) $mysqli->insert_id;
         $stmt->close();

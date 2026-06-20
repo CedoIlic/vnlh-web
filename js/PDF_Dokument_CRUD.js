@@ -91,7 +91,7 @@
       gotovo();
     });
     xhrGet(API + 'PDF_Stilovi_CRUD_sve.php', function (t) {
-      try { var a = JSON.parse(t || '[]'); a.forEach(function (o) { mapaParagraf[String(o.id)] = o; }); napuniSelekt('st_paragraf_id', a, null, true); napuniSelekt('edit_broj_stranice_paragraf_id', a, null, true); } catch (e) {}
+      try { var a = JSON.parse(t || '[]'); a.forEach(function (o) { mapaParagraf[String(o.id)] = o; }); napuniSelekt('st_paragraf_id', a, null, true); napuniSelekt('edit_broj_stranice_paragraf_id', a, null, true); napuniSelekt('edit_extra_prored_paragraf_id', a, null, true); } catch (e) {}
       gotovo();
     });
     xhrGet(API + 'PDF_Stilovi_Slike_CRUD_sve.php', function (t) {
@@ -585,6 +585,18 @@
     if (dlg && hdr && typeof KontroleModalDrag === 'function') KontroleModalDrag(dlg, hdr);
   })();
 
+  /* Reset razvojne (testni kontekst) sekcije — poziva se pri učitavanju/novom dokumentu.
+     U Fazi 2 razvojni podaci nisu perzistirani, pa se uvijek vraćaju na prazno + „dostupan u app". */
+  function resetRazvojSekciju() {
+    var cb = byId('edit_u_razvoju'); if (cb) cb.checked = false;
+    var txt = byId('edit_u_razvoju_tekst'); if (txt) txt.textContent = 'Dokument je dostupan u app';
+    setVal('razvoj_tablica', ''); refreshSelect('razvoj_tablica');
+    napuniSelekt('razvoj_kolona', [], null, true); setVal('razvoj_kolona', ''); refreshSelect('razvoj_kolona');
+    napuniSelekt('razvoj_vrijednost', [], null, true); setVal('razvoj_vrijednost', ''); refreshSelect('razvoj_vrijednost');
+    setVal('razvoj_trazi', '');
+    setVal('razvoj_izabrani_id', '');
+  }
+
   /* ---- Punjenje / čišćenje dokumenta ---- */
   function popuniDokument(dok, lstStavke, samoSadrzaj) {
     if (!samoSadrzaj) {
@@ -596,6 +608,8 @@
     var ak = byId('edit_aktivan'); if (ak) ak.checked = dok ? (dok.aktivan == 1 || dok.aktivan === '1' || dok.aktivan === true) : true;
     setVal('edit_napomena', dok ? dok.napomena : '');
     setVal('edit_broj_stranice_paragraf_id', (dok && dok.broj_stranice_paragraf_id) ? dok.broj_stranice_paragraf_id : ''); refreshSelect('edit_broj_stranice_paragraf_id');
+    setVal('edit_extra_prored_paragraf_id', (dok && dok.dokument_prored_default_stil) ? dok.dokument_prored_default_stil : ''); refreshSelect('edit_extra_prored_paragraf_id');
+    if (!samoSadrzaj) { if (typeof restoreRazvoj === 'function') restoreRazvoj(dok); else resetRazvojSekciju(); }
     stavke = (lstStavke || []).map(function (r) {
       return {
         _tid: tidSeq++,
@@ -638,9 +652,9 @@
     xhrGet(API + 'PDF_Stilovi_CRUD_sve.php', function (t) {
       try {
         var a = JSON.parse(t || '[]'); mapaParagraf = {}; a.forEach(function (o) { mapaParagraf[String(o.id)] = o; });
-        var v3 = val('st_paragraf_id'), v4 = val('edit_broj_stranice_paragraf_id');
-        napuniSelekt('st_paragraf_id', a, null, true); napuniSelekt('edit_broj_stranice_paragraf_id', a, null, true);
-        setVal('st_paragraf_id', v3); refreshSelect('st_paragraf_id'); setVal('edit_broj_stranice_paragraf_id', v4); refreshSelect('edit_broj_stranice_paragraf_id');
+        var v3 = val('st_paragraf_id'), v4 = val('edit_broj_stranice_paragraf_id'), v5 = val('edit_extra_prored_paragraf_id');
+        napuniSelekt('st_paragraf_id', a, null, true); napuniSelekt('edit_broj_stranice_paragraf_id', a, null, true); napuniSelekt('edit_extra_prored_paragraf_id', a, null, true);
+        setVal('st_paragraf_id', v3); refreshSelect('st_paragraf_id'); setVal('edit_broj_stranice_paragraf_id', v4); refreshSelect('edit_broj_stranice_paragraf_id'); setVal('edit_extra_prored_paragraf_id', v5); refreshSelect('edit_extra_prored_paragraf_id');
       } catch (e) {}
       gotovo();
     });
@@ -699,19 +713,41 @@
        Nasljedi dodatno traži da postoje dokumenti u bazi. */
     var imaDok = trim(val('edit_naziv')) !== '';
     var docExists = Object.keys(docPoId).length > 0;
+    var uRazvoju = !!(byId('edit_u_razvoju') && byId('edit_u_razvoju').checked);
     if (typeof KontroleSetControlEnabled === 'function') {
       var tpl = byId('edit_template_id'); if (tpl) KontroleSetControlEnabled(tpl, imaDok);
       var opis = byId('edit_opis'); if (opis) KontroleSetControlEnabled(opis, imaDok);
       var brSel = byId('edit_broj_stranice_paragraf_id'); if (brSel) KontroleSetControlEnabled(brSel, imaDok);
+      var epSel = byId('edit_extra_prored_paragraf_id'); if (epSel) KontroleSetControlEnabled(epSel, imaDok);
       var nasl = byId('edit_naslijedi_dok'); if (nasl) KontroleSetControlEnabled(nasl, imaDok && docExists);
+      /* Razvojni lanac: čekbox kad postoji dokument; tablica tek kad je „u razvoju" (inače nema smisla);
+         kolona kad je tablica; traži/vrijednost kad je kolona. Izabrani ID: disabled dok nema vrijednosti
+         iznad njega, nakon izbora → RO (naš RO vizual, kao na drugim kontrolama). */
+      var imaTab = trim(val('razvoj_tablica')) !== '';
+      var imaKol = trim(val('razvoj_kolona')) !== '';
+      var rRaz = byId('edit_u_razvoju'); if (rRaz) KontroleSetControlEnabled(rRaz, imaDok);
+      var rTab = byId('razvoj_tablica'); if (rTab) KontroleSetControlEnabled(rTab, imaDok && uRazvoju);
+      var rKol = byId('razvoj_kolona'); if (rKol) KontroleSetControlEnabled(rKol, imaDok && uRazvoju && imaTab);
+      var rTrazi = byId('razvoj_trazi'); if (rTrazi) KontroleSetControlEnabled(rTrazi, imaDok && uRazvoju && imaKol);
+      var rVrij = byId('razvoj_vrijednost'); if (rVrij) KontroleSetControlEnabled(rVrij, imaDok && uRazvoju && imaKol);
+      var rIz = byId('razvoj_izabrani_id');
+      if (rIz) {
+        /* RO (aktivan) samo dok je „u razvoju" i ima izabranu vrijednost; inače disabled. */
+        var imaIzVrij = uRazvoju && parseInt(trim(val('razvoj_izabrani_id')), 10) > 0;
+        KontroleSetControlEnabled(rIz, imaIzVrij);
+        if (typeof KontroleSetControlReadonly === 'function') KontroleSetControlReadonly(rIz, imaIzVrij);
+      }
     }
     postaviStavkaEnabled(imaDok);   /* edit stavke + tipka Dodaj/Izmijeni aktivni samo dok postoji dokument */
-    /* PDF tab: enable kad je odabran template (selekt ima vrijednost). */
+    /* PDF tab + vodilice: pregled je moguć samo dok je dokument U RAZVOJU i ima izabran testni ID.
+       Kad nije u razvoju, ID dolazi iz aplikacije pri izvođenju → u formi nema pregleda. */
     var imaTemplate = trim(val('edit_template_id')) !== '';
+    var imaIzId = parseInt(trim(val('razvoj_izabrani_id')), 10) > 0;
+    var mozePreview = imaTemplate && uRazvoju && imaIzId;
     var pdfKart = byId('dokTabKart2');
     if (pdfKart) {
-      pdfKart.disabled = !imaTemplate;
-      if (!imaTemplate && pdfKart.classList.contains('kontrola-tab__kartica--aktivna') && typeof kontrolaTabPostaviAktivni === 'function') {
+      pdfKart.disabled = !mozePreview;
+      if (!mozePreview && pdfKart.classList.contains('kontrola-tab__kartica--aktivna') && typeof kontrolaTabPostaviAktivni === 'function') {
         kontrolaTabPostaviAktivni(byId('dokTab'), 0);
       }
     }
@@ -727,22 +763,106 @@
     /* Vodilice: dostupne samo kad postoji dokument (template) za preview. */
     var bb = byId('btnBlokovi');
     if (bb) {
-      var mozeVodilice = trim(val('edit_template_id')) !== '';
-      bb.disabled = !mozeVodilice;
-      if (!mozeVodilice && prikaziBlokove) { prikaziBlokove = false; postaviBlokIkonu(); }
+      bb.disabled = !mozePreview;
+      if (!mozePreview && prikaziBlokove) { prikaziBlokove = false; postaviBlokIkonu(); }
     }
     if (typeof postaviBlokStranicaIkonu === 'function') postaviBlokStranicaIkonu();
   }
   byId('edit_naziv').addEventListener('input', azurirajSpremiStanje);
   byId('edit_template_id').addEventListener('change', azurirajSpremiStanje);
 
-  /* Razvojna sekcija: tekst uz čekbox ovisi o stanju (čekiran = u razvoju; inače dostupan u app). */
+  /* Razvojna sekcija: tekst uz čekbox ovisi o stanju (čekiran = u razvoju; inače dostupan u app).
+     Promjena čekboxa utječe i na gating PDF taba (pregled samo kad je u razvoju). */
   (function () {
     var cb = byId('edit_u_razvoju'), txt = byId('edit_u_razvoju_tekst');
     if (!cb || !txt) return;
     function osvjeziRazvojTekst() { txt.textContent = cb.checked ? 'Dokument je u razvoju' : 'Dokument je dostupan u app'; }
-    cb.addEventListener('change', osvjeziRazvojTekst);
+    cb.addEventListener('change', function () { osvjeziRazvojTekst(); azurirajSpremiStanje(); });
     osvjeziRazvojTekst();
+  })();
+
+  /* Rekonstrukcija razvojne sekcije iz dokumenta — postavlja je lanac-IIFE niže (asinkrono). */
+  var restoreRazvoj = null;
+
+  /* Razvojni lanac: Tablica → Kolona → (Pretraži) → Vrijednost → Izabrani ID (RO).
+     Vrijednosti se filtriraju debounceom = sustav_varijable #114. „Izabrani ID" puni se isključivo
+     izborom iz Vrijednosti (option.value = id sloga); admin nema direktan upis. */
+  (function () {
+    var selTab = byId('razvoj_tablica'), selKol = byId('razvoj_kolona'),
+        selVri = byId('razvoj_vrijednost'), inpTrazi = byId('razvoj_trazi'), izId = byId('razvoj_izabrani_id');
+    if (!selTab || !selKol || !selVri || !inpTrazi || !izId) return;
+    var traziTimer = null;
+
+    function jsonNiz(t) { var a; try { a = JSON.parse(t || '[]'); } catch (e) { a = []; } return Array.isArray(a) ? a : []; }
+    function kaoOpcije(niz) { return niz.map(function (n) { return { id: n, naziv: n }; }); }
+    function postaviIzId(v) { izId.value = (v == null ? '' : String(v)); azurirajSpremiStanje(); }
+    function resetSelekt(id) { napuniSelekt(id, [], null, true); setVal(id, ''); refreshSelect(id); }
+
+    /* Tablice — jednom pri inicijalizaciji. */
+    xhrGet(API + 'PDF_Dokument_razvoj.php?sto=tablice', function (t) {
+      napuniSelekt('razvoj_tablica', kaoOpcije(jsonNiz(t)), null, true);
+    });
+    /* Var #114 (debounce Traži) — jednokratni dohvat. */
+    if (typeof window.vnlhLoadPronadjiStankaMsFromVar114 === 'function') window.vnlhLoadPronadjiStankaMsFromVar114(API);
+
+    function ucitajKolone() {
+      resetSelekt('razvoj_kolona'); resetSelekt('razvoj_vrijednost'); postaviIzId('');
+      var tablica = trim(val('razvoj_tablica'));
+      if (!tablica) return;
+      xhrGet(API + 'PDF_Dokument_razvoj.php?sto=kolone&tablica=' + encodeURIComponent(tablica), function (t) {
+        napuniSelekt('razvoj_kolona', kaoOpcije(jsonNiz(t)), null, true);
+      });
+    }
+    function ucitajVrijednosti() {
+      resetSelekt('razvoj_vrijednost'); postaviIzId('');
+      var tablica = trim(val('razvoj_tablica')), kolona = trim(val('razvoj_kolona'));
+      if (!tablica || !kolona) return;
+      var url = API + 'PDF_Dokument_razvoj.php?sto=vrijednosti&tablica=' + encodeURIComponent(tablica) +
+                '&kolona=' + encodeURIComponent(kolona) + '&trazi=' + encodeURIComponent(trim(val('razvoj_trazi')));
+      xhrGet(url, function (t) { napuniSelekt('razvoj_vrijednost', mapVrij(jsonNiz(t)), null, true); });
+    }
+    /* option.value = id sloga; tekst = vrijednost kolone (prazno → oznaka s id-em). */
+    function mapVrij(arr) {
+      return arr.map(function (o) {
+        return { id: o.id, naziv: (o.v == null || String(o.v) === '') ? ('(bez vrijednosti) #' + o.id) : String(o.v) };
+      });
+    }
+
+    /* Rekonstrukcija razvojne sekcije iz spremljenog dokumenta (ili prazno za novi).
+       Asinkrono: tablica → (kolone) kolona → (vrijednosti) izabrani ID. */
+    restoreRazvoj = function (dok) {
+      var aktivan = !!(dok && (dok.razvoj_aktivan == 1 || dok.razvoj_aktivan === '1' || dok.razvoj_aktivan === true));
+      var cb = byId('edit_u_razvoju'); if (cb) cb.checked = aktivan;
+      var txt = byId('edit_u_razvoju_tekst'); if (txt) txt.textContent = aktivan ? 'Dokument je u razvoju' : 'Dokument je dostupan u app';
+      resetSelekt('razvoj_kolona'); resetSelekt('razvoj_vrijednost');
+      setVal('razvoj_trazi', ''); izId.value = '';
+      var tablica = (dok && dok.razvoj_tablica) ? String(dok.razvoj_tablica) : '';
+      var kolona = (dok && dok.razvoj_kolona) ? String(dok.razvoj_kolona) : '';
+      var testId = (dok && dok.razvoj_izabrani_id) ? parseInt(dok.razvoj_izabrani_id, 10) : 0;
+      setVal('razvoj_tablica', tablica); refreshSelect('razvoj_tablica');
+      if (!tablica) { azurirajSpremiStanje(); return; }
+      xhrGet(API + 'PDF_Dokument_razvoj.php?sto=kolone&tablica=' + encodeURIComponent(tablica), function (t) {
+        napuniSelekt('razvoj_kolona', kaoOpcije(jsonNiz(t)), null, true);
+        setVal('razvoj_kolona', kolona); refreshSelect('razvoj_kolona');
+        if (!kolona) { azurirajSpremiStanje(); return; }
+        var url = API + 'PDF_Dokument_razvoj.php?sto=vrijednosti&tablica=' + encodeURIComponent(tablica) +
+                  '&kolona=' + encodeURIComponent(kolona) + '&trazi=';
+        xhrGet(url, function (t2) {
+          napuniSelekt('razvoj_vrijednost', mapVrij(jsonNiz(t2)), null, true);
+          if (testId > 0) { setVal('razvoj_vrijednost', String(testId)); refreshSelect('razvoj_vrijednost'); izId.value = String(testId); }
+          azurirajSpremiStanje();
+        });
+      });
+    };
+
+    selTab.addEventListener('change', function () { ucitajKolone(); azurirajSpremiStanje(); });
+    selKol.addEventListener('change', function () { setVal('razvoj_trazi', ''); ucitajVrijednosti(); azurirajSpremiStanje(); });
+    selVri.addEventListener('change', function () { postaviIzId(trim(val('razvoj_vrijednost'))); });
+    inpTrazi.addEventListener('input', function () {
+      if (traziTimer) clearTimeout(traziTimer);
+      var ms = (typeof window.vnlhGetPronadjiStankaMs === 'function') ? window.vnlhGetPronadjiStankaMs() : 1000;
+      traziTimer = setTimeout(ucitajVrijednosti, ms);
+    });
   })();
 
   /* Provjera stavki prije slanja — preslikava CHECK chk_prikaz_po_vrsti + chk_izvor_po_tipu (samo obavezna
@@ -812,6 +932,11 @@
       aktivan: byId('edit_aktivan').checked ? 1 : 0,
       napomena: trim(val('edit_napomena')),
       broj_stranice_paragraf_id: trim(val('edit_broj_stranice_paragraf_id')) ? parseInt(val('edit_broj_stranice_paragraf_id'), 10) : null,
+      dokument_prored_default_stil: trim(val('edit_extra_prored_paragraf_id')) ? parseInt(val('edit_extra_prored_paragraf_id'), 10) : null,
+      razvoj_aktivan: (byId('edit_u_razvoju') && byId('edit_u_razvoju').checked) ? 1 : 0,
+      razvoj_tablica: trim(val('razvoj_tablica')) || null,
+      razvoj_kolona: trim(val('razvoj_kolona')) || null,
+      razvoj_izabrani_id: trim(val('razvoj_izabrani_id')) ? parseInt(val('razvoj_izabrani_id'), 10) : null,
       stavke: stavke.map(function (s, i) {
         return { redoslijed: i + 1, zona: s.zona, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti };
       })
@@ -864,16 +989,19 @@
     var info = byId('previewInfo');
     if (trim(val('edit_template_id')) === '') { info.textContent = 'Odaberi template (tab Dokument).'; return; }
     info.textContent = 'Dohvaćam…';
-    /* ===== DEBUG (privremeno — ukloniti nakon testiranja) =====
-       Za test indirektnog ključa: id eseja se čita iz polja „Napomena" (edit_napomena)
-       i šalje kao kontekst ID_Esej pri svakom osvježavanju PDF-a. */
-    var kontekstDebug = {};
-    var _debugEsejId = parseInt(trim(val('edit_napomena')), 10);
-    if (_debugEsejId > 0) kontekstDebug.ID_Esej = _debugEsejId;
-    /* ===== /DEBUG ===== */
+    /* Testni kontekst: „Izabrani ID" (desni stupac) → svaki distinct kontekst_kljuc iz stavki dokumenta.
+       Za esej-dokument to daje { ID_Esej: <izabrani id> }. */
+    var kontekst = {};
+    var testniId = parseInt(trim(val('razvoj_izabrani_id')), 10);
+    if (testniId > 0) {
+      stavke.forEach(function (s) {
+        var k = s.kontekst_kljuc != null ? trim(String(s.kontekst_kljuc)) : '';
+        if (k !== '') kontekst[k] = testniId;
+      });
+    }
     var payload = {
       template_id: parseInt(val('edit_template_id'), 10),
-      kontekst: kontekstDebug,
+      kontekst: kontekst,
       broj_stranice_paragraf_id: trim(val('edit_broj_stranice_paragraf_id')) ? parseInt(val('edit_broj_stranice_paragraf_id'), 10) : null,
       stavke: stavke.map(function (s) { return { redoslijed: 0, zona: s.zona, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti }; })
     };

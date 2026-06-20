@@ -16,6 +16,7 @@ CREATE TABLE `zapisnik_sa_radova` (
   `ovjera_poslije_govornik_id` int(11) unsigned DEFAULT NULL COMMENT 'ID člana (clanovi.id) koji je označio ovjeru nakon radova — Govornik.',
   `sazetak` text DEFAULT NULL COMMENT 'Sažetak (kratki pregled) sadržaja zapisnika; puni tekst u stupcu zapisnik.',
   `zapisnik` text DEFAULT NULL COMMENT 'Puni tekst zapisnika.',
+  `dokument_prored` decimal(3,2) DEFAULT NULL COMMENT 'Definiranje extra proreda u tijelu teksta (najčešče) za rješavanje problema lošeg završetka dokumenta.',
   `upisao` int(11) unsigned DEFAULT NULL COMMENT 'ID člana (clanovi.id) koji je kreirao zapis.',
   `vrijeme_upisa` datetime DEFAULT NULL COMMENT 'Datum i vrijeme kreiranja zapisa.',
   PRIMARY KEY (`id`),

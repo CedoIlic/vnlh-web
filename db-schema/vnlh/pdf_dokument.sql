@@ -7,9 +7,16 @@ CREATE TABLE `pdf_dokument` (
   `created_at`  datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Vrijeme kreiranja',
   `napomena`    varchar(1024) DEFAULT NULL COMMENT 'Slobodna bilješka administratora',
   `broj_stranice_paragraf_id` int(11) unsigned DEFAULT NULL COMMENT 'FK na pdf_paragraf — stil teksta brojača stranica (NULL = zadani font); poravnanje ostaje iz template.broj_stranice_poravnanje',
+  `dokument_prored_default_stil` int(11) unsigned DEFAULT NULL COMMENT 'Default stil paragrafa (pdf_paragraf.id) za retke dodane radi extra proreda u dokumentu.',
+  `razvoj_aktivan` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Dokument je u razvoju — testni kontekst (donje kolone) aktivan; preview se gradi na testnom ID-u.',
+  `razvoj_tablica` varchar(64) DEFAULT NULL COMMENT 'Testni kontekst: naziv tablice iz koje se bira testni slog za preview.',
+  `razvoj_kolona` varchar(64) DEFAULT NULL COMMENT 'Testni kontekst: naziv kolone za pretragu vrijednosti pri izboru testnog sloga.',
+  `razvoj_izabrani_id` int(11) unsigned DEFAULT NULL COMMENT 'Testni kontekst: ID izabranog sloga na kojem se gradi preview dokumenta.',
   PRIMARY KEY (`id`),
   KEY `fk_dokument_template` (`template_id`),
   KEY `fk_dokument_broj_paragraf` (`broj_stranice_paragraf_id`),
+  KEY `fk_dokument_prored_default_stil` (`dokument_prored_default_stil`),
   CONSTRAINT `fk_dokument_template` FOREIGN KEY (`template_id`) REFERENCES `pdf_template` (`id`),
-  CONSTRAINT `fk_dokument_broj_paragraf` FOREIGN KEY (`broj_stranice_paragraf_id`) REFERENCES `pdf_paragraf` (`id`) ON UPDATE CASCADE
+  CONSTRAINT `fk_dokument_broj_paragraf` FOREIGN KEY (`broj_stranice_paragraf_id`) REFERENCES `pdf_paragraf` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_dokument_prored_default_stil` FOREIGN KEY (`dokument_prored_default_stil`) REFERENCES `pdf_paragraf` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

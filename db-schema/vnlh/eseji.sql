@@ -8,6 +8,7 @@ CREATE TABLE `eseji` (
   `kljucne_rijeci` text DEFAULT NULL COMMENT 'Izbor ključnih riječi iz sadržaja eseja',
   `esej` text DEFAULT NULL COMMENT 'Tekst eseja',
   `javno_dostupan` smallint(6) NOT NULL DEFAULT 0 COMMENT '0 ako esej pripada isključivo loži, 1 ako je dostupan svim ložama',
+  `dokument_prored` decimal(3,2) DEFAULT NULL COMMENT 'Definiranje extra proreda u tijelu teksta (najčešče) za rješavanje problema lošeg završetka dokumenta.',
   `upisao` int(11) unsigned DEFAULT NULL COMMENT 'ID onoga ko je inicijalno upisao esej',
   `vrijeme_upisa` datetime DEFAULT NULL COMMENT 'Vrijeme sa servera kada je esej upisan',
   PRIMARY KEY (`id`),
