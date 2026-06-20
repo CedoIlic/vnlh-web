@@ -69,7 +69,8 @@ function pdf_vrijednost_po_id($mysqli, $tablica, $kolona, $id)
     return $row ? $row['v'] : null;
 }
 
-/** Mapiranje vrijednosti po formatu "v:tekst;v:tekst" (npr. 0:Brat;1:Sestra). Bez poklapanja → original. */
+/** Mapiranje vrijednosti po formatu "v:tekst;v:tekst" (npr. 0:Brat;1:Sestra). Bez poklapanja → original.
+    U mapiranom tekstu '^' postaje razmak (kao kod korisničkog teksta) — za rubne razmake koje bi trim pojeo. */
 function pdf_mapa_primijeni($vrijednost, $mapa)
 {
     if ($vrijednost === null) return null;
@@ -81,7 +82,7 @@ function pdf_mapa_primijeni($vrijednost, $mapa)
         if ($par === '') continue;
         $p = explode(':', $par, 2);
         if (count($p) !== 2) continue;
-        if (trim($p[0]) === $kljuc) return trim($p[1]);
+        if (trim($p[0]) === $kljuc) return str_replace('^', ' ', trim($p[1]));
     }
     return $vrijednost;
 }

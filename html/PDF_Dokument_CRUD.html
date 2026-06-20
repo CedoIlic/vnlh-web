@@ -282,7 +282,10 @@
                 </div>
                 <div class="pdf-dokument-crud__polje" id="polje_literal_tekst" hidden>
                     <label class="kontrola-labela mb-0" for="st_literal_tekst">Korisnički tekst</label>
-                    <input id="st_literal_tekst" type="text" class="kontrola-edit" placeholder="npr. C∴L∴^" maxlength="1024" autocomplete="off">
+                    <div class="pdf-dokument-crud__edit-with-ellipsis">
+                        <input id="st_literal_tekst" type="text" class="kontrola-edit" placeholder="npr. C∴L∴^" maxlength="1024" autocomplete="off">
+                        <button type="button" id="btnLiteralPomoc" class="pdf-dokument-crud__ellipsis-btn" title="Upute / oznake" aria-label="Upute za korisnički tekst"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                    </div>
                 </div>
                 <div class="pdf-dokument-crud__polje" id="polje_mapa" hidden>
                     <label class="kontrola-labela mb-0" for="st_mapa_vrijednosti">Mapa vrijednosti</label>
@@ -329,6 +332,12 @@
                 <pre>0:Brat
 1:Sestra</pre>
                 <p>Ako vrijednost ne odgovara nijednom paru, ostaje izvorna (nepromijenjena).</p>
+                <hr>
+                <p><strong>Posebne oznake u tekstu</strong> (vrijede u korisničkom tekstu i u mapiranom tekstu):</p>
+                <ul>
+                    <li><code>^</code> — razmak; čuva rubne razmake koje bi se inače obrezali. Npr. <code>Brat^</code> → „Brat ".</li>
+                    <li><code>~(N)</code> — tabulator: sljedeći tekst počinje na <strong>N mm</strong> od lijevog ruba. Npr. <code>Napisano dana~(100)</code> + spojena stavka s datumom → datum počinje na 100 mm. Više <code>~(N)</code> u retku = više stupaca; pozicije moraju rasti (nerastući marker se zanemaruje).</li>
+                </ul>
                 <p class="pdf-dokument-crud__pomoc-todo">Operandi i uvjeti (=, ≠, prazno, nije prazno, …) — u izradi, dopunit ćemo.</p>
             </div>
         </div>

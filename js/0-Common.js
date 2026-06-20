@@ -88,6 +88,33 @@
     xhr.send();
   };
 
+  /* --- Blok: Godina istinske svjetlosti (pretvorba datuma u „budući" kalendar) ---
+     Naputak: docs/Izracun_datuma.md. Y_nova = Y + 4000; M_novi = ((M-3+12) mod 12)+1 (ožujak=1); dan ostaje.
+     Ulaz: Date objekt, ili string "YYYY-MM-DD" (DB/ISO, uz opc. vrijeme) ili "D.M.YYYY"/"DD.MM.YYYY" (lokalni).
+     Izlaz: "D. dan M. mjeseca Y. godine" (npr. "18. dan 4. mjeseca 6026. godine"); nevaljan/prazan ulaz → "". */
+  window.Godina_Istinske_Svjetlosti = function (datum) {
+    var D, M, Y, m;
+    if (datum instanceof Date) {
+      if (isNaN(datum.getTime())) return '';
+      D = datum.getDate(); M = datum.getMonth() + 1; Y = datum.getFullYear();
+    } else if (typeof datum === 'string') {
+      var s = trim(datum);
+      if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ].*)?$/))) {        // YYYY-MM-DD (DB/ISO)
+        Y = +m[1]; M = +m[2]; D = +m[3];
+      } else if ((m = s.match(/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\.?$/))) {  // D.M.YYYY / DD.MM.YYYY (lokalni)
+        D = +m[1]; M = +m[2]; Y = +m[3];
+      } else {
+        return '';
+      }
+    } else {
+      return '';
+    }
+    if (!(Y >= 1) || M < 1 || M > 12 || D < 1 || D > 31) return '';
+    var Mnovi = ((M - 3 + 12) % 12) + 1;
+    var Ynova = Y + 4000;
+    return D + '. dan ' + Mnovi + '. mjeseca ' + Ynova + '. godine';
+  };
+
   /* --- Blok: Meni – hover kašnjenje: 116 = glavna stavka (prvi dropdown), 115 = podmeni/ugniježđeni (114 = Traži, ne miješati) --- */
   var VNLH_VAR_ID_MENI_MAIN_HOVER_MS = 116;
   var VNLH_VAR_ID_MENI_DROPDOWN_HOVER_MS = 115;

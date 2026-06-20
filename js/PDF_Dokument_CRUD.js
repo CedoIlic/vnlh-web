@@ -578,6 +578,7 @@
     }
     function zatvori() { m.setAttribute('aria-hidden', 'true'); m.classList.remove('kontrola-modal--open'); }
     var bp = byId('btnMapaPomoc'); if (bp) bp.addEventListener('click', otvori);
+    var bpl = byId('btnLiteralPomoc'); if (bpl) bpl.addEventListener('click', otvori);
     var ok = byId('btnMapaPomocOk'); if (ok) ok.addEventListener('click', zatvori);
     var ov = byId('mapaPomocModal_overlay'); if (ov) ov.addEventListener('click', zatvori);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && m.getAttribute('aria-hidden') === 'false') zatvori(); });

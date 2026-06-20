@@ -49,10 +49,69 @@
     });
   }
 
+  /* Tab-stopovi: marker ~(N) u tekstu znači da sljedeći segment počinje na N mm od lijevog ruba teksta.
+     Skenira runove i reže ih na segmente {pos, runovi} (prvi pos=0). Pozicije moraju rasti — nerastući
+     marker se ignorira (dropa). Vraća null ako markera nema (tada se ne dira ponašanje). */
+  var TAB_RE = /~\((\d+(?:\.\d+)?)\)/;
+  function tabSegmenti(tekst) {
+    var runovi = (typeof tekst === 'string') ? [{ text: tekst }] : (tekst || []);
+    var ima = false;
+    for (var j = 0; j < runovi.length; j++) {
+      if (runovi[j] && typeof runovi[j].text === 'string' && TAB_RE.test(runovi[j].text)) { ima = true; break; }
+    }
+    if (!ima) return null;
+    var segs = [{ pos: 0, runovi: [] }];
+    var maxPos = 0;
+    runovi.forEach(function (r) {
+      if (!r || typeof r.text !== 'string') { if (r) segs[segs.length - 1].runovi.push(r); return; }
+      var rest = r.text, m;
+      while ((m = rest.match(TAB_RE))) {
+        var before = rest.slice(0, m.index);
+        if (before !== '') { var rb = { text: before }; if (r.font) rb.font = r.font; if (r.color) rb.color = r.color; segs[segs.length - 1].runovi.push(rb); }
+        var pos = parseFloat(m[1]);
+        rest = rest.slice(m.index + m[0].length);
+        if (pos > maxPos) { segs.push({ pos: pos, runovi: [] }); maxPos = pos; }   // nerastući → ignoriraj marker
+      }
+      if (rest !== '') { var ra = { text: rest }; if (r.font) ra.font = r.font; if (r.color) ra.color = r.color; segs[segs.length - 1].runovi.push(ra); }
+    });
+    return segs;
+  }
+
+  /* Tab-redak → pdfmake columns: širina stupca = razlika pozicija (mm→pt), zadnji '*'.
+     MVP: bez okvira/pozadine; stil (font/veličina/boja/lineHeight) na svaki stupac; poravnanje lijevo. */
+  function sastaviTabRedak(stil, kljuc, segs, opts) {
+    opts = opts || {};
+    var mL = mm(stil, 'uvlaka_lijevo_mm'), mR = mm(stil, 'uvlaka_desno_mm');
+    var mT = mm(stil, 'razmak_prije_mm'), mB = mm(stil, 'razmak_poslije_mm');
+    var marT = opts.noGapAbove ? 0 : mT, marB = opts.fillGapBelow ? 0 : mB;
+    var baza = {
+      font: kljuc,
+      fontSize: broj(stil.velicina_pt) || 12,
+      bold: bool(stil.bold),
+      italics: bool(stil.italic),
+      lineHeight: broj(stil.prored) || 1,
+      color: str(stil.boja) || '#000000',
+      alignment: 'left'
+    };
+    if (bool(stil.podcrtano)) baza.decoration = 'underline';
+    var cols = segs.map(function (seg, idx) {
+      var col = {}; for (var key in baza) col[key] = baza[key];
+      col.text = seg.runovi.length ? seg.runovi : '';
+      col.width = (idx < segs.length - 1) ? ((segs[idx + 1].pos - seg.pos) * MM_PT) : '*';
+      return col;
+    });
+    return { columns: cols, columnGap: 0, margin: [mL, marT, mR, marB] };
+  }
+
   /* Jedan odlomak (margin = razmaci/uvlake; okvir ili pozadina ga omotaju u tablicu). */
   function sastaviOdlomak(stil, kljuc, tekst, opts) {
     stil = stil || {};
     opts = opts || {};
+    var _tabSegs = tabSegmenti(tekst);
+    if (_tabSegs) {
+      if (_tabSegs.length > 1) return sastaviTabRedak(stil, kljuc, _tabSegs, opts);
+      tekst = _tabSegs[0].runovi.length ? _tabSegs[0].runovi : '';   // svi markeri nevaljani → očišćen tekst
+    }
     var par = {
       text: tekst,
       font: kljuc,
