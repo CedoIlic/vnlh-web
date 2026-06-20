@@ -87,6 +87,68 @@ function pdf_mapa_primijeni($vrijednost, $mapa)
     return $vrijednost;
 }
 
+/** Parsira datum/datetime string → ['Y','M','D','H','i','s'] ili null ako nije datum. */
+function pdf_parse_datum($v)
+{
+    $v = trim((string) $v);
+    if ($v === '') return null;
+    if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/', $v, $m)) {
+        return ['Y' => (int) $m[1], 'M' => (int) $m[2], 'D' => (int) $m[3], 'H' => isset($m[4]) ? (int) $m[4] : 0, 'i' => isset($m[5]) ? (int) $m[5] : 0, 's' => isset($m[6]) ? (int) $m[6] : 0];
+    }
+    if (preg_match('/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\.?/', $v, $m)) {
+        return ['Y' => (int) $m[3], 'M' => (int) $m[2], 'D' => (int) $m[1], 'H' => 0, 'i' => 0, 's' => 0];
+    }
+    return null;
+}
+
+/** Dan u tjednu (Sakamoto, bez ovisnosti o timezone): 0=nedjelja … 6=subota. */
+function pdf_dan_u_tjednu($Y, $M, $D)
+{
+    $t = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
+    $y = $Y - ($M < 3 ? 1 : 0);
+    return (int) (($y + intdiv($y, 4) - intdiv($y, 100) + intdiv($y, 400) + $t[$M - 1] + $D) % 7);
+}
+
+/** Godina istinske svjetlosti (PHP blizanac JS Godina_Istinske_Svjetlosti): Y+4000, mjesec ožujak=1. */
+function pdf_gis_datum($Y, $M, $D)
+{
+    $Mnovi = (($M - 3 + 12) % 12) + 1;
+    return $D . '. dan ' . $Mnovi . '. mjeseca ' . ($Y + 4000) . '. godine';
+}
+
+/** Formatira datumsku vrijednost po uzorku (tokeni) ili keyword "GIS".
+    Prazan format ili vrijednost koja nije datum → vrijednost se vraća nepromijenjena.
+    Tokeni: dddd dan u tjednu, mmmm mjesec imenom, DD/D dan, MM/M mjesec broj, YYYY/YY godina, HH/mm/ss vrijeme. */
+function pdf_formatiraj_datum($vrijednost, $format)
+{
+    if ($vrijednost === null) return null;
+    $format = trim((string) $format);
+    if ($format === '') return $vrijednost;
+    $d = pdf_parse_datum($vrijednost);
+    if ($d === null) return $vrijednost;
+    if ($format === 'GIS') return pdf_gis_datum($d['Y'], $d['M'], $d['D']);
+    $mjeseci = ['', 'siječanj', 'veljača', 'ožujak', 'travanj', 'svibanj', 'lipanj', 'srpanj', 'kolovoz', 'rujan', 'listopad', 'studeni', 'prosinac'];
+    $dani = ['nedjelja', 'ponedjeljak', 'utorak', 'srijeda', 'četvrtak', 'petak', 'subota'];
+    $dow = pdf_dan_u_tjednu($d['Y'], $d['M'], $d['D']);
+    $z2 = function ($n) { return str_pad((string) $n, 2, '0', STR_PAD_LEFT); };
+    return preg_replace_callback('/dddd|mmmm|YYYY|YY|DD|D|MM|M|HH|mm|ss/', function ($mm) use ($d, $mjeseci, $dani, $dow, $z2) {
+        switch ($mm[0]) {
+            case 'dddd': return $dani[$dow];
+            case 'mmmm': return $mjeseci[$d['M']];
+            case 'YYYY': return (string) $d['Y'];
+            case 'YY': return substr((string) $d['Y'], -2);
+            case 'DD': return $z2($d['D']);
+            case 'D': return (string) $d['D'];
+            case 'MM': return $z2($d['M']);
+            case 'M': return (string) $d['M'];
+            case 'HH': return $z2($d['H']);
+            case 'mm': return $z2($d['i']);
+            case 'ss': return $z2($d['s']);
+        }
+        return $mm[0];
+    }, $format);
+}
+
 /** Dohvati vrijednost {kolona} iz {tablica} prema načinu (staticki/dinamicki/po_vrijednosti). */
 function pdf_dohvati_vrijednost($mysqli, $tablica, $kolona, $st, $kontekst)
 {
@@ -314,7 +376,7 @@ function pdf_segment_vrijednost($mysqli, $s, $izvori, $kontekst)
 {
     if (($s['izvor_tip'] ?? '') === 'korisnicki') {
         $lit = (string) ($s['literal_tekst'] ?? '');
-        return ['greska' => null, 'vrijednost' => str_replace('^', ' ', $lit)];
+        return ['greska' => null, 'vrijednost' => pdf_formatiraj_datum(str_replace('^', ' ', $lit), $s['format_datuma'] ?? null)];
     }
     $izvorId = isset($s['izvor_id']) ? (int) $s['izvor_id'] : 0;
     $izvor = isset($izvori[$izvorId]) ? $izvori[$izvorId] : null;
@@ -338,7 +400,7 @@ function pdf_segment_vrijednost($mysqli, $s, $izvori, $kontekst)
     } else {
         $val = pdf_dohvati_vrijednost($mysqli, $izvor['tablica'], $izvor['kolona'], $s, $kontekst);
     }
-    return ['greska' => null, 'vrijednost' => pdf_mapa_primijeni($val, $s['mapa_vrijednosti'] ?? null)];
+    return ['greska' => null, 'vrijednost' => pdf_formatiraj_datum(pdf_mapa_primijeni($val, $s['mapa_vrijednosti'] ?? null), $s['format_datuma'] ?? null)];
 }
 
 // --- Razrješavanje stavki -----------------------------------------------
@@ -397,6 +459,13 @@ while ($i < $n) {
                 $segTekst = (string) $val; $segColor = null;
             }
             if ($segTekst === null) continue;                    // prazan segment — preskoči (flag se ne mijenja)
+            // Korisnički upisan ~(N) više nije podržan (zamijenila ga „Fiksna pozicija stavke") → ukloni ga.
+            $segTekst = preg_replace('/~\(\d+(?:\.\d+)?\)/', '', $segTekst);
+            // Fiksna pozicija stavke → INTERNI ~(N) marker ispred sadržaja (renderer ga pretvara u columns).
+            $fiks = isset($seg['fiksna_pozicija']) ? (float) $seg['fiksna_pozicija'] : 0;
+            if ($fiks > 0) {
+                $segTekst = '~(' . rtrim(rtrim(sprintf('%.2f', $fiks), '0'), '.') . ')' . $segTekst;
+            }
             if ($imaPrije && $zadnjiFlag === 2) {                 // meki prijelom prema prethodnom segmentu
                 $combined .= PDF_MEKI_PRIJELOM;
                 $dijelovi[] = ['tekst' => PDF_MEKI_PRIJELOM, 'color' => null];

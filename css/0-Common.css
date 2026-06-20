@@ -502,7 +502,7 @@
   --modal_image_bg_warning: var(--c-yellow-500);                     /* Podloga slike za stanje warning */
   /* Ikone modala (Check/Error/…) učitavaju se kao <img> iz baze (php/modal_ikona.php, modalIconSrcForStanje); stari --modal_image_* URL tokeni uklonjeni. */
   --modal_auto_close_ms: 2000;                                       /* Automatsko zatvaranje u ms kad nema tipki */
-  --modal_button_caption_default: var(--c-red-500);                        /* Boja captiona default tipke u modalu */
+  --modal_button_caption_default: var(--c-gray-900);                       /* Boja captiona default tipke u modalu (crno, kao ostali caption-i tipki) */
 
   /* =========================================================
      GRUPA: MODAL TABLICA (modal s tablicom, drag, resize kut, resize traka u tijelu)

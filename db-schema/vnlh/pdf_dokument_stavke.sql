@@ -18,6 +18,8 @@ CREATE TABLE `pdf_dokument_stavke` (
   `naziv_stavke`     varchar(255) DEFAULT NULL COMMENT 'Naziv/naslov stavke (npr. logo, naslov) — interna oznaka administratora',
   `preko_izvor_id`   int(11) unsigned DEFAULT NULL COMMENT 'FK na pdf_dozvoljeni_izvori — izvor (tablica.kolona) FK-stupca preko kojeg se dobije id (indirektni ključ, npr. eseji.autor); NULL = direktan dohvat',
   `mapa_vrijednosti` varchar(255) DEFAULT NULL COMMENT 'Mapiranje konačne vrijednosti, format "v:tekst;v:tekst" (npr. 0:Brat;1:Sestra); NULL = bez mapiranja',
+  `format_datuma`    varchar(64) DEFAULT NULL COMMENT 'Uzorak formata datuma za izlaz (DD/D dan, MM/M mjesec broj, mmmm mjesec imenom, YYYY/YY godina, dddd dan u tjednu, HH/mm/ss vrijeme); prazno = sirova vrijednost',
+  `fiksna_pozicija`  decimal(6,2) DEFAULT NULL COMMENT 'Fiksna početna pozicija sadržaja stavke u mm od lijevog ruba (tab); NULL = bez fiksne pozicije',
   PRIMARY KEY (`id`),
   KEY `idx_dokument_redoslijed` (`dokument_id`, `redoslijed`),
   KEY `fk_stavka_izvor` (`izvor_id`),

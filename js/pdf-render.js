@@ -49,9 +49,10 @@
     });
   }
 
-  /* Tab-stopovi: marker ~(N) u tekstu znači da sljedeći segment počinje na N mm od lijevog ruba teksta.
-     Skenira runove i reže ih na segmente {pos, runovi} (prvi pos=0). Pozicije moraju rasti — nerastući
-     marker se ignorira (dropa). Vraća null ako markera nema (tada se ne dira ponašanje). */
+  /* Fiksna pozicija stavke: INTERNI marker ~(N) (ubacuje ga resolver iz stavka.fiksna_pozicija) znači da
+     sljedeći segment počinje na N mm od lijevog ruba teksta. NIJE korisnička sintaksa — admin koristi polje
+     „Fiksna pozicija stavke". Skenira runove i reže na segmente {pos, runovi} (prvi pos=0); pozicije moraju
+     rasti (nerastući se ignorira). Vraća null ako markera nema (ponašanje se ne dira). */
   var TAB_RE = /~\((\d+(?:\.\d+)?)\)/;
   function tabSegmenti(tekst) {
     var runovi = (typeof tekst === 'string') ? [{ text: tekst }] : (tekst || []);

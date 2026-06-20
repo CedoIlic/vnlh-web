@@ -294,6 +294,20 @@
                         <button type="button" id="btnMapaPomoc" class="pdf-dokument-crud__ellipsis-btn" title="Upute / sintaksa" aria-label="Upute za mapu vrijednosti"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
                     </div>
                 </div>
+                <div class="pdf-dokument-crud__polje" id="polje_format_datuma">
+                    <label class="kontrola-labela mb-0" for="st_format_datuma">Format datuma</label>
+                    <div class="pdf-dokument-crud__edit-with-ellipsis">
+                        <input id="st_format_datuma" type="text" class="kontrola-edit" placeholder="npr. DD. MM. YYYY. ili GIS" maxlength="64" autocomplete="off">
+                        <button type="button" id="btnFormatPomoc" class="pdf-dokument-crud__ellipsis-btn" title="Upute / formati" aria-label="Upute za format datuma"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                    </div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_fiksna_pozicija">
+                    <label class="kontrola-labela mb-0" for="st_fiksna_pozicija">Fiksna pozicija stavke</label>
+                    <div class="pdf-dokument-crud__unos-mjera">
+                        <input id="st_fiksna_pozicija" type="text" class="kontrola-edit pdf-dokument-crud__num" inputmode="decimal" placeholder="0,0" maxlength="9" autocomplete="off" aria-label="Fiksna pozicija stavke u mm">
+                        <span class="pdf-dokument-crud__mjera" aria-hidden="true">mm</span>
+                    </div>
+                </div>
                 <div class="pdf-dokument-crud__polje" id="polje_paragraf">
                     <label class="kontrola-labela mb-0" for="st_paragraf_id">Stil teksta</label>
                     <div class="kontrola-select"><select id="st_paragraf_id" aria-label="Stil teksta">
@@ -313,7 +327,7 @@
             </div>
         </div>
         <div class="kontrola-modal__footer">
-            <button type="button" id="btnStavkaUpis" class="kontrola-btn kontrola-btn--crud-upisi" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
+            <button type="button" id="btnStavkaUpis" class="kontrola-btn kontrola-btn--primary" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
             <button type="button" id="btnStavkaOdustani" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
         </div>
     </div>
@@ -336,13 +350,45 @@
                 <p><strong>Posebne oznake u tekstu</strong> (vrijede u korisničkom tekstu i u mapiranom tekstu):</p>
                 <ul>
                     <li><code>^</code> — razmak; čuva rubne razmake koje bi se inače obrezali. Npr. <code>Brat^</code> → „Brat ".</li>
-                    <li><code>~(N)</code> — tabulator: sljedeći tekst počinje na <strong>N mm</strong> od lijevog ruba. Npr. <code>Napisano dana~(100)</code> + spojena stavka s datumom → datum počinje na 100 mm. Više <code>~(N)</code> u retku = više stupaca; pozicije moraju rasti (nerastući marker se zanemaruje).</li>
                 </ul>
+                <p>Za poravnanje sadržaja na fiksnu poziciju (tabulator) koristi polje <strong>„Fiksna pozicija stavke"</strong>.</p>
                 <p class="pdf-dokument-crud__pomoc-todo">Operandi i uvjeti (=, ≠, prazno, nije prazno, …) — u izradi, dopunit ćemo.</p>
             </div>
         </div>
         <div class="kontrola-modal__footer">
-            <button type="button" id="btnMapaPomocOk" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+            <button type="button" id="btnMapaPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Popup: upute za „Format datuma" ===== -->
+<div class="kontrola-modal kontrola-modal--dim" id="formatPomocModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="formatPomocModal_overlay"></div>
+    <div class="kontrola-modal__dialog pdf-dokument-crud__pomoc-modal">
+        <div class="kontrola-modal__header" id="formatPomocModal_header">Format datuma — upute</div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content pdf-dokument-crud__pomoc">
+                <p><strong>Format datuma</strong> — ako vrijednost stavke jest datum, ispisuje se po zadanom uzorku. Prazno ili vrijednost koja nije datum → ostaje nepromijenjena.</p>
+                <p>Tokeni:</p>
+                <ul>
+                    <li><code>DD</code> / <code>D</code> — dan (01 / 1)</li>
+                    <li><code>MM</code> / <code>M</code> — mjesec brojem (06 / 6)</li>
+                    <li><code>mmmm</code> — mjesec imenom (lipanj)</li>
+                    <li><code>YYYY</code> / <code>YY</code> — godina (2026 / 26)</li>
+                    <li><code>dddd</code> — dan u tjednu (ponedjeljak)</li>
+                    <li><code>HH</code> <code>mm</code> <code>ss</code> — sat / minuta / sekunda</li>
+                    <li>ostali znakovi (<code>.</code>, razmak, <code>/</code>, <code>,</code>) — pišu se doslovno</li>
+                </ul>
+                <p>Primjeri za <code>2026-06-01</code>:</p>
+                <pre>DD. MM. YYYY.        → 01. 06. 2026.
+dddd, D. mmmm YYYY.  → ponedjeljak, 1. lipanj 2026.</pre>
+                <hr>
+                <p><strong>GIS</strong> — upiši <code>GIS</code> (umjesto uzorka) da se datum pretvori u <em>godinu istinske svjetlosti</em>:</p>
+                <pre>GIS → 1. dan 4. mjeseca 6026. godine</pre>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="btnFormatPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
         </div>
     </div>
 </div>
@@ -374,6 +420,19 @@
                     </div>
                     <label class="kontrola-checkbox-labela" style="margin-bottom:.4rem;"><input id="tm_djelomicno" type="checkbox" class="kontrola-checkbox"> Djelomično ok</label>
                     <button type="button" id="tm_trazi" class="kontrola-btn" style="margin-bottom:.15rem; margin-left:auto;"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Traži</span></span></span></button>
+                </div>
+                <div class="pdf-dokument-crud__pomoc">
+                    <hr>
+                    <p><strong>Kako radi:</strong> pomoć za pronalazak <em>testnog ID-a</em> retka u tablici izvora ove (dinamičke) stavke.</p>
+                    <ul>
+                        <li><strong>Kolona tabele</strong> — kolona po kojoj se traži.</li>
+                        <li><strong>Traženi niz</strong> — vrijednost koja se traži u toj koloni.</li>
+                        <li><strong>Djelomično ok</strong> — traži djelomično podudaranje (sadrži niz); inače točno podudaranje.</li>
+                        <li><strong>Traži</strong> — pronalazi prvi red i upiše njegov <strong>ID</strong>; ako ih je više, javi koliko (uzima prvi).</li>
+                        <li><strong>OK</strong> — postavlja taj ID kao „Testni ID (pregled)" stavke.</li>
+                    </ul>
+                    <p><strong>Kada se koristi:</strong> za pojedinačni test dinamičke stavke — npr. kad stavka ima drukčiji <code>kontekst_kljuc</code> od dokumentnog testnog konteksta, ili za brzu provjeru bez postavljanja „Izabrani ID".</p>
+                    <p><strong>Kada NE:</strong> kad je dokument „u razvoju" i ima postavljen „Izabrani ID" (desni stupac) — on već dodjeljuje id svim stavkama s istim ključem, pa je ovaj testni ID suvišan. Također, kad dokument nije u razvoju (id dolazi iz aplikacije).</p>
                 </div>
             </div>
         </div>

@@ -70,13 +70,13 @@ try {
     if (!empty($stavke)) {
         $dok = 0; $red = 0; $zona = ''; $vrsta = ''; $izParam = null; $izTip = '';
         $izRed = null; $kkljuc = null; $tid = null; $tkol = null; $tvrij = null; $lit = null;
-        $parId = null; $sslik = null; $bezkraj = 0; $nap = null; $prekoId = null; $mapa = null;
+        $parId = null; $sslik = null; $bezkraj = 0; $nap = null; $prekoId = null; $mapa = null; $fmt = null; $fiks = null;
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $ins->bind_param('iissisisisssiiisis', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa);
+        $ins->bind_param('iissisisisssiiisissd', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks);
         $dok = $id;
         $i = 0;
         foreach ($stavke as $s) {
@@ -122,6 +122,10 @@ try {
             $prekoId = ($izTip === 'dinamicki' && (int) ($s['preko_izvor_id'] ?? 0) > 0) ? (int) $s['preko_izvor_id'] : null;
             $mv = ($izTip !== 'korisnicki') ? trim((string) ($s['mapa_vrijednosti'] ?? '')) : '';
             $mapa = ($mv === '') ? null : $mv;
+            $fv = ($vrsta === 'tekst') ? trim((string) ($s['format_datuma'] ?? '')) : '';   // format datuma (samo tekst)
+            $fmt = ($fv === '') ? null : $fv;
+            $fp = ($vrsta === 'tekst' && isset($s['fiksna_pozicija']) && (float) $s['fiksna_pozicija'] > 0) ? (float) $s['fiksna_pozicija'] : null;
+            $fiks = $fp;   // fiksna pozicija (mm); NULL = bez
             $zadnjiRed = $red;
             $ins->execute();
         }
