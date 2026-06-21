@@ -33,8 +33,13 @@
   var selectRegija = document.getElementById('select_regija');
   var selectLoza   = document.getElementById('select_loza');
 
-  /** ID trenutno učitanog/upisanog eseja (mod 1); null u modu 0. */
+  /** ID trenutno učitanog/upisanog eseja (mod 1, vlastiti esej); null u modu 0 i za tuđi esej. */
   var esejTrenutniId = null;
+  /** ID eseja PRIKAZANOG u formi (vlastiti ILI tuđi javni) — izvor za PDF. null kad nema eseja.
+   *  Tuđi javni esej smije se PDF-ati (čita se iz baze sa svim vlasnikovim obilježjima). */
+  var esejPrikazaniId = null;
+  /** Vrijednost eseji.dokument_prored prikazanog eseja (množitelj extra-proreda); null = nije postavljen. */
+  var esejProredAktivni = null;
   /** ID odabranog autora (clanovi.id); null ako nije odabran. */
   var esejAutorClanId = null;
   /** Pravo upisa/izmjene iz geo/prava odgovora (1 = smije, 0 = ne smije); koristi esejProvedeUvjeteForma. */
@@ -1024,6 +1029,10 @@
     var isIstaLoza = rowData.ista_loza === 1;
     /* 1. Clear + postavi mod (edit ili RO za tuđi esej). */
     esejOcistiFormu();  /* resetira _esejReadOnlyMode = false */
+    /* ID i prored PRIKAZANOG eseja (vlastiti ILI tuđi javni) — PDF je dozvoljen u oba slučaja. */
+    esejPrikazaniId = String(rowData.id);
+    esejProredAktivni = (rowData.dokument_prored != null && rowData.dokument_prored !== '') ? rowData.dokument_prored : null;
+    esejAzurirajPdfDugme();   /* odmah enable — ne čekamo geo/stupanj async lanac */
     if (isIstaLoza) {
       window.mod_upisa_eseja = 1;
       esejTrenutniId = String(rowData.id);
@@ -1411,14 +1420,24 @@
     if (bUpis) { bUpis.hidden = true; bUpis.style.display = 'none'; bUpis.disabled = true; }
     var bBr = document.getElementById('btnIzbrisi');
     if (bBr)   { bBr.hidden = true; bBr.style.display = 'none'; }
+    esejAzurirajPdfDugme();   /* RO (tuđi javni esej) → PDF disabled */
+  }
+
+  /**
+   * Jedini izvor istine za enable/disable PDF ikone: aktivna kad je esej UČITAN iz baze (postoji
+   * esejPrikazaniId) — i vlastiti i TUĐI JAVNI (javan esej se smije PDF-ati). Poziva se ODMAH pri
+   * svakoj promjeni esejPrikazaniId — ne oslanja se na async lanac (stupanj XHR, geo kaskada),
+   * što je bio uzrok povremenog ne-enable-a.
+   */
+  function esejAzurirajPdfDugme() {
     var btnPdf = document.getElementById('esej_btn_pdf');
-    if (btnPdf) btnPdf.disabled = true;
+    if (btnPdf) btnPdf.disabled = !esejPrikazaniId;
   }
 
   /**
    * Evaluira uvjete za Upis/Izmjeni (vidljivost) i PDF (disabled).
    * Upis/Izmjeni: vidljiv samo kad su loža + autor + naslov + stupanj postavljeni.
-   * PDF: enabled samo kad su loža + autor + naslov + stupanj + sadržaj postavljeni.
+   * PDF: vidi esejAzurirajPdfDugme (samo kad je esej učitan iz baze).
    */
   function esejProvedeUvjeteForma() {
     if (_esejReadOnlyMode) { _esejPrimijeniReadOnly(); return; }
@@ -1428,10 +1447,7 @@
     var imaNaslov = naslovEl ? !!trimZ(naslovEl.value) : false;
     var stupanjEl = document.getElementById('esej_select_stupanj');
     var imaStupanj = stupanjEl ? !!trimZ(stupanjEl.value) : false;
-    var imaSadrzaj = !!trimZ(esejSadrzajGetTekst() || '');
-
     var mozUpis = imaLozu && imaAutor && imaNaslov && imaStupanj;
-    var mozPdf  = mozUpis && imaSadrzaj;
 
     /* Upis/Izmjeni: hidden dok nisu sva obavezna polja; prava moraju dozvoljavati upis. */
     var bUpis = document.getElementById('btnUpisi');
@@ -1446,9 +1462,8 @@
       }
     }
 
-    /* PDF: disable/enable prema svim obaveznim poljima + sadržaj. */
-    var btnPdf = document.getElementById('esej_btn_pdf');
-    if (btnPdf) btnPdf.disabled = !mozPdf;
+    /* PDF: jedini izvor istine je esejAzurirajPdfDugme (esej učitan iz baze, ne RO). */
+    esejAzurirajPdfDugme();
   }
 
   /**
@@ -1510,8 +1525,7 @@
     /* Ikone u zaglavlju: disable/enable zajedno s tabovima. */
     var btnOdabir = document.getElementById('esej_btn_odabir_postojeceg');
     if (btnOdabir) btnOdabir.disabled = !imaLozu;
-    var btnPdf = document.getElementById('esej_btn_pdf');
-    if (btnPdf) btnPdf.disabled = !imaLozu;
+    esejAzurirajPdfDugme();   /* PDF: jedini izvor istine (esej učitan iz baze, ne RO) */
 
     /* Sinkroniziraj izgled labela s disabled stanjem kontrola. */
     if (typeof KontroleSyncLabelsDisabledState === 'function') {
@@ -1819,6 +1833,8 @@
     var lokot = document.getElementById('esej_ro_lokot');
     if (lokot) { lokot.hidden = true; lokot.style.display = 'none'; }
     esejTrenutniId = null;
+    esejPrikazaniId = null;
+    esejProredAktivni = null;
     esejAutorClanId = null;
     _esejReadOnlyMode = false;
     /* Postavi na tab 0 (Opći podaci). */
@@ -2207,6 +2223,237 @@
         } catch (e2) {}
       }
       window.location.href = new URL('Meni.php', window.location.href).href;
+    });
+  }());
+
+  /* ============================================================
+   * PDF modal eseja: render dokumenta „Esej" (kontekst = id eseja) +
+   * uživo podešavanje extra-proreda (eseji.dokument_prored).
+   * ============================================================ */
+  (function initPdfModal() {
+    var ESEJ_DOK_NAZIV = 'Esej';   /* dokument u pdf_dokument koji opisuje izgled esej-PDF-a (referenca po nazivu) */
+    var PRORED_MIN = 0.80, PRORED_MAX = 2.00, PRORED_KORAK = 0.1, PRORED_DEF = 1.00;
+    var MSG_SPREMLJEN = 'Prored spremljen.';
+
+    var btnPdf      = document.getElementById('esej_btn_pdf');
+    var modal       = document.getElementById('esejModalPdf');
+    if (!btnPdf || !modal) return;
+    var overlay     = modal.querySelector('.esej-crud__modal-pdf-overlay');
+    var okvir       = document.getElementById('esej_pdf_okvir');
+    var info        = document.getElementById('esej_pdf_info');
+    var inpProred   = document.getElementById('esej_pdf_prored');
+    var btnGore     = document.getElementById('esej_pdf_prored_gore');
+    var btnDolje    = document.getElementById('esej_pdf_prored_dolje');
+    var btnSave     = document.getElementById('esej_pdf_save');
+    var btnRefresh  = document.getElementById('esej_pdf_refresh');
+    var btnPovratak = document.getElementById('esej_pdf_povratak');
+    var spiner      = document.getElementById('esej_pdf_spiner');
+
+    var _dokument = null;        /* {dokument, stavke} za „Esej" — keš nakon prvog dohvata */
+    var _proredStilId = null;    /* dokument.dokument_prored_default_stil */
+    var _esejIdAktivni = null;   /* id eseja za koji je modal otvoren */
+    var _zauzet = false;         /* render u tijeku */
+
+    function fmtProred(n) { return n.toFixed(2).replace('.', ','); }
+    function parseProred(v) {
+      var n = parseFloat(String(v == null ? '' : v).replace(',', '.'));
+      if (isNaN(n)) n = PRORED_DEF;
+      if (n < PRORED_MIN) n = PRORED_MIN;
+      if (n > PRORED_MAX) n = PRORED_MAX;
+      return Math.round(n * 100) / 100;
+    }
+    function getProred() { return parseProred(inpProred ? inpProred.value : PRORED_DEF); }
+    function setProred(n) { if (inpProred) inpProred.value = fmtProred(parseProred(n)); }
+    function postaviInfo(t) { if (info) info.textContent = t || ''; }
+    /* „Prored spremljen." vrijedi samo dok je vrijednost nepromijenjena — očisti je čim korisnik dira prored. */
+    function porukaSpremljenOcisti() { if (info && info.textContent === MSG_SPREMLJEN) postaviInfo(''); }
+    function spinerShow() { if (typeof KontroleSpinerShow === 'function') KontroleSpinerShow(spiner); }
+    function spinerHide() { if (typeof KontroleSpinerHide === 'function') KontroleSpinerHide(spiner); }
+    /* Terminal rendera: oslobodi lock, sakrij spiner, postavi info. */
+    function krajRendera(poruka) { _zauzet = false; spinerHide(); postaviInfo(poruka || ''); }
+
+    /* Početni „Prored": esej.dokument_prored (ako postavljen) → inače prored default-stila dokumenta
+       (dokument_prored_default_stil) → inače PRORED_DEF. Zahtijeva učitan _dokument (default_stil_prored). */
+    function postaviPocetniProred() {
+      var v;
+      if (esejProredAktivni != null && trimZ(String(esejProredAktivni)) !== '') v = esejProredAktivni;
+      else if (_dokument && _dokument.default_stil_prored != null && trimZ(String(_dokument.default_stil_prored)) !== '') v = _dokument.default_stil_prored;
+      else v = PRORED_DEF;
+      setProred(v);
+    }
+
+    function ocistiIframe() {
+      if (okvir) {
+        if (okvir._url) { try { URL.revokeObjectURL(okvir._url); } catch (e) {} okvir._url = null; }
+        okvir.removeAttribute('src');
+      }
+    }
+
+    function otvoriModal() {
+      modal.classList.add('esej-crud__modal-pdf--open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+    function zatvoriModal() {
+      modal.classList.remove('esej-crud__modal-pdf--open');
+      modal.setAttribute('aria-hidden', 'true');
+      ocistiIframe();
+      spinerHide();
+      postaviInfo('');
+      try { btnPdf.focus(); } catch (e) {}
+    }
+
+    function ucitajFontove(lista, cb, err) {
+      lista = lista || [];
+      if (!lista.length) { cb(); return; }
+      var preostalo = lista.length, greska = false;
+      lista.forEach(function (f) {
+        window.PdfRender.Fontovi.osiguraj(f.kljuc, f.porodica,
+          function () { if (--preostalo === 0) { greska ? err() : cb(); } },
+          function () { greska = true; if (--preostalo === 0) { err(); } });
+      });
+    }
+
+    /* Resolve stavki dokumenta (kontekst = id eseja) → pdf-render → blob u iframe. */
+    function renderiraj() {
+      if (_zauzet) return;
+      spinerShow();
+      if (!window.PdfRender) { krajRendera('PDF biblioteka nije učitana.'); return; }
+      if (!_dokument || !_dokument.dokument) { krajRendera('Dokument „' + ESEJ_DOK_NAZIV + '" nije pronađen.'); return; }
+      if (!_esejIdAktivni) { krajRendera('Esej nije učitan.'); return; }
+      var dok = _dokument.dokument;
+      var stavke = _dokument.stavke || [];
+      /* Kontekst: svaki distinct kontekst_kljuc dinamičkih stavki → id eseja (bez hardkodiranja ključa). */
+      var kontekst = {};
+      stavke.forEach(function (s) {
+        var k = s.kontekst_kljuc != null ? trimZ(String(s.kontekst_kljuc)) : '';
+        if (k !== '') kontekst[k] = parseInt(_esejIdAktivni, 10);
+      });
+      var payload = {
+        template_id: dok.template_id ? parseInt(dok.template_id, 10) : 0,
+        kontekst: kontekst,
+        broj_stranice_paragraf_id: dok.broj_stranice_paragraf_id ? parseInt(dok.broj_stranice_paragraf_id, 10) : null,
+        stavke: stavke.map(function (s) {
+          return {
+            redoslijed: s.redoslijed, zona: s.zona, vrsta: s.vrsta,
+            izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id,
+            kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id,
+            trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost,
+            literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id,
+            bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke,
+            preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
+            format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija
+          };
+        })
+      };
+      var proredVrijednost = getProred();
+      _zauzet = true;
+      postaviInfo('Dohvaćam…');
+      esejPostJson(getApiUrl('PDF_Generator_resolve.php'), payload, function (res) {
+        var model;
+        try { model = JSON.parse(res); } catch (e) { krajRendera('Greška dohvata modela.'); return; }
+        if (!model || model.greska) { krajRendera('Greška: ' + ((model && model.greska) || 'nepoznata')); return; }
+        postaviInfo('Pripremam slike…');
+        window.PdfRender.pripremiSlike(model, function (model) {
+          postaviInfo('Gradim PDF…');
+          var dd = window.PdfRender.sastaviDocDefinition(model, { proredStilId: _proredStilId, proredVrijednost: proredVrijednost });
+          window.PdfRender.Pdf.ucitaj(function () {
+            ucitajFontove(model.fontovi, function () {
+              try {
+                pdfMake.createPdf(dd).getBlob(function (blob) {
+                  ocistiIframe();
+                  okvir._url = URL.createObjectURL(blob);
+                  okvir.src = okvir._url;
+                  krajRendera('');
+                });
+              } catch (e) { krajRendera('Greška pri renderu: ' + e); }
+            }, function () { krajRendera('Greška pri učitavanju fontova.'); });
+          }, function () { krajRendera('Greška pri učitavanju pdfmake biblioteke.'); });
+        });
+      });
+    }
+
+    /* Klik PDF: zapamti id eseja, postavi prored, otvori modal, (dohvati dokument →) renderiraj. */
+    btnPdf.addEventListener('click', function () {
+      if (btnPdf.disabled || !esejPrikazaniId) return;
+      _esejIdAktivni = esejPrikazaniId;
+      /* Tuđi javni esej (RO): PDF se smije graditi, ali prored se NE smije spremati (tuđi zapis). */
+      if (btnSave) btnSave.disabled = !!_esejReadOnlyMode;
+      otvoriModal();
+      /* Početni prored se postavlja TEK kad je dokument dostupan (treba default_stil_prored). */
+      if (_dokument && _dokument.dokument) { postaviPocetniProred(); renderiraj(); return; }
+      spinerShow();
+      postaviInfo('Učitavam dokument…');
+      var url = getApiUrl('PDF_Dokument_po_nazivu.php') + '?naziv=' + encodeURIComponent(ESEJ_DOK_NAZIV);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        var data = null;
+        try { data = JSON.parse((xhr.responseText || '').replace(/^﻿/, '').trim()); } catch (e) {}
+        if (!data || data.greska || !data.dokument) {
+          krajRendera('Dokument „' + ESEJ_DOK_NAZIV + '" nije pronađen.');
+          return;
+        }
+        _dokument = data;
+        _proredStilId = data.dokument.dokument_prored_default_stil
+          ? parseInt(data.dokument.dokument_prored_default_stil, 10) : null;
+        postaviPocetniProred();
+        renderiraj();
+      };
+      xhr.send();
+    });
+
+    /* Stepper ±0,1 (klamp); ručni unos dozvoljen, normalizira se na blur. */
+    function korak(d) {
+      setProred(getProred() + d);
+      porukaSpremljenOcisti();
+    }
+    if (btnGore)  btnGore.addEventListener('click', function () { korak(PRORED_KORAK); });
+    if (btnDolje) btnDolje.addEventListener('click', function () { korak(-PRORED_KORAK); });
+    if (inpProred) {
+      inpProred.addEventListener('input', function () {
+        /* dopusti znamenke, zarez i točku tijekom tipkanja */
+        var c = inpProred.value.replace(/[^0-9.,]/g, '');
+        if (inpProred.value !== c) inpProred.value = c;
+        porukaSpremljenOcisti();
+      });
+      inpProred.addEventListener('blur', function () { setProred(getProred()); });
+      inpProred.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); setProred(getProred()); renderiraj(); }
+      });
+    }
+
+    /* Save: spremi prored u bazu (eseji.dokument_prored) za trenutni esej. */
+    if (btnSave) {
+      btnSave.addEventListener('click', function () {
+        if (!_esejIdAktivni || _esejReadOnlyMode) return;   /* tuđi esej: ne spremaj prored */
+        var p = getProred();
+        setProred(p);
+        btnSave.disabled = true;
+        esejPostJson(getApiUrl('Esej_CRUD_prored.php'), { id: parseInt(_esejIdAktivni, 10), prored: fmtProred(p) }, function (res, status) {
+          btnSave.disabled = false;
+          if (status >= 200 && status < 300 && res === 'OK') {
+            esejProredAktivni = p;   /* zapamti za sljedeće otvaranje */
+            postaviInfo(MSG_SPREMLJEN);
+          } else {
+            var pk = typeof parseResponseCode === 'function' ? parseResponseCode(res) : null;
+            var kod = pk && pk.code ? pk.code : '200';
+            if (typeof window.showPorukaModal === 'function') {
+              window.showPorukaModal(typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[kod] ? kod : '200', pk ? pk.replacements || [] : [res]);
+            } else { postaviInfo('Greška pri spremanju proreda.'); }
+          }
+        });
+      });
+    }
+
+    /* Refresh: ponovo renderiraj s trenutnom vrijednošću proreda (bez spremanja). */
+    if (btnRefresh) btnRefresh.addEventListener('click', function () { setProred(getProred()); renderiraj(); });
+
+    /* Zatvaranje: Povratak / overlay / Escape. */
+    if (btnPovratak) btnPovratak.addEventListener('click', zatvoriModal);
+    if (overlay)     overlay.addEventListener('click', zatvoriModal);
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && modal.classList.contains('esej-crud__modal-pdf--open')) zatvoriModal();
     });
   }());
 

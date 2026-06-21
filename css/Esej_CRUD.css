@@ -724,3 +724,170 @@ body {
   justify-content: center;
   border-top: 1px solid var(--edit_border);
 }
+
+/* =========================================================
+   PDF modal eseja (render dokumenta „Esej" + extra prored)
+   ========================================================= */
+.esej-crud__modal-pdf {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.esej-crud__modal-pdf.esej-crud__modal-pdf--open { display: flex; }
+.esej-crud__modal-pdf-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--modal_tablica_overlay_bg);
+}
+.esej-crud__modal-pdf-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(900px, 95vw);
+  height: 92vh;
+  max-width: 95vw;
+  max-height: 95vh;
+  border: var(--modal_tablica_border_w) solid var(--modal_tablica_border);
+  border-radius: var(--modal_tablica_border_radius);
+  box-shadow: var(--modal_tablica_sjena);
+  background: var(--modal_tablica_body_bg);
+  overflow: hidden;
+}
+.esej-crud__modal-pdf-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: var(--modal_tablica_header_padding_y) var(--modal_tablica_header_padding_x);
+  background: var(--modal_tablica_header_bg);
+  color: var(--modal_tablica_header_text);
+  border-bottom: var(--modal_tablica_header_border_bottom);
+}
+.esej-crud__modal-pdf-naslov {
+  font-family: var(--modal_tablica_header_font_family);
+  font-size: var(--modal_tablica_header_font_size);
+  font-weight: var(--modal_tablica_header_font_weight);
+}
+.esej-crud__modal-pdf-alati {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+/* Stepper (isti obrazac kao PDF_Stilovi veličina) — širina edita 100px. */
+.esej-crud__stepper {
+  position: relative;
+  display: inline-flex;
+}
+.esej-crud__stepper-input {
+  width: 100px;
+  text-align: center;
+  padding-right: 1.5rem;
+}
+.esej-crud__stepper-strelice {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 1.35rem;
+  display: flex;
+  flex-direction: column;
+}
+.esej-crud__stepper-btn {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 0.6rem;
+  line-height: 1;
+  border: none;
+  background: var(--c-gray-50, #f8f9fa);
+  color: var(--c-text, #333);
+  cursor: pointer;
+}
+.esej-crud__stepper-btn:first-child {
+  border-bottom: 1px solid var(--edit_border, #ced4da);
+  border-top-right-radius: var(--edit_radius, 6px);
+}
+.esej-crud__stepper-btn:last-child {
+  border-bottom-right-radius: var(--edit_radius, 6px);
+}
+@media (hover: hover) {
+  .esej-crud__stepper-btn:hover { background: var(--c-gray-100, #eee); }
+}
+/* Ikona-tipke (save / refresh) u zaglavlju — sjene/tokeni isti kao kontrola-edit. */
+.esej-crud__modal-pdf-ikona-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--edit_height);
+  height: var(--edit_height);
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  box-shadow: var(--tablica_sjena);
+  color: var(--edit_text);
+  cursor: pointer;
+}
+.esej-crud__modal-pdf-ikona-btn:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--edit_text_disabled);
+  border-color: var(--edit_border_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled);
+  cursor: var(--edit_cursor_disabled);
+}
+@media (hover: hover) {
+  .esej-crud__modal-pdf-ikona-btn:hover:not(:disabled) { background: var(--c-gray-100, #eee); }
+}
+.esej-crud__modal-pdf-ikona-btn:active:not(:disabled) { transform: translateY(1px); }
+/* Dva slobodna mjesta (rezerva) između save i refresh. */
+.esej-crud__modal-pdf-slot {
+  display: inline-block;
+  width: var(--edit_height);
+  height: var(--edit_height);
+}
+.esej-crud__modal-pdf-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--c-gray-200, #e9ecef);
+}
+.esej-crud__modal-pdf-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: var(--c-gray-200, #e9ecef);
+}
+.esej-crud__modal-pdf-info {
+  position: absolute;
+  left: 0.5rem;
+  bottom: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  color: var(--c-text, #333);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+  pointer-events: none;
+}
+.esej-crud__modal-pdf-info:empty { display: none; }
+.esej-crud__modal-pdf-footer {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: var(--modal_tablica_footer_padding_y, 0.6rem) var(--modal_tablica_footer_padding_x, 0.75rem);
+  border-top: 1px solid var(--edit_border, #ced4da);
+  background: var(--modal_tablica_body_bg, #fff);
+}

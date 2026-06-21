@@ -90,7 +90,7 @@
       fontSize: broj(stil.velicina_pt) || 12,
       bold: bool(stil.bold),
       italics: bool(stil.italic),
-      lineHeight: broj(stil.prored) || 1,
+      lineHeight: (opts.proredVrijednost != null ? broj(opts.proredVrijednost) : (broj(stil.prored) || 1)),
       color: str(stil.boja) || '#000000',
       alignment: 'left'
     };
@@ -119,7 +119,7 @@
       fontSize: broj(stil.velicina_pt) || 12,
       bold: bool(stil.bold),
       italics: bool(stil.italic),
-      lineHeight: broj(stil.prored) || 1,
+      lineHeight: (opts.proredVrijednost != null ? broj(opts.proredVrijednost) : (broj(stil.prored) || 1)),
       alignment: str(stil.poravnanje) || 'left',
       color: str(stil.boja) || '#000000'
     };
@@ -337,7 +337,10 @@
         var ps = (s.paragraf_id && parStilovi[s.paragraf_id]) ? parStilovi[s.paragraf_id] : {};
         var kljuc = s.font_kljuc || undefined;
         var odlomci = s.odlomci || [];
-        return odlomci.map(function (runovi) { return sastaviOdlomak(ps, kljuc, runovi, {}); });
+        /* Extra prored dokumenta: APSOLUTNI override lineHeight-a SAMO na stilu dokument_prored_default_stil. */
+        var elOpts = {};
+        if (opts.proredVrijednost != null && opts.proredStilId && ps && +ps.id === +opts.proredStilId) elOpts.proredVrijednost = opts.proredVrijednost;
+        return odlomci.map(function (runovi) { return sastaviOdlomak(ps, kljuc, runovi, elOpts); });
       }
       return [];
     }

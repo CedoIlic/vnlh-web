@@ -51,6 +51,7 @@ $base_sql = "
         e.naslov_eseja,
         e.kljucne_rijeci,
         e.esej,
+        e.dokument_prored,
         e.javno_dostupan,
         IF(e.loza = ?, 1, 0) AS ista_loza,
         (SELECT zb.boja    FROM zapisnik_boje_u_listi zb WHERE zb.id = 10 LIMIT 1) AS boja_javno,
