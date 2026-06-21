@@ -10,6 +10,7 @@ if ($db_ret !== -1) {
 $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 $id_regija = isset($_POST['id_regija']) ? (int)$_POST['id_regija'] : 0;
 $naziv = isset($_POST['naziv']) ? trim($_POST['naziv']) : '';
+$orjent = (isset($_POST['orjent']) && trim($_POST['orjent']) !== '') ? trim($_POST['orjent']) : null;   // Orijent lože; prazno → NULL
 $adresa_1 = isset($_POST['adresa_loze_1']) ? trim($_POST['adresa_loze_1']) : '';
 $adresa_2 = isset($_POST['adresa_loze_2']) ? trim($_POST['adresa_loze_2']) : '';
 $grad = isset($_POST['grad']) ? trim($_POST['grad']) : '';
@@ -87,6 +88,7 @@ $set_parts[] = ($id_tip_loze === null ? 'id_tip_loze=NULL' : 'id_tip_loze=?'); i
 $set_parts[] = ($id_drzava === null ? 'id_drzava=NULL' : 'id_drzava=?'); if ($id_drzava !== null) { $bind_types .= 'i'; $bind_values[] = &$id_drzava; }
 $set_parts[] = ($id_drzava_adrese === null ? 'id_drzava_adrese=NULL' : 'id_drzava_adrese=?'); if ($id_drzava_adrese !== null) { $bind_types .= 'i'; $bind_values[] = &$id_drzava_adrese; }
 $set_parts[] = 'naziv=?'; $bind_types .= 's'; $bind_values[] = &$naziv;
+$set_parts[] = 'orjent=?'; $bind_types .= 's'; $bind_values[] = &$orjent;
 $set_parts[] = 'adresa_loze_1=?'; $bind_types .= 's'; $bind_values[] = &$adresa_1;
 $set_parts[] = 'adresa_loze_2=?'; $bind_types .= 's'; $bind_values[] = &$adresa_2;
 $set_parts[] = 'grad=?'; $bind_types .= 's'; $bind_values[] = &$grad;

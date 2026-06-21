@@ -13,7 +13,7 @@ if ($id_regija <= 0) {
     echo '[]';
     exit;
 }
-$sql = "SELECT id, id_regija, id_obred, id_tip_loze, id_drzava, id_drzava_adrese, naziv,
+$sql = "SELECT id, id_regija, id_obred, id_tip_loze, id_drzava, id_drzava_adrese, naziv, orjent,
         adresa_loze_1, adresa_loze_2, grad, posta, telefon_loze, meil_loze, datum_nastanka, napomena, aktivnost,
         (slika IS NOT NULL) AS ima_sliku
         FROM loze WHERE id_regija = ? ORDER BY naziv";

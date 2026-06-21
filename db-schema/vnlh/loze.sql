@@ -6,6 +6,7 @@ CREATE TABLE `loze` (
   `id_drzava` int(11) unsigned DEFAULT NULL,
   `id_drzava_adrese` int(11) unsigned DEFAULT NULL,
   `naziv` varchar(50) DEFAULT NULL,
+  `orjent` varchar(250) DEFAULT NULL COMMENT 'Orijent (sjedište) lože — slobodan tekst',
   `adresa_loze_1` varchar(50) NOT NULL DEFAULT '',
   `adresa_loze_2` varchar(50) NOT NULL DEFAULT '',
   `grad` varchar(15) NOT NULL,

@@ -114,6 +114,10 @@
   grid-template-columns: 1fr 30%;
   gap: 0.75rem;
 }
+/* Telefon/E-mail: 50/50 kad ima širine; kod uskog prikaza E-mail pada ispod Telefona, oboje puna širina. */
+.loze-crud__edit-body .loze-crud__edit-row.loze-crud__edit-row--inline.loze-crud__edit-row--inline-50 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
 .loze-crud__edit-row--inline .loze-crud__edit-cell {
   min-width: 0;
   display: flex;

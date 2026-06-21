@@ -73,7 +73,7 @@
   }
 
   function clearControlsFromSelection() {
-    var ids = ['edit_naziv', 'edit_adresa_1', 'edit_adresa_2', 'edit_grad', 'edit_posta', 'edit_telefon', 'edit_email', 'edit_datum', 'edit_napomena'];
+    var ids = ['edit_naziv', 'edit_orjent', 'edit_adresa_1', 'edit_adresa_2', 'edit_grad', 'edit_posta', 'edit_telefon', 'edit_email', 'edit_datum', 'edit_napomena'];
     for (var i = 0; i < ids.length; i++) {
       var el = document.getElementById(ids[i]);
       if (el) { el.value = ''; if (ids[i] === 'edit_naziv') el.dispatchEvent(new Event('input', { bubbles: true })); }
@@ -114,6 +114,8 @@
       if (found) {
         var editNaziv = document.getElementById('edit_naziv');
         if (editNaziv) { editNaziv.value = found.naziv != null ? found.naziv : ''; editNaziv.dispatchEvent(new Event('input', { bubbles: true })); }
+        var editOrjent = document.getElementById('edit_orjent');
+        if (editOrjent) editOrjent.value = found.orjent != null ? found.orjent : '';
         var editAdresa1 = document.getElementById('edit_adresa_1');
         if (editAdresa1) editAdresa1.value = found.adresa_loze_1 != null ? found.adresa_loze_1 : '';
         var editAdresa2 = document.getElementById('edit_adresa_2');
@@ -645,6 +647,7 @@
     fd.append('id_regija', payload.id_regija);
     if (payload.id_drzava !== '' && payload.id_drzava != null) fd.append('id_drzava', payload.id_drzava);
     fd.append('naziv', payload.naziv);
+    fd.append('orjent', payload.orjent != null ? payload.orjent : '');
     if (payload.id_obred !== '' && payload.id_obred != null) fd.append('id_obred', payload.id_obred);
     if (payload.id_tip_loze !== '' && payload.id_tip_loze != null) fd.append('id_tip_loze', payload.id_tip_loze);
     if (payload.id_drzava_adrese !== '' && payload.id_drzava_adrese != null) fd.append('id_drzava_adrese', payload.id_drzava_adrese);
@@ -728,6 +731,7 @@
         id_regija: idRegija,
         id_drzava: idDrzavaVal !== '' ? idDrzavaVal : null,
         naziv: naziv,
+        orjent: document.getElementById('edit_orjent') ? trim(document.getElementById('edit_orjent').value) : '',
         id_obred: selectObred ? trim(selectObred.value) : '',
         id_tip_loze: selectTipLoze ? trim(selectTipLoze.value) : '',
         id_drzava_adrese: selectDrzavaAdrese ? trim(selectDrzavaAdrese.value) : '',

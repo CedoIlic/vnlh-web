@@ -10,6 +10,7 @@ if ($db_ret !== -1) {
 
 $id_regija = isset($_POST['id_regija']) ? (int)$_POST['id_regija'] : 0;
 $naziv = isset($_POST['naziv']) ? trim($_POST['naziv']) : '';
+$orjent = (isset($_POST['orjent']) && trim($_POST['orjent']) !== '') ? trim($_POST['orjent']) : null;   // Orijent lože; prazno → NULL
 $adresa_1 = isset($_POST['adresa_loze_1']) ? trim($_POST['adresa_loze_1']) : '';
 $adresa_2 = isset($_POST['adresa_loze_2']) ? trim($_POST['adresa_loze_2']) : '';
 $grad = isset($_POST['grad']) ? trim($_POST['grad']) : '';
@@ -74,7 +75,7 @@ if (isset($_FILES['thumb']) && $_FILES['thumb']['error'] === UPLOAD_ERR_OK) {
     }
 }
 
-$cols = ['id_regija', 'id_obred', 'id_tip_loze', 'id_drzava', 'id_drzava_adrese', 'naziv', 'adresa_loze_1', 'adresa_loze_2', 'grad', 'posta', 'telefon_loze', 'meil_loze', 'datum_nastanka', 'napomena', 'aktivnost', 'slika', 'slika_mime', 'slika_thumbnail', 'slika_thumbnail_mime'];
+$cols = ['id_regija', 'id_obred', 'id_tip_loze', 'id_drzava', 'id_drzava_adrese', 'naziv', 'orjent', 'adresa_loze_1', 'adresa_loze_2', 'grad', 'posta', 'telefon_loze', 'meil_loze', 'datum_nastanka', 'napomena', 'aktivnost', 'slika', 'slika_mime', 'slika_thumbnail', 'slika_thumbnail_mime'];
 $vals = [];
 $bind_types = '';
 $bind_values = [];
@@ -84,6 +85,7 @@ $vals[] = ($id_tip_loze === null ? 'NULL' : '?'); if ($id_tip_loze !== null) { $
 $vals[] = ($id_drzava === null ? 'NULL' : '?'); if ($id_drzava !== null) { $bind_types .= 'i'; $bind_values[] = &$id_drzava; }
 $vals[] = ($id_drzava_adrese === null ? 'NULL' : '?'); if ($id_drzava_adrese !== null) { $bind_types .= 'i'; $bind_values[] = &$id_drzava_adrese; }
 $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$naziv;
+$vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$orjent;
 $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$adresa_1;
 $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$adresa_2;
 $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$grad;
