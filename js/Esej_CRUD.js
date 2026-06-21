@@ -2373,14 +2373,10 @@
     }
 
     /* Klik PDF: zapamti id eseja, postavi prored, otvori modal, (dohvati dokument →) renderiraj. */
-    btnPdf.addEventListener('click', function () {
-      if (btnPdf.disabled || !esejPrikazaniId) return;
-      _esejIdAktivni = esejPrikazaniId;
-      /* Tuđi javni esej (RO): PDF se smije graditi, ali prored se NE smije spremati (tuđi zapis). */
-      if (btnSave) btnSave.disabled = !!_esejReadOnlyMode;
-      otvoriModal();
-      /* Početni prored se postavlja TEK kad je dokument dostupan (treba default_stil_prored). */
-      if (_dokument && _dokument.dokument) { postaviPocetniProred(); renderiraj(); return; }
+    /* Dohvati dokument „Esej" SVAKI put (bez keša) + renderiraj — app uvijek odražava aktualne stavke
+       (admin ih mijenja u PDF_Dokument formi). resetProred=true → postavi početni prored (otvaranje);
+       false → zadrži trenutnu vrijednost steppera (Refresh). */
+    function ucitajDokumentIRenderiraj(resetProred) {
       spinerShow();
       postaviInfo('Učitavam dokument…');
       var url = getApiUrl('PDF_Dokument_po_nazivu.php') + '?naziv=' + encodeURIComponent(ESEJ_DOK_NAZIV);
@@ -2397,10 +2393,19 @@
         _dokument = data;
         _proredStilId = data.dokument.dokument_prored_default_stil
           ? parseInt(data.dokument.dokument_prored_default_stil, 10) : null;
-        postaviPocetniProred();
+        if (resetProred) postaviPocetniProred();
         renderiraj();
       };
       xhr.send();
+    }
+
+    btnPdf.addEventListener('click', function () {
+      if (btnPdf.disabled || !esejPrikazaniId) return;
+      _esejIdAktivni = esejPrikazaniId;
+      /* Tuđi javni esej (RO): PDF se smije graditi, ali prored se NE smije spremati (tuđi zapis). */
+      if (btnSave) btnSave.disabled = !!_esejReadOnlyMode;
+      otvoriModal();
+      ucitajDokumentIRenderiraj(true);   /* svjež dohvat + početni prored */
     });
 
     /* Stepper ±0,1 (klamp); ručni unos dozvoljen, normalizira se na blur. */
@@ -2447,7 +2452,7 @@
     }
 
     /* Refresh: ponovo renderiraj s trenutnom vrijednošću proreda (bez spremanja). */
-    if (btnRefresh) btnRefresh.addEventListener('click', function () { setProred(getProred()); renderiraj(); });
+    if (btnRefresh) btnRefresh.addEventListener('click', function () { setProred(getProred()); ucitajDokumentIRenderiraj(false); });
 
     /* Zatvaranje: Povratak / overlay / Escape. */
     if (btnPovratak) btnPovratak.addEventListener('click', zatvoriModal);
