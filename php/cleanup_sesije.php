@@ -26,7 +26,8 @@ $idle = sesija_pracenje_aktivnosti_session_timeout_sec($mysqli);
 if ($idle < 60) {
     $idle = 90;
 }
-$sql = 'UPDATE sustav_sesije_aktivne SET status = \'timeout\', zadnja_aktivnost = NOW()
+/* SAMO status → timeout; zadnja_aktivnost se NE dira (ostaje stvarno zadnje vrijeme, ne trenutak detekcije). */
+$sql = 'UPDATE sustav_sesije_aktivne SET status = \'timeout\'
         WHERE status = \'aktivna\' AND zadnja_aktivnost < DATE_SUB(NOW(), INTERVAL ' . (int) $idle . ' SECOND)';
 $mysqli->query($sql);
 Alati_Sesije_Aktivne_obrisi_neaktivne_redove($mysqli);

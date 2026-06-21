@@ -281,8 +281,9 @@ function Alati_Sesije_Aktivne_povijest_zadnja_stranica(string $hist): string
 }
 
 /**
- * Eksplicitna odjava (Logout, odjava zbog prava): retak ostaje u tablici sa status = logout,
- * zadnja_aktivnost = trenutak odjave. (Za razliku od isteka sesije = timeout, ne briše se red.)
+ * Eksplicitna odjava (Logout, odjava zbog prava): retak ostaje u tablici sa status = logout.
+ * zadnja_aktivnost se NE dira — ostaje stvarno zadnje vrijeme aktivnosti (upisuje ga samo touch trenutne
+ * aktivne sesije). (Za razliku od isteka sesije = timeout, ne briše se red.)
  */
 function Alati_Sesije_Aktivne_mark_logout_for_session(string $sessionId, int $idKorisnik): void
 {
@@ -296,7 +297,7 @@ function Alati_Sesije_Aktivne_mark_logout_for_session(string $sessionId, int $id
     }
     $stmt = $mysqli->prepare(
         'UPDATE sustav_sesije_aktivne
-         SET status = \'logout\', zadnja_aktivnost = NOW()
+         SET status = \'logout\'
          WHERE session_id = ? AND id_korisnik = ?'
     );
     if ($stmt) {
@@ -308,8 +309,8 @@ function Alati_Sesije_Aktivne_mark_logout_for_session(string $sessionId, int $id
 }
 
 /**
- * Kad PHP sesija istekne zbog neaktivnosti (idle), ažurira red u sustav_sesije_aktivne:
- * status = 'timeout', zadnja_aktivnost = trenutak isteka (NOW).
+ * Kad PHP sesija istekne zbog neaktivnosti (idle), ažurira red u sustav_sesije_aktivne: status = 'timeout'.
+ * zadnja_aktivnost se NE dira — ostaje stvarno zadnje vrijeme aktivnosti (touch trenutne aktivne sesije).
  * Poziva se prije brisanja sesije; red ostaje u tablici (status timeout; odjava eksplicitno postavlja logout).
  */
 function Alati_Sesije_Aktivne_mark_timeout_session(): void
@@ -329,7 +330,7 @@ function Alati_Sesije_Aktivne_mark_timeout_session(): void
     }
     $stmt = $mysqli->prepare(
         'UPDATE sustav_sesije_aktivne
-         SET status = \'timeout\', zadnja_aktivnost = NOW()
+         SET status = \'timeout\'
          WHERE session_id = ? AND id_korisnik = ? AND status = \'aktivna\''
     );
     if ($stmt) {
@@ -364,9 +365,10 @@ function Alati_Sesije_Aktivne_reconcile_timeout_stale_aktivne(mysqli $mysqli): v
             $ownSid = $tmp;
         }
     }
+    /* SAMO status → timeout; zadnja_aktivnost se NE dira (ostaje stvarno zadnje vrijeme, ne trenutak detekcije). */
     if ($ownSid !== '') {
         $stmt = $mysqli->prepare(
-            'UPDATE sustav_sesije_aktivne SET status = \'timeout\', zadnja_aktivnost = NOW()
+            'UPDATE sustav_sesije_aktivne SET status = \'timeout\'
              WHERE status = \'aktivna\' AND zadnja_aktivnost < DATE_SUB(NOW(), INTERVAL ' . $intervalSql . ' SECOND)
              AND session_id <> ?'
         );
@@ -376,7 +378,7 @@ function Alati_Sesije_Aktivne_reconcile_timeout_stale_aktivne(mysqli $mysqli): v
             $stmt->close();
         }
     } else {
-        $sql = 'UPDATE sustav_sesije_aktivne SET status = \'timeout\', zadnja_aktivnost = NOW()
+        $sql = 'UPDATE sustav_sesije_aktivne SET status = \'timeout\'
                 WHERE status = \'aktivna\' AND zadnja_aktivnost < DATE_SUB(NOW(), INTERVAL ' . $intervalSql . ' SECOND)';
         $mysqli->query($sql);
     }

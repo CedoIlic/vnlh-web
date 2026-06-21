@@ -85,7 +85,8 @@ if ($za === false || (time() - (int) $za) > $timeoutSec) {
     $idRow = (int) ($row['id'] ?? 0);
     if ($idRow > 0) {
         $u = $mysqli->prepare(
-            'UPDATE sustav_sesije_aktivne SET status = \'timeout\', zadnja_aktivnost = NOW() WHERE id = ? AND id_korisnik = ? AND status = \'aktivna\''
+            /* SAMO status → timeout; zadnja_aktivnost ostaje stvarno zadnje vrijeme aktivnosti. */
+            'UPDATE sustav_sesije_aktivne SET status = \'timeout\' WHERE id = ? AND id_korisnik = ? AND status = \'aktivna\''
         );
         if ($u) {
             $u->bind_param('ii', $idRow, $uid);
