@@ -59,3 +59,19 @@ zasebno; ovdje su stvari koje se NE rješavaju kroz Skeemu ni kroz git.
 - **Točan naziv:** `VNLH Logo` (tip `Slika WEBP`, mime `image/webp`). Izvor: `slike-arhiva/VNLH_Logo.webp`.
 - **Verifikacija:** prijavljen otvoriti `…/php/sustav_slika.php?naziv=VNLH%20Logo` → vraća WEBP (200);
   zatim otvoriti glavni meni → logo u pozadini.
+
+---
+
+## 4. Ukloniti neiskorištenu stored funkciju `vnlh_fk_exists` (produkcija)
+
+- **Dodano:** 2026-06-21
+- **Kontekst:** Funkcija `vnlh_fk_exists` korištena je jednokratno (pomoć pri provjeri FK-a);
+  više se ne koristi.
+- **Simptom:** Backup produkcijske baze (`Baza-Bekap_na_lokalno_racunalo.sh`, mysqldump korisnikom
+  `digital_skeema`) ispisuje upozorenje:
+  `mysqldump: digital_skeema has insufficient privileges to SHOW CREATE FUNCTION vnlh_fk_exists!`
+  — funkcija se NE uključuje u dump (podaci i tablice su uredno spremljeni). Uklanjanjem funkcije
+  upozorenje nestaje.
+- **Akcija (produkcija digital.hr):** `DROP FUNCTION IF EXISTS vnlh_fk_exists;` (provjeriti prije da
+  je zaista nigdje ne koristi migracija/Skeema). Po potrebi ukloniti i iz Skeema deklaracija ako postoji.
+- **Verifikacija:** ponoviti backup → nema upozorenja.

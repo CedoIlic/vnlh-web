@@ -109,11 +109,14 @@ function pdf_dan_u_tjednu($Y, $M, $D)
     return (int) (($y + intdiv($y, 4) - intdiv($y, 100) + intdiv($y, 400) + $t[$M - 1] + $D) % 7);
 }
 
-/** Godina istinske svjetlosti (PHP blizanac JS Godina_Istinske_Svjetlosti): Y+4000, mjesec ožujak=1. */
+/** Godina istinske svjetlosti (PHP blizanac JS Godina_Istinske_Svjetlosti): Y+4000, mjesec ožujak=1.
+ *  Mjesec se ispisuje RIMSKIM brojem bez točke (npr. „1. dan IV mjeseca 6026. godine"). */
 function pdf_gis_datum($Y, $M, $D)
 {
     $Mnovi = (($M - 3 + 12) % 12) + 1;
-    return $D . '. dan ' . $Mnovi . '. mjeseca ' . ($Y + 4000) . '. godine';
+    $rim = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    $mjRim = isset($rim[$Mnovi]) ? $rim[$Mnovi] : (string) $Mnovi;
+    return $D . '. dan ' . $mjRim . ' mjeseca ' . ($Y + 4000) . '. godine';
 }
 
 /** Formatira datumsku vrijednost po uzorku (tokeni) ili keyword "GIS".

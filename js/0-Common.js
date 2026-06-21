@@ -91,7 +91,7 @@
   /* --- Blok: Godina istinske svjetlosti (pretvorba datuma u „budući" kalendar) ---
      Naputak: docs/Izracun_datuma.md. Y_nova = Y + 4000; M_novi = ((M-3+12) mod 12)+1 (ožujak=1); dan ostaje.
      Ulaz: Date objekt, ili string "YYYY-MM-DD" (DB/ISO, uz opc. vrijeme) ili "D.M.YYYY"/"DD.MM.YYYY" (lokalni).
-     Izlaz: "D. dan M. mjeseca Y. godine" (npr. "18. dan 4. mjeseca 6026. godine"); nevaljan/prazan ulaz → "". */
+     Izlaz: "D. dan <rimski mjesec> mjeseca Y. godine" (npr. "18. dan IV mjeseca 6026. godine"); nevaljan/prazan ulaz → "". */
   window.Godina_Istinske_Svjetlosti = function (datum) {
     var D, M, Y, m;
     if (datum instanceof Date) {
@@ -112,7 +112,9 @@
     if (!(Y >= 1) || M < 1 || M > 12 || D < 1 || D > 31) return '';
     var Mnovi = ((M - 3 + 12) % 12) + 1;
     var Ynova = Y + 4000;
-    return D + '. dan ' + Mnovi + '. mjeseca ' + Ynova + '. godine';
+    var rim = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+    var mjRim = rim[Mnovi] || String(Mnovi);
+    return D + '. dan ' + mjRim + ' mjeseca ' + Ynova + '. godine';
   };
 
   /* --- Blok: Meni – hover kašnjenje: 116 = glavna stavka (prvi dropdown), 115 = podmeni/ugniježđeni (114 = Traži, ne miješati) --- */
