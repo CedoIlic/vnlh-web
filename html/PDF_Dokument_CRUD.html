@@ -33,6 +33,7 @@
             <div class="pdf-dokument-crud__zaglavlje-akcije" id="stavkeAkcijeHeader" hidden>
                 <button type="button" id="btnStavkaDodaj" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Dodaj stavku" aria-label="Dodaj stavku"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h18v2.5H3V4zm0 5.75h10v2.5H3v-2.5z"/><path d="M16 13h2.5v3.5H22V19h-3.5v3.5H16V19h-3.5v-2.5H16V13z"/></svg></button>
                 <button type="button" id="btnStavkaUredi" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Uredi stavku" aria-label="Uredi stavku"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18v2H3V5zm0 4h12v2H3V9zm0 4h8v2H3v-2zm0 4h8v2H3v-2z"/><path d="M21.41 11.59l-2-2a1.5 1.5 0 0 0-2.12 0l-5.79 5.79V19h3.62l5.79-5.79a1.5 1.5 0 0 0 0-2.12l.5.5zm-7.29 5.41h-1v-1l4.79-4.79 1 1L14.12 17z"/></svg></button>
+                <button type="button" id="btnStavkaClone" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Kloniraj stavku" aria-label="Kloniraj stavku"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/><path d="M12 16h6M15.5 13.5 18 16l-2.5 2.5"/></svg></button>
                 <button type="button" id="btnStavkaInfo" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Informacije o stavci" aria-label="Informacije o stavci"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 1.8a8.2 8.2 0 1 1 0 16.4 8.2 8.2 0 0 1 0-16.4z"/><path d="M12 6.2a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8zm1.6 11.3h-3.2v-1.6h.8v-3.6h-.8v-1.6h2.4v5.2h.8v1.6z"/></svg></button>
                 <button type="button" id="btnStavkaGore" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Pomakni gore" aria-label="Pomakni gore"><span class="pdf-dokument-crud__akcija-trokut" aria-hidden="true">▲</span></button>
                 <button type="button" id="btnStavkaDolje" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Pomakni dolje" aria-label="Pomakni dolje"><span class="pdf-dokument-crud__akcija-trokut" aria-hidden="true">▼</span></button>
@@ -324,7 +325,10 @@
                     </select></div>
                 </div>
                 <div class="pdf-dokument-crud__polje" id="polje_bez_kraja">
-                    <label class="kontrola-checkbox-labela"><input id="st_bez_kraja_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u isti red</label>
+                    <div class="pdf-dokument-crud__cb-red">
+                        <label class="kontrola-checkbox-labela"><input id="st_bez_kraja_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u isti red</label>
+                        <label class="kontrola-checkbox-labela"><input id="st_sakrij_ako_prazno" type="checkbox" class="kontrola-checkbox"> Sakrij red ako je prazno</label>
+                    </div>
                     <label class="kontrola-checkbox-labela"><input id="st_novi_red_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u novi red (isti odlomak)</label>
                 </div>
             </div>
@@ -446,6 +450,33 @@ dddd, D. mmmm YYYY.  → ponedjeljak, 1. lipanj 2026.</pre>
     </div>
 </div>
 
+<!-- Modal: Kloniranje stavke (dodaj stavku iz drugog dokumenta u tekući) -->
+<div class="kontrola-modal kontrola-modal--dim" id="cloneModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="cloneModal_overlay"></div>
+    <div class="kontrola-modal__dialog pdf-dokument-crud__clone-modal" id="cloneModal_dialog">
+        <div class="kontrola-modal__header" id="cloneModal_header">Kloniranje stavke</div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content">
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="clone_dokument">Dokument</label>
+                    <div class="kontrola-select"><select id="clone_dokument" aria-label="Dokument">
+                        <option value="">— odaberi dokument —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje">
+                    <label class="kontrola-labela mb-0" for="clone_stavka">Stavka</label>
+                    <div class="kontrola-select"><select id="clone_stavka" aria-label="Stavka" disabled>
+                        <option value="">— odaberi stavku —</option>
+                    </select></div>
+                </div>
+                <div id="clone_info" class="pdf-dokument-crud__clone-info" aria-live="polite"></div>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="clone_zatvori" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Zatvori</span></span></span></button>
+        </div>
+    </div>
+</div>
 <script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Kontrole_Tab.js?v=__VNLH_ASSET_V__"></script>

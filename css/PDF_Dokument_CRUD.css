@@ -115,6 +115,8 @@
 .pdf-dokument-crud__stavka-upis { margin-top: auto; padding-top: 0.6rem; align-items: flex-start; }
 .pdf-dokument-crud__stupac:first-child { padding-right: 1rem; border-right: 1px solid var(--edit_border, #ced4da); }
 .pdf-dokument-crud__polje { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+/* Dva checkboxa u istom redu (Spoji u isti red | Sakrij red ako je prazno). */
+.pdf-dokument-crud__cb-red { display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: center; }
 .pdf-dokument-crud__stupac .kontrola-select,
 .pdf-dokument-crud__stupac .kontrola-edit,
 .pdf-dokument-crud__stupac .kontrola-napomena { width: 100%; box-sizing: border-box; }
@@ -327,3 +329,26 @@
 .pdf-dokument-crud__unos-mjera { display: flex; align-items: center; gap: 0.35rem; }
 .pdf-dokument-crud__num { width: 6rem; text-align: right; }
 .pdf-dokument-crud__mjera { flex: 0 0 auto; white-space: nowrap; font-size: 0.9em; opacity: 0.75; }
+
+/* Clone modal — povratna informacija (npr. „Dodano na kraj: …"). */
+.pdf-dokument-crud__clone-modal { min-width: 26rem; }
+.pdf-dokument-crud__clone-info {
+  margin-top: 0.6rem;
+  min-height: 1.2em;
+  font-size: 0.9em;
+  color: var(--label_text_muted, #6c757d);
+}
+/* Padajuća lista selekta smije pasti IZVAN modala (ne reže je dialog/content overflow). */
+.pdf-dokument-crud__clone-modal,
+.pdf-dokument-crud__clone-modal .kontrola-modal__content {
+  overflow: visible;
+}
+/* overflow:visible gubi zaobljenje → zaglavlje/podnožje sami zaoble svoje vanjske kutove (radius iznutra). */
+.pdf-dokument-crud__clone-modal .kontrola-modal__header {
+  border-top-left-radius: calc(var(--panel_radius, 12px) - var(--modal_border_w, 1px));
+  border-top-right-radius: calc(var(--panel_radius, 12px) - var(--modal_border_w, 1px));
+}
+.pdf-dokument-crud__clone-modal .kontrola-modal__footer {
+  border-bottom-left-radius: calc(var(--panel_radius, 12px) - var(--modal_border_w, 1px));
+  border-bottom-right-radius: calc(var(--panel_radius, 12px) - var(--modal_border_w, 1px));
+}

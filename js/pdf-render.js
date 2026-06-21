@@ -275,22 +275,24 @@
 
   /* Vodilice (margine + zone zaglavlja/podnožja) iscrtane u SAMOM PDF-u kao background —
      za provjeru poravnanja elemenata u odnosu na margine. pageSize iz pdfmake je u pt i već orijentiran. */
-  function vodiliceBackground(t, stranica) {
-    stranica = (stranica === 2) ? 2 : 1;
-    var mL = mm(t, 'margina_lijevo_mm'), mT = mm(t, 'margina_gore_mm'),
-        mR = mm(t, 'margina_desno_mm'), mB = mm(t, 'margina_dolje_mm');
-    /* Zone po pravilima stranice: zaglavlje (primjena=svaka → svaka, inače samo 1.); podnožje od_stranice. */
-    var zaglNaStr = bool(t.zaglavlje) && broj(t.zaglavlje_visina_mm) > 0 && (stranica === 1 || str(t.zaglavlje_primjena) === 'svaka');
-    var podnNaStr = bool(t.podnozje) && broj(t.podnozje_visina_mm) > 0 && (stranica >= (broj(t.podnozje_od_stranice) || 1));
-    var zv = zaglNaStr ? mm(t, 'zaglavlje_visina_mm') : 0;
-    var pv = podnNaStr ? mm(t, 'podnozje_visina_mm') : 0;
-    /* Okvir tijela prati efektivne margine (zaglavlje/podnožje); uvjet vrijedi po pravilu stranice. */
-    var zaglMarg = bool(t.zaglavlje) && (stranica === 1 || str(t.zaglavlje_primjena) === 'svaka');
-    var podnMarg = bool(t.podnozje) && (stranica >= (broj(t.podnozje_od_stranice) || 1));
-    var mTef = gornjaTijela(t, zaglMarg);
-    var mBef = donjaTijela(t, podnMarg);
+  /* efektivnaStrFn(currentPage) → broj stranice po kojem se ODREĐUJU zone (zaglavlje/podnožje).
+     Vjeran prikaz: vraća stvarni currentPage (svaka stranica svoje zone). Simulacija (jednostranični
+     dokument): vraća fiksnu (1/2). Zone se računaju PO STRANICI unutar vraćene funkcije. */
+  function vodiliceBackground(t, efektivnaStrFn) {
+    var mL = mm(t, 'margina_lijevo_mm'), mR = mm(t, 'margina_desno_mm');
     var BOJA = '#2d6da3';
+    var podnOd = broj(t.podnozje_od_stranice) || 1;
+    var primjenaSvaka = str(t.zaglavlje_primjena) === 'svaka';
     return function (currentPage, pageSize) {
+      var stranica = efektivnaStrFn ? efektivnaStrFn(currentPage) : currentPage;
+      /* Zone po pravilima stranice: zaglavlje (primjena=svaka → svaka, inače samo 1.); podnožje od_stranice. */
+      var zaglNaStrL = bool(t.zaglavlje) && broj(t.zaglavlje_visina_mm) > 0 && (stranica === 1 || primjenaSvaka);
+      var podnNaStrL = bool(t.podnozje) && broj(t.podnozje_visina_mm) > 0 && (stranica >= podnOd);
+      var zv = zaglNaStrL ? mm(t, 'zaglavlje_visina_mm') : 0;
+      var pv = podnNaStrL ? mm(t, 'podnozje_visina_mm') : 0;
+      /* Okvir tijela prati efektivne margine (zaglavlje/podnožje); uvjet vrijedi po pravilu stranice. */
+      var mTef = gornjaTijela(t, bool(t.zaglavlje) && (stranica === 1 || primjenaSvaka));
+      var mBef = donjaTijela(t, bool(t.podnozje) && (stranica >= podnOd));
       var W = pageSize.width, H = pageSize.height;
       var canvas = [
         /* okvir margina (tijelo) — iscrtkano */
@@ -318,7 +320,7 @@
 
     /* Jedna stavka → niz pdfmake elemenata (tekst = više odlomaka; slika = jedan). */
     function elementi(s) {
-      if (!s || s.greska) return [];
+      if (!s || s.greska || s.sakrij) return [];
       if (s.vrsta === 'slika') {
         var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
         /* Apsolutno — ishodište po zoni:
@@ -347,7 +349,7 @@
 
     var content = [], headerTxt = [], headerSlike = [], footer = [];   /* headerSlike: { el, stil } radi potiskuje */
     stavke.forEach(function (s) {
-      if (!s || s.greska) return;
+      if (!s || s.greska || s.sakrij) return;
       if (s.zona === 'zaglavlje') {
         if (s.vrsta === 'slika') {
           var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
@@ -380,8 +382,9 @@
     var primjenaSvaka = str(t.zaglavlje_primjena) === 'svaka';
     var podnOd = broj(t.podnozje_od_stranice) || 1;
     var gornjaMargina, donjaMargina, spacerVisina = 0;
-    if (opts.vodilice) {
-      var simStr2 = (opts.stranica === 2 ? 2 : 1);
+    if (opts.simuliraj) {
+      /* Simulacija (jednostranični dokument): margine baš za simuliranu stranicu. */
+      var simStr2 = (opts.simuliraj === 2 ? 2 : 1);
       gornjaMargina = gornjaTijela(t, zaglAktivno && (simStr2 === 1 || primjenaSvaka));
       donjaMargina = donjaTijela(t, podnAktivno && (simStr2 >= podnOd));
     } else {
@@ -413,10 +416,10 @@
     if (fmt === 'custom') dd.pageSize = { width: mm(t, 'sirina_mm'), height: mm(t, 'visina_mm') };
     else dd.pageSize = fmt.toUpperCase();        /* pdfmake: A4/A5/A3/LETTER/LEGAL */
 
-    /* Efektivna stranica: kad su vodilice uključene, pregled VJERNO simulira odabranu stranicu
-       (opts.stranica 1/2) umjesto stvarnog pdfmake currentPage-a (koji je u jednostraničnom
-       pregledu uvijek 1). Bez vodilica (običan pregled / stvarni izlaz) vrijedi pravi currentPage. */
-    var simStr = opts.vodilice ? (opts.stranica === 2 ? 2 : 1) : null;
+    /* Efektivna stranica: SAMO kod simulacije (opts.simuliraj 1/2 — jednostranični dokument, da se može
+       pregledati izgled 2. stranice) forsiramo broj stranice. Inače (vjeran pregled višestraničnog,
+       običan pregled, stvarni izlaz) vrijedi pravi pdfmake currentPage → zaglavlje samo gdje template kaže. */
+    var simStr = opts.simuliraj ? (opts.simuliraj === 2 ? 2 : 1) : null;
     function efektivnaStr(currentPage) { return simStr || currentPage; }
     function zaglNaStr(currentPage) {
       var p = efektivnaStr(currentPage);
@@ -492,7 +495,7 @@
       },
       absolutePosition: { x: mLpt + resL, y: 0 }
     } : null;
-    var vodiliceFn = opts.vodilice ? vodiliceBackground(t, opts.stranica) : null;
+    var vodiliceFn = opts.vodilice ? vodiliceBackground(t, efektivnaStr) : null;
     if (headerTextItem || vodiliceFn || headerPhEls.length) {
       dd.background = function (currentPage, pageSize) {
         var out = [];
@@ -502,6 +505,16 @@
           if (headerTextItem) out.push(headerTextItem);
         }
         return out;
+      };
+    }
+
+    /* Broj stranica → callback (preview treba znati je li dokument jednostraničan radi simulacije 2. strane).
+       Omotamo dd.header (header dobiva pageCount); ako headera nema, vraća null (bez utjecaja na izgled). */
+    if (typeof opts.onPageCount === 'function') {
+      var _hdrOrig = dd.header;
+      dd.header = function (currentPage, pageCount, pageSize) {
+        try { opts.onPageCount(pageCount); } catch (e) {}
+        return _hdrOrig ? _hdrOrig(currentPage, pageCount, pageSize) : null;
       };
     }
     return dd;

@@ -20,6 +20,7 @@ CREATE TABLE `pdf_dokument_stavke` (
   `mapa_vrijednosti` varchar(255) DEFAULT NULL COMMENT 'Mapiranje konačne vrijednosti, format "v:tekst;v:tekst" (npr. 0:Brat;1:Sestra); NULL = bez mapiranja',
   `format_datuma`    varchar(64) DEFAULT NULL COMMENT 'Uzorak formata datuma za izlaz (DD/D dan, MM/M mjesec broj, mmmm mjesec imenom, YYYY/YY godina, dddd dan u tjednu, HH/mm/ss vrijeme); prazno = sirova vrijednost',
   `fiksna_pozicija`  decimal(6,2) DEFAULT NULL COMMENT 'Fiksna početna pozicija sadržaja stavke u mm od lijevog ruba (tab); NULL = bez fiksne pozicije',
+  `sakrij_ako_prazno` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Ako je vrijednost stavke prazna, sakrij cijeli red (vrijedi i za spojene redove); bez placeholdera',
   PRIMARY KEY (`id`),
   KEY `idx_dokument_redoslijed` (`dokument_id`, `redoslijed`),
   KEY `fk_stavka_izvor` (`izvor_id`),

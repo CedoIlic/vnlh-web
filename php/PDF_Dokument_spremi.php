@@ -70,13 +70,13 @@ try {
     if (!empty($stavke)) {
         $dok = 0; $red = 0; $zona = ''; $vrsta = ''; $izParam = null; $izTip = '';
         $izRed = null; $kkljuc = null; $tid = null; $tkol = null; $tvrij = null; $lit = null;
-        $parId = null; $sslik = null; $bezkraj = 0; $nap = null; $prekoId = null; $mapa = null; $fmt = null; $fiks = null;
+        $parId = null; $sslik = null; $bezkraj = 0; $nap = null; $prekoId = null; $mapa = null; $fmt = null; $fiks = null; $sakrij = 0;
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $ins->bind_param('iissisisisssiiisissd', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks);
+        $ins->bind_param('iissisisisssiiisissdi', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij);
         $dok = $id;
         $i = 0;
         foreach ($stavke as $s) {
@@ -126,6 +126,7 @@ try {
             $fmt = ($fv === '') ? null : $fv;
             $fp = ($vrsta === 'tekst' && isset($s['fiksna_pozicija']) && (float) $s['fiksna_pozicija'] > 0) ? (float) $s['fiksna_pozicija'] : null;
             $fiks = $fp;   // fiksna pozicija (mm); NULL = bez
+            $sakrij = !empty($s['sakrij_ako_prazno']) ? 1 : 0;   // sakrij cijeli red ako je vrijednost prazna
             $zadnjiRed = $red;
             $ins->execute();
         }

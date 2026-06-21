@@ -446,16 +446,19 @@ while ($i < $n) {
         $segErr = null;
         $imaPrije = false;     // je li već dodan segment s vrijednošću
         $zadnjiFlag = 0;       // bez_kraja_odlomka zadnjeg dodanog segmenta
+        $sakrijRed = false;    // bilo koji segment s "sakrij_ako_prazno" i prazan → sakrij cijeli red (bez placeholdera)
         foreach ($chain as $ci) {
             $seg = $stavke[$ci];
             $r = pdf_segment_vrijednost($mysqli, $seg, $izvori, $kontekst);
             if ($r['greska'] !== null && $segErr === null) $segErr = $r['greska'];
             $val = $r['vrijednost'];
             $segTekst = null; $segColor = null;
-            if ((($seg['izvor_tip'] ?? '') === 'dinamicki') && ($val === null || $val === '')) {
+            $prazno = ($val === null || $val === '');
+            if (!empty($seg['sakrij_ako_prazno']) && $prazno) { $sakrijRed = true; continue; }   // oznaka + prazno → sakrij red
+            if ((($seg['izvor_tip'] ?? '') === 'dinamicki') && $prazno) {
                 $segTekst = 'XXXXXXXX'; $segColor = '#cccccc';   // placeholder kao siva ploha
                 $imaPlaceholder = true;
-            } elseif ($val !== null && $val !== '') {
+            } elseif (!$prazno) {
                 $segTekst = (string) $val; $segColor = null;
             }
             if ($segTekst === null) continue;                    // prazan segment — preskoči (flag se ne mijenja)
@@ -483,7 +486,10 @@ while ($i < $n) {
             'paragraf_id' => $parId ?: null,
             'font_kljuc' => $fk
         ];
-        if ($combined === '') {
+        if ($sakrijRed) {
+            $rec['sakrij'] = true;     // označena stavka prazna → cijeli red se ne prikazuje
+            $rec['odlomci'] = [];
+        } elseif ($combined === '') {
             $rec['greska'] = (count($chain) === 1 && $segErr !== null) ? $segErr : 'Izvor prazan.';
             $rec['odlomci'] = [];
         } else {
@@ -512,7 +518,9 @@ while ($i < $n) {
         } else {
             $vrijednost = $r['vrijednost'];
             if ($vrijednost === null || $vrijednost === '') {
-                if (($s['izvor_tip'] ?? '') === 'dinamicki') {
+                if (!empty($s['sakrij_ako_prazno'])) {
+                    $rec['sakrij'] = true;   // označena slika prazna → red se ne prikazuje (bez placeholdera)
+                } elseif (($s['izvor_tip'] ?? '') === 'dinamicki') {
                     // Dinamička slika bez konteksta (uređivanje/pregled): placeholder za pozicioniranje/stil.
                     $rec['placeholder'] = true;
                     $rec['kontekst_kljuc'] = isset($s['kontekst_kljuc']) ? (string) $s['kontekst_kljuc'] : '';
