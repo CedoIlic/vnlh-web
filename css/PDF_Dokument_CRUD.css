@@ -121,7 +121,18 @@
 .pdf-dokument-crud__polje[hidden] { display: none; }
 
 /* ===== Tab PDF: preview ===== */
-.pdf-dokument-crud__preview-info { color: var(--label_text_muted, #6c757d); font-size: 0.9em; }
+/* Status preview-a: centriran u slobodnom prostoru trake (između kartica i desne grupe ikona). */
+.pdf-dokument-crud__preview-info {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  pointer-events: none;
+  color: var(--label_text_muted, #6c757d);
+  font-size: 0.9em;
+}
+.pdf-dokument-crud__preview-info[hidden] { display: none; }
 .pdf-dokument-crud__preview-okvir { width: 100%; height: 70vh; border: 1px solid var(--edit_border, #ced4da); border-radius: var(--edit_radius, 6px); box-shadow: var(--tablica_sjena); box-sizing: border-box; }
 
 /* Toggle-ikona: vodilice u PDF-u. Flat gumb po presedanu kolor-trigger gumba
@@ -158,6 +169,22 @@
 }
 .pdf-dokument-crud__blok-toggle svg { display: block; height: 1.3rem; width: auto; }
 .pdf-dokument-crud__blok-toggle--aktivan { color: #2d6da3; border-color: #2d6da3; }
+
+/* Refresh ikona (osvježi PDF) — izgled blok-toggle gumba + tradicionalna arrow-path ikona. */
+.pdf-dokument-crud__refresh-btn .kontrola-icon--arrow-path {
+  width: 1.3rem;
+  height: 1.3rem;
+  mask-size: 1.3rem 1.3rem;
+  -webkit-mask-size: 1.3rem 1.3rem;
+  flex-shrink: 0;
+}
+/* Dva slobodna mjesta (rezerva) lijevo od refresh ikone u zaglavlju PDF taba. */
+.pdf-dokument-crud__akcija-slot {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: var(--edit_height, 2.25rem);
+  height: var(--edit_height, 2.25rem);
+}
 
 /* ===== Footer ===== */
 .pdf-dokument-crud__footer {

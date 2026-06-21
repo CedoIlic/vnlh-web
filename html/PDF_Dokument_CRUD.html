@@ -40,11 +40,14 @@
                 <button type="button" id="btnStavkaDeselekt" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--akcija" disabled title="Makni selekciju" aria-label="Makni selekciju"><span class="kontrola-icon--asterisk" aria-hidden="true"></span></button>
             </div>
             <!-- Akcije PDF preview-a (vidljivo samo na tabu PDF) – desni rub trake -->
+            <!-- Status preview-a (Gotovo./Dohvaćam…) — centriran u slobodnom prostoru zaglavlja (samo tab PDF) -->
+            <span id="previewInfo" class="pdf-dokument-crud__preview-info" hidden></span>
             <div class="pdf-dokument-crud__zaglavlje-akcije" id="pdfAkcijeHeader" hidden>
-                <span id="previewInfo" class="pdf-dokument-crud__preview-info"></span>
-                <button type="button" id="btnPreview" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Osvježi</span></span></span></button>
                 <button type="button" id="btnBlokovi" class="pdf-dokument-crud__blok-toggle" aria-pressed="false" title="Prikaži vodilice stranice (margine, zaglavlje, podnožje)" disabled></button>
                 <button type="button" id="btnBlokStranica" class="pdf-dokument-crud__blok-toggle pdf-dokument-crud__blok-stranica" title="Prikaz pravila za 1. / 2. stranicu" disabled></button>
+                <span class="pdf-dokument-crud__akcija-slot" aria-hidden="true"></span>
+                <span class="pdf-dokument-crud__akcija-slot" aria-hidden="true"></span>
+                <button type="button" id="btnPreview" class="pdf-dokument-crud__blok-toggle pdf-dokument-crud__refresh-btn" title="Osvježi PDF" aria-label="Osvježi PDF"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
             </div>
         </div>
 

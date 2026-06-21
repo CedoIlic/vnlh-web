@@ -1231,7 +1231,7 @@
 
   /* Akcije u zaglavlju taba: svaka grupa vidljiva samo dok je njezin panel aktivan. */
   (function () {
-    [['stavkeAkcijeHeader', 'dokTabPanel1'], ['pdfAkcijeHeader', 'dokTabPanel2']].forEach(function (par) {
+    [['stavkeAkcijeHeader', 'dokTabPanel1'], ['pdfAkcijeHeader', 'dokTabPanel2'], ['previewInfo', 'dokTabPanel2']].forEach(function (par) {
       var grupa = byId(par[0]), panel = byId(par[1]);
       if (!grupa || !panel) return;
       function osvjezi() { grupa.hidden = panel.hasAttribute('hidden'); }
