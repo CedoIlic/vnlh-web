@@ -3599,12 +3599,15 @@
           zapisnikPostJson(getApiUrl('Zapisnik_CRUD_brisanje.php'), { id: zapisnikTrenutniId }, function (res, status) {
             btnIzbrisi.disabled = false;
             if (status >= 200 && status < 300 && res === 'OK') {
+              function _nakonUspjesnaBrisanja() {
+                zapisnikOcistiSvuFormu();
+                var tabRoot = document.getElementById('zapisnikKontrolaTab');
+                if (tabRoot && typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(tabRoot, 0);
+              }
               if (typeof window.showPorukaModal === 'function') {
-                window.showPorukaModal('003', [], function () {
-                  window.location.href = new URL('Meni.php', window.location.href).href;
-                });
+                window.showPorukaModal('003', [], _nakonUspjesnaBrisanja);
               } else {
-                window.location.href = new URL('Meni.php', window.location.href).href;
+                _nakonUspjesnaBrisanja();
               }
             } else {
               var p = typeof parseResponseCode === 'function' ? parseResponseCode(res) : null;
