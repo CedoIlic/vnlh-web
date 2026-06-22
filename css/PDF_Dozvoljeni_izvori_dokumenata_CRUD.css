@@ -12,13 +12,26 @@
   gap: 0.75rem;
 }
 
-/* Tablica (selekt) lijevo, na vrhu edita; napomena ispod preko cijele širine. */
-.pdf-izvdok-crud__mreza {
+/* Edit u dva stupca s okomitom pregradom: lijevo postojeće kontrole, desno dozvoljene kolone.
+   align-items: stretch → desni stupac (i pregrada) popunjavaju visinu lijevog. */
+.pdf-izvdok-crud__edit-dvije-kolone {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem 1rem;
-  align-items: end;
+  gap: 0.75rem 1.5rem;
+  align-items: stretch;
 }
+.pdf-izvdok-crud__edit-kol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+/* Okomita pregrada između stupaca. */
+.pdf-izvdok-crud__edit-kol--kolone {
+  border-left: 1px solid var(--tablica_obrub, #d0d0d0);
+  padding-left: 1.5rem;
+}
+
 .pdf-izvdok-crud__polje {
   display: flex;
   flex-direction: column;
@@ -32,6 +45,37 @@
   flex-direction: column;
   gap: 0.25rem;
 }
+
+/* Desni stupac: RO prikaz kolona + elipsis desno (kao lože učesnice). Prikaz raste po visini. */
+.pdf-izvdok-crud__kolone-red {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.pdf-izvdok-crud__kolone-prikaz {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  resize: none;
+}
+/* Elipsis ostaje fiksne veličine na vrhu (ne rasteže se). */
+.pdf-izvdok-crud__edit-kol--kolone .pdf-izvdok-crud__ellipsis-btn { align-self: flex-start; }
+.pdf-izvdok-crud__ellipsis-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--tablica_obrub, #c9c9c9);
+  border-radius: 0.35rem;
+  background: var(--kontrola_pozadina, #f4f4f4);
+  cursor: pointer;
+}
+.pdf-izvdok-crud__ellipsis-btn:disabled { opacity: 0.45; cursor: default; }
+.pdf-izvdok-crud__ellipsis-btn:not(:disabled):hover { background: var(--tablica_red_hover, #e9e9e9); }
 
 .pdf-izvdok-crud__edit-footer {
   display: flex;

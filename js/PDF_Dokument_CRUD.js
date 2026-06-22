@@ -916,6 +916,11 @@
     function kaoOpcije(niz) { return niz.map(function (n) { return { id: n, naziv: n }; }); }
     function postaviIzId(v) { izId.value = (v == null ? '' : String(v)); azurirajSpremiStanje(); }
     function resetSelekt(id) { napuniSelekt(id, [], null, true); setVal(id, ''); refreshSelect(id); }
+    function selektImaOpciju(id, vrijednost) {
+      var s = byId(id); if (!s) return false;
+      for (var i = 0; i < s.options.length; i++) if (s.options[i].value === vrijednost) return true;
+      return false;
+    }
 
     /* Tablice — jednom pri inicijalizaciji. */
     xhrGet(API + 'PDF_Dokument_razvoj.php?sto=tablice', function (t) {
@@ -958,10 +963,15 @@
       var tablica = (dok && dok.razvoj_tablica) ? String(dok.razvoj_tablica) : '';
       var kolona = (dok && dok.razvoj_kolona) ? String(dok.razvoj_kolona) : '';
       var testId = (dok && dok.razvoj_izabrani_id) ? parseInt(dok.razvoj_izabrani_id, 10) : 0;
+      /* Spremljena tablica koja više nije dozvoljena (nije među opcijama whitelista) → očisti cijeli lanac. */
+      if (tablica && !selektImaOpciju('razvoj_tablica', tablica)) { tablica = ''; kolona = ''; testId = 0; }
       setVal('razvoj_tablica', tablica); refreshSelect('razvoj_tablica');
       if (!tablica) { azurirajSpremiStanje(); return; }
       xhrGet(API + 'PDF_Dokument_razvoj.php?sto=kolone&tablica=' + encodeURIComponent(tablica), function (t) {
-        napuniSelekt('razvoj_kolona', kaoOpcije(jsonNiz(t)), null, true);
+        var dozvoljeneKolone = jsonNiz(t);
+        napuniSelekt('razvoj_kolona', kaoOpcije(dozvoljeneKolone), null, true);
+        /* Spremljena kolona koja više nije dozvoljena → očisti kolonu i ostatak lanca. */
+        if (kolona && dozvoljeneKolone.indexOf(kolona) < 0) { kolona = ''; testId = 0; }
         setVal('razvoj_kolona', kolona); refreshSelect('razvoj_kolona');
         if (!kolona) { azurirajSpremiStanje(); return; }
         var url = API + 'PDF_Dokument_razvoj.php?sto=vrijednosti&tablica=' + encodeURIComponent(tablica) +

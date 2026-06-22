@@ -26,24 +26,38 @@
         </div>
     </div>
 
-    <!-- Panel 2: edit -->
+    <!-- Panel 2: edit (jedan panel, dva stupca s okomitom pregradom) -->
     <div class="kontrola-panel mb-3 pdf-izvdok-crud__panel-edit" id="edit_panel">
         <div class="kontrola-panel__body pdf-izvdok-crud__edit-body">
+            <div class="pdf-izvdok-crud__edit-dvije-kolone">
 
-            <div class="pdf-izvdok-crud__mreza">
-                <div class="pdf-izvdok-crud__polje">
-                    <label class="kontrola-labela mb-0" for="edit_tablica">Tablica</label>
-                    <div class="kontrola-select">
-                        <select id="edit_tablica" aria-label="Tablica">
-                            <option value="">— odaberi tablicu —</option>
-                        </select>
+                <!-- Lijevo: postojeće kontrole -->
+                <div class="pdf-izvdok-crud__edit-kol">
+                    <div class="pdf-izvdok-crud__polje">
+                        <label class="kontrola-labela mb-0" for="edit_tablica">Tablica</label>
+                        <div class="kontrola-select">
+                            <select id="edit_tablica" aria-label="Tablica">
+                                <option value="">— odaberi tablicu —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="pdf-izvdok-crud__napomena-red">
+                        <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                        <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
                     </div>
                 </div>
-            </div>
 
-            <div class="pdf-izvdok-crud__napomena-red">
-                <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
-                <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+                <!-- Desno: dozvoljene kolone (RO prikaz + elipsis → modal multiselect) -->
+                <div class="pdf-izvdok-crud__edit-kol pdf-izvdok-crud__edit-kol--kolone">
+                    <label class="kontrola-labela mb-0" for="edit_kolone_prikaz">Dozvoljene kolone</label>
+                    <div class="pdf-izvdok-crud__kolone-red">
+                        <textarea id="edit_kolone_prikaz" class="kontrola-napomena pdf-izvdok-crud__kolone-prikaz" rows="3" readonly aria-label="Dozvoljene kolone"></textarea>
+                        <button type="button" id="btnKoloneModal" class="pdf-izvdok-crud__ellipsis-btn" aria-label="Odabir dozvoljenih kolona" title="Odabir dozvoljenih kolona">
+                            <span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
 

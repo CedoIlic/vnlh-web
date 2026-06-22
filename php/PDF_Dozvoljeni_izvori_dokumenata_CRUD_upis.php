@@ -49,8 +49,9 @@ try {
     if (!$st) { echo '200,' . $mysqli->errno; exit; }
     $st->bind_param('ss', $tablica, $napomena);
     $st->execute();
-    echo 'OK';
+    $noviId = $mysqli->insert_id;
     $st->close();
+    echo (string) $noviId;   // vraća id novog izvora (za spremanje kolona koje su odabrane prije snimanja)
 } catch (mysqli_sql_exception $e) {
     echo '200,' . $e->getCode();
 }

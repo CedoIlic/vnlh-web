@@ -3,6 +3,9 @@ require_once __DIR__ . '/require_login_api.php';
 // Pretraga ID retka po vrijednosti kolone u whitelist tablici (za modal "Izbor ID za test").
 // Ulaz: POST JSON { izvor_id, kolona, vrijednost }. Tablica se izvodi iz pdf_dozvoljeni_izvori,
 // kolona se validira (postoji u tablici); vrijednost ide kao bound parametar. Izlaz: { id: <broj|null> }.
+// Sigurnost: smije ga zvati samo onaj tko smije i otvoriti formu PDF_Dokument.
+require_once __DIR__ . '/vnlh_api_pravo_modula.php';
+vnlh_api_zahtijevaj_modul('PDF_Dokument_CRUD.html');
 $db_ret = require_once __DIR__ . '/00_db.php';
 header('Content-Type: application/json; charset=utf-8');
 if ($db_ret !== -1) {
