@@ -1,0 +1,43 @@
+/* PDF_Dozvoljeni_izvori_dokumenata_CRUD — dozvoljene tablice za razvojni blok PDF_Dokument.
+   Desktop only. Bez boja. */
+
+.pdf-izvdok-crud__panel-tablica {
+  height: 18rem;
+  min-height: 12rem;
+}
+
+.pdf-izvdok-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Tablica (selekt) lijevo, na vrhu edita; napomena ispod preko cijele širine. */
+.pdf-izvdok-crud__mreza {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  align-items: end;
+}
+.pdf-izvdok-crud__polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.pdf-izvdok-crud__polje .kontrola-select { width: 100%; }
+
+.pdf-izvdok-crud__napomena-red {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pdf-izvdok-crud__edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pdf-izvdok-crud__footer-left,
+.pdf-izvdok-crud__footer-right { display: flex; gap: 0.5rem; }

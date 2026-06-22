@@ -49,13 +49,16 @@ function razvoj_kolona_postoji($mysqli, $tablica, $kolona)
 $sto = isset($_GET['sto']) ? (string) $_GET['sto'] : '';
 
 if ($sto === 'tablice') {
-    // Sve bazne tablice koje imaju stupac `id` (PK na koji se veže testni kontekst).
-    $sql = "SELECT t.TABLE_NAME AS naziv
-            FROM information_schema.TABLES t
+    // Dozvoljene tablice = whitelist (pdf_dozvoljeni_izvori_dokumenata) ∩ bazne tablice koje
+    // stvarno postoje i imaju stupac `id` (PK na koji se veže testni kontekst). Popis se uređuje
+    // kroz formu „Dozvoljeni izvori dokumenata" (PDF_Dozvoljeni_izvori_dokumenata_CRUD).
+    $sql = "SELECT d.tablica AS naziv
+            FROM pdf_dozvoljeni_izvori_dokumenata d
+            JOIN information_schema.TABLES t
+              ON t.TABLE_SCHEMA = DATABASE() AND t.TABLE_NAME = d.tablica AND t.TABLE_TYPE = 'BASE TABLE'
             JOIN information_schema.COLUMNS c
               ON c.TABLE_SCHEMA = t.TABLE_SCHEMA AND c.TABLE_NAME = t.TABLE_NAME AND c.COLUMN_NAME = 'id'
-            WHERE t.TABLE_SCHEMA = DATABASE() AND t.TABLE_TYPE = 'BASE TABLE'
-            ORDER BY t.TABLE_NAME";
+            ORDER BY d.tablica";
     $res = $mysqli->query($sql);
     $out = [];
     if ($res) { while ($r = $res->fetch_assoc()) $out[] = $r['naziv']; }
