@@ -141,6 +141,7 @@ Skup klasa za poluautomatizaciju. Dio treba prateće PHP endpointe (čitanje faj
 - **Faza 1 — Globalni ključevi:** `global.*` (CRUD tipke, „Povratak", zajedničke labele, poruke 0-Poruke). Dokaz na 1 formi end-to-end.
 - **Faza 2 — Alat + admin forma:** `0-Internacionalizacija.js` (ekstraktor → sink → detektor → AI) + prateći PHP endpointi; **admin forma za uređivanje prijevoda** (§5a, `Prijevodi_CRUD`).
 - **Faza 3 — Prevođenje formi (test → produkcija):** redom jednostavne → složene (§8). Po **formi**: Claude upiše **draft/test prijevode** (`prijevod_test=1`) → testira sučelje (raspored/ožičenje). Po **bloku ~10–15 formi**: **kvalitetan API prijevod** (Opus 4.8, batch) + revizija → `prijevod=1` (produkcija). Razvoj (`VNLH_RAZVOJ=1`) prikazuje test+produkcija; produkcija samo `prijevod=1`.
+  - **Test duljina po formi — modali, popupi, gumbi (OBAVEZNO):** svaku formu koja ima **modale i popupe** testirati na **SVIM jezicima** jer duljina prijevoda jako varira (de/fr dulji; grčki/ćirilica druge širine; npr. „Καταχώρηση" ≫ „Upis"). Fiksne dimenzije/širine mogu prelomiti raspored ili rezati tekst. Po potrebi **prepraviti kontrolu da bude univerzalna** (fleksibilna/auto širina, dopušteno prelamanje, min/max, bez hardkodiranih px za tekstualne kutije, gumbi prate sadržaj) — rješava se jednom za sve jezike, ne podešava po jeziku. Vrijedi i za zaglavlja tablica, labele i tab-naslove.
 - **Faza 4 — Kvaliteta i čišćenje:** detektor nedostajućih, revizija AI prijevoda, uklanjanje zastarjelih ključeva, dostupni jezici po formi.
 
 ---

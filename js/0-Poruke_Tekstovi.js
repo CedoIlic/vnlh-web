@@ -26,6 +26,25 @@ var MODAL_BUTTON_CAPTIONS = {
   Cancel: 'Odustani'
 };
 
+/* --- i18n MAPE (showPorukaModal u 0-Kontrole.js, uz window.vnlhT) ---------
+   Tekst poruke se prevodi ključem 'poruka.<id>' (id iz MODAL_MESSAGES).
+   Zaglavlje (origin) i caption tipke nemaju id pa idu preko ove dvije mape literal→i18n ključ.
+   Master jezik / nepoznat unos → ostaje literal iz koda (fallback u t()). --- */
+var MODAL_ORIGIN_KLJUC = {
+  'Korisničko sučelje': 'poruka.zaglavlje.sucelje',
+  'Poruka servera':     'poruka.zaglavlje.server',
+  'Poruka SQL baze':    'poruka.zaglavlje.sql',
+  'Baza podataka':      'poruka.zaglavlje.baza',
+  'Zapisnik':           'poruka.zaglavlje.zapisnik',
+  'Odgovori razvoja':   'poruka.zaglavlje.odgovori'
+};
+var MODAL_GUMB_KLJUC = {
+  OK:     'global.gumb.ok',
+  Yes:    'global.gumb.da',
+  No:     'global.gumb.ne',
+  Cancel: 'global.gumb.odustani'
+};
+
 var MODAL_MESSAGES = {
   '001': '001|Korisničko sučelje||ok||Novi slog je uspješno dodan u bazu.',   /* Bez tipki (auto-close), stanje ok */
   '002': '002|Korisničko sučelje|(OK)|error||Upisani podatak već postoji. #1',   /* Duplikat – greška; #1 = labela polja */

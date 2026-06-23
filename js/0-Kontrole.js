@@ -3229,13 +3229,17 @@
         var raw = typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[code];
         if (!raw) return;
         var msg = parseModalMessage(raw);
-        var tekst = msg.tekst_poruke || '—';
+        /* i18n: prijevod teksta poruke (poruka.<id>) prije zamjene placeholdera #1/#2/#3. */
+        var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+        var tekst = tt('poruka.' + msg.id, msg.tekst_poruke || '—');
         if (replacements && replacements.length) {
           [1, 2, 3].forEach(function (i) {
             if (replacements[i - 1] != null) tekst = tekst.replace(new RegExp('#' + i, 'g'), replacements[i - 1]);
           });
         }
-        headerEl.textContent = msg.origin || '—';
+        /* i18n: prijevod zaglavlja (origin) preko mape literal→ključ; nepoznat origin → master tekst. */
+        var origMap = (typeof MODAL_ORIGIN_KLJUC !== 'undefined') ? MODAL_ORIGIN_KLJUC : {};
+        headerEl.textContent = tt(origMap[msg.origin] || '', msg.origin || '—');
         contentEl.textContent = tekst;
 
         imageEl.setAttribute('aria-hidden', 'false');
@@ -3256,12 +3260,15 @@
 
         footerEl.innerHTML = '';
         var captions = typeof MODAL_BUTTON_CAPTIONS !== 'undefined' ? MODAL_BUTTON_CAPTIONS : {};
+        var gumbMap = (typeof MODAL_GUMB_KLJUC !== 'undefined') ? MODAL_GUMB_KLJUC : {};
         if (msg.buttons.length > 0) {
           msg.buttons.forEach(function (b) {
             var btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'kontrola-btn';
-            btn.textContent = captions[b.key] != null ? captions[b.key] : b.key;
+            /* i18n: caption tipke (global.gumb.<slug>); fallback master caption. */
+            var capMaster = captions[b.key] != null ? captions[b.key] : b.key;
+            btn.textContent = tt(gumbMap[b.key] || ('global.gumb.' + String(b.key).toLowerCase()), capMaster);
             if (b.default) btn.classList.add('kontrola-btn--primary');
             (function (btnKey) {
               btn.addEventListener('click', function () {

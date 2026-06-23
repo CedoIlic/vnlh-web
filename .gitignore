@@ -39,3 +39,6 @@ config.php
 node_modules/
 dist/
 build/
+# i18n radni JSON-i + generirani seed SQL (jednokratno, ne commitati)
+tmp/
+sql/i18n_poruke_seed.sql

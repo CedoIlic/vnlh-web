@@ -168,8 +168,7 @@ const ObrediCRUD = {
               osvjeziTablicu();
             });
           } else {
-            var p = parseResponseCode(res);
-            if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(p.code, p.replacements);
+            prikaziGresku(res);
           }
         });
       } else {
@@ -181,8 +180,7 @@ const ObrediCRUD = {
               osvjeziTablicu();
             });
           } else {
-            var p = parseResponseCode(res);
-            if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(p.code, p.replacements);
+            prikaziGresku(res);
           }
         });
       }
@@ -257,6 +255,19 @@ const ObrediCRUD = {
     return { code: s.slice(0, idx).trim(), replacements: [s.slice(idx + 1).trim()] };
   }
 
+  /** Prikaže modal greške iz PHP odgovora. Za 002 (duplikat) #1 = PREVEDENA labela kontrole koja je izazvala
+   *  grešku (labela ima vlastiti i18n ključ → sadržaj #1 se ne prevodi zasebno). */
+  function prikaziGresku(res) {
+    var p = parseResponseCode(res);
+    if (!p || typeof MODAL_MESSAGES === 'undefined' || !MODAL_MESSAGES[p.code] || typeof window.showPorukaModal !== 'function') return;
+    var repl = p.replacements;
+    if (p.code === '002') {
+      var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+      repl = [tt('obredi_crud.labela.naziv', 'Naziv obreda')];
+    }
+    window.showPorukaModal(p.code, repl);
+  }
+
   /** Blok: ucitajPodatkeTablica – GET Obredi_CRUD_sve.php, parsira JSON, vraća redove [ naziv, id ]; ako odgovor nije JSON (npr. 100, 200,123), prikaže modal i callback s praznim nizom. */
   function ucitajPodatkeTablica(callback) {
     var xhr = new XMLHttpRequest();
@@ -266,10 +277,7 @@ const ObrediCRUD = {
       var text = (xhr.responseText || '').trim();
       var rows = [];
       if (text !== '' && text.charAt(0) !== '[') {
-        var parsed = parseResponseCode(text);
-        if (parsed && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[parsed.code] && typeof window.showPorukaModal === 'function') {
-          window.showPorukaModal(parsed.code, parsed.replacements);
-        }
+        prikaziGresku(text);
       } else {
         try {
           var arr = JSON.parse(text || '[]');
