@@ -61,6 +61,8 @@ $html = vnlh_apply_asset_token_to_html($html);
 $html = vnlh_inject_chat_flag_script($html);
 $html = vnlh_inject_sesija_pracenje_aktivnosti_script($html);
 $html = vnlh_inject_jezik_prebacivac_script($html);
+require_once __DIR__ . '/0-Jezik_lib.php';
+$html = jezik_inject_i18n_script($html, 'Meni.html');
 $appBaseJs = vnlh_app_base_path_for_js();
 $inject = '<script>window.__VNLH_MENU_DUZNOSNIK_OK__=' . ($meniDuznosnikValjan ? 'true' : 'false') . ';';
 $inject .= 'window.__VNLH_APP_BASE_PATH__=' . json_encode($appBaseJs, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) . ';</script>' . "\n";

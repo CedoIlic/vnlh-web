@@ -1,7 +1,7 @@
-/* 0-Jezik.js — globalni prebacivač jezika u zaglavlju (ZASAD SIMULACIJA: samo zamjena zastave).
- * Ubacuje zastavu trenutnog jezika lijevo od chat ikone (.naslov-forme__ikone); klik → popup s aktivnim
- * jezicima (zastava + izvorni naziv + (naziv)); izbor → zamjena zastave u zaglavlju.
- * Bez persistencije — reload vraća na zadani jezik. Prava funkcionalnost (spremanje + prijevod) dolazi kasnije.
+/* 0-Jezik.js — globalni prebacivač jezika u zaglavlju + i18n runtime (t() i data-i18n swapper).
+ * Ubacuje zastavu trenutnog jezika lijevo od chat ikone (.naslov-forme__ikone); klik → popup s jezicima
+ * dostupnima za formu (window.__VNLH_FORM_JEZICI__; inače svi aktivni); izbor → sprema jezik (0-Jezik_postavi.php) + reload.
+ * Rječnik injektira server (window.__I18N__ po formi); master jezik (window.__VNLH_JEZIK_MASTER__) = literali iz koda → swapper je no-op.
  * NE dira 0-Common.js — samo čita/dopunjuje wrapper ikona u zaglavlju.
  */
 // @ts-nocheck
@@ -21,6 +21,50 @@
     return k !== '' ? apiUrl('Jezici_CRUD_Zastava.php') + '?kod=' + encodeURIComponent(k) : '';
   }
 
+  /* ---------- i18n runtime: t() + data-i18n swapper ---------- */
+  function tLookup(key) {
+    var d = window.__I18N__;
+    if (!d || !key) return null;
+    return Object.prototype.hasOwnProperty.call(d, key) ? d[key] : null;
+  }
+  /** Prijevod ključa; fallback = drugi argument (master literal) ili sam ključ. params: {1:'x'} → zamjena {1}. */
+  function t(key, fallback, params) {
+    var s = tLookup(key);
+    if (s == null) s = (fallback != null ? fallback : key);
+    if (params) for (var k in params) {
+      if (Object.prototype.hasOwnProperty.call(params, k)) s = s.split('{' + k + '}').join(String(params[k]));
+    }
+    return s;
+  }
+  function prevediElement(el) {
+    var v;
+    if (el.hasAttribute('data-i18n')) { v = tLookup(el.getAttribute('data-i18n')); if (v != null) el.textContent = v; }
+    if (el.hasAttribute('data-i18n-placeholder')) { v = tLookup(el.getAttribute('data-i18n-placeholder')); if (v != null) el.setAttribute('placeholder', v); }
+    if (el.hasAttribute('data-i18n-title')) { v = tLookup(el.getAttribute('data-i18n-title')); if (v != null) el.setAttribute('title', v); }
+    if (el.hasAttribute('data-i18n-aria')) { v = tLookup(el.getAttribute('data-i18n-aria')); if (v != null) el.setAttribute('aria-label', v); }
+  }
+  var I18N_SEL = '[data-i18n],[data-i18n-placeholder],[data-i18n-title],[data-i18n-aria]';
+  /** Prevede sve data-i18n elemente unutar root (default document). Master jezik → no-op (literali ostaju). */
+  function prevedi(root) {
+    if (window.__VNLH_JEZIK_MASTER__) return;
+    root = root || document;
+    if (root.nodeType === 1 && root.matches && root.matches(I18N_SEL)) prevediElement(root);
+    if (root.querySelectorAll) { var els = root.querySelectorAll(I18N_SEL); for (var i = 0; i < els.length; i++) prevediElement(els[i]); }
+  }
+  /** Prati dinamički ubačen DOM (modali, fragmenti) i prevede ga. Master → ništa. */
+  function pratiDOM() {
+    if (window.__VNLH_JEZIK_MASTER__ || !window.MutationObserver || !document.body) return;
+    new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        var a = muts[i].addedNodes;
+        for (var j = 0; j < a.length; j++) if (a[j].nodeType === 1) prevedi(a[j]);
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+  /* Globalno: t() za programatske stringove, vnlhI18nPrevedi() nakon ručnog ubacivanja fragmenata. */
+  window.vnlhT = t;
+  window.vnlhI18nPrevedi = prevedi;
+
   var jezici = [];       // [{kod, naziv, naziv_izvorni, drzava_kod, zadani}]
   var trenutniKod = '';  // odabrani jezik (in-memory, bez persistencije)
   var popupEl = null;
@@ -39,10 +83,36 @@
     }
   }
 
+  function spremiJezik(kod, cb) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', apiUrl('0-Jezik_postavi.php'), true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (cb) cb((xhr.responseText || '').trim() === 'OK');
+    };
+    xhr.send('kod=' + encodeURIComponent(kod));
+  }
+
   function odaberiJezik(kod) {
-    trenutniKod = kod;
-    postaviZastavuUZaglavlju(drzavaZaKod(kod));
     zatvoriPopup();
+    if (kod === trenutniKod) return;
+    spremiJezik(kod, function (ok) {
+      if (ok) window.location.reload(); // novi rječnik se injektira pri ponovnom učitavanju
+    });
+  }
+
+  /** Jezici dostupni za ovu formu: __VNLH_FORM_JEZICI__ (kodovi) + uvijek master/zadani; inače svi aktivni. */
+  function jeziciZaFormu() {
+    var dop = window.__VNLH_FORM_JEZICI__;
+    if (!dop || !dop.length) return jezici;
+    var set = {};
+    for (var i = 0; i < dop.length; i++) set[String(dop[i]).toLowerCase()] = 1;
+    var out = [];
+    for (var j = 0; j < jezici.length; j++) {
+      if ((jezici[j].zadani | 0) === 1 || set[jezici[j].kod]) out.push(jezici[j]);
+    }
+    return out;
   }
 
   function zatvoriPopup() {
@@ -64,8 +134,9 @@
     if (popupEl) { zatvoriPopup(); return; }
     popupEl = document.createElement('div');
     popupEl.className = 'naslov-forme__jezik-popup';
-    for (var i = 0; i < jezici.length; i++) {
-      var j = jezici[i];
+    var lista = jeziciZaFormu();
+    for (var i = 0; i < lista.length; i++) {
+      var j = lista[i];
       var row = document.createElement('button');
       row.type = 'button';
       row.className = 'naslov-forme__jezik-popup-stavka';
@@ -123,6 +194,7 @@
 
   function inicijalniKod() {
     if (trenutniKod) return trenutniKod;
+    if (window.__VNLH_JEZIK__) return String(window.__VNLH_JEZIK__);
     for (var i = 0; i < jezici.length; i++) if ((jezici[i].zadani | 0) === 1) return jezici[i].kod;
     return jezici.length ? jezici[0].kod : '';
   }
@@ -152,6 +224,9 @@
   function init() {
     if (/Login\.(html|php)/i.test(window.location.pathname || '')) return;
     if (document.body && document.body.classList.contains('login-win')) return;
+    /* i18n: prevedi statički DOM i prati dinamički (neovisno o postojanju zaglavlja). */
+    prevedi(document);
+    pratiDOM();
     if (!document.querySelector('.naslov-forme')) return;
     ucitajJezike(function () {
       if (jezici.length) ubaciGumb();

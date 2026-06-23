@@ -84,7 +84,40 @@ function vnlh_establish_login_session(int $idKorisnik, int $idDuznosnik): void {
     $_SESSION['id_duznosnik_razina'] = 0;
     $_SESSION['last_activity'] = time();
     $_SESSION['client_ip'] = vnlh_client_ip();
+    /* Jezik sučelja korisnika (i18n); 0/NULL = zadani jezik aplikacije (master). */
+    $_SESSION['id_jezik'] = vnlh_login_id_jezik_korisnika($idKorisnik);
     vnlh_refresh_session_cookie();
+}
+
+/**
+ * id_jezik korisnika iz sustav_korisnici_login (0 ako nema kolone/retka/vrijednosti → zadani jezik).
+ * prepare() vraća false ako kolona još ne postoji (prije ALTER-a) → graciozno 0.
+ */
+function vnlh_login_id_jezik_korisnika(int $idKorisnik): int {
+    if ($idKorisnik <= 0) {
+        return 0;
+    }
+    require_once __DIR__ . '/vnlh_db_connect.php';
+    $db = vnlh_db_connect();
+    if ($db === false) {
+        return 0;
+    }
+    $idJezik = 0;
+    try {
+        if ($st = $db->prepare("SELECT id_jezik FROM sustav_korisnici_login WHERE id_korisnik = ? LIMIT 1")) {
+            $st->bind_param('i', $idKorisnik);
+            $st->execute();
+            $rs = $st->get_result();
+            if ($rs && ($row = $rs->fetch_assoc())) {
+                $idJezik = (int) ($row['id_jezik'] ?? 0);
+            }
+            $st->close();
+        }
+    } catch (\Throwable $e) {
+        $idJezik = 0; // kolona još ne postoji (prije ALTER-a) ili DB greška → zadani jezik
+    }
+    $db->close();
+    return $idJezik;
 }
 
 /**

@@ -120,4 +120,6 @@ $html = vnlh_inject_chat_flag_script($html);
 $html = vnlh_inject_app_base_path_script($html);
 $html = vnlh_inject_sesija_pracenje_aktivnosti_script($html);
 $html = vnlh_inject_jezik_prebacivac_script($html);
+require_once __DIR__ . '/0-Jezik_lib.php';
+$html = jezik_inject_i18n_script($html, $basename);
 echo vnlh_inject_samo_desktop($html, $basename);
