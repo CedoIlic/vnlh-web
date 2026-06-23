@@ -1,0 +1,73 @@
+/* 0-Jezik.css — globalni prebacivač jezika u zaglavlju (.naslov-forme__ikone).
+   Boje/fontovi/sjene iz tokena u 0-Common.css. */
+
+/* Gumb sa zastavom trenutnog jezika; lijevo od chata, uz razmak ("dva prazna mjesta"). */
+.naslov-forme__jezik {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    margin-right: 2.6rem; /* dva prazna mjesta do chat ikone (rezerva za buduće ikone) */
+}
+
+.naslov-forme__jezik-flag {
+    display: block;
+    height: 22px;
+    width: auto;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px var(--c-shadow-30);
+}
+
+/* Popup ispod zastave s aktivnim jezicima (fiksno pozicioniran preko body-a; JS postavlja top/left). */
+.naslov-forme__jezik-popup {
+    position: fixed;
+    z-index: 1200;
+    min-width: 210px;
+    padding: 4px;
+    background: var(--modal_tablica_body_bg, var(--c-white));
+    color: var(--text);
+    border: var(--modal_tablica_border_w, 1px) solid var(--modal_tablica_border, var(--c-gray-300));
+    border-radius: var(--modal_tablica_border_radius, 8px);
+    box-shadow: var(--kontrole_sjena_tablica);
+    font-family: var(--font_family);
+    font-size: var(--font_size);
+    font-weight: var(--font_weight);
+}
+
+.naslov-forme__jezik-popup-stavka {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 6px 8px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+    white-space: nowrap;
+}
+
+.naslov-forme__jezik-popup-stavka:hover {
+    background: var(--c-gray-100);
+}
+
+.naslov-forme__jezik-popup-stavka--aktivna {
+    background: var(--c-blue-50);
+    font-weight: 600;
+}
+
+.naslov-forme__jezik-popup-flag {
+    flex: 0 0 auto;
+    display: block;
+    height: 18px;
+    width: auto;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px var(--c-shadow-30);
+}

@@ -151,6 +151,22 @@ function vnlh_inject_sesija_pracenje_aktivnosti_script(string $html): string
 }
 
 /**
+ * Umeće CSS+JS globalnog prebacivača jezika (css/0-Jezik.css, js/0-Jezik.js) odmah nakon <head>.
+ * Iste relativne putanje (../) kao ostali asseti forme; fragmenti bez <head> se preskaču (parent ih već nosi).
+ */
+function vnlh_inject_jezik_prebacivac_script(string $html): string
+{
+    if (stripos($html, '<head>') === false) {
+        return $html;
+    }
+    $v = rawurlencode(vnlh_asset_cache_token());
+    $snip = '<link rel="stylesheet" href="../css/0-Jezik.css?v=' . $v . '">'
+          . '<script defer src="../js/0-Jezik.js?v=' . $v . '"></script>';
+    $out = preg_replace('/<head>/i', '<head>' . "\n" . $snip, $html, 1);
+    return is_string($out) ? $out : $html;
+}
+
+/**
  * device vrijednost (meni.device) za zadanu html datoteku: 0=svi uređaji, 1=samo desktop, 2=samo mobitel.
  * Static cache po requestu; čita živo iz baze (promjena meni.device → vrijedi na sljedećem serviranju forme).
  */
@@ -210,6 +226,7 @@ function vnlh_emit_html_file(string $htmlBasename): void {
     $html = vnlh_inject_chat_flag_script($html);
     $html = vnlh_inject_app_base_path_script($html);
     $html = vnlh_inject_sesija_pracenje_aktivnosti_script($html);
+    $html = vnlh_inject_jezik_prebacivac_script($html);
     echo vnlh_inject_samo_desktop($html, $basename);
 }
 

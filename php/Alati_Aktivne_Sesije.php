@@ -18,6 +18,7 @@ $html = vnlh_apply_asset_token_to_html($html);
 /* Pravo na chat ikonu u naslovu (0-Poruke.js); ručni echo stranice ne prolaze vnlh_emit_html_file. */
 $html = vnlh_inject_chat_flag_script($html);
 $html = vnlh_inject_sesija_pracenje_aktivnosti_script($html);
+$html = vnlh_inject_jezik_prebacivac_script($html);
 // Jedinstveni placeholder u statičkom HTML-u (vrijednost već ograničena u PHP funkciji).
 $html = str_replace('{{VNLH_DEFAULT_INTERVAL_OSVJEZI}}', (string) $defaultSec, $html);
 $appBaseJs = vnlh_app_base_path_for_js();
