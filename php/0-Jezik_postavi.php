@@ -3,7 +3,7 @@ require_once __DIR__ . '/require_login_api.php';
 // =====================================================
 // 0-Jezik_postavi.php
 // Sprema jezik sučelja korisnika (sustav_korisnici_login.id_jezik) + sesija (i18n).
-// Ulaz (POST): kod (2-3 slova, aktivan jezik)
+// Ulaz (POST): kod (BCP-47 lite: mala slova/brojke/crtica, 2-10 znakova, npr. hr, it, en-usa, srbl)
 // Izlaz (TEXT): OK | 105 (loš kod/sesija) | 106 (nepoznat/neaktivan jezik) | 200,<errno>
 // =====================================================
 
@@ -16,7 +16,7 @@ if ($db_ret !== -1) {
 $kod = isset($_POST['kod']) ? strtolower(trim($_POST['kod'])) : '';
 $idKorisnik = (int) ($_SESSION['id_korisnik'] ?? 0);
 
-if ($kod === '' || !preg_match('/^[a-z]{2,3}$/', $kod) || $idKorisnik <= 0) {
+if ($kod === '' || !preg_match('/^[a-z0-9-]{2,10}$/', $kod) || $idKorisnik <= 0) {
     echo '105';
     exit;
 }
