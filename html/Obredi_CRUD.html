@@ -15,7 +15,7 @@
 <body>
 
 <div class="naslov-forme">
-    <h2>Obredi</h2>
+    <h2 data-i18n="obredi_crud.naslov">Obredi</h2>
 </div>
 
 <div class="page-container">
@@ -30,9 +30,9 @@
     <div class="kontrola-panel mb-3" id="edit_panel">
         <div class="kontrola-panel__body obredi-crud__edit-body">
             <div class="obredi-crud__edit-row">
-                <label class="kontrola-labela mb-0" for="edit_obred">Naziv obreda</label>
+                <label class="kontrola-labela mb-0" for="edit_obred" data-i18n="obredi_crud.labela.naziv">Naziv obreda</label>
                 <div class="kontrola-edit-delete">
-                    <input id="edit_obred" type="text" class="kontrola-edit-delete__input" placeholder="Naziv obreda...">
+                    <input id="edit_obred" type="text" class="kontrola-edit-delete__input" placeholder="Naziv obreda..." data-i18n-placeholder="obredi_crud.placeholder.naziv">
                     <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
                 </div>
             </div>
@@ -49,7 +49,7 @@
                 <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi">
                     <span class="kontrola-btn__outer">
                         <span class="kontrola-btn__inner">
-                            <span class="kontrola-btn__label">Izbriši</span>
+                            <span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span>
                         </span>
                     </span>
                 </button>
@@ -58,7 +58,7 @@
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak">
                     <span class="kontrola-btn__outer">
                         <span class="kontrola-btn__inner">
-                            <span class="kontrola-btn__label">Povratak</span>
+                            <span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span>
                         </span>
                     </span>
                 </button>

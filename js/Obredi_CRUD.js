@@ -119,8 +119,10 @@ const ObrediCRUD = {
 
     if (btnUpisi && btnUpisiLabel) {
       btnUpisi.classList.toggle('kontrola-btn--crud-izmjeni', imaSelekciju);
-      btnUpisiLabel.textContent = imaSelekciju ? 'Izmjeni' : 'Upis';
-      btnUpisi.setAttribute('aria-label', imaSelekciju ? 'Izmjeni' : 'Upis');
+      var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+      var lblUpis = imaSelekciju ? tt('global.gumb.izmijeni', 'Izmjeni') : tt('global.gumb.upis', 'Upis');
+      btnUpisiLabel.textContent = lblUpis;
+      btnUpisi.setAttribute('aria-label', lblUpis);
       btnUpisi.disabled = !imaSadrzaj;
     }
     if (btnIzbrisi) {
@@ -329,6 +331,11 @@ const ObrediCRUD = {
 
   /** Jednokratno ažuriranje stanja tipki nakon učitavanja. */
   updateCrudUpisiState();
+  /* Ponovi nakon DOMContentLoaded — tada je 0-Jezik.js (defer) već definirao window.vnlhT,
+     pa dinamička labela (Upis/Izmjeni) dobije prijevod na ne-master jeziku. */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateCrudUpisiState);
+  }
 
   /** Izvoz konfiguracije na window (npr. za testove ili druge skripte). */
   window.ObrediCRUD = ObrediCRUD;
