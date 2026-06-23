@@ -43,8 +43,9 @@
     if (el.hasAttribute('data-i18n-title')) { v = tLookup(el.getAttribute('data-i18n-title')); if (v != null) el.setAttribute('title', v); }
     if (el.hasAttribute('data-i18n-aria')) { v = tLookup(el.getAttribute('data-i18n-aria')); if (v != null) el.setAttribute('aria-label', v); }
     if (el.hasAttribute('data-i18n-dataplaceholder')) { v = tLookup(el.getAttribute('data-i18n-dataplaceholder')); if (v != null) el.setAttribute('data-placeholder', v); }
+    if (el.hasAttribute('data-i18n-alt')) { v = tLookup(el.getAttribute('data-i18n-alt')); if (v != null) el.setAttribute('alt', v); }
   }
-  var I18N_SEL = '[data-i18n],[data-i18n-placeholder],[data-i18n-title],[data-i18n-aria],[data-i18n-dataplaceholder]';
+  var I18N_SEL = '[data-i18n],[data-i18n-placeholder],[data-i18n-title],[data-i18n-aria],[data-i18n-dataplaceholder],[data-i18n-alt]';
   /** Prevede sve data-i18n elemente unutar root (default document). Master jezik → no-op (literali ostaju). */
   function prevedi(root) {
     if (window.__VNLH_JEZIK_MASTER__) return;
