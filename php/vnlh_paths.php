@@ -153,6 +153,8 @@ function vnlh_inject_sesija_pracenje_aktivnosti_script(string $html): string
 /**
  * Umeće CSS+JS globalnog prebacivača jezika (css/0-Jezik.css, js/0-Jezik.js) odmah nakon <head>.
  * Iste relativne putanje (../) kao ostali asseti forme; fragmenti bez <head> se preskaču (parent ih već nosi).
+ * 0-Jezik.js je SINKRON (bez defer): window.vnlhT/__I18N__ su spremni PRIJE skripti formi (config-time t(),
+ * prijevod zaglavlja i dinamičkih labela bez bljeska). init() i data-i18n swapper i dalje čekaju DOMContentLoaded.
  */
 function vnlh_inject_jezik_prebacivac_script(string $html): string
 {
@@ -161,7 +163,7 @@ function vnlh_inject_jezik_prebacivac_script(string $html): string
     }
     $v = rawurlencode(vnlh_asset_cache_token());
     $snip = '<link rel="stylesheet" href="../css/0-Jezik.css?v=' . $v . '">'
-          . '<script defer src="../js/0-Jezik.js?v=' . $v . '"></script>';
+          . '<script src="../js/0-Jezik.js?v=' . $v . '"></script>';
     $out = preg_replace('/<head>/i', '<head>' . "\n" . $snip, $html, 1);
     return is_string($out) ? $out : $html;
 }

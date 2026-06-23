@@ -53,6 +53,12 @@ const ObrediCRUD = {
   /** Callback kad korisnik promijeni selekciju u tablici (postavlja se u FUNKCIONALNOSTI). */
   var onCrudSelectionChange = null;
 
+  /* Prijevod zaglavlja tablice iz jednog ključa (naslovi zarezom). 0-Jezik.js je sinkron → vnlhT je spreman ovdje;
+     na master jeziku / bez prijevoda vraća originalne naslove. */
+  if (window.vnlhTZaglavlje) {
+    ObrediCRUD.Tablica_Zaglavlje = window.vnlhTZaglavlje('obredi_crud.tablica.zaglavlje', ObrediCRUD.Tablica_Zaglavlje);
+  }
+
   CommonCRUD.initTablica('tablicaContainer', ObrediCRUD, {
     onReady: function (api) { tablicaApi = api; },
     onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
@@ -290,7 +296,7 @@ const ObrediCRUD = {
     });
   }
 
-  /** Postavi podatke u tablicu i primijeni zaglavlje (CommonCRUD). */
+  /** Postavi podatke u tablicu i primijeni zaglavlje (CommonCRUD). Zaglavlje je prevedeno pri initu. */
   function setDataTablica(rows) {
     CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, ObrediCRUD.Tablica_Zaglavlje);
   }
@@ -329,13 +335,8 @@ const ObrediCRUD = {
     return window.CommonTrim ? window.CommonTrim(s) : (s != null ? String(s).replace(/^\s+|\s+$/g, '') : '');
   }
 
-  /** Jednokratno ažuriranje stanja tipki nakon učitavanja. */
+  /** Jednokratno ažuriranje stanja tipki nakon učitavanja (0-Jezik.js je sinkron → vnlhT je spreman). */
   updateCrudUpisiState();
-  /* Ponovi nakon DOMContentLoaded — tada je 0-Jezik.js (defer) već definirao window.vnlhT,
-     pa dinamička labela (Upis/Izmjeni) dobije prijevod na ne-master jeziku. */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateCrudUpisiState);
-  }
 
   /** Izvoz konfiguracije na window (npr. za testove ili druge skripte). */
   window.ObrediCRUD = ObrediCRUD;

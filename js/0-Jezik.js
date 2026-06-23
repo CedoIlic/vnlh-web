@@ -61,9 +61,28 @@
       }
     }).observe(document.body, { childList: true, subtree: true });
   }
-  /* Globalno: t() za programatske stringove, vnlhI18nPrevedi() nakon ručnog ubacivanja fragmenata. */
+  /** Prevede zaglavlje tablice iz JEDNOG ključa (master naslovi spojeni zarezom). Vraća KLON s prevedenim
+   *  title; ako prijevoda nema ili se broj stupaca ne slaže → vraća original (master). delimiter default ','. */
+  function tZaglavlje(key, zaglavlje, delimiter) {
+    if (!Array.isArray(zaglavlje) || !zaglavlje.length) return zaglavlje;
+    var prijevod = tLookup(key);
+    if (prijevod == null) return zaglavlje; // master jezik ili nema prijevoda → naslovi iz koda
+    var d = delimiter || ',';
+    var dijelovi = String(prijevod).split(d);
+    if (dijelovi.length !== zaglavlje.length) return zaglavlje; // broj stupaca se ne slaže → sigurno master
+    return zaglavlje.map(function (c, i) {
+      var klon = {};
+      for (var k in c) if (Object.prototype.hasOwnProperty.call(c, k)) klon[k] = c[k];
+      klon.title = dijelovi[i].replace(/^\s+|\s+$/g, '');
+      return klon;
+    });
+  }
+
+  /* Globalno: t() za programatske stringove, vnlhI18nPrevedi() nakon ručnog ubacivanja fragmenata,
+     vnlhTZaglavlje() za prijevod zaglavlja tablice iz jednog ključa. */
   window.vnlhT = t;
   window.vnlhI18nPrevedi = prevedi;
+  window.vnlhTZaglavlje = tZaglavlje;
 
   var jezici = [];       // [{kod, naziv, naziv_izvorni, drzava_kod, zadani}]
   var trenutniKod = '';  // odabrani jezik (in-memory, bez persistencije)
