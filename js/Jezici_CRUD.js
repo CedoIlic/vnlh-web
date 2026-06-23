@@ -24,11 +24,11 @@
     ]
   };
 
-  /** URL zastave: servira php/zastava.php iz baze (sustav_slike_tekstovi preko slika_naziv).
+  /** URL zastave: servira php/Jezici_CRUD_Zastava.php iz baze (sustav_slike_tekstovi preko slika_naziv).
    *  Prazno = bez zastave; nema slike u bazi → 404 → prazan okvir (placeholder). */
   function flagUrl(drzavaKod) {
     var k = (drzavaKod != null ? String(drzavaKod) : '').trim().toLowerCase();
-    return k !== '' ? '../php/zastava.php?kod=' + encodeURIComponent(k) : '';
+    return k !== '' ? '../php/Jezici_CRUD_Zastava.php?kod=' + encodeURIComponent(k) : '';
   }
 
   /** Indeks skrivenog id-a u redu tablice = broj vidljivih kolona. */
