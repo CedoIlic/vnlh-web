@@ -19,14 +19,14 @@
     <link rel="stylesheet" href="../css/Stupnjevi_CRUD.css?v=__VNLH_ASSET_V__">
 </head>
 <body>
-<div class="naslov-forme"><h2>Stupnjevi</h2></div>
+<div class="naslov-forme"><h2 data-i18n="stupnjevi_crud.naslov">Stupnjevi</h2></div>
 <div class="page-container stupnjevi-crud">
     <div class="stupnjevi-crud__top-row">
         <div class="kontrola-panel mb-3 stupnjevi-crud__panel-slika">
             <div class="kontrola-panel__body">
-                <div class="stupnjevi-crud__edit-image-area" id="stupnjevi_image_area" aria-label="Prostor za sliku – dvoklik za uređivanje" tabindex="0">
-                    <button type="button" id="stupnjevi_image_delete_btn" class="stupnjevi-crud__edit-image-delete" aria-label="Obriši sliku" title="Obriši sliku" disabled><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
-                    <div id="stupnjevi_image_frame" class="obrada-slika__preview-wrap stupnjevi-crud__panel-preview-wrap" data-placeholder="dvoklik za učitavanje/uređivanje">
+                <div class="stupnjevi-crud__edit-image-area" id="stupnjevi_image_area" aria-label="Prostor za sliku – dvoklik za uređivanje" data-i18n-aria="stupnjevi_crud.slika.aria" tabindex="0">
+                    <button type="button" id="stupnjevi_image_delete_btn" class="stupnjevi-crud__edit-image-delete" aria-label="Obriši sliku" title="Obriši sliku" data-i18n-aria="stupnjevi_crud.slika.obrisi" data-i18n-title="stupnjevi_crud.slika.obrisi" disabled><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
+                    <div id="stupnjevi_image_frame" class="obrada-slika__preview-wrap stupnjevi-crud__panel-preview-wrap" data-placeholder="dvoklik za učitavanje/uređivanje" data-i18n-dataplaceholder="stupnjevi_crud.slika.placeholder">
                         <img id="stupnjevi_image_preview" class="obrada-slika__img" src="" alt="" aria-hidden="true" style="display: none;">
                     </div>
                 </div>
@@ -35,7 +35,7 @@
         <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-one-row kontrola-panel kontrola-panel--resize-y mb-3 stupnjevi-crud__panel-tablica">
             <div class="kontrola-panel__header stupnjevi-crud__tablica-header">
                 <div class="stupnjevi-crud__header-row">
-                    <label class="kontrola-labela mb-0" for="select_obred">Obred</label>
+                    <label class="kontrola-labela mb-0" for="select_obred" data-i18n="stupnjevi_crud.labela.obred">Obred</label>
                     <div class="kontrola-select">
                         <select id="select_obred" aria-label="Odaberi obred">
                             <option value="0">Nije izabran</option>
@@ -53,15 +53,15 @@
             <div class="stupnjevi-crud__edit-cols">
                 <div class="stupnjevi-crud__edit-col">
                     <div class="stupnjevi-crud__edit-row">
-                        <label class="kontrola-labela mb-0" for="edit_naziv">Naziv stupnja</label>
+                        <label class="kontrola-labela mb-0" for="edit_naziv" data-i18n="stupnjevi_crud.labela.naziv">Naziv stupnja</label>
                         <div class="kontrola-edit-delete">
-                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv stupnja...">
+                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv stupnja..." data-i18n-placeholder="stupnjevi_crud.placeholder.naziv">
                             <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
                         </div>
                     </div>
                     <div class="stupnjevi-crud__edit-row">
-                        <label class="kontrola-labela mb-0" for="edit_stupanj">Stupanj</label>
-                        <input id="edit_stupanj" type="text" class="kontrola-edit" inputmode="numeric" placeholder="Stupanj">
+                        <label class="kontrola-labela mb-0" for="edit_stupanj" data-i18n="stupnjevi_crud.labela.stupanj">Stupanj</label>
+                        <input id="edit_stupanj" type="text" class="kontrola-edit" inputmode="numeric" placeholder="Stupanj" data-i18n-placeholder="stupnjevi_crud.placeholder.stupanj">
                     </div>
                 </div>
             </div>
@@ -69,10 +69,10 @@
         <div class="kontrola-panel__footer stupnjevi-crud__edit-footer">
             <div class="stupnjevi-crud__footer-left">
                 <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
-                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
             </div>
             <div class="stupnjevi-crud__footer-right">
-                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
             </div>
         </div>
     </div>

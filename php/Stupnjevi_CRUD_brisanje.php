@@ -7,7 +7,7 @@ require_once __DIR__ . '/require_login_api.php';
 //
 // Blokovi: Konekcija na bazu, Validacija ulaza, Brisanje (DELETE).
 // Ulaz (POST): id (obavezno)
-// Izlaz (TEXT): OK | 100 | 108,<id> | 200,<errno>
+// Izlaz (TEXT): OK | 100 | 106,<errno> (vezani podaci, FK) | 108,<id> | 200,<errno>
 // Koristi: 00_db.php ($mysqli)
 // =====================================================
 
@@ -36,11 +36,16 @@ if (!$stmt) {
     exit;
 }
 $stmt->bind_param("i", $id);
-if ($stmt->execute()) {
+/* Brisanje NE kaskadira: stupanj vezan na eseje/napredovanja/zapisnik (FK RESTRICT) → 1451 → poruka 106 (ne tiha greška). */
+try {
+    $stmt->execute();
     echo 'OK';
-} else {
-    /* execute() nije uspio → SQL greška (npr. FK). */
-    echo '200,' . $mysqli->errno;
+} catch (mysqli_sql_exception $e) {
+    if ((int)$e->getCode() === 1451) {
+        echo '106,' . $e->getCode();
+    } else {
+        echo '200,' . $e->getCode();
+    }
 }
 $stmt->close();
 $mysqli->close();

@@ -9,7 +9,7 @@ require_once __DIR__ . '/require_login_api.php';
 // Ulaz (POST): id (obavezno), obred_id (obavezno), naziv (obavezno, max 50), stupanj (1–99)
 //              slika (file, opcionalno), slika_mime (opcionalno), thumb (file, opcionalno), thumb_mime (opcionalno)
 //              Ako slika/thumb nisu poslani, u bazu se šalje NULL (brišu se postojeće).
-// Izlaz (TEXT): OK | 100 | 105 | 200,<errno>
+// Izlaz (TEXT): OK | 002,<polje> | 100 | 105 | 200,<errno>
 // Koristi: 00_db.php ($mysqli)
 // =====================================================
 
@@ -41,6 +41,23 @@ if ($stupanj < 1 || $stupanj > 99) {
     /* Stupanj izvan dozvoljenog raspona 1–99. */
     echo '105';
     exit;
+}
+
+// --- Blok: Provjera duplikata unutar obreda (isti naziv ILI isti stupanj nisu dozvoljeni), osim trenutnog retka ---
+/* Vraća 002,<polje>; JS popuni #1 prevedenom labelom tog polja (naziv/stupanj). */
+if ($dupStmt = $mysqli->prepare("SELECT id FROM stupnjevi WHERE id_obred = ? AND LOWER(naziv) = LOWER(?) AND id <> ? LIMIT 1")) {
+    $dupStmt->bind_param("isi", $obred_id, $naziv, $id);
+    $dupStmt->execute();
+    $exists = ($r = $dupStmt->get_result()) && $r->fetch_assoc();
+    $dupStmt->close();
+    if ($exists) { echo '002,naziv'; exit; }
+}
+if ($dupStmt = $mysqli->prepare("SELECT id FROM stupnjevi WHERE id_obred = ? AND stupanj = ? AND id <> ? LIMIT 1")) {
+    $dupStmt->bind_param("iii", $obred_id, $stupanj, $id);
+    $dupStmt->execute();
+    $exists = ($r = $dupStmt->get_result()) && $r->fetch_assoc();
+    $dupStmt->close();
+    if ($exists) { echo '002,stupanj'; exit; }
 }
 
 // --- Blok: Slike (opcionalno); ako nisu poslani = NULL, u bazi se brišu postojeće ---

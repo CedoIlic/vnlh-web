@@ -44,6 +44,11 @@
   var onCrudSelectionChange = null;
   var data = [];
 
+  /* Prijevod zaglavlja tablice iz jednog ključa (naslovi zarezom). 0-Jezik.js je sinkron → vnlhT spreman. */
+  if (window.vnlhTZaglavlje) {
+    StupnjeviCRUD.Tablica_Zaglavlje = window.vnlhTZaglavlje('stupnjevi_crud.tablica.zaglavlje', StupnjeviCRUD.Tablica_Zaglavlje);
+  }
+
   CommonCRUD.initTablica('tablicaContainer', StupnjeviCRUD, {
     getRowId: function (row) { return row.length > 0 ? row[row.length - 1] : null; },
     onReady: function (api) { tablicaApi = api; },
@@ -142,8 +147,10 @@
     var btnIzbrisi = document.getElementById('btnIzbrisi');
     if (btnUpisi && btnUpisiLabel) {
       btnUpisi.classList.toggle('kontrola-btn--crud-izmjeni', imaSelekciju);
-      btnUpisiLabel.textContent = imaSelekciju ? 'Izmjeni' : 'Upis';
-      btnUpisi.setAttribute('aria-label', imaSelekciju ? 'Izmjeni' : 'Upis');
+      var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+      var lblUpis = imaSelekciju ? tt('global.gumb.izmijeni', 'Izmjeni') : tt('global.gumb.upis', 'Upis');
+      btnUpisiLabel.textContent = lblUpis;
+      btnUpisi.setAttribute('aria-label', lblUpis);
       btnUpisi.disabled = !(imaObred && imaSadrzaj);
     }
     if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
@@ -353,8 +360,7 @@
                 osvjeziTablicu();
               });
             } else {
-              var p = parseResponseCode(res);
-              if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(p.code, p.replacements || []);
+              prikaziGresku(res);
             }
           });
         } else {
@@ -367,8 +373,7 @@
                 osvjeziTablicu();
               });
             } else {
-              var p = parseResponseCode(res);
-              if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(p.code, p.replacements || []);
+              prikaziGresku(res);
             }
           });
         }
@@ -411,10 +416,7 @@
             osvjeziTablicu();
           });
         } else {
-          var p = parseResponseCode(res);
-          if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') {
-            window.showPorukaModal(p.code, p.replacements || []);
-          }
+          prikaziGresku(res);
         }
       });
     });
@@ -432,6 +434,20 @@
     return { code: s.slice(0, idx).trim(), replacements: [s.slice(idx + 1).trim()] };
   }
 
+  /** Prikaže modal greške. Za 002 (duplikat) #1 = PREVEDENA labela polja koje je server označio (naziv/stupanj). */
+  function prikaziGresku(res) {
+    var p = parseResponseCode(res);
+    if (!p || typeof MODAL_MESSAGES === 'undefined' || !MODAL_MESSAGES[p.code] || typeof window.showPorukaModal !== 'function') return;
+    var repl = p.replacements || [];
+    if (p.code === '002') {
+      var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+      var mapa = { naziv: ['stupnjevi_crud.labela.naziv', 'Naziv stupnja'], stupanj: ['stupnjevi_crud.labela.stupanj', 'Stupanj'] };
+      var m = mapa[repl[0]] || mapa.naziv;
+      repl = [tt(m[0], m[1])];
+    }
+    window.showPorukaModal(p.code, repl);
+  }
+
   function ucitajObrediSelect(callback) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', API_BASE + 'Obredi_CRUD_sve.php', true);
@@ -440,7 +456,8 @@
       var text = (xhr.responseText || '').trim();
       var select = document.getElementById('select_obred');
       if (!select) { if (callback) callback(); return; }
-      var opts = []; opts.push('<option value="0">Nije izabran</option>');
+      var ttSel = window.vnlhT || function (k, f) { return f != null ? f : k; };
+      var opts = []; opts.push('<option value="0">' + escapeHtml(ttSel('stupnjevi_crud.opcija.nije_izabran', 'Nije izabran')) + '</option>');
       if (text !== '' && text.charAt(0) === '[') {
         try {
           var arr = JSON.parse(text || '[]');

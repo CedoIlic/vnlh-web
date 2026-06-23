@@ -217,3 +217,34 @@ Cilj: infrastruktura da **svaka** forma MOŽE biti prevedena i da **prebacivač 
 - PHP lib = **`0-Jezik_lib.php`** (uz 0-Jezik modul).
 - Default `id_jezik` postojećih korisnika = **zadani (hr)**.
 - Promjena jezika = **reload** (Faza 0); in-place swap kasnije.
+
+---
+
+## 11. RECEPT — prijevod nove forme (korak po korak)
+
+Motor je gotov (tablice, `0-Jezik_lib.php`, sinkroni `0-Jezik.js`, poruke). Master (hr) ostaje literal u kodu; svaki tekst dobiva i18n ključ za ostale jezike. Ključ: `<modul>.<sekcija>.<element>`; dijeljeno = `global.*`. Datoteke uz formu (prefiks forme).
+
+**Alati u runtime-u** (svi globalni, sinkrono spremni prije skripti forme):
+- `data-i18n="kljuc"` (textContent), `data-i18n-placeholder|-title|-aria="kljuc"` — **statični** tekst (swapper)
+- `window.vnlhT('kljuc','master',{1:..})` — **dinamični** tekst iz JS-a; vraća prijevod ili master literal
+- `window.vnlhTZaglavlje('forma.tablica.zaglavlje', cfg.Tablica_Zaglavlje)` — **zaglavlje tablice** iz JEDNOG ključa (naslovi zarezom)
+- `window.vnlhI18nPrevedi(root)` — ručni re-swap nakon dinamički ubačenog DOM-a (modali/fragmenti; MutationObserver to ionako hvata)
+
+### Koraci
+1. **Popiši tekstove** forme: naslov (h2), labele, placeholderi, zaglavlje tablice, statični gumbi, dinamični JS tekstovi (npr. Upis↔Izmjeni), tab-naslovi, modali/popupi specifični za formu.
+2. **HTML — statični tekst:** dodaj `data-i18n` atribute:
+   - naslov → `data-i18n="<forma>.naslov"`; labela → `data-i18n="<forma>.labela.<x>"`; placeholder → `data-i18n-placeholder="<forma>.placeholder.<x>"`.
+   - **statični CRUD gumbi** (Izbriši, Povratak) → GLOBALNI ključevi `global.gumb.izbrisi` / `global.gumb.povratak` (već prevedeni).
+   - master literal OSTAJE u elementu (fallback).
+3. **Zaglavlje tablice** (ako ima): u `.js`, IZMEĐU definicije configa i `CommonCRUD.initTablica`:
+   `if (window.vnlhTZaglavlje) Cfg.Tablica_Zaglavlje = window.vnlhTZaglavlje('<forma>.tablica.zaglavlje', Cfg.Tablica_Zaglavlje);`
+4. **Dinamični tekst iz JS-a** (gumb koji JS prepisuje, statusi): `var tt = window.vnlhT || function(k,f){return f!=null?f:k;}; el.textContent = tt('global.gumb.upis','Upis');` (Upis/Izmjeni = `global.gumb.upis`/`global.gumb.izmijeni`).
+5. **Poruke modala:** NIŠTA — globalne su, motor ih prevodi. Ako poruka ima `#1` koji upućuje na polje (npr. 002) → proslijedi **prevedenu labelu kontrole** kao replacement (uzorak `prikaziGresku` u Obredi_CRUD.js); sadržaj #1 se ne prevodi zasebno.
+6. **Ključevi → baza:** `INSERT` u `sustav_prijevodi_kljucevi` (form-specifični `<forma>.*`; globalne provjeri da postoje). `izvorni_tekst` = TOČAN literal iz koda; `izvorni_hash = MD5(izvorni_tekst)`; `tip`/`kontrola`/`naziv_fajla` popunjeni.
+7. **Draft prijevodi → baza:** 6 jezika (it, en-usa, fr, srbl, srbc, gr), `prijevod_test=1`, `izvor='ai'`, `izvor_hash = k.izvorni_hash`. Za veće setove: paralelni prevoditelji → JSON u `tmp/` → generator → **SQL u `sql/`** (idempotentno `ON DUPLICATE KEY UPDATE`, escaping). Za male forme ručno.
+8. **Bump** `00-Version.js` (cache-bust) + **lint** (`node --check` JS, `php -l` PHP).
+9. **TEST na SVIM jezicima:** naslov/labele/zaglavlje/gumbi/modali; **provjeri DULJINE** (fr/de/gr/ćirilica dulji) — fiksne dimenzije lome raspored → prepravi kontrolu da bude **univerzalna** (fleksibilna širina, prelamanje, min/max). Vidi §7 Faza 3.
+10. **Git:** commit + push (po dogovoru: „git"=commit+push). SQL seed u `sql/` je gitignoran (one-off Heidi), radni JSON-i u `tmp/` gitignorani.
+
+### Referenca — Obredi_CRUD (gotov primjer)
+Ključevi: `obredi_crud.naslov`, `obredi_crud.labela.naziv`, `obredi_crud.placeholder.naziv`, `obredi_crud.tablica.zaglavlje` + globalni `global.gumb.{upis,izmijeni,izbrisi,povratak}`. Datoteke: `html/Obredi_CRUD.html`, `js/Obredi_CRUD.js`.
