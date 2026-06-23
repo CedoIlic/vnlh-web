@@ -36,7 +36,7 @@
     Tablica_Zaglavlje: [
       { key: "naziv", title: "Naziv", SQL_Naziv: "naziv", sortable: 1, sortable_icon: 0, type: "t", width: 0, suffix: "", align: "L", row_align: "L", mobitel_prikaz: 1 },
       { key: "stupanj", title: "Stupanj", SQL_Naziv: "stupanj", sortable: 1, sortable_icon: 0, type: "n", width: -20, suffix: "", align: "C", row_align: "C", mobitel_prikaz: 1 },
-      { key: "ima_sliku", title: "Slika", SQL_Naziv: "ima_sliku", sortable: 0, sortable_icon: 0, type: "b", width: 60, suffix: "", align: "C", row_align: "C", mobitel_prikaz: 0, cell_readonly: 1 }
+      { key: "ima_sliku", title: "Slika", SQL_Naziv: "ima_sliku", sortable: 0, sortable_icon: 0, type: "b", width: 108, suffix: "", align: "C", row_align: "C", mobitel_prikaz: 0, cell_readonly: 1 }
     ]
   };
 
