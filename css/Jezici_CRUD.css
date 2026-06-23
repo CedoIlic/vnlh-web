@@ -1,0 +1,107 @@
+/* Jezici_CRUD.css – raspored edit panela forme Jezici (sustav_jezici) + modal aktiviranja država.
+   Kontrole i boje/fontovi/sjene preuzeti iz tokena u 0-Common.css; ovdje samo raspored i vezivanje tokena. */
+
+/* Modal država (ModalTablicaInit) ne smije ispod 5 vidljivih redova — token za izračun MIN_H. */
+:root {
+    --modal_tablica_vidljivih_redova: 5;
+}
+
+/* Grid 3 kolone: Jezik | Šifra | Zastava. 2. red sjeda u iste kolone → Redoslijed pod Šifrom, Izvorni naziv pod Zastavom (lijevi rubovi po x-osi se poklapaju). Forma je desktop-only. */
+.jezici-crud__edit-body {
+    display: grid;
+    grid-template-columns: minmax(160px, 1.35fr) 110px minmax(240px, 1.45fr);
+    gap: 0.75rem 1rem;
+    align-items: end;
+}
+
+.jezici-crud__edit-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+/* Kontrole pune cijelu svoju grid-kolonu (da se rubovi poklope između redova). */
+.jezici-crud__edit-cell .kontrola-edit,
+.jezici-crud__edit-cell .kontrola-edit-delete,
+.jezici-crud__edit-cell .jezici-crud__drzava-wrap {
+    width: 100%;
+}
+
+/* Grupa checkboxa = kolona 1 u 2. redu (pod Jezikom). */
+.jezici-crud__check-group {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-bottom: 0.4rem;
+}
+
+.jezici-crud__check {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+/* Select zastave + … gumb u istom redu. */
+.jezici-crud__drzava-wrap {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.jezici-crud__drzava-wrap .kontrola-select {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.jezici-crud__ellipsis {
+    flex: 0 0 auto;
+    width: var(--edit_height, 36px);
+    height: var(--edit_height, 36px);
+    line-height: 1;
+    font-family: var(--font_family);
+    font-size: var(--font_size);
+    color: var(--edit_text);
+    border: var(--tablica_border_w, 1px) solid var(--edit_border);
+    border-radius: var(--edit_radius, 8px);
+    background: var(--edit_bg);
+    cursor: pointer;
+}
+
+.jezici-crud__ellipsis:hover {
+    box-shadow: var(--edit_focus_shadow);
+}
+
+.jezici-crud__ellipsis:disabled {
+    background: var(--edit_bg_disabled);
+    border-color: var(--edit_border_disabled);
+    color: var(--edit_text_disabled);
+    cursor: var(--edit_cursor_disabled, default);
+    box-shadow: none;
+}
+
+/* Footer: lijevo akcije, desno povratak (ako globalni panel CSS ne rasporedi). */
+.jezici-crud__footer-left {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Zastava u tablici: 4:3 flag-chip (visina +50% u odnosu na prvotnih 22px). */
+#tablicaContainer .kontrola-tablica__cell-img {
+    width: auto;
+    height: 33px;
+    object-fit: contain;
+    border-radius: 2px;
+    box-shadow: 0 0 0 var(--tablica_border_w, 1px) var(--tablica_border);
+}
+
+/* Nema zastave (bez države ili slika ne postoji u bazi): prazan okvir istih dimenzija — ne slomljena slika. */
+#tablicaContainer .kontrola-tablica__cell-inner--slika-prazno {
+    display: inline-block;
+    width: 44px;
+    height: 33px;
+    border: var(--tablica_border_w, 1px) solid var(--tablica_border);
+    border-radius: 2px;
+    background: none;
+}

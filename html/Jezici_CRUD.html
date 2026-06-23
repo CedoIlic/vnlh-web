@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
     <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
     <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/Jezici_CRUD.css?v=__VNLH_ASSET_V__">
 </head>
 
 <body>
@@ -27,12 +28,55 @@
 
     <div class="kontrola-panel mb-3" id="edit_panel">
         <div class="kontrola-panel__body jezici-crud__edit-body">
-            <div class="jezici-crud__edit-row">
+            <!-- Grid 3 kolone: Jezik | Šifra | Zastava. 2. red sjeda u iste kolone: Redoslijed pod Šifru, Izvorni naziv pod Zastavu. -->
+            <!-- KOL 1 / red 1: Jezik -->
+            <div class="jezici-crud__edit-cell jezici-crud__edit-cell--naziv">
                 <label class="kontrola-labela mb-0" for="edit_jezik">Jezik</label>
                 <div class="kontrola-edit-delete">
-                    <input id="edit_jezik" type="text" class="kontrola-edit-delete__input" placeholder="Jezik...">
+                    <input id="edit_jezik" type="text" class="kontrola-edit-delete__input" maxlength="50" placeholder="Jezik...">
                     <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
                 </div>
+            </div>
+            <!-- KOL 2 / red 1: Šifra -->
+            <div class="jezici-crud__edit-cell jezici-crud__edit-cell--kod">
+                <label class="kontrola-labela mb-0" for="edit_kod">Šifra</label>
+                <div class="kontrola-edit-delete">
+                    <input id="edit_kod" type="text" class="kontrola-edit-delete__input" maxlength="10" placeholder="npr. en">
+                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                </div>
+            </div>
+            <!-- KOL 3 / red 1: Zastava - država -->
+            <div class="jezici-crud__edit-cell jezici-crud__edit-cell--drzava">
+                <label class="kontrola-labela mb-0" for="edit_drzava">Zastava - država</label>
+                <div class="jezici-crud__drzava-wrap">
+                    <div class="kontrola-select">
+                        <select id="edit_drzava">
+                            <option value="">— bez zastave —</option>
+                        </select>
+                    </div>
+                    <button type="button" id="btnDrzaveModal" class="jezici-crud__ellipsis" title="Uključi/isključi države u izboru" aria-label="Upravljaj državama">…</button>
+                </div>
+            </div>
+            <!-- KOL 1 / red 2: Zadani + Aktivan -->
+            <div class="jezici-crud__check-group">
+                <div class="jezici-crud__check">
+                    <input id="edit_zadani" type="checkbox" class="kontrola-checkbox">
+                    <label class="kontrola-labela mb-0" for="edit_zadani">Zadani</label>
+                </div>
+                <div class="jezici-crud__check">
+                    <input id="edit_aktivan" type="checkbox" class="kontrola-checkbox" checked>
+                    <label class="kontrola-labela mb-0" for="edit_aktivan">Aktivan</label>
+                </div>
+            </div>
+            <!-- KOL 2 / red 2: Redoslijed (pod Šifrom) -->
+            <div class="jezici-crud__edit-cell jezici-crud__edit-cell--red">
+                <label class="kontrola-labela mb-0" for="edit_redoslijed">Redoslijed</label>
+                <input id="edit_redoslijed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="npr. 50">
+            </div>
+            <!-- KOL 3 / red 2: Izvorni naziv (pod Zastavom) -->
+            <div class="jezici-crud__edit-cell jezici-crud__edit-cell--izvorni">
+                <label class="kontrola-labela mb-0" for="edit_izvorni">Izvorni naziv</label>
+                <input id="edit_izvorni" type="text" class="kontrola-edit" maxlength="80" placeholder="npr. Italiano, Српски, Ελληνικά">
             </div>
         </div>
         <div class="kontrola-panel__footer jezici-crud__edit-footer">

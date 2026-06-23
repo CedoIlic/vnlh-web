@@ -59,6 +59,8 @@ var MODAL_MESSAGES = {
   '030': '030|Korisničko sučelje|(OK)|error||Format dokumenta nije ispravan.',   /* 0-Obrada_Slike: učitana datoteka ne odgovara odabranom formatu (tip_podatka) */
   '031': '031|Korisničko sučelje|(OK)|error||Spremanje je zaustavljeno — neke stavke nisu potpune: #1',   /* PDF_Dokument_CRUD: validacija stavki prije spremanja; #1 = popis problema */
   '032': '032|Korisničko sučelje|OK,(Cancel)|warning||Brisanje dokumenta izbrisat će i sve pripadajuće stavke. Jeste li sigurni da želite obrisati dokument?',   /* PDF_Dokument_CRUD: potvrda brisanja dokumenta (kaskadno briše stavke); default Odustani */
+  '033': '033|Korisničko sučelje|(OK)|error||Šifra jezika mora imati 2–10 znakova: mala slova (a–z), brojke i opcionalno crtica (npr. hr, en, pt-br).',   /* Jezici_CRUD: nevažeći format kolone kod */
+  '034': '034|Korisničko sučelje|(OK)|forbidden||Zadani jezik se ne može obrisati ni isključiti. Najprije postavi drugi jezik kao zadani.',   /* Jezici_CRUD: zaštita fallback (zadanog) jezika pri brisanju/deaktivaciji/skidanju oznake zadani */
   '100': '100|Poruka servera|(OK)|error||Nije moguće povezivanje sa bazom podataka.',   /* Greška konekcije (00_db.php) */
   '101': '101|Poruka servera|(OK)|error||Neočekivani odgovor poslužitelja. Pokušajte ponovno.',   /* Nepoznat kod odgovora (npr. PHP greška) */
   '105': '105|Poruka servera|(OK)|error||Podaci poslani na upis nisu ispravni.',         /* Nevaljani ulaz (npr. id <= 0) */

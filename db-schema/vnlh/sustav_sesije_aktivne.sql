@@ -3,7 +3,7 @@ CREATE TABLE `sustav_sesije_aktivne` (
   `id_korisnik` int(11) unsigned NOT NULL,
   `session_id` varchar(128) NOT NULL COMMENT 'Jedinstveni identifikator sesije; služi za identifikaciju konkretnog login-a/browsera/uređaja.',
   `login_vrijeme` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Vrijeme otvaranja sesije (login); služi za evidenciju trajanja sesije.',
-  `zadnja_aktivnost` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Vrijeme zadnje aktivnosti; ažurira se pri radu i koristi za timeout.',
+  `zadnja_aktivnost` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'Vrijeme zadnje aktivnosti; pišu ga eksplicitno samo ping/touch/insert (NOW). BEZ ON UPDATE current_timestamp() — inače bi promjene statusa (timeout/logout), poll nepročitanih i slanje poruke drugom korisniku lažno bumpali ovo vrijeme.',
   `otvorena_stranica` varchar(255) DEFAULT NULL COMMENT 'Trenutno otvorena forma, modul ili ruta; informacija gdje se korisnik nalazi.',
   `povijest_sesije` text DEFAULT NULL COMMENT 'Pamti povijest korištenih formi unutar sesije; služi za pregled kretanja korisnika kroz aplikaciju i dijagnostiku.',
   `ip_adresa` varchar(45) DEFAULT NULL COMMENT 'IP adresa korisnika; koristi se za sigurnost i dijagnostiku.',
