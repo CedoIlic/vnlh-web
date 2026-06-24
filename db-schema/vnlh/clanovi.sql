@@ -40,11 +40,11 @@ CREATE TABLE `clanovi` (
   KEY `ix_clanovi_na_prijedlog` (`na_prijedlog`),
   KEY `ix_clanovi_drzava` (`drzava`),
   CONSTRAINT `fk_clanovi_adrese` FOREIGN KEY (`adresa`) REFERENCES `adrese` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_clanovi_drzave` FOREIGN KEY (`drzava`) REFERENCES `drzave` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_clanovi_drzave` FOREIGN KEY (`drzava`) REFERENCES `drzave` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_clanovi_emaili` FOREIGN KEY (`e_mail`) REFERENCES `e_maili` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_clanovi_loze` FOREIGN KEY (`loza`) REFERENCES `loze` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_clanovi_na_prijedlog` FOREIGN KEY (`na_prijedlog`) REFERENCES `clanovi` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_clanovi_porijeklo` FOREIGN KEY (`porijeklo`) REFERENCES `clanovi_porijeklo` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `fk_clanovi_stupnjevi` FOREIGN KEY (`stupanj`) REFERENCES `stupnjevi` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_clanovi_stupnjevi` FOREIGN KEY (`stupanj`) REFERENCES `stupnjevi` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_clanovi_telefoni` FOREIGN KEY (`telefon`) REFERENCES `telefoni` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
