@@ -39,6 +39,12 @@
   var tablicaApi = null;
   var onCrudSelectionChange = null;
 
+  /* Prijevod zaglavlja tablice iz jednog ključa (naslovi zarezom). 0-Jezik.js je sinkron → vnlhT je spreman ovdje;
+     na master jeziku / bez prijevoda vraća originalne naslove. */
+  if (window.vnlhTZaglavlje) {
+    DrzaveCRUD.Tablica_Zaglavlje = window.vnlhTZaglavlje('drzave_crud.tablica.zaglavlje', DrzaveCRUD.Tablica_Zaglavlje);
+  }
+
   CommonCRUD.initTablica('tablicaContainer', DrzaveCRUD, {
     onReady: function (api) { tablicaApi = api; },
     onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
@@ -85,8 +91,10 @@
     var imaSadrzaj = editEl ? trim(editEl.value) !== '' : false;
     if (btnUpisi && btnUpisiLabel) {
       btnUpisi.classList.toggle('kontrola-btn--crud-izmjeni', imaSelekciju);
-      btnUpisiLabel.textContent = imaSelekciju ? 'Izmjeni' : 'Upis';
-      btnUpisi.setAttribute('aria-label', imaSelekciju ? 'Izmjeni' : 'Upis');
+      var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+      var lblUpis = imaSelekciju ? tt('global.gumb.izmijeni', 'Izmjeni') : tt('global.gumb.upis', 'Upis');
+      btnUpisiLabel.textContent = lblUpis;
+      btnUpisi.setAttribute('aria-label', lblUpis);
       btnUpisi.disabled = !imaSadrzaj;
     }
     if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
@@ -121,8 +129,7 @@
               osvjeziTablicu();
             });
           } else {
-            var p = parseResponseCode(res);
-            if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(p.code, p.replacements);
+            prikaziGresku(res);
           }
         });
       } else {
@@ -134,8 +141,7 @@
               osvjeziTablicu();
             });
           } else {
-            var p = parseResponseCode(res);
-            if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(p.code, p.replacements);
+            prikaziGresku(res);
           }
         });
       }
@@ -194,6 +200,19 @@
     return { code: s.slice(0, idx).trim(), replacements: [s.slice(idx + 1).trim()] };
   }
 
+  /** Prikaže modal greške iz PHP odgovora. Za 002 (duplikat) #1 = PREVEDENA labela kontrole koja je izazvala
+   *  grešku (labela ima vlastiti i18n ključ → sadržaj #1 se ne prevodi zasebno). */
+  function prikaziGresku(res) {
+    var p = parseResponseCode(res);
+    if (!p || typeof MODAL_MESSAGES === 'undefined' || !MODAL_MESSAGES[p.code] || typeof window.showPorukaModal !== 'function') return;
+    var repl = p.replacements;
+    if (p.code === '002') {
+      var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+      repl = [tt('drzave_crud.labela.naziv', 'Naziv države')];
+    }
+    window.showPorukaModal(p.code, repl);
+  }
+
   function ucitajPodatkeTablica(callback) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', API_BASE + 'Drzave_CRUD_sve.php', true);
@@ -202,10 +221,7 @@
       var text = (xhr.responseText || '').trim();
       var rows = [];
       if (text !== '' && text.charAt(0) !== '[') {
-        var parsed = parseResponseCode(text);
-        if (parsed && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[parsed.code] && typeof window.showPorukaModal === 'function') {
-          window.showPorukaModal(parsed.code, parsed.replacements);
-        }
+        prikaziGresku(text);
       } else {
         try {
           var arr = JSON.parse(text || '[]');
