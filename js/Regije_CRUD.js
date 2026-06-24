@@ -41,6 +41,18 @@
   var tablicaApi = null;
   var onCrudSelectionChange = null;
 
+  /* Prijevod zaglavlja tablice iz jednog ključa (naslovi zarezom). 0-Jezik.js je sinkron → vnlhT je spreman ovdje;
+     na master jeziku / bez prijevoda vraća originalne naslove. */
+  if (window.vnlhTZaglavlje) {
+    RegijeCRUD.Tablica_Zaglavlje = window.vnlhTZaglavlje('regije_crud.tablica.zaglavlje', RegijeCRUD.Tablica_Zaglavlje);
+  }
+
+  /** Prijevod teksta prazne opcije selecta države ("— Odaberi državu —"). */
+  function tekstPraznaOpcija() {
+    var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+    return tt('regije_crud.opcija.odaberi', '— Odaberi državu —');
+  }
+
   CommonCRUD.initTablica('tablicaContainer', RegijeCRUD, {
     getRowId: function (row) { return row && row[1] != null ? row[1] : (row && row[0]); },
     onReady: function (api) { tablicaApi = api; },
@@ -115,8 +127,10 @@
 
     if (btnUpisi && btnUpisiLabel) {
       btnUpisi.classList.toggle('kontrola-btn--crud-izmjeni', imaSelekciju);
-      btnUpisiLabel.textContent = imaSelekciju ? 'Izmjeni' : 'Upis';
-      btnUpisi.setAttribute('aria-label', imaSelekciju ? 'Izmjeni' : 'Upis');
+      var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+      var lblUpis = imaSelekciju ? tt('global.gumb.izmijeni', 'Izmjeni') : tt('global.gumb.upis', 'Upis');
+      btnUpisiLabel.textContent = lblUpis;
+      btnUpisi.setAttribute('aria-label', lblUpis);
       btnUpisi.disabled = !imaDrzavu || !imaSadrzaj;
     }
     if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
@@ -178,7 +192,7 @@
         while (sel.firstChild) sel.removeChild(sel.firstChild);
         var opt0 = document.createElement('option');
         opt0.value = '';
-        opt0.textContent = '— Odaberi državu —';
+        opt0.textContent = tekstPraznaOpcija();
         sel.appendChild(opt0);
         if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_drzava');
         if (callback) callback();
@@ -192,7 +206,7 @@
         while (sel.firstChild) sel.removeChild(sel.firstChild);
         var optEmpty = document.createElement('option');
         optEmpty.value = '';
-        optEmpty.textContent = '— Odaberi državu —';
+        optEmpty.textContent = tekstPraznaOpcija();
         sel.appendChild(optEmpty);
         if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_drzava');
         if (callback) callback();
@@ -206,7 +220,7 @@
       while (sel.firstChild) sel.removeChild(sel.firstChild);
       var optEmpty = document.createElement('option');
       optEmpty.value = '';
-      optEmpty.textContent = '— Odaberi državu —';
+      optEmpty.textContent = tekstPraznaOpcija();
       sel.appendChild(optEmpty);
 
       for (var i = 0; i < options.length; i++) {

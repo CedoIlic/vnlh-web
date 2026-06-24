@@ -18,14 +18,14 @@
     <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
 </head>
 <body>
-<div class="naslov-forme"><h2>Regije</h2></div>
+<div class="naslov-forme"><h2 data-i18n="regije_crud.naslov">Regije</h2></div>
 <div class="page-container">
     <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel kontrola-panel--resize-y mb-3">
         <div class="kontrola-panel__header regije-crud__tablica-header" style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-            <label class="kontrola-labela mb-0" for="select_drzava" style="white-space: nowrap; flex-shrink: 0;">Država</label>
+            <label class="kontrola-labela mb-0" for="select_drzava" style="white-space: nowrap; flex-shrink: 0;" data-i18n="regije_crud.labela.drzava">Država</label>
             <div class="kontrola-select" style="flex: 1 1 auto; min-width: 0;">
-                <select id="select_drzava" aria-label="Odaberi državu">
-                    <option value="">— Odaberi državu —</option>
+                <select id="select_drzava" aria-label="Odaberi državu" data-i18n-aria="regije_crud.select.aria">
+                    <option value="" data-i18n="regije_crud.opcija.odaberi">— Odaberi državu —</option>
                 </select>
             </div>
         </div>
@@ -36,9 +36,9 @@
     <div class="kontrola-panel mb-3" id="edit_panel">
         <div class="kontrola-panel__body regije-crud__edit-body">
             <div class="regije-crud__edit-row">
-                <label class="kontrola-labela mb-0" for="edit_regija">Regija</label>
+                <label class="kontrola-labela mb-0" for="edit_regija" data-i18n="regije_crud.labela.regija">Regija</label>
                 <div class="kontrola-edit-delete">
-                    <input id="edit_regija" type="text" class="kontrola-edit-delete__input" placeholder="Naziv regije...">
+                    <input id="edit_regija" type="text" class="kontrola-edit-delete__input" placeholder="Naziv regije..." data-i18n-placeholder="regije_crud.placeholder.regija">
                     <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
                 </div>
             </div>
@@ -46,10 +46,10 @@
         <div class="kontrola-panel__footer regije-crud__edit-footer">
             <div class="regije-crud__footer-left">
                 <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
-                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
             </div>
             <div class="regije-crud__footer-right">
-                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
             </div>
         </div>
     </div>
