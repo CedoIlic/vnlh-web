@@ -31,6 +31,14 @@
   /** Redovi iz API-ja za sinkron panel ↔ tablica */
   var bojeRawData = [];
 
+  /** i18n helper: prijevod iz rječnika ili master literal (2. arg). 0-Jezik.js je sinkron → spreman ovdje. */
+  function tt(k, f) { return (window.vnlhT || function (k2, f2) { return f2 != null ? f2 : k2; })(k, f); }
+
+  /* Prijevod zaglavlja tablice 1 (boje) iz jednog ključa (naslovi zarezom). */
+  if (window.vnlhTZaglavlje) {
+    AlatiPorukeRazvojaTip.Tablica_Zaglavlje = window.vnlhTZaglavlje('alati_poruke_razvoja_tip.tablica.zaglavlje', AlatiPorukeRazvojaTip.Tablica_Zaglavlje);
+  }
+
   CommonCRUD.initTablica('tablicaContainer', AlatiPorukeRazvojaTip, {
     getRowId: function (row) { return row != null && row.length > 0 ? row[0] : null; },
     onReady: function (api) { tablicaApi = api; },
@@ -59,6 +67,11 @@
   var onCrudPorukeSelectionChange = null;
   /** Redovi poruka iz API-ja (JOIN fg/bg za prikaz) */
   var porukeRawData = [];
+
+  /* Prijevod zaglavlja tablice 2 (poruke) iz jednog ključa (naslovi zarezom). */
+  if (window.vnlhTZaglavlje) {
+    AlatiPorukeRazvojaTipPoruke.Tablica_Zaglavlje = window.vnlhTZaglavlje('alati_poruke_razvoja_tip.tablica_poruke.zaglavlje', AlatiPorukeRazvojaTipPoruke.Tablica_Zaglavlje);
+  }
 
   CommonCRUD.initTablica('tablicaPorukeContainer', AlatiPorukeRazvojaTipPoruke, {
     getRowId: function (row) { return row != null && row.length > 0 ? row[0] : null; },
@@ -286,8 +299,9 @@
 
     if (btnUpisi && btnUpisiLabel) {
       btnUpisi.classList.toggle('kontrola-btn--crud-izmjeni', imaSelekciju);
-      btnUpisiLabel.textContent = imaSelekciju ? 'Izmjeni' : 'Upis';
-      btnUpisi.setAttribute('aria-label', imaSelekciju ? 'Izmjeni' : 'Upis');
+      var lblUpis = imaSelekciju ? tt('global.gumb.izmijeni', 'Izmjeni') : tt('global.gumb.upis', 'Upis');
+      btnUpisiLabel.textContent = lblUpis;
+      btnUpisi.setAttribute('aria-label', lblUpis);
       /* Novi slog: barem jedna boja; izmjena: uvijek dozvoljeno. */
       btnUpisi.disabled = imaSelekciju ? false : !imaBoju;
     }
@@ -469,7 +483,7 @@
     sel.innerHTML = '';
     var optEmpty = document.createElement('option');
     optEmpty.value = '';
-    optEmpty.textContent = '— Bez boje —';
+    optEmpty.textContent = tt('alati_poruke_razvoja_tip.opcija.bez_boje', '— Bez boje —');
     sel.appendChild(optEmpty);
     var arr = bojeRawData.slice();
     arr.sort(function (a, b) {
@@ -481,7 +495,7 @@
       var b = arr[i];
       var o = document.createElement('option');
       o.value = String(b.id);
-      o.textContent = 'Poruka';
+      o.textContent = tt('alati_poruke_razvoja_tip.labela.poruka', 'Poruka');
       var fg = b.fg_boja != null ? String(b.fg_boja) : '';
       var bg = b.bg_boja != null ? String(b.bg_boja) : '';
       var pfg = bojaFromStorage(fg !== '' ? fg : '#000000FF');
@@ -747,8 +761,9 @@
     var kodOk = kodN >= 1 && kodN <= 99;
     if (btnPorukeUpisi && btnPorukeUpisiLabel) {
       btnPorukeUpisi.classList.toggle('kontrola-btn--crud-izmjeni', imaSel);
-      btnPorukeUpisiLabel.textContent = imaSel ? 'Izmjeni' : 'Upis';
-      btnPorukeUpisi.setAttribute('aria-label', imaSel ? 'Izmjeni' : 'Upis');
+      var lblPorukeUpis = imaSel ? tt('global.gumb.izmijeni', 'Izmjeni') : tt('global.gumb.upis', 'Upis');
+      btnPorukeUpisiLabel.textContent = lblPorukeUpis;
+      btnPorukeUpisi.setAttribute('aria-label', lblPorukeUpis);
       /* Novi slog: kod 1–99; izmjena: uvijek. */
       btnPorukeUpisi.disabled = imaSel ? false : !kodOk;
     }

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="../css/Alati_Poruke_Razvoja_Tip.css?v=__VNLH_ASSET_V__">
 </head>
 <body>
-<div class="naslov-forme"><h2>Tipovi poruka za odgovor razvoja</h2></div>
+<div class="naslov-forme"><h2 data-i18n="alati_poruke_razvoja_tip.naslov">Tipovi poruka za odgovor razvoja</h2></div>
 <div class="page-container">
     <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
         <div class="kontrola-panel__body">
@@ -24,30 +24,30 @@
             <div class="alati-poruke-razvoja-tip__edit-row alati-poruke-razvoja-tip__edit-row--sve-u-redu">
                 <div class="alati-poruke-razvoja-tip__boja-wrap alati-poruke-razvoja-tip__boja-wrap--redosljed">
                     <div class="alati-poruke-razvoja-tip__cell">
-                        <label class="kontrola-labela mb-0" for="redosljed_edit">Redosljed</label>
-                        <input id="redosljed_edit" type="number" class="kontrola-edit alati-poruke-razvoja-tip__redosljed-edit" min="0" max="255" step="1" value="0" inputmode="numeric" aria-label="Redosljed (0–255)">
+                        <label class="kontrola-labela mb-0" for="redosljed_edit" data-i18n="alati_poruke_razvoja_tip.labela.redosljed">Redosljed</label>
+                        <input id="redosljed_edit" type="number" class="kontrola-edit alati-poruke-razvoja-tip__redosljed-edit" min="0" max="255" step="1" value="0" inputmode="numeric" aria-label="Redosljed (0–255)" data-i18n-aria="alati_poruke_razvoja_tip.redosljed.aria">
                     </div>
                 </div>
                 <div class="alati-poruke-razvoja-tip__boja-wrap">
                     <div class="alati-poruke-razvoja-tip__cell">
-                        <label class="kontrola-labela mb-0" for="fg_boja_display">Boja teksta</label>
+                        <label class="kontrola-labela mb-0" for="fg_boja_display" data-i18n="alati_poruke_razvoja_tip.labela.boja_teksta">Boja teksta</label>
                         <div class="kontrola-boja" data-boja-za="fg_boja_display" data-boja-nullable="1">
-                            <button type="button" id="fg_boja_display_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju teksta">
+                            <button type="button" id="fg_boja_display_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju teksta" data-i18n-aria="alati_poruke_razvoja_tip.boja_teksta.trigger_aria">
                                 <span class="kontrola-icon--paleta" aria-hidden="true"></span>
                             </button>
-                            <input id="fg_boja_display" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" readonly aria-label="Boja teksta (hex)">
+                            <input id="fg_boja_display" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" data-i18n-placeholder="alati_poruke_razvoja_tip.boja.placeholder" readonly aria-label="Boja teksta (hex)" data-i18n-aria="alati_poruke_razvoja_tip.boja_teksta.aria">
                             <span class="kontrola-boja__swatch" aria-hidden="true"></span>
                         </div>
                     </div>
                 </div>
                 <div class="alati-poruke-razvoja-tip__boja-wrap">
                     <div class="alati-poruke-razvoja-tip__cell">
-                        <label class="kontrola-labela mb-0" for="bg_boja_display">Boja podloge</label>
+                        <label class="kontrola-labela mb-0" for="bg_boja_display" data-i18n="alati_poruke_razvoja_tip.labela.boja_podloge">Boja podloge</label>
                         <div class="kontrola-boja" data-boja-za="bg_boja_display" data-boja-nullable="1">
-                            <button type="button" id="bg_boja_display_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju podloge">
+                            <button type="button" id="bg_boja_display_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju podloge" data-i18n-aria="alati_poruke_razvoja_tip.boja_podloge.trigger_aria">
                                 <span class="kontrola-icon--paleta" aria-hidden="true"></span>
                             </button>
-                            <input id="bg_boja_display" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" readonly aria-label="Boja podloge (hex)">
+                            <input id="bg_boja_display" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" data-i18n-placeholder="alati_poruke_razvoja_tip.boja.placeholder" readonly aria-label="Boja podloge (hex)" data-i18n-aria="alati_poruke_razvoja_tip.boja_podloge.aria">
                             <span class="kontrola-boja__swatch" aria-hidden="true"></span>
                         </div>
                     </div>
@@ -57,7 +57,7 @@
         <div class="kontrola-panel__footer alati-poruke-razvoja-tip__edit-footer">
             <div class="alati-poruke-razvoja-tip__footer-left">
                 <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
-                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
             </div>
         </div>
     </div>
@@ -72,37 +72,37 @@
             <div class="alati-poruke-razvoja-tip__poruke-edit-row alati-poruke-razvoja-tip__poruke-edit-row--gornji">
                 <div class="alati-poruke-razvoja-tip__boja-wrap alati-poruke-razvoja-tip__boja-wrap--redosljed">
                     <div class="alati-poruke-razvoja-tip__cell">
-                        <label class="kontrola-labela mb-0" for="poruke_redosljed_edit">Redosljed</label>
-                        <input id="poruke_redosljed_edit" type="number" class="kontrola-edit alati-poruke-razvoja-tip__redosljed-edit" min="0" max="255" step="1" value="0" inputmode="numeric" aria-label="Redosljed poruke (0–255)">
+                        <label class="kontrola-labela mb-0" for="poruke_redosljed_edit" data-i18n="alati_poruke_razvoja_tip.labela.redosljed">Redosljed</label>
+                        <input id="poruke_redosljed_edit" type="number" class="kontrola-edit alati-poruke-razvoja-tip__redosljed-edit" min="0" max="255" step="1" value="0" inputmode="numeric" aria-label="Redosljed poruke (0–255)" data-i18n-aria="alati_poruke_razvoja_tip.poruke_redosljed.aria">
                     </div>
                 </div>
                 <div class="alati-poruke-razvoja-tip__boja-wrap alati-poruke-razvoja-tip__poruke-kod-wrap">
                     <div class="alati-poruke-razvoja-tip__cell">
-                        <label class="kontrola-labela mb-0" for="poruke_kod_edit">Kod</label>
-                        <input id="poruke_kod_edit" type="number" class="kontrola-edit alati-poruke-razvoja-tip__poruke-kod-edit" min="1" max="99" step="1" value="1" inputmode="numeric" aria-label="Kod poruke (1–99)">
+                        <label class="kontrola-labela mb-0" for="poruke_kod_edit" data-i18n="alati_poruke_razvoja_tip.labela.kod">Kod</label>
+                        <input id="poruke_kod_edit" type="number" class="kontrola-edit alati-poruke-razvoja-tip__poruke-kod-edit" min="1" max="99" step="1" value="1" inputmode="numeric" aria-label="Kod poruke (1–99)" data-i18n-aria="alati_poruke_razvoja_tip.kod.aria">
                     </div>
                 </div>
                 <div class="alati-poruke-razvoja-tip__poruke-boja-field">
-                    <label class="kontrola-labela mb-0" for="poruke_boja_select">Boja</label>
+                    <label class="kontrola-labela mb-0" for="poruke_boja_select" data-i18n="alati_poruke_razvoja_tip.labela.boja">Boja</label>
                     <div class="kontrola-select alati-poruke-razvoja-tip__poruke-boja-kontrola">
-                        <select id="poruke_boja_select" aria-label="Boja poruke (iz palete)">
-                            <option value="">— Bez boje —</option>
+                        <select id="poruke_boja_select" aria-label="Boja poruke (iz palete)" data-i18n-aria="alati_poruke_razvoja_tip.boja_select.aria">
+                            <option value="" data-i18n="alati_poruke_razvoja_tip.opcija.bez_boje">— Bez boje —</option>
                         </select>
                     </div>
                 </div>
                 <div class="alati-poruke-razvoja-tip__poruke-msg-field">
-                    <label class="kontrola-labela mb-0" for="poruke_tekst_edit">Poruka</label>
-                    <input id="poruke_tekst_edit" type="text" class="kontrola-edit alati-poruke-razvoja-tip__poruke-msg-edit" maxlength="250" placeholder="Tekst poruke…" aria-label="Tekst poruke">
+                    <label class="kontrola-labela mb-0" for="poruke_tekst_edit" data-i18n="alati_poruke_razvoja_tip.labela.poruka">Poruka</label>
+                    <input id="poruke_tekst_edit" type="text" class="kontrola-edit alati-poruke-razvoja-tip__poruke-msg-edit" maxlength="250" placeholder="Tekst poruke…" data-i18n-placeholder="alati_poruke_razvoja_tip.placeholder.poruka" aria-label="Tekst poruke" data-i18n-aria="alati_poruke_razvoja_tip.poruka.aria">
                 </div>
             </div>
         </div>
         <div class="kontrola-panel__footer alati-poruke-razvoja-tip__poruke-edit-footer">
             <div class="alati-poruke-razvoja-tip__poruke-footer-left">
                 <button type="button" id="btnPorukeUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
-                <button type="button" id="btnPorukeIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+                <button type="button" id="btnPorukeIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
             </div>
             <div class="alati-poruke-razvoja-tip__footer-right">
-                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
             </div>
         </div>
     </div>
