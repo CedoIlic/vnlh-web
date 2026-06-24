@@ -6,7 +6,7 @@ if ($db_ret !== -1) {
     echo $db_ret;
     exit;
 }
-$result = $mysqli->query("SELECT id, naziv FROM radovi_tip ORDER BY redosljed ASC");
+$result = $mysqli->query("SELECT id, naziv, redosljed FROM radovi_tip ORDER BY redosljed ASC");
 $rows = [];
 if (!$result) {
     header('Content-Type: text/plain');
