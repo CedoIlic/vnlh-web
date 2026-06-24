@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="../css/Zapisnik_Boje_U_Listi_CRUD.css?v=__VNLH_ASSET_V__">
 </head>
 <body>
-<div class="naslov-forme"><h2>Boje eseji, zapisnici, lista</h2></div>
+<div class="naslov-forme"><h2 data-i18n="zapisnik_boje_u_listi_crud.naslov">Boje eseji, zapisnici, lista</h2></div>
 <div class="page-container">
     <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
         <div class="kontrola-panel__body">
@@ -22,51 +22,51 @@
         <div class="kontrola-panel__body zapisnik-boje-u-listi-crud__edit-body">
             <div class="zapisnik-boje-u-listi-crud__edit-row zapisnik-boje-u-listi-crud__edit-row--naziv-id-boja">
                 <div class="zapisnik-boje-u-listi-crud__cell zapisnik-boje-u-listi-crud__cell--id">
-                    <label class="kontrola-labela mb-0" for="id_edit">ID</label>
-                    <input id="id_edit" type="text" class="kontrola-edit zapisnik-boje-u-listi-crud__id-edit" inputmode="numeric" placeholder="1–99" maxlength="2" aria-label="ID (1–99)">
+                    <label class="kontrola-labela mb-0" for="id_edit" data-i18n="zapisnik_boje_u_listi_crud.labela.id">ID</label>
+                    <input id="id_edit" type="text" class="kontrola-edit zapisnik-boje-u-listi-crud__id-edit" inputmode="numeric" placeholder="1–99" data-i18n-placeholder="zapisnik_boje_u_listi_crud.placeholder.id" maxlength="2" aria-label="ID (1–99)" data-i18n-aria="zapisnik_boje_u_listi_crud.id.aria">
                 </div>
                 <div class="zapisnik-boje-u-listi-crud__cell zapisnik-boje-u-listi-crud__cell--naziv">
-                    <label class="kontrola-labela mb-0" for="naziv_edit">Naziv boje</label>
+                    <label class="kontrola-labela mb-0" for="naziv_edit" data-i18n="zapisnik_boje_u_listi_crud.labela.naziv">Naziv boje</label>
                     <div class="kontrola-edit-delete">
-                        <input id="naziv_edit" type="text" class="kontrola-edit-delete__input" placeholder="Naziv boje...">
+                        <input id="naziv_edit" type="text" class="kontrola-edit-delete__input" placeholder="Naziv boje..." data-i18n-placeholder="zapisnik_boje_u_listi_crud.placeholder.naziv">
                         <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
                     </div>
                 </div>
                 <div class="zapisnik-boje-u-listi-crud__edit-row__boja-wrap">
                     <div class="zapisnik-boje-u-listi-crud__cell zapisnik-boje-u-listi-crud__cell--boja">
-                        <label class="kontrola-labela mb-0" for="boja_kb">Boja teksta</label>
+                        <label class="kontrola-labela mb-0" for="boja_kb" data-i18n="zapisnik_boje_u_listi_crud.labela.boja_teksta">Boja teksta</label>
                         <div class="kontrola-boja" data-boja-za="boja_kb" data-boja-nullable="1">
-                            <button type="button" id="boja_kb_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju teksta">
+                            <button type="button" id="boja_kb_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju teksta" data-i18n-aria="zapisnik_boje_u_listi_crud.boja_teksta.trigger_aria">
                                 <span class="kontrola-icon--paleta" aria-hidden="true"></span>
                             </button>
-                            <input id="boja_kb" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" readonly aria-label="Boja teksta (hex)">
+                            <input id="boja_kb" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" data-i18n-placeholder="zapisnik_boje_u_listi_crud.boja.placeholder" readonly aria-label="Boja teksta (hex)" data-i18n-aria="zapisnik_boje_u_listi_crud.boja_teksta.aria">
                             <span class="kontrola-boja__swatch" aria-hidden="true"></span>
                         </div>
                     </div>
                     <div class="zapisnik-boje-u-listi-crud__cell zapisnik-boje-u-listi-crud__cell--boja">
-                        <label class="kontrola-labela mb-0" for="boja_bg_kb">Boja podloge</label>
+                        <label class="kontrola-labela mb-0" for="boja_bg_kb" data-i18n="zapisnik_boje_u_listi_crud.labela.boja_podloge">Boja podloge</label>
                         <div class="kontrola-boja" data-boja-za="boja_bg_kb" data-boja-nullable="1">
-                            <button type="button" id="boja_bg_kb_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju podloge">
+                            <button type="button" id="boja_bg_kb_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju podloge" data-i18n-aria="zapisnik_boje_u_listi_crud.boja_podloge.trigger_aria">
                                 <span class="kontrola-icon--paleta" aria-hidden="true"></span>
                             </button>
-                            <input id="boja_bg_kb" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" readonly aria-label="Boja podloge (hex)">
+                            <input id="boja_bg_kb" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" data-i18n-placeholder="zapisnik_boje_u_listi_crud.boja.placeholder" readonly aria-label="Boja podloge (hex)" data-i18n-aria="zapisnik_boje_u_listi_crud.boja_podloge.aria">
                             <span class="kontrola-boja__swatch" aria-hidden="true"></span>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="zapisnik-boje-u-listi-crud__edit-row">
-                <label class="kontrola-labela mb-0" for="opis_edit">Opis</label>
-                <textarea id="opis_edit" class="kontrola-napomena zapisnik-boje-u-listi-crud__opis" rows="2" placeholder="Opis..." maxlength="1024"></textarea>
+                <label class="kontrola-labela mb-0" for="opis_edit" data-i18n="zapisnik_boje_u_listi_crud.labela.opis">Opis</label>
+                <textarea id="opis_edit" class="kontrola-napomena zapisnik-boje-u-listi-crud__opis" rows="2" placeholder="Opis..." data-i18n-placeholder="zapisnik_boje_u_listi_crud.placeholder.opis" maxlength="1024"></textarea>
             </div>
         </div>
         <div class="kontrola-panel__footer zapisnik-boje-u-listi-crud__edit-footer">
             <div class="zapisnik-boje-u-listi-crud__footer-left">
                 <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
-                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
             </div>
             <div class="zapisnik-boje-u-listi-crud__footer-right">
-                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
             </div>
         </div>
     </div>
