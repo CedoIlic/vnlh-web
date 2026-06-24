@@ -11,14 +11,14 @@
     <link rel="stylesheet" href="../css/Loze_Tip_CRUD.css?v=__VNLH_ASSET_V__">
 </head>
 <body>
-<div class="naslov-forme"><h2>Tipovi Loža</h2></div>
+<div class="naslov-forme"><h2 data-i18n="loze_tip_crud.naslov">Tipovi Loža</h2></div>
 <div class="page-container">
     <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel kontrola-panel--resize-y mb-3">
         <div class="kontrola-panel__header loze-tip-crud__tablica-header" style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-            <label class="kontrola-labela mb-0" for="select_obred_loze" style="white-space: nowrap; flex-shrink: 0;">Obred</label>
+            <label class="kontrola-labela mb-0" for="select_obred_loze" style="white-space: nowrap; flex-shrink: 0;" data-i18n="loze_tip_crud.labela.obred">Obred</label>
             <div class="kontrola-select" style="flex: 1 1 auto; min-width: 0;">
-                <select id="select_obred_loze" aria-label="Obred pod kojim loža radi">
-                    <option value="">Nije izabran</option>
+                <select id="select_obred_loze" aria-label="Obred pod kojim loža radi" data-i18n-aria="loze_tip_crud.select.aria">
+                    <option value="" data-i18n="loze_tip_crud.opcija.nije_izabran">Nije izabran</option>
                 </select>
             </div>
         </div>
@@ -31,30 +31,30 @@
             <div class="loze-tip-crud__edit-inner" style="display: flex; flex-direction: column; gap: 0.75rem;">
                 <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem;">
                     <div style="display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 0; min-width: 0;">
-                        <label class="kontrola-labela mb-0" for="edit_naziv">Tip lože</label>
+                        <label class="kontrola-labela mb-0" for="edit_naziv" data-i18n="loze_tip_crud.labela.naziv">Tip lože</label>
                         <div class="kontrola-edit-delete">
-                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Tip lože...">
+                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Tip lože..." data-i18n-placeholder="loze_tip_crud.placeholder.naziv">
                             <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
                         </div>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 0.25rem; flex: 0 0 auto; width: 5rem;">
-                        <label class="kontrola-labela mb-0" for="edit_redosljed">Redosljed</label>
-                        <input id="edit_redosljed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="1–99" aria-label="Redosljed 1 do 99" style="text-align: right;">
+                        <label class="kontrola-labela mb-0" for="edit_redosljed" data-i18n="loze_tip_crud.labela.redosljed">Redosljed</label>
+                        <input id="edit_redosljed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="1–99" data-i18n-placeholder="loze_tip_crud.placeholder.redosljed" aria-label="Redosljed 1 do 99" data-i18n-aria="loze_tip_crud.redosljed.aria" style="text-align: right;">
                     </div>
                 </div>
                 <div style="display: flex; gap: 0.75rem;">
                     <div style="display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 0; min-width: 0;">
-                        <label class="kontrola-labela mb-0" for="edit_stupnjevi_nadleznosti">Stupnjevi nadležnosti</label>
+                        <label class="kontrola-labela mb-0" for="edit_stupnjevi_nadleznosti" data-i18n="loze_tip_crud.labela.stupnjevi_nadleznosti">Stupnjevi nadležnosti</label>
                         <div class="loze-tip-crud__edit-ellipsis-red">
                             <input id="edit_stupnjevi_nadleznosti" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
-                            <button type="button" id="btn_stupnjevi_nadleznosti" class="loze-tip-crud__ellipsis-btn" aria-label="Izbor stupnjeva nadležnosti" title="Izbor stupnjeva nadležnosti" disabled><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                            <button type="button" id="btn_stupnjevi_nadleznosti" class="loze-tip-crud__ellipsis-btn" aria-label="Izbor stupnjeva nadležnosti" data-i18n-aria="loze_tip_crud.btn.nadleznost" title="Izbor stupnjeva nadležnosti" data-i18n-title="loze_tip_crud.btn.nadleznost" disabled><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
                         </div>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 0; min-width: 0;">
-                        <label class="kontrola-labela mb-0" for="edit_stupnjevi_pregleda">Stupnjevi za pregled</label>
+                        <label class="kontrola-labela mb-0" for="edit_stupnjevi_pregleda" data-i18n="loze_tip_crud.labela.stupnjevi_pregleda">Stupnjevi za pregled</label>
                         <div class="loze-tip-crud__edit-ellipsis-red">
                             <input id="edit_stupnjevi_pregleda" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
-                            <button type="button" id="btn_stupnjevi_pregleda" class="loze-tip-crud__ellipsis-btn" aria-label="Izbor stupnjeva za pregled" title="Izbor stupnjeva za pregled" disabled><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                            <button type="button" id="btn_stupnjevi_pregleda" class="loze-tip-crud__ellipsis-btn" aria-label="Izbor stupnjeva za pregled" data-i18n-aria="loze_tip_crud.btn.pregled" title="Izbor stupnjeva za pregled" data-i18n-title="loze_tip_crud.btn.pregled" disabled><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
                         </div>
                     </div>
                 </div>
@@ -63,10 +63,10 @@
         <div class="kontrola-panel__footer loze-tip-crud__edit-footer">
             <div class="loze-tip-crud__footer-left">
                 <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
-                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
             </div>
             <div class="loze-tip-crud__footer-right">
-                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
             </div>
         </div>
     </div>

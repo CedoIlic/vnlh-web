@@ -42,6 +42,17 @@
   var tablicaApi = null;
   var onCrudSelectionChange = null;
 
+  /** i18n helper: prijevod iz rječnika ili master literal (2. arg). 0-Jezik.js je sinkron → spreman ovdje. */
+  function tt(k, f) { return (window.vnlhT || function (k2, f2) { return f2 != null ? f2 : k2; })(k, f); }
+  /** Prijevod teksta prazne opcije selecta obreda ("Nije izabran"). */
+  function tekstNijeIzabran() { return tt('loze_tip_crud.opcija.nije_izabran', 'Nije izabran'); }
+
+  /* Prijevod zaglavlja glavne tablice iz jednog ključa (4 naslova zarezom). 0-Jezik.js je sinkron → vnlhT spreman;
+     na master jeziku / bez prijevoda vraća originalne naslove. */
+  if (window.vnlhTZaglavlje) {
+    Loze_TipCRUD.Tablica_Zaglavlje = window.vnlhTZaglavlje('loze_tip_crud.tablica.zaglavlje', Loze_TipCRUD.Tablica_Zaglavlje);
+  }
+
   CommonCRUD.initTablica('tablicaContainer', Loze_TipCRUD, {
     getRowId: function (row) { return row && row[4] != null ? row[4] : (row && row.length > 2 ? row[2] : row && row[1]); },
     onReady: function (api) { tablicaApi = api; },
@@ -142,8 +153,9 @@
     var imaSadrzaj = editEl ? trim(editEl.value) !== '' : false;
     if (btnUpisi && btnUpisiLabel) {
       btnUpisi.classList.toggle('kontrola-btn--crud-izmjeni', imaSelekciju);
-      btnUpisiLabel.textContent = imaSelekciju ? 'Izmjeni' : 'Upis';
-      btnUpisi.setAttribute('aria-label', imaSelekciju ? 'Izmjeni' : 'Upis');
+      var lblUpis = imaSelekciju ? tt('global.gumb.izmijeni', 'Izmjeni') : tt('global.gumb.upis', 'Upis');
+      btnUpisiLabel.textContent = lblUpis;
+      btnUpisi.setAttribute('aria-label', lblUpis);
       btnUpisi.disabled = !imaSadrzaj;
     }
     if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
@@ -194,6 +206,10 @@
     { key: 'stupanj', title: 'Stupanj', sortable: 1, sortable_icon: 0, type: 'n', width: 100, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
     { key: 'naziv', title: 'Naziv', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
   ];
+  /* Prijevod zaglavlja modala iz jednog ključa ("Stupanj, Naziv"). */
+  if (window.vnlhTZaglavlje) {
+    modalStupnjeviNadleznostiZaglavlje = window.vnlhTZaglavlje('loze_tip_crud.modal.zaglavlje', modalStupnjeviNadleznostiZaglavlje);
+  }
   var modalStupnjeviNadleznostiApi = null;
 
   function ucitajStupnjeviZaModal(obredId, callback) {
@@ -231,11 +247,11 @@
   if (typeof ModalTablicaInit === 'function') {
     modalStupnjeviNadleznostiApi = ModalTablicaInit({
       storageKey: 'loze_tip_stupnjevi_nadleznosti',
-      headerText: 'Izbor stupnjeva nadležnosti lože',
+      headerText: tt('loze_tip_crud.modal.nadleznost_naslov', 'Izbor stupnjeva nadležnosti lože'),
       getButtons: function () {
         return [
           {
-            label: 'Upisi',
+            label: tt('global.gumb.upisi', 'Upisi'),
             primary: true,
             className: 'kontrola-btn--crud-upisi',
             onClick: function (tablicaApi) {
@@ -271,7 +287,7 @@
             }
           },
           {
-            label: 'Izbriši',
+            label: tt('global.gumb.izbrisi', 'Izbriši'),
             className: 'kontrola-btn--crud-izbrisi',
             onClick: function (tablicaApi) {
               if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
@@ -304,7 +320,7 @@
               xhr.send(formData);
             }
           },
-          { label: 'Povratak', className: 'kontrola-btn--crud-povratak', onClick: function () { if (modalStupnjeviNadleznostiApi) modalStupnjeviNadleznostiApi.close(); } }
+          { label: tt('global.gumb.povratak', 'Povratak'), className: 'kontrola-btn--crud-povratak', onClick: function () { if (modalStupnjeviNadleznostiApi) modalStupnjeviNadleznostiApi.close(); } }
         ];
       }
     });
@@ -316,16 +332,20 @@
     { key: 'stupanj', title: 'Stupanj', sortable: 1, sortable_icon: 0, type: 'n', width: 100, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
     { key: 'naziv', title: 'Naziv', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
   ];
+  /* Prijevod zaglavlja modala iz jednog ključa ("Stupanj, Naziv"). */
+  if (window.vnlhTZaglavlje) {
+    modalStupnjeviPregledaZaglavlje = window.vnlhTZaglavlje('loze_tip_crud.modal.zaglavlje', modalStupnjeviPregledaZaglavlje);
+  }
   var modalStupnjeviPregledaApi = null;
 
   if (typeof ModalTablicaInit === 'function') {
     modalStupnjeviPregledaApi = ModalTablicaInit({
       storageKey: 'loze_tip_stupnjevi_pregleda',
-      headerText: 'Izbor stupnjeva pregleda lože',
+      headerText: tt('loze_tip_crud.modal.pregled_naslov', 'Izbor stupnjeva pregleda lože'),
       getButtons: function () {
         return [
           {
-            label: 'Upisi',
+            label: tt('global.gumb.upisi', 'Upisi'),
             primary: true,
             className: 'kontrola-btn--crud-upisi',
             onClick: function (tablicaApi) {
@@ -361,7 +381,7 @@
             }
           },
           {
-            label: 'Izbriši',
+            label: tt('global.gumb.izbrisi', 'Izbriši'),
             className: 'kontrola-btn--crud-izbrisi',
             onClick: function (tablicaApi) {
               if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
@@ -394,7 +414,7 @@
               xhr.send(formData);
             }
           },
-          { label: 'Povratak', className: 'kontrola-btn--crud-povratak', onClick: function () { if (modalStupnjeviPregledaApi) modalStupnjeviPregledaApi.close(); } }
+          { label: tt('global.gumb.povratak', 'Povratak'), className: 'kontrola-btn--crud-povratak', onClick: function () { if (modalStupnjeviPregledaApi) modalStupnjeviPregledaApi.close(); } }
         ];
       }
     });
@@ -496,8 +516,7 @@
               osvjeziTablicu();
             });
           } else {
-            var p = parseResponseCode(res);
-            if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(p.code, p.replacements);
+            prikaziGresku(res);
           }
         });
       } else {
@@ -517,8 +536,7 @@
               osvjeziTablicu();
             });
           } else {
-            var p = parseResponseCode(res);
-            if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') window.showPorukaModal(p.code, p.replacements);
+            prikaziGresku(res);
           }
         });
       }
@@ -581,6 +599,16 @@
     var idx = s.indexOf(',');
     if (idx < 0) return { code: s, replacements: [] };
     return { code: s.slice(0, idx).trim(), replacements: [s.slice(idx + 1).trim()] };
+  }
+
+  /** Prikaže modal greške iz PHP odgovora. Za 002 (duplikat) #1 = PREVEDENA labela kontrole koja je izazvala
+   *  grešku (labela ima vlastiti i18n ključ → sadržaj #1 se ne prevodi zasebno). */
+  function prikaziGresku(res) {
+    var p = parseResponseCode(res);
+    if (!p || typeof MODAL_MESSAGES === 'undefined' || !MODAL_MESSAGES[p.code] || typeof window.showPorukaModal !== 'function') return;
+    var repl = p.replacements;
+    if (p.code === '002') repl = [tt('loze_tip_crud.labela.naziv', 'Tip lože')];
+    window.showPorukaModal(p.code, repl);
   }
 
   function ucitajEnumStupnjeviZaVlasnika(idVlasnik, idPozicija, callback) {
@@ -682,7 +710,7 @@
         while (sel.firstChild) sel.removeChild(sel.firstChild);
         var opt0 = document.createElement('option');
         opt0.value = '';
-        opt0.textContent = 'Nije izabran';
+        opt0.textContent = tekstNijeIzabran();
         sel.appendChild(opt0);
         if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_obred_loze');
         if (callback) callback();
@@ -696,7 +724,7 @@
         while (sel.firstChild) sel.removeChild(sel.firstChild);
         var optEmpty = document.createElement('option');
         optEmpty.value = '';
-        optEmpty.textContent = 'Nije izabran';
+        optEmpty.textContent = tekstNijeIzabran();
         sel.appendChild(optEmpty);
         if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_obred_loze');
         if (callback) callback();

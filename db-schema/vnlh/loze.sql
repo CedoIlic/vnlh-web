@@ -2,7 +2,7 @@ CREATE TABLE `loze` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `id_regija` int(11) unsigned NOT NULL,
   `id_obred` int(11) unsigned DEFAULT NULL,
-  `id_tip_loze` int(11) DEFAULT NULL,
+  `id_tip_loze` int(11) unsigned DEFAULT NULL,
   `id_drzava` int(11) unsigned DEFAULT NULL,
   `id_drzava_adrese` int(11) unsigned DEFAULT NULL,
   `naziv` varchar(50) DEFAULT NULL,
@@ -30,5 +30,6 @@ CREATE TABLE `loze` (
   CONSTRAINT `fk_loze_id_drzava` FOREIGN KEY (`id_drzava`) REFERENCES `drzave` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_loze_id_drzava_adrese` FOREIGN KEY (`id_drzava_adrese`) REFERENCES `drzave_adresa` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_loze_id_obred` FOREIGN KEY (`id_obred`) REFERENCES `obredi` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_loze_id_tip_loze` FOREIGN KEY (`id_tip_loze`) REFERENCES `loze_tip` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `loze_ibfk_1` FOREIGN KEY (`id_regija`) REFERENCES `regije` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
