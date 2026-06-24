@@ -1,6 +1,6 @@
 /* Radovi_TipUnosaPrisutnih_CRUD — tipovi unosa prisustva (radovi_prisustvo_tip). */
 
-/* Stupci: R. 100px | Naziv elastičan | Boja 100px | Svi 80px | S. 80px | D. 80px */
+/* Stupci: Redosljed 100px | Naziv elastičan | Boja 120px | Svi 120px | Slobodno 120px | Dužnost 120px */
 #tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(1),
 #tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(1) {
   width: 100px !important;
@@ -17,15 +17,15 @@
 
 #tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(3),
 #tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(3) {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
 }
 #tablicaContainer .kontrola-tablica__header thead tr th:nth-child(3),
 #tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(3) {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
   box-sizing: border-box;
 }
 
@@ -35,9 +35,9 @@
 #tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(5),
 #tablicaContainer .kontrola-tablica__header table > colgroup > col:nth-child(6),
 #tablicaContainer .kontrola-tablica__scroll table > colgroup > col:nth-child(6) {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
 }
 #tablicaContainer .kontrola-tablica__header thead tr th:nth-child(4),
 #tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(4),
@@ -45,9 +45,9 @@
 #tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(5),
 #tablicaContainer .kontrola-tablica__header thead tr th:nth-child(6),
 #tablicaContainer .kontrola-tablica__scroll tbody tr td:nth-child(6) {
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
   box-sizing: border-box;
 }
 

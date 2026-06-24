@@ -16,11 +16,11 @@
     Tablica_Zaglavlje: [
       { key: 'redosljed', title: 'Redosljed', SQL_Naziv: 'redosljed', sortable: 0, sortable_icon: 0, type: 'n', width: 100, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
       { key: 'naziv', title: 'Naziv', SQL_Naziv: 'naziv', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
-      { key: 'boja_prikaza', title: 'Boja', SQL_Naziv: 'boja_prikaza', sortable: 0, sortable_icon: 0, type: 't', width: 100, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
-      { key: 'svi_clanovi_obedijncije', title: 'Svi', SQL_Naziv: 'svi_clanovi_obedijncije', sortable: 0, sortable_icon: 0, type: 'b', width: 80, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1, cell_readonly: 1 },
+      { key: 'boja_prikaza', title: 'Boja', SQL_Naziv: 'boja_prikaza', sortable: 0, sortable_icon: 0, type: 't', width: 120, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
+      { key: 'svi_clanovi_obedijncije', title: 'Svi', SQL_Naziv: 'svi_clanovi_obedijncije', sortable: 0, sortable_icon: 0, type: 'b', width: 120, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1, cell_readonly: 1 },
       /* Slob. — slobodan unos imena / lože / države za tip prisustva (0 ili 1, samo čitanje u gridu). */
-      { key: 'slobodan_unos', title: 'Slob.', SQL_Naziv: 'slobodan_unos', sortable: 0, sortable_icon: 0, type: 'b', width: 80, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1, cell_readonly: 1 },
-      { key: 'duznosnik_ok', title: 'Duž.', SQL_Naziv: 'duznosnik_ok', sortable: 0, sortable_icon: 0, type: 'b', width: 80, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1, cell_readonly: 1 }
+      { key: 'slobodan_unos', title: 'Slobodno', SQL_Naziv: 'slobodan_unos', sortable: 0, sortable_icon: 0, type: 'b', width: 120, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1, cell_readonly: 1 },
+      { key: 'duznosnik_ok', title: 'Dužnost', SQL_Naziv: 'duznosnik_ok', sortable: 0, sortable_icon: 0, type: 'b', width: 120, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1, cell_readonly: 1 }
     ]
   };
 

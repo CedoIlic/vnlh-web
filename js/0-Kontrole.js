@@ -2798,42 +2798,42 @@
 
       var MODAL_HTML = [
         '<div class="kontrola-boja-modal__overlay" data-boja-zatvori></div>',
-        '<div class="kontrola-boja-modal__dialog" role="dialog" aria-modal="true" aria-label="Izbor boje">',
+        '<div class="kontrola-boja-modal__dialog" role="dialog" aria-modal="true" aria-label="Izbor boje" data-i18n-aria="global.boja.dialog_aria">',
         '<div class="kontrola-boja-modal__zaglavlje">',
-        '<span class="kontrola-boja-modal__naslov">Boje</span>',
-        '<div class="kontrola-select kontrola-boja-modal__nacin"><select id="bojaModalNacin" aria-label="Način izbora boje">',
-        '<option value="paleta">Paleta boja</option><option value="korisnik">Korisnička boja</option>',
+        '<span class="kontrola-boja-modal__naslov" data-i18n="global.boja.naslov">Boje</span>',
+        '<div class="kontrola-select kontrola-boja-modal__nacin"><select id="bojaModalNacin" aria-label="Način izbora boje" data-i18n-aria="global.boja.nacin_aria">',
+        '<option value="paleta" data-i18n="global.boja.paleta">Paleta boja</option><option value="korisnik" data-i18n="global.boja.korisnicka">Korisnička boja</option>',
         '</select></div>',
         '</div>',
         '<div class="kontrola-boja-modal__body">',
-        '<div class="kontrola-boja-modal__paleta" id="bojaModalPaleta" role="listbox" aria-label="Paleta boja"></div>',
+        '<div class="kontrola-boja-modal__paleta" id="bojaModalPaleta" role="listbox" aria-label="Paleta boja" data-i18n-aria="global.boja.paleta"></div>',
         '<div class="kontrola-boja-modal__korisnik" id="bojaModalKorisnik" hidden>',
         '<div class="kontrola-boja-modal__kor-unos">',
-        '<button type="button" id="bojaModalNativTrigger" class="kontrola-boja__trigger kontrola-boja-modal__nativ-trigger" aria-label="Sistemski izbor boje"><span class="kontrola-icon--paleta" aria-hidden="true"></span></button>',
-        '<input type="text" id="bojaModalKorHex" class="kontrola-edit kontrola-edit--readonly kontrola-boja-modal__hex" maxlength="9" placeholder="#000000" readonly tabindex="-1" aria-readonly="true" aria-label="Kod boje (hex)">',
+        '<button type="button" id="bojaModalNativTrigger" class="kontrola-boja__trigger kontrola-boja-modal__nativ-trigger" aria-label="Sistemski izbor boje" data-i18n-aria="global.boja.sistemski_aria"><span class="kontrola-icon--paleta" aria-hidden="true"></span></button>',
+        '<input type="text" id="bojaModalKorHex" class="kontrola-edit kontrola-edit--readonly kontrola-boja-modal__hex" maxlength="9" placeholder="#000000" readonly tabindex="-1" aria-readonly="true" aria-label="Kod boje (hex)" data-i18n-aria="global.boja.hex_aria">',
         '<input type="color" id="bojaModalNativ" class="kontrola-boja-modal__nativ-skriven" value="#000000" tabindex="-1" aria-hidden="true">',
         '</div>',
         '<span id="bojaModalKorPuna" class="kontrola-boja-modal__kor-puna" aria-hidden="true"></span>',
         '<div class="kontrola-boja-modal__red" id="bojaModalKorAlphaRed">',
-        '<label class="kontrola-labela mb-0" for="bojaModalKorAlpha">Prozirnost</label>',
-        '<input type="range" id="bojaModalKorAlpha" min="0" max="255" value="255" class="kontrola-boja-modal__alpha" aria-label="Prozirnost (alpha)">',
+        '<label class="kontrola-labela mb-0" for="bojaModalKorAlpha" data-i18n="global.boja.prozirnost">Prozirnost</label>',
+        '<input type="range" id="bojaModalKorAlpha" min="0" max="255" value="255" class="kontrola-boja-modal__alpha" aria-label="Prozirnost (alpha)" data-i18n-aria="global.boja.prozirnost_aria">',
         '<span id="bojaModalKorAlphaVal" class="kontrola-boja-modal__alpha-val">100%</span>',
         '</div>',
         '<span class="kontrola-boja-modal__kor-pregled-okvir"><span id="bojaModalKorPregled" class="kontrola-boja-modal__kor-pregled" aria-hidden="true"></span></span>',
         '</div>',
         '<div class="kontrola-boja-modal__red kontrola-boja-modal__red--pregled" id="bojaModalPregledRed">',
         '<span class="kontrola-boja-modal__pregled-okvir"><span id="bojaModalPregled" class="kontrola-boja-modal__pregled"></span></span>',
-        '<input type="text" id="bojaModalHex" class="kontrola-edit kontrola-edit--readonly kontrola-boja-modal__hex" maxlength="9" placeholder="#000000" readonly tabindex="-1" aria-readonly="true" aria-label="Kod boje (hex)">',
+        '<input type="text" id="bojaModalHex" class="kontrola-edit kontrola-edit--readonly kontrola-boja-modal__hex" maxlength="9" placeholder="#000000" readonly tabindex="-1" aria-readonly="true" aria-label="Kod boje (hex)" data-i18n-aria="global.boja.hex_aria">',
         '</div>',
         '<div class="kontrola-boja-modal__red" id="bojaModalAlphaRed">',
-        '<label class="kontrola-labela mb-0" for="bojaModalAlpha">Prozirnost</label>',
-        '<input type="range" id="bojaModalAlpha" min="0" max="255" value="255" class="kontrola-boja-modal__alpha" aria-label="Prozirnost (alpha)">',
+        '<label class="kontrola-labela mb-0" for="bojaModalAlpha" data-i18n="global.boja.prozirnost">Prozirnost</label>',
+        '<input type="range" id="bojaModalAlpha" min="0" max="255" value="255" class="kontrola-boja-modal__alpha" aria-label="Prozirnost (alpha)" data-i18n-aria="global.boja.prozirnost_aria">',
         '<span id="bojaModalAlphaVal" class="kontrola-boja-modal__alpha-val">255</span>',
         '</div>',
         '</div>',
         '<div class="kontrola-boja-modal__footer">',
-        '<button type="button" id="bojaModalOk" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>',
-        '<button type="button" id="bojaModalOdustani" class="kontrola-btn kontrola-btn--crud-povratak" data-boja-zatvori><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>',
+        '<button type="button" id="bojaModalOk" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.ok">OK</span></span></span></button>',
+        '<button type="button" id="bojaModalOdustani" class="kontrola-btn kontrola-btn--crud-povratak" data-boja-zatvori><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.odustani">Odustani</span></span></span></button>',
         '</div>',
         '</div>'
       ].join('');
@@ -2876,13 +2876,14 @@
         napuniPaletu: function () {
           if (!this.paleta) return;
           var html = '';
-          if (this.nullable) html += '<button type="button" class="kontrola-boja-modal__swatch kontrola-boja__swatch--prazno" data-bez="1" title="Bez boje (sistemska)" aria-label="Bez boje"></button>';
+          var _tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+          if (this.nullable) html += '<button type="button" class="kontrola-boja-modal__swatch kontrola-boja__swatch--prazno" data-bez="1" title="' + _tt('global.boja.bez_sistemska', 'Bez boje (sistemska)') + '" aria-label="' + _tt('global.boja.bez', 'Bez boje') + '"></button>';
           /* Zadnji red uvijek pun: „Bez boje" (nullable) zauzima ćeliju pa nullable treba 8 dodatnih,
              non-nullable nema tu ćeliju pa treba 9 — u oba slučaja nema slobodnog mjesta. */
           var brEkstra = this.nullable ? 8 : 9;
           var lista = this.BOJE.concat(this.BOJE_EKSTRA.slice(0, brEkstra));
           lista.forEach(function (b, i) {
-            html += '<button type="button" class="kontrola-boja-modal__swatch" data-hex="' + b[1] + '" title="' + b[0] + '" aria-label="' + b[0] + '" style="background:' + b[1] + '"></button>';
+            html += '<button type="button" class="kontrola-boja-modal__swatch" data-hex="' + b[1] + '" aria-label="' + b[1] + '" style="background:' + b[1] + '"></button>';
             if (i === 1) html += '<span class="kontrola-boja-modal__placeholder" aria-hidden="true"></span>';
           });
           this.paleta.innerHTML = html;
@@ -3004,6 +3005,9 @@
           m.setAttribute('aria-hidden', 'true');
           m.innerHTML = MODAL_HTML;
           document.body.appendChild(m);
+          /* i18n: prevedi statične dijelove modala PRIJE initCustomSelect (da custom-select pročita prevedene opcije).
+             Na master jeziku / bez prijevoda = no-op (literali ostaju). */
+          if (typeof window.vnlhI18nPrevedi === 'function') window.vnlhI18nPrevedi(m);
           this._built = true;
           this.modal = m;
           this.nacin = byId('bojaModalNacin');
