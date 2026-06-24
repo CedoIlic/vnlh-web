@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
 </head>
 <body>
-<div class="naslov-forme"><h2>Tipovi menija</h2></div>
+<div class="naslov-forme"><h2 data-i18n="meni_tip_crud.naslov">Tipovi menija</h2></div>
 <div class="page-container">
     <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
         <div class="kontrola-panel__body">
@@ -20,9 +20,9 @@
     <div class="kontrola-panel mb-3" id="edit_panel">
         <div class="kontrola-panel__body meni-tip-crud__edit-body">
             <div class="meni-tip-crud__edit-row">
-                <label class="kontrola-labela mb-0" for="edit_naziv">Tip menija</label>
+                <label class="kontrola-labela mb-0" for="edit_naziv" data-i18n="meni_tip_crud.labela.naziv">Tip menija</label>
                 <div class="kontrola-edit-delete">
-                    <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Tip menija...">
+                    <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Tip menija..." data-i18n-placeholder="meni_tip_crud.placeholder.naziv">
                     <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
                 </div>
             </div>
@@ -30,10 +30,10 @@
         <div class="kontrola-panel__footer meni-tip-crud__edit-footer">
             <div class="meni-tip-crud__footer-left">
                 <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
-                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
             </div>
             <div class="meni-tip-crud__footer-right">
-                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
             </div>
         </div>
     </div>
