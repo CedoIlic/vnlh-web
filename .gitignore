@@ -42,3 +42,5 @@ build/
 # i18n radni JSON-i + generirani seed SQL (jednokratno, ne commitati)
 tmp/
 sql/i18n_*_seed.sql
+# jednokratne ALTER skripte za Heidi (shema je u db-schema/ za Skeemu)
+sql/alter_*.sql
