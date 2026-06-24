@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="../css/Radovi_TipUnosaPrisutnih_CRUD.css?v=__VNLH_ASSET_V__">
 </head>
 <body>
-<div class="naslov-forme"><h2>Tipovi unosa prisustva</h2></div>
+<div class="naslov-forme"><h2 data-i18n="radovi_tip_unosa_prisutnih_crud.naslov">Tipovi unosa prisustva</h2></div>
 <div class="page-container">
     <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
         <div class="kontrola-panel__body">
@@ -27,46 +27,46 @@
             <div class="radovi-tip-unosa-pris-crud__edit-inner" style="display: flex; flex-direction: column; gap: 0.75rem;">
                 <div class="radovi-tip-unosa-pris-crud__red-glava">
                     <div class="radovi-tip-unosa-pris-crud__polje naziv-polje">
-                        <label class="kontrola-labela mb-0" for="edit_naziv">Naziv</label>
+                        <label class="kontrola-labela mb-0" for="edit_naziv" data-i18n="radovi_tip_unosa_prisutnih_crud.labela.naziv">Naziv</label>
                         <div class="kontrola-edit-delete">
-                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv tipa..." maxlength="50">
+                            <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv tipa..." data-i18n-placeholder="radovi_tip_unosa_prisutnih_crud.placeholder.naziv" maxlength="50">
                             <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
                         </div>
                     </div>
                     <div class="radovi-tip-unosa-pris-crud__polje redosljed-polje">
-                        <label class="kontrola-labela mb-0" for="edit_redosljed">Redosljed</label>
-                        <input id="edit_redosljed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="1–99" aria-label="Redosljed 1 do 99" style="text-align: right;">
+                        <label class="kontrola-labela mb-0" for="edit_redosljed" data-i18n="radovi_tip_unosa_prisutnih_crud.labela.redosljed">Redosljed</label>
+                        <input id="edit_redosljed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="1–99" data-i18n-placeholder="radovi_tip_unosa_prisutnih_crud.placeholder.redosljed" aria-label="Redosljed 1 do 99" data-i18n-aria="radovi_tip_unosa_prisutnih_crud.redosljed.aria" style="text-align: right;">
                     </div>
                     <div class="radovi-tip-unosa-pris-crud__boja-wrap">
                         <div class="radovi-tip-unosa-pris-crud__polje radovi-tip-unosa-pris-crud__polje--boja">
-                            <label class="kontrola-labela mb-0" for="edit_boja_prikaza">Boja prikaza</label>
+                            <label class="kontrola-labela mb-0" for="edit_boja_prikaza" data-i18n="radovi_tip_unosa_prisutnih_crud.labela.boja">Boja prikaza</label>
                             <div class="kontrola-boja" data-boja-za="edit_boja_prikaza" data-boja-nullable="1">
-                                <button type="button" id="edit_boja_prikaza_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju prikaza">
+                                <button type="button" id="edit_boja_prikaza_trigger" class="kontrola-boja__trigger" aria-label="Odaberi boju prikaza" data-i18n-aria="radovi_tip_unosa_prisutnih_crud.boja.trigger_aria">
                                     <span class="kontrola-icon--paleta" aria-hidden="true"></span>
                                 </button>
-                                <input id="edit_boja_prikaza" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" readonly aria-label="Boja prikaza (hex)">
+                                <input id="edit_boja_prikaza" type="text" class="kontrola-edit kontrola-edit--readonly kontrola-boja__hex" maxlength="9" tabindex="-1" aria-readonly="true" placeholder="(bez)" data-i18n-placeholder="radovi_tip_unosa_prisutnih_crud.boja.placeholder" readonly aria-label="Boja prikaza (hex)" data-i18n-aria="radovi_tip_unosa_prisutnih_crud.boja.aria">
                                 <span class="kontrola-boja__swatch" aria-hidden="true"></span>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="radovi-tip-unosa-pris-crud__duznosnik-red">
-                    <input type="checkbox" id="edit_duznosnik_ok" class="kontrola-checkbox radovi-tip-unosa-pris-crud__duznosnik-cb" value="1" aria-label="Smije obnašati dužnost na radovima">
-                    <label class="kontrola-labela mb-0 radovi-tip-unosa-pris-crud__duznosnik-label" for="edit_duznosnik_ok">Smije obnašati dužnost na radovima</label>
-                    <input type="checkbox" id="edit_slobodan_unos" class="kontrola-checkbox radovi-tip-unosa-pris-crud__duznosnik-cb" value="1" aria-label="Slobodan unos imena, lože i države">
-                    <label class="kontrola-labela mb-0 radovi-tip-unosa-pris-crud__duznosnik-label" for="edit_slobodan_unos">Slobodan unos imena, lože i države</label>
-                    <input type="checkbox" id="edit_svi_clanovi_obedijncije" class="kontrola-checkbox radovi-tip-unosa-pris-crud__duznosnik-cb" value="1" aria-label="Svi članovi obedijencije u izvor">
-                    <label class="kontrola-labela mb-0 radovi-tip-unosa-pris-crud__duznosnik-label" for="edit_svi_clanovi_obedijncije">Svi članovi obedijencije u izvor</label>
+                    <input type="checkbox" id="edit_duznosnik_ok" class="kontrola-checkbox radovi-tip-unosa-pris-crud__duznosnik-cb" value="1" aria-label="Smije obnašati dužnost na radovima" data-i18n-aria="radovi_tip_unosa_prisutnih_crud.cb.duznosnik">
+                    <label class="kontrola-labela mb-0 radovi-tip-unosa-pris-crud__duznosnik-label" for="edit_duznosnik_ok" data-i18n="radovi_tip_unosa_prisutnih_crud.cb.duznosnik">Smije obnašati dužnost na radovima</label>
+                    <input type="checkbox" id="edit_slobodan_unos" class="kontrola-checkbox radovi-tip-unosa-pris-crud__duznosnik-cb" value="1" aria-label="Slobodan unos imena, lože i države" data-i18n-aria="radovi_tip_unosa_prisutnih_crud.cb.slobodan">
+                    <label class="kontrola-labela mb-0 radovi-tip-unosa-pris-crud__duznosnik-label" for="edit_slobodan_unos" data-i18n="radovi_tip_unosa_prisutnih_crud.cb.slobodan">Slobodan unos imena, lože i države</label>
+                    <input type="checkbox" id="edit_svi_clanovi_obedijncije" class="kontrola-checkbox radovi-tip-unosa-pris-crud__duznosnik-cb" value="1" aria-label="Svi članovi obedijencije u izvor" data-i18n-aria="radovi_tip_unosa_prisutnih_crud.cb.svi">
+                    <label class="kontrola-labela mb-0 radovi-tip-unosa-pris-crud__duznosnik-label" for="edit_svi_clanovi_obedijncije" data-i18n="radovi_tip_unosa_prisutnih_crud.cb.svi">Svi članovi obedijencije u izvor</label>
                 </div>
             </div>
         </div>
         <div class="kontrola-panel__footer radovi-tip-unosa-pris-crud__edit-footer">
             <div class="radovi-tip-unosa-pris-crud__footer-left">
                 <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
-                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
             </div>
             <div class="radovi-tip-unosa-pris-crud__footer-right">
-                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
             </div>
         </div>
     </div>

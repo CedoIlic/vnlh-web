@@ -14,7 +14,7 @@
     CrudCssPrefix: 'radovi-tip-unosa-pris-crud',
     /* Tablica_Zaglavlje: key/title/width/type — Red. i Boja fiksne širine; Naziv fleks; checkbox stupci read-only u gridu (Svi, Slob., Duž.). */
     Tablica_Zaglavlje: [
-      { key: 'redosljed', title: 'Red.', SQL_Naziv: 'redosljed', sortable: 0, sortable_icon: 0, type: 'n', width: 100, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
+      { key: 'redosljed', title: 'Redosljed', SQL_Naziv: 'redosljed', sortable: 0, sortable_icon: 0, type: 'n', width: 100, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
       { key: 'naziv', title: 'Naziv', SQL_Naziv: 'naziv', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'boja_prikaza', title: 'Boja', SQL_Naziv: 'boja_prikaza', sortable: 0, sortable_icon: 0, type: 't', width: 100, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
       { key: 'svi_clanovi_obedijncije', title: 'Svi', SQL_Naziv: 'svi_clanovi_obedijncije', sortable: 0, sortable_icon: 0, type: 'b', width: 80, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1, cell_readonly: 1 },
@@ -26,6 +26,12 @@
 
   var tablicaApi = null;
   var onCrudSelectionChange = null;
+
+  /* Prijevod zaglavlja tablice iz jednog ključa (6 naslova zarezom: "Redosljed, Naziv, Boja, Svi, Slob., Duž.").
+     0-Jezik.js je sinkron → vnlhT spreman; na master jeziku / bez prijevoda vraća originalne naslove. */
+  if (window.vnlhTZaglavlje) {
+    Radovi_TipUnosaPrisutnihCRUD.Tablica_Zaglavlje = window.vnlhTZaglavlje('radovi_tip_unosa_prisutnih_crud.tablica.zaglavlje', Radovi_TipUnosaPrisutnihCRUD.Tablica_Zaglavlje);
+  }
 
   CommonCRUD.initTablica('tablicaContainer', Radovi_TipUnosaPrisutnihCRUD, {
     getRowId: function (row) {
@@ -251,8 +257,10 @@
     var imaSadrzaj = editEl ? trim(editEl.value) !== '' : false;
     if (btnUpisi && btnUpisiLabel) {
       btnUpisi.classList.toggle('kontrola-btn--crud-izmjeni', imaSelekciju);
-      btnUpisiLabel.textContent = imaSelekciju ? 'Izmjeni' : 'Upis';
-      btnUpisi.setAttribute('aria-label', imaSelekciju ? 'Izmjeni' : 'Upis');
+      var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+      var lblUpis = imaSelekciju ? tt('global.gumb.izmijeni', 'Izmjeni') : tt('global.gumb.upis', 'Upis');
+      btnUpisiLabel.textContent = lblUpis;
+      btnUpisi.setAttribute('aria-label', lblUpis);
       btnUpisi.disabled = !imaSadrzaj;
     }
     if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
@@ -319,10 +327,7 @@
               });
             }
           } else {
-            var p = parseResponseCode(res);
-            if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') {
-              window.showPorukaModal(p.code, p.code === '002' ? ['Naziv'] : p.replacements);
-            }
+            prikaziGresku(res);
           }
         });
       } else {
@@ -345,10 +350,7 @@
               });
             }
           } else {
-            var p = parseResponseCode(res);
-            if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') {
-              window.showPorukaModal(p.code, p.code === '002' ? ['Naziv'] : p.replacements);
-            }
+            prikaziGresku(res);
           }
         });
       }
@@ -415,6 +417,19 @@
     var idx = s.indexOf(',');
     if (idx < 0) return { code: s, replacements: [] };
     return { code: s.slice(0, idx).trim(), replacements: [s.slice(idx + 1).trim()] };
+  }
+
+  /** Prikaže modal greške iz PHP odgovora. Za 002 (duplikat) #1 = PREVEDENA labela kontrole koja je izazvala
+   *  grešku (labela ima vlastiti i18n ključ → sadržaj #1 se ne prevodi zasebno). */
+  function prikaziGresku(res) {
+    var p = parseResponseCode(res);
+    if (!p || typeof MODAL_MESSAGES === 'undefined' || !MODAL_MESSAGES[p.code] || typeof window.showPorukaModal !== 'function') return;
+    var repl = p.replacements;
+    if (p.code === '002') {
+      var tt = window.vnlhT || function (k, f) { return f != null ? f : k; };
+      repl = [tt('radovi_tip_unosa_prisutnih_crud.labela.naziv', 'Naziv')];
+    }
+    window.showPorukaModal(p.code, repl);
   }
 
   /** [ redosljed, naziv, boja_prikaza, svi_clanovi_obedijncije, slobodan_unos, duznosnik_ok, id ] — stupac Boja za naknadno bojanje ćelije. */
