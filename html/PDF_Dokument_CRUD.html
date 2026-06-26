@@ -210,6 +210,10 @@
                     <option value="tekst|dinamicki">Tekst — dinamički</option>
                     <option value="tekst|po_vrijednosti">Tekst — po vrijednosti</option>
                     <option value="tekst|korisnicki">Tekst — korisnički (upisani)</option>
+                    <option value="tekst|relacija_broj">Tekst — relacija (broj)</option>
+                    <option value="tekst|relacija_lista">Tekst — relacija (lista naziva)</option>
+                    <option value="tekst|relacija_redak">Tekst — relacija (redak iz predloška)</option>
+                    <option value="tekst|relacija_grupe">Tekst — relacija (grupe po tipu)</option>
                     <option value="slika|staticki">Slika — statička</option>
                     <option value="slika|dinamicki">Slika — dinamička</option>
                     <option value="slika|po_vrijednosti">Slika — po vrijednosti</option>
@@ -229,6 +233,10 @@
                         <option value="dinamicki">Dinamički</option>
                         <option value="po_vrijednosti">Po vrijednosti</option>
                         <option value="korisnicki">Korisnički tekst</option>
+                        <option value="relacija_broj">Relacija — broj</option>
+                        <option value="relacija_lista">Relacija — lista</option>
+                        <option value="relacija_redak">Relacija — redak</option>
+                        <option value="relacija_grupe">Relacija — grupe</option>
                     </select>
                 </div>
                 <div class="pdf-dokument-crud__polje">
@@ -273,6 +281,34 @@
                     <div class="kontrola-select"><select id="st_preko_izvor" aria-label="Veza (preko izvora)">
                         <option value="">— bez veze (direktno) —</option>
                     </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_relacija" hidden>
+                    <label class="kontrola-labela mb-0" for="st_relacija">Relacija (1-na-više)</label>
+                    <div class="kontrola-select"><select id="st_relacija" aria-label="Relacija">
+                        <option value="">— odaberi —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_lista_nacin" hidden>
+                    <label class="kontrola-labela mb-0" for="st_lista_nacin">Spajanje liste</label>
+                    <div class="kontrola-select"><select id="st_lista_nacin" aria-label="Spajanje liste">
+                        <option value="zarez">Zarez (u istom redu)</option>
+                        <option value="novi_red">Svaki u novom redu (isti odlomak)</option>
+                        <option value="novi_odlomak">Svaki u novom odlomku</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_lista_separator" hidden>
+                    <label class="kontrola-labela mb-0" for="st_lista_separator">Separator liste</label>
+                    <input id="st_lista_separator" type="text" class="kontrola-edit" placeholder="zadano: , (zarez+razmak); ^ = razmak" maxlength="16" autocomplete="off">
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_redak_predlozak" hidden>
+                    <label class="kontrola-labela mb-0" for="st_redak_predlozak">Redak-predložak</label>
+                    <div class="pdf-dokument-crud__edit-with-ellipsis">
+                        <textarea id="st_redak_predlozak" class="kontrola-napomena" rows="2" placeholder="npr. {j.naziv_duznosti}:{tab}{c.spol|0:Brat;1:Sestra} {c.ime}" maxlength="512"></textarea>
+                        <button type="button" id="btnRedakPomoc" class="pdf-dokument-crud__ellipsis-btn" title="Upute / sintaksa" aria-label="Upute za redak-predložak"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                    </div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_labela_bold" hidden>
+                    <label class="kontrola-checkbox-labela"><input id="st_labela_bold" type="checkbox" class="kontrola-checkbox"> Labela (naziv tipa) podebljana</label>
                 </div>
                 <div class="pdf-dokument-crud__polje" id="polje_trazi_kolona" hidden>
                     <label class="kontrola-labela mb-0" for="st_trazi_kolona">Traži kolonu</label>
@@ -352,18 +388,61 @@
                 <p>Primjer (spol → oslovljavanje):</p>
                 <pre>0:Brat
 1:Sestra</pre>
-                <p>Ako vrijednost ne odgovara nijednom paru, ostaje izvorna (nepromijenjena).</p>
+                <p>Ako vrijednost ne odgovara nijednom ključu, ostaje izvorna (nepromijenjena).</p>
+                <hr>
+                <p><strong>Vrste ključeva</strong> (uz točnu vrijednost):</p>
+                <ul>
+                    <li><code>2</code>, <code>8</code>, <code>Brat</code> — <strong>točna</strong> vrijednost (broj ili tekst).</li>
+                    <li><code>=2</code> / <code>==2</code> — jednako (numerički; hvata i „2.0").</li>
+                    <li><code>!=1</code> / <code>&lt;&gt;1</code> — različito od broja; <code>!=Brat</code> — različito od teksta.</li>
+                    <li><code>&gt;1</code> <code>&gt;=2</code> <code>&lt;5</code> <code>&lt;=4</code> — usporedbe (numerički).</li>
+                    <li><code>2-4</code> — raspon, uključivo (numerički).</li>
+                    <li><code>*</code> — <strong>default</strong>: kad ništa drugo ne pogodi.</li>
+                </ul>
+                <p><strong>Redoslijed pobjeđivanja:</strong> točan ključ → prvi <em>uvjet</em> (po redu kako su napisani) koji vrijedi → <code>*</code>.</p>
+                <p>Primjer (broj loža → jednina/množina):</p>
+                <pre>1:^…je učestvovala i cijenjena loža^
+*:^…su učestvovale i cijenjene lože:^</pre>
                 <hr>
                 <p><strong>Posebne oznake u tekstu</strong> (vrijede u korisničkom tekstu i u mapiranom tekstu):</p>
                 <ul>
                     <li><code>^</code> — razmak; čuva rubne razmake koje bi se inače obrezali. Npr. <code>Brat^</code> → „Brat ".</li>
                 </ul>
                 <p>Za poravnanje sadržaja na fiksnu poziciju (tabulator) koristi polje <strong>„Fiksna pozicija stavke"</strong>.</p>
-                <p class="pdf-dokument-crud__pomoc-todo">Operandi i uvjeti (=, ≠, prazno, nije prazno, …) — u izradi, dopunit ćemo.</p>
             </div>
         </div>
         <div class="kontrola-modal__footer">
             <button type="button" id="btnMapaPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Popup: upute za „Redak-predložak" (relacija_redak) ===== -->
+<div class="kontrola-modal kontrola-modal--dim" id="redakPomocModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="redakPomocModal_overlay"></div>
+    <div class="kontrola-modal__dialog pdf-dokument-crud__pomoc-modal">
+        <div class="kontrola-modal__header" id="redakPomocModal_header">Redak-predložak — upute</div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content pdf-dokument-crud__pomoc">
+                <p><strong>Redak-predložak</strong> — gradi JEDAN redak po vezi (npr. po dužnosniku). Stavka ispiše više redaka, po jedan za svaki red relacije.</p>
+                <p>Polja (placeholderi):</p>
+                <ul>
+                    <li><code>{j.kolona}</code> — kolona iz <strong>spojne</strong> tablice (npr. <code>{j.naziv_duznosti}</code>).</li>
+                    <li><code>{c.kolona}</code> — kolona iz <strong>ciljne</strong> tablice (npr. <code>{c.ime}</code>).</li>
+                    <li><code>{c.kolona|mapa}</code> — inline mapa (ista sintaksa kao polje „Mapa"), npr. <code>{c.spol|0:Brat;1:Sestra}</code>.</li>
+                    <li><code>{j.kol-&gt;tbl.kol2}</code> — <strong>FK-skok</strong>: slijedi kolonu-FK do druge tablice (npr. <code>{j.id_drzave-&gt;radovi_drzave_gostiju.naziv}</code>).</li>
+                    <li><code>[..]</code> — <strong>opcionalni blok</strong>: ispiše se samo ako sadrži bar jednu ne-praznu vrijednost (za uvjetne separatore), npr. <code>[-{j.loza}]</code>.</li>
+                    <li><code>{tab}</code> — poravnanje na <strong>„Fiksnu poziciju stavke"</strong> (mm); sve iza počinje na toj poziciji.</li>
+                </ul>
+                <p>Svaka kolona mora biti u „Dozvoljenim izvorima" (whitelist). <code>^</code> = razmak (čuva rubne razmake).</p>
+                <p>Primjer (dužnosnici):</p>
+                <pre>{j.naziv_duznosti}:{tab}{c.spol|0:Brat;1:Sestra} {c.ime}</pre>
+                <p>Daje (uz fiksnu poziciju 100 mm): <code>Časni majstor:&nbsp;&nbsp;&nbsp;Sestra Morana</code> (ime poravnato).</p>
+                <p>Redoslijed redaka i ciljnu tablicu definira relacija; prazna relacija → cijela stavka skrivena (uz „Sakrij red ako je prazno").</p>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="btnRedakPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
         </div>
     </div>
 </div>

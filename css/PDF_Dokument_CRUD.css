@@ -300,7 +300,7 @@
 .pdf-dokument-crud__stavka-modal #polje_mapa .kontrola-napomena { flex: 1 1 auto; min-width: 0; box-sizing: border-box; }
 
 /* ===== Popup uputa (Mapa vrijednosti) ===== */
-.pdf-dokument-crud__pomoc-modal { max-width: 32rem; }
+.pdf-dokument-crud__pomoc-modal { min-width: 48rem; max-width: 48rem; }
 /* Centriranje preko absolute+transform da drag ne skoči pri prvom pomaku (kao kod editora). */
 .kontrola-modal__dialog.pdf-dokument-crud__pomoc-modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; }
 .pdf-dokument-crud__pomoc p { margin: 0 0 0.5rem; }

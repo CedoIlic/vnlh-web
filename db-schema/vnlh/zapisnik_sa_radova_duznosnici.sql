@@ -11,7 +11,8 @@ CREATE TABLE `zapisnik_sa_radova_duznosnici` (
     'Majstor ceremonije',
     'Prvi đakon',
     'Drugi đakon',
-    'Unutarnji čuvar hrama'
+    'Unutarnji čuvar hrama',
+    'Majstor sklada'
   ) NOT NULL COMMENT 'Vrsta dužnosti (jedinstven par s id_zapisnika).',
   `id_clana` int(11) unsigned NOT NULL COMMENT 'Član na dužnosti (veza na clanovi.id).',
   PRIMARY KEY (`id_zapisnika`, `naziv_duznosti`),

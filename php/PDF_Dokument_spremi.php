@@ -71,12 +71,13 @@ try {
         $dok = 0; $red = 0; $zona = ''; $vrsta = ''; $izParam = null; $izTip = '';
         $izRed = null; $kkljuc = null; $tid = null; $tkol = null; $tvrij = null; $lit = null;
         $parId = null; $sslik = null; $bezkraj = 0; $nap = null; $prekoId = null; $mapa = null; $fmt = null; $fiks = null; $sakrij = 0;
+        $relId = null; $listaNacin = null; $listaSep = null; $redakPred = null; $labelaBold = 0;   // relacija_*
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $ins->bind_param('iissisisisssiiisissdi', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij);
+        $ins->bind_param('iissisisisssiiisissdiisssi', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold);
         $dok = $id;
         $i = 0;
         foreach ($stavke as $s) {
@@ -84,10 +85,11 @@ try {
             $red = isset($s['redoslijed']) ? (int) $s['redoslijed'] : $i;
             $zona = in_array(($s['zona'] ?? ''), ['tijelo', 'zaglavlje', 'podnozje', 'naslovna'], true) ? $s['zona'] : 'tijelo';
             $vrsta = in_array(($s['vrsta'] ?? ''), ['tekst', 'slika'], true) ? $s['vrsta'] : '';
-            $izTip = in_array(($s['izvor_tip'] ?? ''), ['staticki', 'dinamicki', 'po_vrijednosti', 'korisnicki'], true) ? $s['izvor_tip'] : '';
+            $izTip = in_array(($s['izvor_tip'] ?? ''), ['staticki', 'dinamicki', 'po_vrijednosti', 'korisnicki', 'relacija_broj', 'relacija_lista', 'relacija_redak', 'relacija_grupe'], true) ? $s['izvor_tip'] : '';
             if ($vrsta === '' || $izTip === '') {
                 throw new RuntimeException('stavka_nevaljana');
             }
+            $relId = null; $listaNacin = null; $listaSep = null; $redakPred = null; $labelaBold = 0;   // reset po stavci (relacija_*)
             if ($izTip === 'korisnicki') {
                 // Upisani tekst — samo za tekst stavke; bez izvora (izvor_id NULL), ostala izvor-polja NULL.
                 if ($vrsta !== 'tekst') {
@@ -96,6 +98,31 @@ try {
                 $izParam = null;
                 $lit = trim((string) ($s['literal_tekst'] ?? ''));   // trima se; rubni razmaci preko '^'
                 $izRed = null; $kkljuc = null; $tkol = null; $tvrij = null;
+            } elseif ($izTip === 'relacija_broj' || $izTip === 'relacija_lista' || $izTip === 'relacija_redak' || $izTip === 'relacija_grupe') {
+                // 1-na-više veza: bez whitelist izvora (izvor_id NULL), relacija_id obavezan, bazni id iz konteksta.
+                if ($vrsta !== 'tekst') {
+                    throw new RuntimeException('stavka_nevaljana');
+                }
+                $relacijaId = (int) ($s['relacija_id'] ?? 0);
+                $kk = trim((string) ($s['kontekst_kljuc'] ?? ''));
+                if ($relacijaId <= 0 || $kk === '') {
+                    throw new RuntimeException('stavka_nevaljana');
+                }
+                $relId = $relacijaId;
+                $izParam = null; $lit = null; $izRed = null; $kkljuc = $kk; $tkol = null; $tvrij = null;
+                if ($izTip === 'relacija_lista') {
+                    $ln = (string) ($s['lista_nacin'] ?? 'zarez');
+                    $listaNacin = in_array($ln, ['zarez', 'novi_red', 'novi_odlomak'], true) ? $ln : 'zarez';
+                    $lsRaw = trim((string) ($s['lista_separator'] ?? ''));
+                    $listaSep = ($lsRaw === '') ? null : $lsRaw;
+                } elseif ($izTip === 'relacija_redak' || $izTip === 'relacija_grupe') {
+                    $rp = trim((string) ($s['redak_predlozak'] ?? ''));
+                    if ($rp === '') {
+                        throw new RuntimeException('stavka_nevaljana');
+                    }
+                    $redakPred = $rp;
+                    if ($izTip === 'relacija_grupe') $labelaBold = !empty($s['labela_bold']) ? 1 : 0;
+                }
             } else {
                 $izvorId = (int) ($s['izvor_id'] ?? 0);
                 if ($izvorId <= 0) {
@@ -109,8 +136,8 @@ try {
                 $tkol = ($izTip === 'po_vrijednosti' && trim((string) ($s['trazi_kolona'] ?? '')) !== '') ? trim((string) $s['trazi_kolona']) : null;
                 $tvrij = ($izTip === 'po_vrijednosti') ? (string) ($s['trazi_vrijednost'] ?? '') : null;
             }
-            // Testni id retka — samo za dinamicki (pregled bez konteksta); inace NULL.
-            $tid = ($izTip === 'dinamicki' && (int) ($s['test_id'] ?? 0) > 0) ? (int) $s['test_id'] : null;
+            // Testni id retka — za dinamicki i relacija_* (pregled bez konteksta); inace NULL.
+            $tid = (in_array($izTip, ['dinamicki', 'relacija_broj', 'relacija_lista', 'relacija_redak', 'relacija_grupe'], true) && (int) ($s['test_id'] ?? 0) > 0) ? (int) $s['test_id'] : null;
             // Stil po vrsti (drugi NULL → zadovolji chk_prikaz_po_vrsti)
             $parId = ($vrsta === 'tekst' && (int) ($s['paragraf_id'] ?? 0) > 0) ? (int) $s['paragraf_id'] : null;
             $sslik = ($vrsta === 'slika' && (int) ($s['slika_stil_id'] ?? 0) > 0) ? (int) $s['slika_stil_id'] : null;

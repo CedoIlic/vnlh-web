@@ -84,7 +84,7 @@
     opts = opts || {};
     var mL = mm(stil, 'uvlaka_lijevo_mm'), mR = mm(stil, 'uvlaka_desno_mm');
     var mT = mm(stil, 'razmak_prije_mm'), mB = mm(stil, 'razmak_poslije_mm');
-    var marT = opts.noGapAbove ? 0 : mT, marB = opts.fillGapBelow ? 0 : mB;
+    var marT = opts.noGapAbove ? 0 : mT, marB = (opts.fillGapBelow || opts.noGapBelow) ? 0 : mB;
     var baza = {
       font: kljuc,
       fontSize: broj(stil.velicina_pt) || 12,
@@ -129,7 +129,7 @@
     var mL = mm(stil, 'uvlaka_lijevo_mm'), mR = mm(stil, 'uvlaka_desno_mm');
     var mT = mm(stil, 'razmak_prije_mm'), mB = mm(stil, 'razmak_poslije_mm');
     var marT = opts.noGapAbove ? 0 : mT;
-    var marB = opts.fillGapBelow ? 0 : mB;
+    var marB = (opts.fillGapBelow || opts.noGapBelow) ? 0 : mB;   /* noGapBelow: samo nuliraj razmak (bez pozadina-semantike fillGapBelow) */
 
     if (okvirImaLiniju(stil)) {
       /* Okvir dominira: tablica s 1 ćelijom (border po stranama, podloga = okvir_boja_podloge, padding okvira). */
@@ -342,7 +342,14 @@
         /* Extra prored dokumenta: APSOLUTNI override lineHeight-a SAMO na stilu dokument_prored_default_stil. */
         var elOpts = {};
         if (opts.proredVrijednost != null && opts.proredStilId && ps && +ps.id === +opts.proredStilId) elOpts.proredVrijednost = opts.proredVrijednost;
-        return odlomci.map(function (runovi) { return sastaviOdlomak(ps, kljuc, runovi, elOpts); });
+        /* Spojeni odlomci (relacija-liste): retci su JEDAN blok → razmak prije samo na prvom, poslije samo na zadnjem. */
+        var spojeni = !!s.spojeni_odlomci, nOd = odlomci.length;
+        return odlomci.map(function (runovi, i) {
+          var o = {}; for (var k in elOpts) o[k] = elOpts[k];
+          if (spojeni && i > 0) o.noGapAbove = true;
+          if (spojeni && i < nOd - 1) o.noGapBelow = true;
+          return sastaviOdlomak(ps, kljuc, runovi, o);
+        });
       }
       return [];
     }
