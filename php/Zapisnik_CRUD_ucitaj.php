@@ -82,7 +82,7 @@ try {
         ORDER BY FIELD(duz.naziv_duznosti,
             'Časni majstor','Prvi nadzornik','Drugi nadzornik',
             'Tajnik lože','Govornik','Majstor ceremonije',
-            'Prvi đakon','Drugi đakon','Unutarnji čuvar hrama')
+            'Prvi đakon','Drugi đakon','Unutarnji čuvar hrama','Majstor sklada')
     ");
     $stmt->bind_param('i', $id);
     $stmt->execute();

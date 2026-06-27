@@ -430,6 +430,7 @@
                     <li><code>{j.kolona}</code> — kolona iz <strong>spojne</strong> tablice (npr. <code>{j.naziv_duznosti}</code>).</li>
                     <li><code>{c.kolona}</code> — kolona iz <strong>ciljne</strong> tablice (npr. <code>{c.ime}</code>).</li>
                     <li><code>{c.kolona|mapa}</code> — inline mapa (ista sintaksa kao polje „Mapa"), npr. <code>{c.spol|0:Brat;1:Sestra}</code>.</li>
+                    <li><code>{c.kolona:inicijal}</code> — <strong>modifikator</strong>: prvo slovo vrijednosti (npr. prezime → inicijal). Dolazi prije <code>|mape</code>. Npr. <code>{c.prezime:inicijal}. {c.ime}</code> → <code>B. Vice</code>.</li>
                     <li><code>{j.kol-&gt;tbl.kol2}</code> — <strong>FK-skok</strong>: slijedi kolonu-FK do druge tablice (npr. <code>{j.id_drzave-&gt;radovi_drzave_gostiju.naziv}</code>).</li>
                     <li><code>[..]</code> — <strong>opcionalni blok</strong>: ispiše se samo ako sadrži bar jednu ne-praznu vrijednost (za uvjetne separatore), npr. <code>[-{j.loza}]</code>.</li>
                     <li><code>{tab}</code> — poravnanje na <strong>„Fiksnu poziciju stavke"</strong> (mm); sve iza počinje na toj poziciji.</li>

@@ -334,8 +334,16 @@
     { editId: 'edit_majstor_ceremonije', ellipsisId: 'ellipsis_majstor_ceremonije' },
     { editId: 'edit_prvi_dakon', ellipsisId: 'ellipsis_prvi_dakon' },
     { editId: 'edit_drugi_dakon', ellipsisId: 'ellipsis_drugi_dakon' },
-    { editId: 'edit_unutarnji_cuvar_hrama', ellipsisId: 'ellipsis_unutarnji_cuvar_hrama' }
+    { editId: 'edit_unutarnji_cuvar_hrama', ellipsisId: 'ellipsis_unutarnji_cuvar_hrama' },
+    { editId: 'edit_majstor_sklada', ellipsisId: 'ellipsis_majstor_sklada' }
   ];
+
+  /**
+   * Kumulativne dužnosti: smiju se obnašati UZ neku drugu dužnost. Posljedice u modalu izbora:
+   *  (1) njihov dodijeljeni član NE ulazi u isključivanje (ne blokira druge dužnosti);
+   *  (2) pri otvaranju NJIHOVOG modala ne isključuje se nitko (lista pokazuje sve raspoložive članove).
+   */
+  var ZAPISNIK_DUZNOSTI_KUMULATIVNE = { 'edit_majstor_sklada': true };
 
   /** Kartica „Dužnosnici”: minimalno prisutnih u desnoj tablici čiji je tip s radovi_prisustvo_tip.duznosnik_ok = 1. */
   var ZAPISNIK_MIN_PRISUTNIH_ZA_KARTICU_DUZNOSNICI = 5;
@@ -469,7 +477,8 @@
   }
 
   /**
-   * Za modal Dužnosnika: članovi koji već imaju dodjelu u bilo kojem od devet polja ne ulaze u listu (dataset.zapisnikClanId na omotu edit-delete).
+   * Za modal Dužnosnika: članovi koji već imaju dodjelu u nekom polju ne ulaze u listu (dataset.zapisnikClanId na omotu edit-delete).
+   * Kumulativne dužnosti (ZAPISNIK_DUZNOSTI_KUMULATIVNE) se preskaču — ne blokiraju izbor u drugim dužnostima.
    * @returns {Object.<string, boolean>}
    */
   function zapisnikDuznosnikMapaClanovaZaIskljucivanjeIzModala() {
@@ -477,6 +486,7 @@
     var di;
     for (di = 0; di < ZAPISNIK_DUZNOSNICI_REDOVI.length; di++) {
       var editId = ZAPISNIK_DUZNOSNICI_REDOVI[di].editId;
+      if (ZAPISNIK_DUZNOSTI_KUMULATIVNE[editId]) continue;   // kumulativna dužnost ne blokira druge
       var inp = document.getElementById(editId);
       if (!inp || !inp.closest) continue;
       var wrap = inp.closest('.kontrola-edit-delete');
@@ -535,7 +545,8 @@
   function zapisnikOtvoriModalDuznosnikaZaEdit(editId) {
     if (typeof ModalTablicaInit !== 'function' || !modalZapisnikDuznosnikIzborApi) return;
     if (!zapisnikIdOdabraneLozISelecta()) return;
-    var exclude = zapisnikDuznosnikMapaClanovaZaIskljucivanjeIzModala();
+    /* Kumulativna dužnost (npr. Majstor sklada): bez isključivanja — lista pokazuje sve raspoložive članove. */
+    var exclude = ZAPISNIK_DUZNOSTI_KUMULATIVNE[editId] ? {} : zapisnikDuznosnikMapaClanovaZaIskljucivanjeIzModala();
     var rows = zapisnikDuznosnikPripremiRedoveZaModal(exclude);
     if (!rows.length) {
       if (typeof window.showPorukaModal === 'function') window.showPorukaModal('125');
@@ -1011,6 +1022,26 @@
    * sadržajni prsten kao u .kontrola-tab__tijelo) da flex rastezanje ne iskrivi očitanje.
    * @returns {number} Pixels, zaokruženo gore, ili 0 ako nema elemenata.
    */
+  /** Izmjeri visinu tab-panela izvan ekrana pri zadanoj širini sadržaja; čuva i vraća izvorni redoslijed + hidden stanje. */
+  function zapisnikMjeriPanelOffscreenPx(panel, contentW) {
+    if (!panel) return 0;
+    var parent = panel.parentNode;
+    if (!parent) return 0;
+    var nxt = panel.nextSibling;
+    var bioHidden = panel.hasAttribute('hidden');
+    parent.removeChild(panel);
+    panel.removeAttribute('hidden');
+    panel.setAttribute('style', 'box-sizing:border-box;visibility:hidden;position:fixed;left:-40000px;top:0;width:' + contentW + 'px;');
+    document.body.appendChild(panel);
+    var h = panel.offsetHeight;
+    document.body.removeChild(panel);
+    panel.removeAttribute('style');
+    if (bioHidden) panel.setAttribute('hidden', '');
+    if (nxt) parent.insertBefore(panel, nxt);
+    else parent.appendChild(panel);
+    return h;
+  }
+
   function zapisnikIzracunajMinVisinuVanjskogPanelaPx() {
     var z = document.getElementById('zapisnikPanel');
     var tabR = document.getElementById('zapisnikKontrolaTab');
@@ -1040,22 +1071,16 @@
       contentW = Math.max(120, Math.round((tij.parentElement && tij.parentElement.getBoundingClientRect().width) || window.innerWidth || 320) - 32);
     }
 
-    var parent = p0.parentNode;
-    var nxt = p0.nextSibling;
-    if (!parent) return 0;
-    parent.removeChild(p0);
-    p0.removeAttribute('hidden');
-    p0.setAttribute('style', 'box-sizing:border-box;visibility:hidden;position:fixed;left:-40000px;top:0;width:' + contentW + 'px;');
-    document.body.appendChild(p0);
-    var hPanel0 = p0.offsetHeight;
-    document.body.removeChild(p0);
-    p0.removeAttribute('style');
-    if (nxt) parent.insertBefore(p0, nxt);
-    else parent.appendChild(p0);
+    /* Min visina = NAJVIŠI fiksni tab (Podaci p0 + Dužnosnici p2 — grid od 10 redova mora cijeli stati bez skrolanja).
+       Liste/textarea tabovi (Prisustvo/Tekst/Eseji) namjerno flexaju/skrolaju, pa ih ne forsiramo. */
+    if (!p0.parentNode) return 0;
+    var p2 = document.getElementById('zapisnikKontrolaTabPanel2');
+    var hPanel0 = zapisnikMjeriPanelOffscreenPx(p0, contentW);
+    var hPanel2 = zapisnikMjeriPanelOffscreenPx(p2, contentW);
     if (typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(tabR, activeIdx);
 
-    if (!(hPanel0 > 0) || !isFinite(hPanel0)) return 0;
-    var maxP = hPanel0;
+    var maxP = Math.max(hPanel0, hPanel2);
+    if (!(maxP > 0) || !isFinite(maxP)) return 0;
 
     var trk = tabR.querySelector('.kontrola-tab__traka');
     var hTraka = trk ? trk.offsetHeight : 0;
@@ -3017,7 +3042,8 @@
     { editId: 'edit_majstor_ceremonije',     naziv: 'Majstor ceremonije' },
     { editId: 'edit_prvi_dakon',             naziv: 'Prvi đakon' },
     { editId: 'edit_drugi_dakon',            naziv: 'Drugi đakon' },
-    { editId: 'edit_unutarnji_cuvar_hrama',  naziv: 'Unutarnji čuvar hrama' }
+    { editId: 'edit_unutarnji_cuvar_hrama',  naziv: 'Unutarnji čuvar hrama' },
+    { editId: 'edit_majstor_sklada',         naziv: 'Majstor sklada' }
   ];
 
   function zapisnikSakupiPayload() {

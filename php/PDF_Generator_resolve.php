@@ -465,8 +465,24 @@ function pdf_relacija_broj($mysqli, $jt, $fk, $baseId)
     return $row ? (int) $row['n'] : 0;
 }
 
-// Predložak retka/imena: {j.kol} spojna, {c.kol} cilj, {j.kol->tbl.kol2} FK-skok (LEFT JOIN), {tab}; opcionalno |mapa. ^ = razmak.
-if (!defined('PDF_PREDLOZAK_RE')) define('PDF_PREDLOZAK_RE', '/\{(?:(j|c)\.([A-Za-z0-9_]+)(?:->([A-Za-z0-9_]+)\.([A-Za-z0-9_]+))?(?:\|([^}]*))?|(tab))\}/u');
+// Predložak retka/imena: {j.kol} spojna, {c.kol} cilj, {j.kol->tbl.kol2} FK-skok (LEFT JOIN), {tab};
+// opcionalno :transform (npr. :inicijal = prvo slovo) pa |mapa. ^ = razmak.
+// Grupe: 1 src(j|c), 2 kol, 3 fk-tbl, 4 fk-kol, 5 transform, 6 mapa, 7 tab.
+if (!defined('PDF_PREDLOZAK_RE')) define('PDF_PREDLOZAK_RE', '/\{(?:(j|c)\.([A-Za-z0-9_]+)(?:->([A-Za-z0-9_]+)\.([A-Za-z0-9_]+))?(?::([a-z]+))?(?:\|([^}]*))?|(tab))\}/u');
+
+/** Transformacija vrijednosti placeholdera (predložak modifikator ":kljuc").
+ *  inicijal / i → prvo slovo (UTF-8, veliko); nepoznat kljuc → vrijednost nepromijenjena. */
+function pdf_predlozak_transform($v, $t)
+{
+    $v = (string) $v;
+    switch ($t) {
+        case 'i':
+        case 'inicijal':
+            $v = trim($v);
+            return $v === '' ? '' : mb_strtoupper(mb_substr($v, 0, 1, 'UTF-8'), 'UTF-8');
+    }
+    return $v;
+}
 
 /** Parsiraj predložak → ['jCols'=>[], 'cCols'=>[], 'follows'=>[{src,col,tbl,col2}]]. */
 function pdf_predlozak_parse($tpl)
@@ -474,7 +490,7 @@ function pdf_predlozak_parse($tpl)
     preg_match_all(PDF_PREDLOZAK_RE, (string) $tpl, $ms, PREG_SET_ORDER);
     $jCols = []; $cCols = []; $follows = [];
     foreach ($ms as $m) {
-        if (!empty($m[6])) continue;   // {tab}
+        if (!empty($m[7])) continue;   // {tab}
         $src = $m[1]; $col = $m[2]; $ftbl = isset($m[3]) ? $m[3] : ''; $fcol = isset($m[4]) ? $m[4] : '';
         if ($ftbl !== '' && $fcol !== '') { $follows["$src.$col.$ftbl.$fcol"] = ['src' => $src, 'col' => $col, 'tbl' => $ftbl, 'col2' => $fcol]; }
         else { if ($src === 'j') $jCols[$col] = true; else $cCols[$col] = true; }
@@ -485,8 +501,9 @@ function pdf_predlozak_parse($tpl)
 /** Vrijednost jednog placeholdera ($m iz PDF_PREDLOZAK_RE) → string. */
 function pdf_predlozak_segment($m, $row, $followAlias, $tab)
 {
-    if (!empty($m[6])) return $tab;   // {tab}
-    $src = $m[1]; $col = $m[2]; $ftbl = isset($m[3]) ? $m[3] : ''; $fcol = isset($m[4]) ? $m[4] : ''; $mapa = isset($m[5]) ? $m[5] : '';
+    if (!empty($m[7])) return $tab;   // {tab}
+    $src = $m[1]; $col = $m[2]; $ftbl = isset($m[3]) ? $m[3] : ''; $fcol = isset($m[4]) ? $m[4] : '';
+    $transform = isset($m[5]) ? $m[5] : ''; $mapa = isset($m[6]) ? $m[6] : '';
     if ($ftbl !== '' && $fcol !== '') {
         $ak = isset($followAlias["$src.$col.$ftbl.$fcol"]) ? $followAlias["$src.$col.$ftbl.$fcol"] : '';
         $v = ($ak !== '' && array_key_exists($ak, $row) && $row[$ak] !== null) ? (string) $row[$ak] : '';
@@ -494,6 +511,7 @@ function pdf_predlozak_segment($m, $row, $followAlias, $tab)
         $rk = ($src === 'j' ? 'j_' : 'c_') . $col;
         $v = (array_key_exists($rk, $row) && $row[$rk] !== null) ? (string) $row[$rk] : '';
     }
+    if ($transform !== '') $v = pdf_predlozak_transform($v, $transform);   // :inicijal i sl. (prije mape)
     if ($mapa !== '') $v = (string) pdf_mapa_primijeni($v, $mapa);
     return $v;
 }

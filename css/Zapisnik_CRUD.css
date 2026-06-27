@@ -456,6 +456,33 @@ body {
   margin-top: 1rem;
 }
 
+/* Tab „Podaci”: prvi podpanel (Opći podaci) RASTE i puni slobodni prostor (npr. kad ukupni panel naraste
+   zbog višeg taba poput Dužnosnika); „lože učesnice” textarea se proporcionalno rastegne, Ovjera ostaje fiksna dolje. */
+#zapisnikKontrolaTabPanel0 .zapisnik-crud__podpanel-opci-radovi.kontrola-panel {
+  flex: 1 0 auto;        /* raste; ne stišće se ispod prirodne visine sadržaja */
+}
+#zapisnikPodpanelOpiRadovi .zapisnik-crud__podpanel-opci-radovi-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+#zapisnikPodpanelOpiRadovi .zapisnik-crud__opci-radovi-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-rows: auto 1fr;   /* 2. red (tip + lože) puni preostalu visinu */
+}
+#zapisnikPodpanelOpiRadovi .zapisnik-crud__polje-loze {
+  align-self: stretch;            /* ćelija „lože” se rasteže u 2. redu grida */
+  min-height: 0;
+}
+/* Tip ćelija jednako visoka kao „lože” pa ellipsis padne na dno → donji rub poravnat s dnom textarea „lože”. */
+#zapisnikPodpanelOpiRadovi .zapisnik-crud__polje-tip.zapisnik-crud__polje-stog {
+  align-self: stretch;
+}
+#zapisnikPodpanelOpiRadovi .zapisnik-crud__tip-ellipsis-red {
+  margin-top: auto;
+}
+
 /*
  * Opći podaci: grid 2×2. Stupci 54fr | 71fr (≈ 43% | 57%; lijevi dodatno sužen ~10% u odnosu na 12|13).
  * .polje-stog = label iznad kontrole.
@@ -569,6 +596,8 @@ body {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  flex: 1 1 auto;       /* rastegni se da prati visinu panela (prvi podpanel raste i puni prostor) */
+  min-height: 6rem;     /* malo viša osnovna visina (prije ~3 retka) */
   resize: none;
   overflow-y: auto;
   /* Jedna loža kao netočen tekst blok (JS: razmaci→\u00A0 unutar grupe); prelomi između loža na '; '. */
