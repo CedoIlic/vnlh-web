@@ -28,6 +28,8 @@
   var zapisnikLozeUcesniceKolekcijaId = [];
   /** ID trenutno učitanog/upisanog zapisnika (mod 1); null u modu 0. */
   var zapisnikTrenutniId = null;
+  /** Extra-prored (zapisnik_sa_radova.dokument_prored) učitanog zapisnika — početna vrijednost PDF stepper-a; null = nema vlastitog. */
+  var zapisnikProredAktivni = null;
   /** true ako prijavljen korisnik ima razinu ≤ sustav_varijable[117] (smije čekirati ovjere). */
   var _zapisnikSmijeOvjera = (function () {
     var razinaCm = typeof window.VNLH_RAZINA_CASNOG_MAJSTORA === 'number' ? window.VNLH_RAZINA_CASNOG_MAJSTORA : 0;
@@ -604,7 +606,8 @@
     var bUpis = document.getElementById('btnUpisi');
     var bPdf = document.getElementById('zapisnik_btn_pdf');
     if (bUpis && !bUpis.hidden) bUpis.disabled = !moze;
-    if (bPdf) bPdf.disabled = !moze;
+    /* PDF čita podatke iz baze po ID-u → samo za SPREMLJENI zapisnik (zapisnikTrenutniId, mod 1). */
+    if (bPdf) bPdf.disabled = !(moze && zapisnikTrenutniId);
   }
 
   /**
@@ -3106,6 +3109,7 @@
   function zapisnikOcistiSvuFormu() {
     /* Stanje upisa — reset na novi zapis */
     zapisnikTrenutniId = null;
+    zapisnikProredAktivni = null;
     var _bioRO = _zapisnikReadOnlyMode;
     if (_bioRO) _zapisnikUkloniReadOnly();
     _zapisnikJeDomacinZaOvjeru = true;
@@ -3436,12 +3440,248 @@
     if (selectLoza) selectLoza.disabled = true;
     zapisnikOsvjeziLoziGrupeIFormu();
 
-    /* PDF zapisnika: placeholder do implementacije backend generiranja. */
-    if (btnPdfZapisnik) {
-      btnPdfZapisnik.addEventListener('click', function () {
-        /* TODO: poziv API-ja / otvaranje generiranog PDF-a */
+    /* ============================================================
+     * PDF modal zapisnika: render dokumenta „Zapisnik" (kontekst = id zapisnika) +
+     * uživo podešavanje extra-proreda (zapisnik_sa_radova.dokument_prored).
+     * Zrcalo PDF-modala forme Esej (initPdfModal u Esej_CRUD.js).
+     * ============================================================ */
+    (function initPdfModalZapisnik() {
+      var ZAP_DOK_NAZIV = 'Zapisnik';   /* dokument u pdf_dokument koji opisuje izgled zapisnik-PDF-a (referenca po nazivu) */
+      var PRORED_MIN = 0.80, PRORED_MAX = 2.00, PRORED_KORAK = 0.1, PRORED_DEF = 1.00;
+      var MSG_SPREMLJEN = 'Prored spremljen.';
+
+      var btnPdf      = btnPdfZapisnik;
+      var modal       = document.getElementById('zapisnikModalPdf');
+      if (!btnPdf || !modal) return;
+      var overlay     = modal.querySelector('.esej-crud__modal-pdf-overlay');
+      var okvir       = document.getElementById('zapisnik_pdf_okvir');
+      var info        = document.getElementById('zapisnik_pdf_info');
+      var inpProred   = document.getElementById('zapisnik_pdf_prored');
+      var btnGore     = document.getElementById('zapisnik_pdf_prored_gore');
+      var btnDolje    = document.getElementById('zapisnik_pdf_prored_dolje');
+      var btnSave     = document.getElementById('zapisnik_pdf_save');
+      var btnRefresh  = document.getElementById('zapisnik_pdf_refresh');
+      var btnPovratak = document.getElementById('zapisnik_pdf_povratak');
+      var spiner      = document.getElementById('zapisnik_pdf_spiner');
+
+      var _dokument = null;        /* {dokument, stavke} za „Zapisnik" — svjež dohvat pri svakom otvaranju */
+      var _proredStilId = null;    /* dokument.dokument_prored_default_stil */
+      var _zapIdAktivni = null;    /* id zapisnika za koji je modal otvoren */
+      var _zauzet = false;         /* render u tijeku */
+
+      function fmtProred(n) { return n.toFixed(2).replace('.', ','); }
+      function parseProred(v) {
+        var n = parseFloat(String(v == null ? '' : v).replace(',', '.'));
+        if (isNaN(n)) n = PRORED_DEF;
+        if (n < PRORED_MIN) n = PRORED_MIN;
+        if (n > PRORED_MAX) n = PRORED_MAX;
+        return Math.round(n * 100) / 100;
+      }
+      function getProred() { return parseProred(inpProred ? inpProred.value : PRORED_DEF); }
+      function setProred(n) { if (inpProred) inpProred.value = fmtProred(parseProred(n)); }
+      function postaviInfo(t) { if (info) info.textContent = t || ''; }
+      /* „Prored spremljen." vrijedi samo dok je vrijednost nepromijenjena — očisti je čim korisnik dira prored. */
+      function porukaSpremljenOcisti() { if (info && info.textContent === MSG_SPREMLJEN) postaviInfo(''); }
+      function spinerShow() { if (typeof KontroleSpinerShow === 'function') KontroleSpinerShow(spiner); }
+      function spinerHide() { if (typeof KontroleSpinerHide === 'function') KontroleSpinerHide(spiner); }
+      /* Terminal rendera: oslobodi lock, sakrij spiner, postavi info. */
+      function krajRendera(poruka) { _zauzet = false; spinerHide(); postaviInfo(poruka || ''); }
+
+      /* Početni „Prored": zapisnik.dokument_prored (ako postavljen) → inače prored default-stila dokumenta
+         (dokument_prored_default_stil) → inače PRORED_DEF. Zahtijeva učitan _dokument (default_stil_prored). */
+      function postaviPocetniProred() {
+        var v;
+        if (zapisnikProredAktivni != null && trimZ(String(zapisnikProredAktivni)) !== '') v = zapisnikProredAktivni;
+        else if (_dokument && _dokument.default_stil_prored != null && trimZ(String(_dokument.default_stil_prored)) !== '') v = _dokument.default_stil_prored;
+        else v = PRORED_DEF;
+        setProred(v);
+      }
+
+      function ocistiIframe() {
+        if (okvir) {
+          if (okvir._url) { try { URL.revokeObjectURL(okvir._url); } catch (e) {} okvir._url = null; }
+          okvir.removeAttribute('src');
+        }
+      }
+
+      function otvoriModal() {
+        modal.classList.add('esej-crud__modal-pdf--open');
+        modal.setAttribute('aria-hidden', 'false');
+      }
+      function zatvoriModal() {
+        modal.classList.remove('esej-crud__modal-pdf--open');
+        modal.setAttribute('aria-hidden', 'true');
+        ocistiIframe();
+        spinerHide();
+        postaviInfo('');
+        try { btnPdf.focus(); } catch (e) {}
+      }
+
+      function ucitajFontove(lista, cb, err) {
+        lista = lista || [];
+        if (!lista.length) { cb(); return; }
+        var preostalo = lista.length, greska = false;
+        lista.forEach(function (f) {
+          window.PdfRender.Fontovi.osiguraj(f.kljuc, f.porodica,
+            function () { if (--preostalo === 0) { greska ? err() : cb(); } },
+            function () { greska = true; if (--preostalo === 0) { err(); } });
+        });
+      }
+
+      /* Resolve stavki dokumenta (kontekst = id zapisnika) → pdf-render → blob u iframe. */
+      function renderiraj() {
+        if (_zauzet) return;
+        spinerShow();
+        if (!window.PdfRender) { krajRendera('PDF biblioteka nije učitana.'); return; }
+        if (!_dokument || !_dokument.dokument) { krajRendera('Dokument „' + ZAP_DOK_NAZIV + '" nije pronađen.'); return; }
+        if (!_zapIdAktivni) { krajRendera('Zapisnik nije učitan.'); return; }
+        var dok = _dokument.dokument;
+        var stavke = _dokument.stavke || [];
+        /* Kontekst: svaki distinct kontekst_kljuc dinamičkih stavki → id zapisnika (bez hardkodiranja ključa). */
+        var kontekst = {};
+        stavke.forEach(function (s) {
+          var k = s.kontekst_kljuc != null ? trimZ(String(s.kontekst_kljuc)) : '';
+          if (k !== '') kontekst[k] = parseInt(_zapIdAktivni, 10);
+        });
+        var payload = {
+          template_id: dok.template_id ? parseInt(dok.template_id, 10) : 0,
+          kontekst: kontekst,
+          broj_stranice_paragraf_id: dok.broj_stranice_paragraf_id ? parseInt(dok.broj_stranice_paragraf_id, 10) : null,
+          /* Ručni pregled (PDF ikona) NE šalje startni_broj_stranice → generator koristi default 1.
+             TODO (almanah, klijentska funkcija): pri ulančanom ispisu niza zapisnika app ovdje prosljeđuje
+             startni_broj_stranice = (zadnja stranica prethodnog dokumenta + 1). Vidi pdf-render.js (onPageCount). */
+          stavke: stavke.map(function (s) {
+            return {
+              redoslijed: s.redoslijed, zona: s.zona, vrsta: s.vrsta,
+              izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id,
+              kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id,
+              trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost,
+              literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id,
+              bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke,
+              preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
+              format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, sakrij_ako_prazno: s.sakrij_ako_prazno,
+              /* relacijska polja (lože učesnice / dužnosnici / prisutni / eseji) — bez njih resolve ne nađe relaciju → prazno */
+              relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
+              redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold
+            };
+          })
+        };
+        var proredVrijednost = getProred();
+        _zauzet = true;
+        postaviInfo('Dohvaćam…');
+        zapisnikPostJson(getApiUrl('PDF_Generator_resolve.php'), payload, function (res) {
+          var model;
+          try { model = JSON.parse(res); } catch (e) { krajRendera('Greška dohvata modela.'); return; }
+          if (!model || model.greska) { krajRendera('Greška: ' + ((model && model.greska) || 'nepoznata')); return; }
+          postaviInfo('Pripremam slike…');
+          window.PdfRender.pripremiSlike(model, function (model) {
+            postaviInfo('Gradim PDF…');
+            var dd = window.PdfRender.sastaviDocDefinition(model, { proredStilId: _proredStilId, proredVrijednost: proredVrijednost });
+            window.PdfRender.Pdf.ucitaj(function () {
+              ucitajFontove(model.fontovi, function () {
+                try {
+                  pdfMake.createPdf(dd).getBlob(function (blob) {
+                    ocistiIframe();
+                    okvir._url = URL.createObjectURL(blob);
+                    okvir.src = okvir._url;
+                    krajRendera('');
+                  });
+                } catch (e) { krajRendera('Greška pri renderu: ' + e); }
+              }, function () { krajRendera('Greška pri učitavanju fontova.'); });
+            }, function () { krajRendera('Greška pri učitavanju pdfmake biblioteke.'); });
+          });
+        });
+      }
+
+      /* Dohvati dokument „Zapisnik" SVAKI put (bez keša) + renderiraj — app uvijek odražava aktualne stavke
+         (admin ih mijenja u PDF_Dokument formi). resetProred=true → postavi početni prored (otvaranje);
+         false → zadrži trenutnu vrijednost steppera (Refresh). */
+      function ucitajDokumentIRenderiraj(resetProred) {
+        spinerShow();
+        postaviInfo('Učitavam dokument…');
+        var url = getApiUrl('PDF_Dokument_po_nazivu.php') + '?naziv=' + encodeURIComponent(ZAP_DOK_NAZIV);
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState !== 4) return;
+          var data = null;
+          try { data = JSON.parse((xhr.responseText || '').replace(/^﻿/, '').trim()); } catch (e) {}
+          if (!data || data.greska || !data.dokument) {
+            krajRendera('Dokument „' + ZAP_DOK_NAZIV + '" nije pronađen.');
+            return;
+          }
+          _dokument = data;
+          _proredStilId = data.dokument.dokument_prored_default_stil
+            ? parseInt(data.dokument.dokument_prored_default_stil, 10) : null;
+          if (resetProred) postaviPocetniProred();
+          renderiraj();
+        };
+        xhr.send();
+      }
+
+      /* Klik PDF: PDF se gradi iz baze po ID-u → samo za spremljeni zapisnik (zapisnikTrenutniId). */
+      btnPdf.addEventListener('click', function () {
+        if (btnPdf.disabled || !zapisnikTrenutniId) return;
+        _zapIdAktivni = zapisnikTrenutniId;
+        /* RO zapisnik (učesnica / usvojen): PDF se smije graditi, ali prored se NE smije spremati. */
+        if (btnSave) btnSave.disabled = !!_zapisnikReadOnlyMode;
+        otvoriModal();
+        ucitajDokumentIRenderiraj(true);   /* svjež dohvat + početni prored */
       });
-    }
+
+      /* Stepper ±0,1 (klamp); ručni unos dozvoljen, normalizira se na blur. */
+      function korak(d) {
+        setProred(getProred() + d);
+        porukaSpremljenOcisti();
+      }
+      if (btnGore)  btnGore.addEventListener('click', function () { korak(PRORED_KORAK); });
+      if (btnDolje) btnDolje.addEventListener('click', function () { korak(-PRORED_KORAK); });
+      if (inpProred) {
+        inpProred.addEventListener('input', function () {
+          /* dopusti znamenke, zarez i točku tijekom tipkanja */
+          var c = inpProred.value.replace(/[^0-9.,]/g, '');
+          if (inpProred.value !== c) inpProred.value = c;
+          porukaSpremljenOcisti();
+        });
+        inpProred.addEventListener('blur', function () { setProred(getProred()); });
+        inpProred.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter') { ev.preventDefault(); setProred(getProred()); renderiraj(); }
+        });
+      }
+
+      /* Save: spremi prored u bazu (zapisnik_sa_radova.dokument_prored) za trenutni zapisnik. */
+      if (btnSave) {
+        btnSave.addEventListener('click', function () {
+          if (!_zapIdAktivni || _zapisnikReadOnlyMode) return;   /* RO zapisnik: ne spremaj prored */
+          var p = getProred();
+          setProred(p);
+          btnSave.disabled = true;
+          zapisnikPostJson(getApiUrl('Zapisnik_CRUD_prored.php'), { id: parseInt(_zapIdAktivni, 10), prored: fmtProred(p) }, function (res, status) {
+            btnSave.disabled = false;
+            if (status >= 200 && status < 300 && res === 'OK') {
+              zapisnikProredAktivni = p;   /* zapamti za sljedeće otvaranje */
+              postaviInfo(MSG_SPREMLJEN);
+            } else {
+              var pk = typeof parseResponseCode === 'function' ? parseResponseCode(res) : null;
+              var kod = pk && pk.code ? pk.code : '200';
+              if (typeof window.showPorukaModal === 'function') {
+                window.showPorukaModal(typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[kod] ? kod : '200', pk ? pk.replacements || [] : [res]);
+              } else { postaviInfo('Greška pri spremanju proreda.'); }
+            }
+          });
+        });
+      }
+
+      /* Refresh: ponovo renderiraj s trenutnom vrijednošću proreda (bez spremanja). */
+      if (btnRefresh) btnRefresh.addEventListener('click', function () { setProred(getProred()); ucitajDokumentIRenderiraj(false); });
+
+      /* Zatvaranje: Povratak / overlay / Escape. */
+      if (btnPovratak) btnPovratak.addEventListener('click', zatvoriModal);
+      if (overlay)     overlay.addEventListener('click', zatvoriModal);
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape' && modal.classList.contains('esej-crud__modal-pdf--open')) zatvoriModal();
+      });
+    }());
 
     /* Modal lože učesnice (ellipsis pored Tip radova): multiselect, OK → textarea „Lože koje su učestvovale…”. */
     if (bTipEllipsis) {
@@ -3839,6 +4079,7 @@
     /* Resetiraj formu, potom vrati mod=1 i ID. */
     zapisnikOcistiSvuFormu();
     zapisnikTrenutniId = data.id;
+    zapisnikProredAktivni = (data.dokument_prored != null && trimZ(String(data.dokument_prored)) !== '') ? data.dokument_prored : null;
     window.mod_upisa_zapisnika = isRO ? 0 : 1; /* RO = mod 0 (bez Upis/Izmjeni) */
     if (isRO) _zapisnikReadOnlyMode = true;    /* postavi rano — guard u zapisnikPostaviKontroleOvisnoLozi */
     _zapisnikJeDomacinZaOvjeru = !isCase1;     /* false samo za učesnicu — ovjera_poslije samoprikaz */

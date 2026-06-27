@@ -440,12 +440,15 @@
     var poravBroj = ({ lijevo: 'left', centar: 'center', desno: 'right' })[str(t.broj_stranice_poravnanje)] || 'center';
     /* Stil teksta brojača (dokument-razina); poravnanje ostaje iz broj_stranice_poravnanje. */
     var brojStil = (model.broj_stranice_paragraf_id && parStilovi[model.broj_stranice_paragraf_id]) ? parStilovi[model.broj_stranice_paragraf_id] : null;
+    /* Startni broj stranice (model.startni_broj_stranice, default 1): pomak SAMO prikazanih brojeva — #S i #U dobiju
+       +(startni-1). NE dira efektivnaStr/zone (zaglavlje 1. str., podnožje od_stranice ostaju na stvarnoj poziciji). */
+    var pomakStranice = Math.max(1, broj(model.startni_broj_stranice) || 1) - 1;
     if (footer.length || brojStr) {
       dd.footer = function (currentPage, pageCount) {
         var arr = podnNaStr(currentPage) ? footer.slice() : [];   /* podnožje od_stranice (i simulacija) */
         if (brojStr) {
           var txt = (str(t.broj_stranice_format) || 'Stranica #S od #U')
-            .split('#S').join(efektivnaStr(currentPage)).split('#U').join(pageCount);
+            .split('#S').join(efektivnaStr(currentPage) + pomakStranice).split('#U').join(pageCount + pomakStranice);
           var bel;
           if (brojStil) {
             /* Pun stil (okvir/linija, podloga, font…) preko sastaviOdlomak; poravnanje iz broj_stranice_poravnanje. */
@@ -517,6 +520,12 @@
 
     /* Broj stranica → callback (preview treba znati je li dokument jednostraničan radi simulacije 2. strane).
        Omotamo dd.header (header dobiva pageCount); ako headera nema, vraća null (bez utjecaja na izgled). */
+    /* TODO (almanah — klijentska app funkcija, još neimplementirano):
+       Ulančani ispis niza zapisnika za godinu uz neprekidan brojač stranica. Plan:
+       reusable helper (npr. renderirajDokument(model, {startni}) → {blob, zadnjaStranica}) koji app petlja
+       zove redom; svakom dokumentu prosljeđuje startni_broj_stranice, a iz onPageCount računa
+       zadnjaStranica = (startni − 1) + pageCount te ga koristi kao startni sljedećeg (startni_next = zadnjaStranica + 1).
+       Ulaz (startni_broj_stranice) i pomak prikaza već postoje; nedostaje samo ovaj omotač + spajanje blob-ova. */
     if (typeof opts.onPageCount === 'function') {
       var _hdrOrig = dd.header;
       dd.header = function (currentPage, pageCount, pageSize) {

@@ -277,7 +277,8 @@
 .pdf-dokument-crud__stavka-modal .pdf-dokument-crud__polje > .pdf-dokument-crud__edit-with-ellipsis { flex: 1 1 auto; min-width: 0; width: auto; }
 /* Checkbox-polje (spajanje) ostaje stupac */
 /* Checkbox-polje (spajanje): poravnato s KONTROLNIM stupcem (ne ispod labela) */
-.pdf-dokument-crud__stavka-modal #polje_bez_kraja { flex-direction: column; align-items: flex-start; gap: 0.3rem; padding-left: calc(11rem + 0.75rem); }
+.pdf-dokument-crud__stavka-modal #polje_bez_kraja,
+.pdf-dokument-crud__stavka-modal #polje_labela_bold { flex-direction: column; align-items: flex-start; gap: 0.3rem; padding-left: calc(11rem + 0.75rem); }
 /* Zaglavlje modala: redovi jedan ispod drugoga („Na temelju stavke" iznad; naslov + „Vrsta stavke" ispod) */
 .pdf-dokument-crud__stavka-modal-header { display: flex; flex-direction: column; align-items: stretch; gap: .5rem; padding-left: var(--modal_body_padding_x); }
 /* Red: naslov + vrsta stavke (select se rasteže kao kontrole u tijelu) */

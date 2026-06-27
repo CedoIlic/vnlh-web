@@ -364,6 +364,10 @@ $template_id = isset($ulaz['template_id']) ? (int) $ulaz['template_id'] : 0;
 $stavke = isset($ulaz['stavke']) && is_array($ulaz['stavke']) ? $ulaz['stavke'] : [];
 $kontekst = isset($ulaz['kontekst']) && is_array($ulaz['kontekst']) ? $ulaz['kontekst'] : [];
 $brojParId = isset($ulaz['broj_stranice_paragraf_id']) ? (int) $ulaz['broj_stranice_paragraf_id'] : 0;   // stil brojača (dokument-razina)
+// Startni broj stranice (opcionalno; default 1). Pomiče SAMO prikazani broj stranice (#S i #U za +(startni-1)).
+// Vrijedi za SVAKI poziv generatora (eseji, zapisnici, budući dokumenti); ne dira raspored zona. Min 1.
+$startniBrojStranice = isset($ulaz['startni_broj_stranice']) ? (int) $ulaz['startni_broj_stranice'] : 1;
+if ($startniBrojStranice < 1) $startniBrojStranice = 1;
 
 // --- Template -----------------------------------------------------------
 $template = null;
@@ -667,13 +671,14 @@ function pdf_segment_vrijednost($mysqli, $s, $izvori, $relacije, $kontekst)
         $gt = (string) ($rel['grupa_tablica'] ?? ''); $gl = (string) ($rel['grupa_label_kolona'] ?? '');
         $gs = (string) ($rel['grupa_sort_kolona'] ?? ''); $disc = (string) ($rel['diskriminator_kolona'] ?? '');
         $fb = (string) ($rel['fallback_kolona'] ?? '');
-        if (!pdf_ident_ok($gt) || !pdf_ident_ok($gl) || !pdf_ident_ok($disc)) {
-            return ['greska' => 'Grupiranje relacije nije ispravno.', 'vrijednost' => null];
-        }
+        $grupiraj = ($gt !== '');   // bez grupe → jedan popis, labela iz mape na BROJU (1 vs >1)
         $dozvoljene = [];
         foreach ($izvori as $iz) { if (isset($iz['tablica'], $iz['kolona'])) $dozvoljene[$iz['tablica'] . '.' . $iz['kolona']] = true; }
-        if (empty($dozvoljene["$gt.$gl"])) return ['greska' => 'Labela grupe nije u whitelistu.', 'vrijednost' => null];
-        if (!pdf_ident_ok($disc) || !pdf_kolona_postoji($mysqli, $jt, $disc)) return ['greska' => 'Diskriminator nije ispravan.', 'vrijednost' => null];
+        if ($grupiraj) {
+            if (!pdf_ident_ok($gt) || !pdf_ident_ok($gl) || !pdf_ident_ok($disc)) return ['greska' => 'Grupiranje relacije nije ispravno.', 'vrijednost' => null];
+            if (empty($dozvoljene["$gt.$gl"])) return ['greska' => 'Labela grupe nije u whitelistu.', 'vrijednost' => null];
+            if (!pdf_kolona_postoji($mysqli, $jt, $disc)) return ['greska' => 'Diskriminator nije ispravan.', 'vrijednost' => null];
+        }
         $tpl = (string) ($s['redak_predlozak'] ?? '');           // predložak imena ČLANA (cilj=clanovi)
         if (trim($tpl) === '') return ['greska' => 'Predložak imena je prazan.', 'vrijednost' => null];
         $fbTpl = (string) ($rel['fallback_predlozak'] ?? '');     // predložak imena GOSTA (clanovi NULL)
@@ -707,11 +712,13 @@ function pdf_segment_vrijednost($mysqli, $s, $izvori, $relacije, $kontekst)
                 $sfxAktivan = true;
             }
         }
-        // SELECT: labela grupe + sort + kolone obaju predložaka + FK-skokovi + link (detekcija član/gost) + suffix
-        $sel = ["g.`$gl` AS `__glabel`"];
-        $ord = [];
-        if ($gs !== '' && pdf_ident_ok($gs) && pdf_kolona_postoji($mysqli, $gt, $gs)) { $sel[] = "g.`$gs` AS `__gsort`"; $ord[] = "g.`$gs`"; }
-        else { $ord[] = "g.id"; }
+        // SELECT: (labela grupe + sort kad grupiramo) + kolone obaju predložaka + FK-skokovi + link + suffix
+        $sel = []; $ord = [];
+        if ($grupiraj) {
+            $sel[] = "g.`$gl` AS `__glabel`";
+            if ($gs !== '' && pdf_ident_ok($gs) && pdf_kolona_postoji($mysqli, $gt, $gs)) { $sel[] = "g.`$gs` AS `__gsort`"; $ord[] = "g.`$gs`"; }
+            else { $ord[] = "g.id"; }
+        }
         $jColsAll = $infoM['jCols'] + $infoG['jCols'];
         foreach (array_keys($jColsAll) as $c) $sel[] = "j.`$c` AS `j_$c`";
         foreach (array_keys($infoM['cCols']) as $c) { $sel[] = "t.`$c` AS `c_$c`"; $ord[] = "t.`$c`"; }
@@ -719,13 +726,15 @@ function pdf_segment_vrijednost($mysqli, $s, $izvori, $relacije, $kontekst)
         $sel[] = "j.`$lk` AS `__link`";
         if (trim($fbTpl) === '' && $fb !== '') { $sel[] = "j.`$fb` AS `__fb`"; }
         if ($sfxAktivan) { $sel[] = "t.`$sfxFk` AS `__sfx_fk`"; $sel[] = "s2.`$sfxCol` AS `__sfx_name`"; }
+        $grupaJoin = $grupiraj ? " JOIN `$gt` g ON g.id = j.`$disc`" : '';
         $sfxJoin = $sfxAktivan ? " LEFT JOIN `$sfxTbl` s2 ON s2.id = t.`$sfxFk`" : '';
-        $sql = "SELECT " . implode(', ', $sel) . " FROM `$jt` j JOIN `$gt` g ON g.id = j.`$disc` LEFT JOIN `$tt` t ON t.id = j.`$lk`" . $fJoins . $sfxJoin . " WHERE j.`$fk` = ? ORDER BY " . implode(', ', $ord);
+        $orderBy = !empty($ord) ? (" ORDER BY " . implode(', ', $ord)) : '';
+        $sql = "SELECT " . implode(', ', $sel) . " FROM `$jt` j" . $grupaJoin . " LEFT JOIN `$tt` t ON t.id = j.`$lk`" . $fJoins . $sfxJoin . " WHERE j.`$fk` = ?" . $orderBy;
         $stmt = $mysqli->prepare($sql); if (!$stmt) return ['greska' => 'Upit grupe neuspješan.', 'vrijednost' => null];
         $stmt->bind_param('i', $baseId);
         $stmt->execute();
         $res = $stmt->get_result();
-        $groups = []; $order = [];
+        $groups = []; $order = []; $svi = [];
         if ($res) while ($row = $res->fetch_assoc()) {
             $link = array_key_exists('__link', $row) ? $row['__link'] : null;
             $jeClan = ($link !== null && (int) $link > 0);
@@ -744,13 +753,23 @@ function pdf_segment_vrijednost($mysqli, $s, $izvori, $relacije, $kontekst)
                 $ime = '';
             }
             if ($ime === '') continue;   // nema upotrebljivog imena
-            $label = (string) $row['__glabel'];
-            if (!isset($groups[$label])) { $groups[$label] = []; $order[] = $label; }
-            $groups[$label][] = $ime;
+            if ($grupiraj) {
+                $label = (string) $row['__glabel'];
+                if (!isset($groups[$label])) { $groups[$label] = []; $order[] = $label; }
+                $groups[$label][] = $ime;
+            } else {
+                $svi[] = $ime;
+            }
         }
         $stmt->close();
-        if (empty($order)) return ['greska' => null, 'vrijednost' => null];   // nema grupa → prazno (sakrij)
         $bold = !empty($s['labela_bold']);
+        if (!$grupiraj) {   // bez grupe: jedan redak, labela iz mape na BROJU (1 vs >1); engine doda ": "
+            if (empty($svi)) return ['greska' => null, 'vrijednost' => null];
+            $label = (string) pdf_mapa_primijeni((string) count($svi), $s['mapa_vrijednosti'] ?? null);
+            $lbl = $bold ? (PDF_BOLD . $label . PDF_BOLD) : $label;
+            return ['greska' => null, 'vrijednost' => $lbl . ': ' . implode(', ', $svi)];
+        }
+        if (empty($order)) return ['greska' => null, 'vrijednost' => null];   // nema grupa → prazno (sakrij)
         $lines = [];
         foreach ($order as $label) {
             $lbl = $bold ? (PDF_BOLD . $label . PDF_BOLD) : $label;
@@ -949,5 +968,6 @@ echo json_encode([
     'stilovi_slika' => $slikaStilovi,
     'fontovi' => $fontoviOut,
     'default_font' => $kljucFallback,
-    'broj_stranice_paragraf_id' => ($brojParId > 0 ? $brojParId : null)
+    'broj_stranice_paragraf_id' => ($brojParId > 0 ? $brojParId : null),
+    'startni_broj_stranice' => $startniBrojStranice
 ], JSON_UNESCAPED_UNICODE);

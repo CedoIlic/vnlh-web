@@ -539,6 +539,46 @@
         <button type="button" id="zapisnik_lista_sazetak_popup_izlaz" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izlaz</span></span></span></button>
     </div>
 </div>
+<!-- Modal: PDF zapisnika (klon esejModalPdf; reuse esej-crud__modal-pdf* / esej-crud__stepper*, Esej_CRUD.css već učitan). -->
+<div id="zapisnikModalPdf" class="esej-crud__modal-pdf" role="dialog" aria-label="PDF zapisnika" aria-modal="true" aria-hidden="true">
+    <div class="esej-crud__modal-pdf-overlay"></div>
+    <div class="esej-crud__modal-pdf-dialog">
+        <div class="esej-crud__modal-pdf-header">
+            <div class="esej-crud__modal-pdf-naslov">PDF zapisnika</div>
+            <div class="esej-crud__modal-pdf-alati" role="group" aria-label="Alati PDF-a">
+                <label class="kontrola-labela mb-0" for="zapisnik_pdf_prored">Prored</label>
+                <div class="esej-crud__stepper">
+                    <input id="zapisnik_pdf_prored" type="text" class="kontrola-edit esej-crud__stepper-input" inputmode="decimal" value="1,00" aria-label="Množitelj proreda (0,80–2,00)">
+                    <span class="esej-crud__stepper-strelice">
+                        <button type="button" id="zapisnik_pdf_prored_gore" class="esej-crud__stepper-btn" aria-label="Povećaj prored za 0,1" tabindex="-1">&#9650;</button>
+                        <button type="button" id="zapisnik_pdf_prored_dolje" class="esej-crud__stepper-btn" aria-label="Smanji prored za 0,1" tabindex="-1">&#9660;</button>
+                    </span>
+                </div>
+                <button type="button" id="zapisnik_pdf_save" class="esej-crud__modal-pdf-ikona-btn" aria-label="Spremi prored" title="Spremi prored">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/>
+                        <path d="M17 21v-8H7v8M7 3v5h8"/>
+                    </svg>
+                </button>
+                <span class="esej-crud__modal-pdf-slot" aria-hidden="true"></span>
+                <span class="esej-crud__modal-pdf-slot" aria-hidden="true"></span>
+                <button type="button" id="zapisnik_pdf_refresh" class="esej-crud__modal-pdf-ikona-btn" aria-label="Osvježi PDF" title="Osvježi PDF">
+                    <span class="kontrola-icon--arrow-path" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+        <div class="esej-crud__modal-pdf-body">
+            <iframe id="zapisnik_pdf_okvir" class="esej-crud__modal-pdf-iframe" title="PDF pregled zapisnika"></iframe>
+            <div id="zapisnik_pdf_spiner" class="kontrola-spiner-overlay" aria-hidden="true">
+                <span class="kontrola-spiner kontrola-spiner--segment" role="status" aria-label="Učitavanje"></span>
+            </div>
+            <div class="esej-crud__modal-pdf-info" id="zapisnik_pdf_info" aria-live="polite"></div>
+        </div>
+        <div class="esej-crud__modal-pdf-footer">
+            <button type="button" id="zapisnik_pdf_povratak" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+        </div>
+    </div>
+</div>
 <script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
@@ -547,6 +587,7 @@
 <script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/0-Kontrole_Tab.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/pdf-render.js?v=__VNLH_ASSET_V__"></script>
 <script src="../js/Zapisnik_CRUD.js?v=__VNLH_ASSET_V__"></script>
 </body>
 </html>

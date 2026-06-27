@@ -328,7 +328,7 @@
     byId('polje_lista_separator').hidden = !(relacijaLista && val('st_lista_nacin') === 'zarez');   /* separator samo za „zarez" */
     byId('polje_redak_predlozak').hidden = !predlozakVidljiv;    /* predložak retka (redak) / predložak imena (grupe) */
     if (byId('polje_labela_bold')) byId('polje_labela_bold').hidden = !relacijaGrupe;   /* bold labele samo za grupe */
-    byId('polje_mapa').hidden = korisnicki || relacijaLista || relacijaRedak || relacijaGrupe;   /* mapa: ne za korisnički/listu/redak/grupe */
+    byId('polje_mapa').hidden = korisnicki || relacijaLista || relacijaRedak;   /* mapa: ne za korisnički/listu/redak; relacija_grupe je koristi za labelu po broju (bez grupe) */
     byId('polje_format_datuma').hidden = (vrsta !== 'tekst');    /* format datuma za sve tekst stavke */
     byId('polje_fiksna_pozicija').hidden = (vrsta !== 'tekst');  /* fiksna pozicija (tab) za sve tekst stavke */
   }
@@ -402,7 +402,7 @@
     s.redak_predlozak = (s.izvor_tip === 'relacija_redak' || s.izvor_tip === 'relacija_grupe') ? (trim(val('st_redak_predlozak')) || null) : null;
     var lbEl = byId('st_labela_bold'); s.labela_bold = (s.izvor_tip === 'relacija_grupe' && lbEl && lbEl.checked) ? 1 : 0;
     /* mapa: null za korisnicki/relacija_lista/relacija_redak; inače (staticki/dinamicki/po_vrijednosti/relacija_broj) iz polja */
-    s.mapa_vrijednosti = (s.izvor_tip === 'korisnicki' || s.izvor_tip === 'relacija_lista' || s.izvor_tip === 'relacija_redak' || s.izvor_tip === 'relacija_grupe') ? null : (trim(val('st_mapa_vrijednosti')) || null);
+    s.mapa_vrijednosti = (s.izvor_tip === 'korisnicki' || s.izvor_tip === 'relacija_lista' || s.izvor_tip === 'relacija_redak') ? null : (trim(val('st_mapa_vrijednosti')) || null);
     s.format_datuma = (s.vrsta === 'tekst') ? (trim(val('st_format_datuma')) || null) : null;
     var fpRaw = trim(val('st_fiksna_pozicija')).replace(',', '.');
     var fpNum = fpRaw !== '' ? parseFloat(fpRaw) : NaN;
