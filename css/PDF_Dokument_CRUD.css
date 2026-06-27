@@ -226,6 +226,14 @@
   box-shadow: var(--kontrole_sjena_slaba_2);
   transition: box-shadow 0.2s ease, background-color 0.2s ease;
 }
+/* Help-varijanta: sadržaj je tekst "?" (ne mask-ikona); elipsis ostaje samo na gumbima koji dižu izvršne modale/popupe. */
+.pdf-dokument-crud__ellipsis-btn--pomoc {
+  font-family: var(--font_family);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--label_text);
+}
 .pdf-dokument-crud__ellipsis-btn:hover:not(:disabled) {
   background: var(--c-gray-100, #eee);
   box-shadow: var(--kontrole_sjena_slaba_1);

@@ -1,0 +1,173 @@
+/* PDF_Dozvoljene_relacije_CRUD — dozvoljene relacije (pdf_dozvoljeni_relacije). Desktop only. Bez boja (tokeni). */
+
+/* Sistemski font/boja na korijen forme → sav vlastiti tekst (oznake) nasljeđuje 0-Common tokene. */
+.pdf-relacije-crud {
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  color: var(--text);
+}
+
+.pdf-relacije-crud__panel-tablica {
+  height: 16rem;
+  min-height: 10rem;
+}
+
+.pdf-relacije-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab (Osnovno / Sufiks / Grupiranje): dvije kolone odvojene vertikalnom linijom. */
+.pdf-relacije-crud__tab-dvije-kolone {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;   /* oba stupca iste visine → vertikalna linija puna, polje--rasti može popuniti prostor */
+}
+.pdf-relacije-crud__tab-kol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0 1.5rem;
+}
+.pdf-relacije-crud__tab-kol:first-child {
+  border-right: var(--panel_border_w) solid var(--panel_border);   /* vertikalna linija između kolona */
+  padding-left: 0;
+}
+.pdf-relacije-crud__tab-kol:last-child {
+  padding-right: 0;
+}
+
+/* Aktivna kartica „negativ" (invertirano) kao u Zapisnik_CRUD: podloga = boja teksta trake, tekst = pozadina tijela. */
+.pdf-relacije-crud__tab .kontrola-tab__kartica--aktivna:not(:disabled) {
+  background: var(--tab_kontrola_header_text);
+  color: var(--tab_kontrola_body_bg);
+  -webkit-text-fill-color: var(--tab_kontrola_body_bg);
+  border-color: var(--tab_kontrola_header_text);
+}
+
+/* Disabled kartica (svi editi taba disable) — „negativ" kao u Zapisnik_CRUD (isti tokeni). */
+.pdf-relacije-crud__tab .kontrola-tab__kartica:disabled {
+  opacity: 1;
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+  cursor: not-allowed;
+}
+/* Aktivna ali disabled (rubni slučaj): bez invertiranih boja aktivne kartice. */
+.pdf-relacije-crud__tab .kontrola-tab__kartica--aktivna:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  border-color: var(--edit_border_disabled);
+}
+
+/* Pojedino polje: labela gore, kontrola dolje. */
+.pdf-relacije-crud__polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.pdf-relacije-crud__polje .kontrola-select { width: 100%; }
+.pdf-relacije-crud__naziv-kontrola { width: 100%; }
+/* Polje koje raste i puni slobodnu visinu stupca (npr. Fallback predložak): textarea se rasteže. */
+.pdf-relacije-crud__polje--rasti {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.pdf-relacije-crud__polje--rasti .kontrola-napomena {
+  flex: 1 1 auto;
+  min-height: 6rem;
+  resize: none;
+}
+.pdf-relacije-crud__opc {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.pdf-relacije-crud__edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pdf-relacije-crud__footer-left,
+.pdf-relacije-crud__footer-right { display: flex; gap: 0.5rem; }
+
+/* "?" gumb desno od selekta. */
+.pdf-relacije-crud__select-red {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.pdf-relacije-crud__select-red .kontrola-select,
+.pdf-relacije-crud__select-red .kontrola-edit-delete,
+.pdf-relacije-crud__select-red .kontrola-napomena { flex: 1 1 auto; min-width: 0; }
+/* Textarea u redu: "?" poravnat na vrh; red i textarea rastu (uz polje--rasti). */
+.pdf-relacije-crud__select-red--napomena {
+  align-items: flex-start;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.pdf-relacije-crud__select-red--napomena .kontrola-napomena { align-self: stretch; }
+/* "?" gumb: isti vizualni jezik kao ostale ikone (ellipsis) — kvadrat sa zaobljenim kutovima; sjene/stanja iz 0-Common tokena. */
+.pdf-relacije-crud__pomoc-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: var(--tab_kontrola_border_w) solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--panel_body_bg);
+  color: var(--label_text);
+  font-family: var(--font_family);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+.pdf-relacije-crud__pomoc-btn:hover:not(:disabled) {
+  background: var(--c-gray-100);
+  box-shadow: var(--kontrole_sjena_slaba_1);
+}
+.pdf-relacije-crud__pomoc-btn:active:not(:disabled) {
+  box-shadow: inset 0 2px 4px var(--c-shadow-30);
+}
+.pdf-relacije-crud__pomoc-btn:focus-visible {
+  outline: 2px solid var(--edit_border_focus);
+  outline-offset: 2px;
+}
+.pdf-relacije-crud__pomoc-btn:disabled {
+  color: var(--label_text_disabled);
+  cursor: not-allowed;
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+  border-color: var(--edit_border_disabled);
+  background: var(--edit_bg_disabled);
+}
+
+/* Popup opisa polja — stil kao popup na PDF Dokument formi. */
+.pdf-relacije-crud__pomoc-modal { min-width: 44rem; max-width: 44rem; }
+.kontrola-modal__dialog.pdf-relacije-crud__pomoc-modal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}
+.pdf-relacije-crud__pomoc p { margin: 0 0 0.5rem; }
+.pdf-relacije-crud__pomoc p:last-child { margin-bottom: 0; }
+.pdf-relacije-crud__pomoc code {
+  background: var(--c-gray-100);
+  padding: 0 0.25rem;
+  border-radius: var(--edit_radius);
+}
+.pdf-relacije-crud__pomoc ul { margin: 0 0 0.5rem; padding-left: 1.2rem; }
+.pdf-relacije-crud__pomoc li { margin: 0 0 0.2rem; }

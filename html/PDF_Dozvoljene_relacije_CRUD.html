@@ -1,0 +1,241 @@
+<!-- =========================================================
+     PDF_Dozvoljene_relacije_CRUD.html
+     CRUD pdf_dozvoljeni_relacije: panel-tablica (popis relacija) + edit panel s tabovima
+     (Osnovno / Sufiks / Grupiranje), svaki tab u dvije kolone odvojene vertikalnom linijom.
+     Tablice/kolone biraju se kaskadno iz baze (information_schema), izvori iz pdf_dozvoljeni_izvori.
+     Uzor: PDF_Whitelist_CRUD. Desktop only.
+     ========================================================= -->
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dozvoljene relacije</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Kontrole_Tab.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
+    <link rel="stylesheet" href="../css/PDF_Dozvoljene_relacije_CRUD.css?v=__VNLH_ASSET_V__">
+</head>
+<body>
+<div class="naslov-forme"><h2>Dozvoljene relacije</h2></div>
+<div class="page-container pdf-relacije-crud">
+
+    <!-- Panel 1: tablica postojećih relacija -->
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3 pdf-relacije-crud__panel-tablica">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+
+    <!-- Panel 2: edit (tabovi) -->
+    <div class="kontrola-panel mb-3 pdf-relacije-crud__panel-edit" id="edit_panel">
+        <div class="kontrola-panel__body pdf-relacije-crud__edit-body">
+
+            <div class="kontrola-tab pdf-relacije-crud__tab" id="relTab" role="tablist" aria-label="Uređivanje relacije">
+                <div class="kontrola-tab__traka" role="presentation">
+                    <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="relTabKart0" aria-selected="true" aria-controls="relTabPanel0" data-tab-index="0">Osnovno</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="relTabKart1" aria-selected="false" aria-controls="relTabPanel1" data-tab-index="1" tabindex="-1">Sufiks</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="relTabKart2" aria-selected="false" aria-controls="relTabPanel2" data-tab-index="2" tabindex="-1">Grupiranje</button>
+                </div>
+                <div class="kontrola-tab__tijelo">
+
+                    <!-- ===== Tab 0: Osnovno ===== -->
+                    <div class="kontrola-tab__panel" role="tabpanel" id="relTabPanel0" aria-labelledby="relTabKart0" data-tab-index="0">
+                        <div class="pdf-relacije-crud__tab-dvije-kolone">
+                            <div class="pdf-relacije-crud__tab-kol">
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_naziv">Naziv</label>
+                                    <div class="kontrola-edit-delete pdf-relacije-crud__naziv-kontrola">
+                                        <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="npr. Zapisnik → lože učesnice" maxlength="128" autocomplete="off">
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_junction_tablica">Spojna (junction) tablica</label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_junction_tablica" aria-label="Spojna tablica">
+                                            <option value="">— odaberi tablicu —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_fk_baza_kolona">FK kolona (veže na bazni id)</label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_fk_baza_kolona" aria-label="FK kolona baza">
+                                            <option value="">— odaberi kolonu —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_link_kolona">Link kolona (veže na cilj)</label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_link_kolona" aria-label="Link kolona">
+                                            <option value="">— odaberi kolonu —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pdf-relacije-crud__tab-kol">
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_ciljni_izvor_id">Ciljni izvor (naziv cilja)</label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_ciljni_izvor_id" aria-label="Ciljni izvor">
+                                            <option value="">— odaberi izvor —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_sort_kolona">Sort kolona <span class="pdf-relacije-crud__opc">(neobavezno)</span></label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_sort_kolona" aria-label="Sort kolona">
+                                            <option value="">— bez sortiranja —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                                    <textarea id="edit_napomena" class="kontrola-napomena" rows="4" placeholder="Slobodna bilješka..." maxlength="1024"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Tab 1: Sufiks ===== -->
+                    <div class="kontrola-tab__panel" role="tabpanel" id="relTabPanel1" aria-labelledby="relTabKart1" data-tab-index="1" hidden>
+                        <div class="pdf-relacije-crud__tab-dvije-kolone">
+                            <div class="pdf-relacije-crud__tab-kol">
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_suffix_fk_kolona">FK kolona cilja (usporedba)</label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_suffix_fk_kolona" aria-label="Sufiks FK kolona cilja">
+                                            <option value="">— bez sufiksa —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_suffix_izvor_id">Izvor naziva sufiksa</label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_suffix_izvor_id" aria-label="Sufiks izvor naziva">
+                                            <option value="">— odaberi izvor —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pdf-relacije-crud__tab-kol">
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_suffix_bazni_izvor_id">Bazni izvor (usporedba)</label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_suffix_bazni_izvor_id" aria-label="Sufiks bazni izvor">
+                                            <option value="">— odaberi izvor —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_suffix_format">Format sufiksa</label>
+                                    <div class="kontrola-edit-delete pdf-relacije-crud__naziv-kontrola">
+                                        <input id="edit_suffix_format" type="text" class="kontrola-edit-delete__input" placeholder="npr. ,^{v}  (zadano: , {v})" maxlength="64" autocomplete="off">
+                                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Tab 2: Grupiranje ===== -->
+                    <div class="kontrola-tab__panel" role="tabpanel" id="relTabPanel2" aria-labelledby="relTabKart2" data-tab-index="2" hidden>
+                        <div class="pdf-relacije-crud__tab-dvije-kolone">
+                            <div class="pdf-relacije-crud__tab-kol">
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_grupa_tablica">Tablica grupa/tipova</label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_grupa_tablica" aria-label="Tablica grupa">
+                                            <option value="">— bez grupiranja —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_grupa_label_kolona">Kolona labele grupe</label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_grupa_label_kolona" aria-label="Kolona labele grupe">
+                                            <option value="">— odaberi kolonu —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_grupa_sort_kolona">Kolona poretka grupa <span class="pdf-relacije-crud__opc">(neobavezno)</span></label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_grupa_sort_kolona" aria-label="Kolona poretka grupa">
+                                            <option value="">— po id grupe —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_diskriminator_kolona">Diskriminator (redak → grupa)</label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_diskriminator_kolona" aria-label="Diskriminator kolona">
+                                            <option value="">— odaberi kolonu —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pdf-relacije-crud__tab-kol">
+                                <div class="pdf-relacije-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="edit_fallback_kolona">Fallback kolona (gotov naziv gosta) <span class="pdf-relacije-crud__opc">(neobavezno)</span></label>
+                                    <div class="kontrola-select">
+                                        <select id="edit_fallback_kolona" aria-label="Fallback kolona">
+                                            <option value="">— bez fallbacka —</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="pdf-relacije-crud__polje pdf-relacije-crud__polje--rasti">
+                                    <label class="kontrola-labela mb-0" for="edit_fallback_predlozak">Fallback predložak (ime gosta)</label>
+                                    <textarea id="edit_fallback_predlozak" class="kontrola-napomena" rows="3" placeholder="npr. {j.ime_i_prezime}[-{j.loza}][-{j.id_drzave->radovi_drzave_gostiju.naziv}]" maxlength="512"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="kontrola-panel__footer pdf-relacije-crud__edit-footer">
+            <div class="pdf-relacije-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="pdf-relacije-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ===== Popup: opis polja (jedan dijeljeni; sadržaj se puni po selektu) ===== -->
+<div class="kontrola-modal kontrola-modal--dim" id="relPomocModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="relPomocModal_overlay"></div>
+    <div class="kontrola-modal__dialog pdf-relacije-crud__pomoc-modal">
+        <div class="kontrola-modal__header" id="relPomocModal_header">Opis</div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content pdf-relacije-crud__pomoc" id="relPomocModal_body"></div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="btnRelPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+        </div>
+    </div>
+</div>
+
+
+<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Kontrole_Tab.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
+<script src="../js/PDF_Dozvoljene_relacije_CRUD.js?v=__VNLH_ASSET_V__"></script>
+</body>
+</html>
