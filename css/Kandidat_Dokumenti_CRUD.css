@@ -1,0 +1,141 @@
+/* =====================================================
+   Kandidat_Dokumenti_CRUD.css
+   Dokumentacija kandidata. Layout/geo/tablica naslijeđeni iz Clanovi_CRUD.css +
+   Clanovi_Loza_CRUD.css; ovdje samo specifičnosti: slika SAMO PRIKAZ, edit-panel
+   naslov, tab „Životopis" + contenteditable (uzor Esej_CRUD).
+   Koristi postojeće tokene (var(--…)) i kontrola-* klase; bez hardkodiranih boja.
+   ===================================================== */
+
+/* --- Containment resizabilnog panela tablice (uzorak je scope-an na .vnlh-page-clanovi-loza-crud,
+   pa ga repliciramo za ovu stranicu) — bez ovoga se kod resize-a tablica „prelije" i gornji
+   paneli odu iza edit panela. --- */
+.vnlh-page-kandidat-dokumenti-crud .clanovi-loza-crud__panel-tablica.kontrola-panel-tablica {
+  min-height: 0;
+}
+.vnlh-page-kandidat-dokumenti-crud .clanovi-loza-crud__panel-tablica > .kontrola-panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.vnlh-page-kandidat-dokumenti-crud .clanovi-loza-crud__panel-tablica > .kontrola-panel__body > .kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  height: auto;
+}
+.vnlh-page-kandidat-dokumenti-crud .clanovi-loza-crud__panel-tablica .kontrola-tablica__inner,
+.vnlh-page-kandidat-dokumenti-crud .clanovi-loza-crud__panel-tablica .kontrola-tablica__scroll-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.vnlh-page-kandidat-dokumenti-crud .clanovi-loza-crud__panel-tablica .kontrola-tablica__scroll-wrap {
+  height: auto;
+  flex: 1 1 auto;
+}
+
+/* --- Slika kandidata: samo prikaz (bez dvoklika/obrade/brisanja) --- */
+.kandidat-dokumenti-crud__image-area {
+  cursor: default;
+}
+.kandidat-dokumenti-crud__image-area:focus,
+.kandidat-dokumenti-crud__image-area:focus-visible {
+  outline: none;
+}
+
+/* --- Edit body + tab: ispune dostupnu visinu (edit panel bez zaglavlja) --- */
+.kandidat-dokumenti-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.kandidat-dokumenti-crud__tab {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+.kandidat-dokumenti-crud__tab-panel--zivotopis {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.kandidat-dokumenti-crud__zivotopis-blok {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 0.25rem;
+}
+
+/* --- Scrol-omot: wrapper s okvirom/radiusom, kliP scrollbara (uzor esej) ---
+   Fiksna zadana visina (ne rasteže se na učitavanju dugog teksta — tekst scrolla unutra);
+   korisnik može povući visinu (resize: vertical). */
+.kandidat-dokumenti-crud__scrol-omot {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  height: 17.6rem;            /* 20% manje od početnih 22rem */
+  min-height: 10rem;
+  resize: vertical;
+  border: 1px solid var(--napomena_border);
+  border-radius: var(--napomena_radius);
+  background: var(--napomena_bg);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.kandidat-dokumenti-crud__scrol-omot:focus-within {
+  border-color: var(--napomena_border_focus, var(--edit_border_focus));
+  box-shadow: var(--edit_focus_shadow);
+}
+.kandidat-dokumenti-crud__scrol-omot .kontrola-napomena {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* --- Contenteditable životopis: klizač, obostrano poravnanje, odlomci --- */
+.kandidat-dokumenti-crud__zivotopis-kontrola.kontrola-napomena {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+.kandidat-dokumenti-crud__zivotopis-kontrola[contenteditable] {
+  cursor: text;
+  text-align: justify;
+  text-indent: 10mm;            /* uvlaka prvog reda (i za direktni tekst prije Entera) */
+  line-height: 1.5;
+}
+/* Odlomci se prelamaju prirodno (reflow); uvlaka prvog reda 10 mm, justify, razmak između odlomaka. */
+.kandidat-dokumenti-crud__zivotopis-kontrola[contenteditable] > div,
+.kandidat-dokumenti-crud__zivotopis-kontrola[contenteditable] > p {
+  text-align: justify;
+  text-indent: 10mm;
+  line-height: 1.5;
+  margin: 0 0 0.6em 0;
+}
+.kandidat-dokumenti-crud__zivotopis-kontrola[contenteditable] > div:last-child,
+.kandidat-dokumenti-crud__zivotopis-kontrola[contenteditable] > p:last-child {
+  margin-bottom: 0;
+}
+.kandidat-dokumenti-crud__zivotopis-kontrola[contenteditable="false"] {
+  cursor: default;
+}
+
+/* Scrollbar (uzor esej/tablica) */
+@supports not selector(::-webkit-scrollbar) {
+  .kandidat-dokumenti-crud__zivotopis-kontrola {
+    scrollbar-width: thin;
+    scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
+  }
+}
+.kandidat-dokumenti-crud__zivotopis-kontrola::-webkit-scrollbar {
+  width: var(--tablica_sirina_scrol_bara);
+  background: var(--tablica_scroll_bg);
+}
+.kandidat-dokumenti-crud__zivotopis-kontrola::-webkit-scrollbar-thumb {
+  background: var(--tablica_scroll_klizac);
+  border-radius: 6px;
+}
+.kandidat-dokumenti-crud__zivotopis-kontrola::-webkit-scrollbar-thumb:hover {
+  background: var(--tablica_scroll_klizac_hover, var(--tablica_scroll_klizac));
+}

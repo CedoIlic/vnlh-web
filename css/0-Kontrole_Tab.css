@@ -79,9 +79,20 @@
   width: auto;
 }
 
-.kontrola-tab__kartica--aktivna {
-  background: var(--tab_kontrola_body_bg);               /* aktivna kartica u boji tijela, boja iz tokena */
+.kontrola-tab__kartica--aktivna:not(:disabled) {
+  /* Negativ (inverzija) aktivne kartice — prekidač --naslov_taba_negativ (1=da/default, 0=ne).
+     Fallback (preglednik bez color-mix): puni negativ; color-mix verzija poštuje token. */
+  background: var(--tab_kontrola_header_text);
+  color: var(--tab_kontrola_body_bg);
+  background: color-mix(in srgb, var(--tab_kontrola_header_text) calc(var(--naslov_taba_negativ, 1) * 100%), var(--tab_kontrola_body_bg));
+  color: color-mix(in srgb, var(--tab_kontrola_body_bg) calc(var(--naslov_taba_negativ, 1) * 100%), var(--tab_kontrola_body_text));
   font-weight: var(--tab_kontrola_header_font_weight);
+}
+
+/* Disabled kartica (npr. tab onemogućen dok nema preduvjeta — selekcije): prigušen tekst, bez negativa. */
+.kontrola-tab__kartica:disabled {
+  color: var(--label_text_disabled);
+  cursor: default;
 }
 
 /* --- Blok: tijelo (sadržaj aktivnog taba) --- */
