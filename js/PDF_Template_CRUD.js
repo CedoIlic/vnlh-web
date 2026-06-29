@@ -227,8 +227,9 @@
         d.textContent = LOREM_DEMO;
         stranica.appendChild(d);
       };
-      /* str. 1 + blokovi: prvo napuni blokove, pa ostatak punom širinom ispod najnižeg bloka */
-      var dnoOkviraMm = 0;
+      /* str. 1 + blokovi: prvo napuni blokove, pa ostatak punom širinom ispod najnižeg bloka.
+         Meki rub: zadnji započeti red ispiši CIJEL (iako prelazi blok), poštuj širinu bloka; tvrdi rub: reži. */
+      var dnoOkviraPx = 0;
       if (_stranica === 1 && okviriState.length) {
         okviriState.forEach(function (o) {
           var ox = parseFloat(String(o.x_mm).replace(',', '.')) || 0,
@@ -236,12 +237,18 @@
               ow = parseFloat(String(o.sirina_mm).replace(',', '.')) || 0,
               oh = parseFloat(String(o.visina_mm).replace(',', '.')) || 0;
           if (ow <= 0 || oh <= 0) return;
-          demoBlok(ox * scale, oy * scale, ow * scale, oh * scale, false);
-          if (oy + oh > dnoOkviraMm) dnoOkviraMm = oy + oh;
+          var meka = (o.y_meka === 1 || o.y_meka === '1' || o.y_meka === true);
+          var topPx = oy * scale, hPx = oh * scale;
+          /* meki = ceil (uključi prelivni red cijel), tvrdi = floor (reži) — prored fiksan (lhPx) bez obzira na visinu bloka */
+          var textHpx = (meka ? Math.ceil(hPx / lhPx) : Math.floor(hPx / lhPx)) * lhPx;
+          demoBlok(ox * scale, topPx, ow * scale, textHpx, false);
+          /* nastavak ide ispod: meki = ispod prelivenog reda; tvrdi = ispod nominalnog ruba bloka */
+          var bottomPx = meka ? (topPx + Math.max(textHpx, hPx)) : (topPx + hPx);
+          if (bottomPx > dnoOkviraPx) dnoOkviraPx = bottomPx;
         });
       }
-      /* tijelo (ostatak): od dna zadnjeg bloka (ili vrha tijela) do donje margine, margina–margina */
-      var tijeloTop = Math.max(bt, dnoOkviraMm * scale);
+      /* tijelo (ostatak): od dna zadnjeg bloka (ili vrha tijela) do donje margine, margina–margina; prored se nastavlja na istoj mreži */
+      var tijeloTop = Math.max(bt, dnoOkviraPx);
       demoBlok(ml * scale, tijeloTop, 0, bb - tijeloTop, true);
     }
 
