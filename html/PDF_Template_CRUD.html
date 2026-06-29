@@ -27,7 +27,7 @@
             <!-- Tablica (lijevo 1/2) -->
             <div class="pdf-template-crud__tablica-wrap">
             <!-- Panel tablica (Naziv opisa + Nasljedi opis u zaglavlju) -->
-            <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-0 pdf-template-crud__panel-tablica">
+            <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-0 pdf-template-crud__panel-tablica" data-resize-sync-group="pdf-template-gornji">
                 <div class="kontrola-panel__header pdf-template-crud__tablica-header">
                     <div class="pdf-template-crud__naziv-polje">
                         <label class="kontrola-labela mb-0" for="edit_naziv">Naziv opisa</label>
@@ -53,7 +53,7 @@
 
             <!-- Pregled (desno 1/2) -->
             <div class="pdf-template-crud__desno">
-                <div class="kontrola-panel pdf-template-crud__preview-panel">
+                <div class="kontrola-panel pdf-template-crud__preview-panel" data-resize-sync-group="pdf-template-gornji">
                     <div class="kontrola-panel__header pdf-template-crud__preview-header">
                         <span>Pregled</span>
                         <span class="pdf-template-crud__preview-akcije">
@@ -232,7 +232,7 @@
                                             <label class="kontrola-labela mb-0">&nbsp;</label>
                                         </span>
                                         <div class="pdf-template-crud__polje pdf-template-crud__polje--rastegni">
-                                            <label class="kontrola-labela mb-0" for="edit_zaglavlje_primjena">Primjena</label>
+                                            <label class="kontrola-labela mb-0" for="edit_zaglavlje_primjena">Ponavljanje zaglavlja</label>
                                             <div class="kontrola-select">
                                                 <select id="edit_zaglavlje_primjena" aria-label="Zaglavlje na prvoj ili svakoj stranici">
                                                     <option value="svaka">Na svakoj stranici</option>
@@ -308,33 +308,43 @@
 
                             <!-- TAB 3: Vezani tekst blokovi (okviri lanca, samo 1. stranica) -->
                             <div class="kontrola-tab__panel" role="tabpanel" id="templateTabPanel3" aria-labelledby="templateTabKart3" hidden>
-                                <div class="pdf-template-crud__okviri">
-                                    <!-- Lijevo: traka + lista okvira (lanac) -->
-                                    <div class="pdf-template-crud__okviri-lista-wrap">
-                                        <div class="pdf-template-crud__okviri-traka">
-                                            <button type="button" id="okvirDodaj" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Dodaj</span></span></span></button>
-                                            <button type="button" id="okvirObrisi" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Obriši</span></span></span></button>
-                                            <button type="button" id="okvirGore" class="kontrola-btn" aria-label="Pomakni gore"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▲</span></span></span></button>
-                                            <button type="button" id="okvirDolje" class="kontrola-btn" aria-label="Pomakni dolje"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">▼</span></span></span></button>
-                                        </div>
-                                        <div id="okviriLista" class="pdf-template-crud__okviri-lista" role="listbox" aria-label="Lanac okvira"></div>
+                                <div class="pdf-template-crud__tri">
+                                    <!-- Kolona 1: tablica postojećih blokova (redoslijed iz baze, bez sorta) -->
+                                    <div class="pdf-template-crud__kolona">
+                                        <div id="okviriTablicaContainer" class="kontrola-tablica pdf-template-crud__okviri-tablica"></div>
                                     </div>
-                                    <!-- Desno: geometrija odabranog okvira -->
-                                    <div class="pdf-template-crud__okviri-edit">
+                                    <!-- Kolona 2: Naziv + tipke (Dodaj/Obriši/▲/▼) + Mekani gornji rub -->
+                                    <div class="pdf-template-crud__kolona">
                                         <div class="pdf-template-crud__polje pdf-template-crud__polje--rastegni">
-                                            <label class="kontrola-labela mb-0" for="edit_okvir_naziv">Naziv okvira</label>
-                                            <input id="edit_okvir_naziv" type="text" class="kontrola-edit" maxlength="50" placeholder="npr. pored slike, ispod" autocomplete="off" aria-label="Naziv okvira">
+                                            <label class="kontrola-labela mb-0" for="edit_okvir_naziv">Naziv bloka</label>
+                                            <div class="kontrola-edit-delete">
+                                                <input id="edit_okvir_naziv" type="text" class="kontrola-edit-delete__input" maxlength="50" placeholder="npr. pored slike, ispod" autocomplete="off" aria-label="Naziv bloka">
+                                                <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                                            </div>
                                         </div>
+                                        <div class="pdf-template-crud__okviri-traka">
+                                            <button type="button" id="okvirDodaj" class="pdf-template-crud__okvir-akcija" title="Dodaj okvir" aria-label="Dodaj okvir"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h18v2.5H3V4zm0 5.75h10v2.5H3v-2.5z"/><path d="M16 13h2.5v3.5H22V19h-3.5v3.5H16V19h-3.5v-2.5H16V13z"/></svg></button>
+                                            <button type="button" id="okvirObrisi" class="pdf-template-crud__okvir-akcija" title="Obriši okvir" aria-label="Obriši okvir"><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
+                                            <button type="button" id="okvirGore" class="pdf-template-crud__okvir-akcija" title="Pomakni gore" aria-label="Pomakni gore"><span class="pdf-template-crud__okvir-trokut" aria-hidden="true">▲</span></button>
+                                            <button type="button" id="okvirDolje" class="pdf-template-crud__okvir-akcija" title="Pomakni dolje" aria-label="Pomakni dolje"><span class="pdf-template-crud__okvir-trokut" aria-hidden="true">▼</span></button>
+                                        </div>
+                                        <span class="pdf-template-crud__cb pdf-template-crud__dno">
+                                            <input type="checkbox" id="edit_okvir_ymeka" class="kontrola-checkbox" value="1" aria-label="Mekani gornji rub okvira">
+                                            <label class="kontrola-labela mb-0" for="edit_okvir_ymeka">Mekani gornji rub</label>
+                                        </span>
+                                    </div>
+                                    <!-- Kolona 3: geometrija (X/Y · Širina/Visina) -->
+                                    <div class="pdf-template-crud__kolona">
                                         <div class="pdf-template-crud__red pdf-template-crud__red--margine2">
                                             <div class="pdf-template-crud__polje">
-                                                <label class="kontrola-labela mb-0" for="edit_okvir_x">X</label>
+                                                <label class="kontrola-labela mb-0" for="edit_okvir_x">X pozicija</label>
                                                 <div class="pdf-template-crud__unos-mjera">
                                                     <input id="edit_okvir_x" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="X okvira u mm">
                                                     <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
                                                 </div>
                                             </div>
                                             <div class="pdf-template-crud__polje">
-                                                <label class="kontrola-labela mb-0" for="edit_okvir_y">Y</label>
+                                                <label class="kontrola-labela mb-0" for="edit_okvir_y">Y pozicija</label>
                                                 <div class="pdf-template-crud__unos-mjera">
                                                     <input id="edit_okvir_y" type="text" class="kontrola-edit pdf-template-crud__num" inputmode="decimal" placeholder="0,0" aria-label="Y okvira u mm">
                                                     <span class="pdf-template-crud__mjera" aria-hidden="true">mm</span>
@@ -357,10 +367,6 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <span class="pdf-template-crud__cb">
-                                            <input type="checkbox" id="edit_okvir_ymeka" class="kontrola-checkbox" value="1" aria-label="Mekani gornji rub okvira">
-                                            <label class="kontrola-labela mb-0" for="edit_okvir_ymeka">Mekani gornji rub</label>
-                                        </span>
                                     </div>
                                 </div>
                             </div>

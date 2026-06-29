@@ -213,18 +213,36 @@
       var bb = Hpx - (podnNaStr ? Math.max(md, pv + pp) : md) * scale;
       var fsPx = DEMO_PT * PT_MM * scale;                       /* 12 pt skalirano kao stranica */
       var lhPx = fsPx * 1.3;
-      var visinaTijela = Math.floor((bb - bt) / lhPx) * lhPx;   /* cijeli redovi → ne reže pola zadnjeg reda */
-      if (visinaTijela >= lhPx) {
-        var dt = el('div', 'pdf-template-crud__demo-tekst');
-        dt.style.left = (ml * scale) + 'px';
-        dt.style.right = (mr * scale) + 'px';
-        dt.style.top = bt + 'px';
-        dt.style.height = visinaTijela + 'px';
-        dt.style.fontSize = fsPx + 'px';
-        dt.style.lineHeight = lhPx + 'px';
-        dt.textContent = LOREM_DEMO;
-        stranica.appendChild(dt);
+      /* nacrtaj demo tekst u pravokutniku (cijeli redovi); koristiRight=true → puna širina margina–margina */
+      var demoBlok = function (left, top, sirina, visina, koristiRight) {
+        var h = Math.floor(visina / lhPx) * lhPx;               /* cijeli redovi → ne reže pola zadnjeg */
+        if (h < lhPx) return;
+        var d = el('div', 'pdf-template-crud__demo-tekst');
+        d.style.left = left + 'px';
+        if (koristiRight) d.style.right = (mr * scale) + 'px'; else d.style.width = sirina + 'px';
+        d.style.top = top + 'px';
+        d.style.height = h + 'px';
+        d.style.fontSize = fsPx + 'px';
+        d.style.lineHeight = lhPx + 'px';
+        d.textContent = LOREM_DEMO;
+        stranica.appendChild(d);
+      };
+      /* str. 1 + blokovi: prvo napuni blokove, pa ostatak punom širinom ispod najnižeg bloka */
+      var dnoOkviraMm = 0;
+      if (_stranica === 1 && okviriState.length) {
+        okviriState.forEach(function (o) {
+          var ox = parseFloat(String(o.x_mm).replace(',', '.')) || 0,
+              oy = parseFloat(String(o.y_mm).replace(',', '.')) || 0,
+              ow = parseFloat(String(o.sirina_mm).replace(',', '.')) || 0,
+              oh = parseFloat(String(o.visina_mm).replace(',', '.')) || 0;
+          if (ow <= 0 || oh <= 0) return;
+          demoBlok(ox * scale, oy * scale, ow * scale, oh * scale, false);
+          if (oy + oh > dnoOkviraMm) dnoOkviraMm = oy + oh;
+        });
       }
+      /* tijelo (ostatak): od dna zadnjeg bloka (ili vrha tijela) do donje margine, margina–margina */
+      var tijeloTop = Math.max(bt, dnoOkviraMm * scale);
+      demoBlok(ml * scale, tijeloTop, 0, bb - tijeloTop, true);
     }
 
     /* naslovna oznaka (samo na 1. stranici) */
@@ -427,21 +445,46 @@
   function valId(id) { var e = byId(id); return e ? e.value : ''; }
   function numId(id) { var n = parseFloat(String(valId(id)).replace(',', '.')); return isNaN(n) ? 0 : n; }
 
-  function renderOkviriLista() {
-    var box = byId('okviriLista');
-    if (!box) return;
-    box.innerHTML = '';
-    okviriState.forEach(function (o, i) {
-      var row = document.createElement('button');
-      row.type = 'button';
-      row.className = 'pdf-template-crud__okvir-red' + (i === okvirSel ? ' pdf-template-crud__okvir-red--aktivan' : '');
-      row.setAttribute('role', 'option');
-      var naziv = (o.naziv != null && trim(o.naziv) !== '') ? trim(o.naziv) : ('Okvir ' + (i + 1));
-      row.textContent = (i + 1) + '. ' + naziv + ' (' + (brojNiz(o.sirina_mm) || '0') + '×' + (brojNiz(o.visina_mm) || '0') + ' mm)';
-      row.disabled = trim(vEdit('naziv')) === '';
-      row.addEventListener('click', function () { okvirSel = i; popuniOkvirEdit(); renderOkviriLista(); azurirajOkvirTraka(); renderPreview(); });
-      box.appendChild(row);
-    });
+  /* Tablica postojećih blokova — 2. CommonCRUD instanca; redoslijed iz baze (bez sorta). */
+  var OKVIRI_TABLICA = {
+    Broj_Kolona: 1,
+    Reload_Ikona: 0,
+    CrudCssPrefix: 'pdf-template-crud',
+    Tablica_Zaglavlje: [
+      { key: 'naziv', title: 'Postojeći blokovi', SQL_Naziv: 'naziv', sortable: 0, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
+    ]
+  };
+  var okviriTablicaApi = null;
+  var okviriProgSel = false;   /* guard: programatska selekcija ne pokreće handler */
+
+  function okvirRedLabel(o, i) {
+    /* bez fallbacka: nema imena → prazan red; broj u zagradi = redni broj bloka (kao u pregledu) */
+    var naziv = (o.naziv != null) ? trim(o.naziv) : '';
+    return naziv === '' ? '' : (naziv + ' (' + (i + 1) + ')');
+  }
+
+  function renderOkviriTablica() {
+    if (!okviriTablicaApi) return;
+    var rows = okviriState.map(function (o, i) { return [okvirRedLabel(o, i), i]; });
+    okviriProgSel = true;
+    CommonCRUD.setDataTablica(okviriTablicaApi, 'okviriTablicaContainer', rows, OKVIRI_TABLICA.Tablica_Zaglavlje);
+    if (okvirSel >= 0 && okvirSel < okviriState.length && typeof okviriTablicaApi.setSelectedRowIds === 'function') {
+      okviriTablicaApi.setSelectedRowIds([okvirSel]);
+    } else if (typeof okviriTablicaApi.clearSelection === 'function') {
+      okviriTablicaApi.clearSelection();
+    }
+    okviriProgSel = false;
+  }
+
+  /* Ažurira tekst SAMO odabranog retka u postojećem DOM-u (bez rebuilda tablice → ne „pojede" klik na drugi red). */
+  function azurirajOkvirRedLabel() {
+    if (okvirSel < 0 || okvirSel >= okviriState.length) return;
+    var cont = byId('okviriTablicaContainer');
+    if (!cont) return;
+    var tr = cont.querySelector('.kontrola-tablica__scroll tbody tr[data-row-id="' + okvirSel + '"]');
+    if (!tr) return;
+    var td = tr.querySelector('td');
+    if (td) td.textContent = okvirRedLabel(okviriState[okvirSel], okvirSel);
   }
 
   function popuniOkvirEdit() {
@@ -455,21 +498,34 @@
     if (v) v.value = o ? brojNiz(o.visina_mm) : '';
     if (ym) ym.checked = o ? !!(o.y_meka === 1 || o.y_meka === '1' || o.y_meka === true) : true;
     azurirajOkvirEditDisabled();
+    /* programski set value ne okida syncVisibility komponente → ručno pokaži/sakrij X (bez dispatcha da ne pokrene listenere) */
+    if (nz) {
+      var nzWrap = nz.closest('.kontrola-edit-delete');
+      var nzClr = nzWrap && nzWrap.querySelector('.kontrola-edit-delete__clear');
+      if (nzClr) nzClr.style.display = (nz.value && String(nz.value).length) ? 'flex' : 'none';
+    }
   }
 
   function azurirajOkvirEditDisabled() {
-    var imaNaziv = trim(vEdit('naziv')) !== '';
-    var ima = okvirSel >= 0 && okvirSel < okviriState.length;
-    ['edit_okvir_naziv', 'edit_okvir_x', 'edit_okvir_y', 'edit_okvir_sirina', 'edit_okvir_visina', 'edit_okvir_ymeka'].forEach(function (id) {
-      var e = byId(id); if (e) e.disabled = !(ima && imaNaziv);
+    var imaTemplate = trim(vEdit('naziv')) !== '';
+    /* Naziv okvira: aktivan čim je template imenovan */
+    var nz = byId('edit_okvir_naziv'); if (nz) nz.disabled = !imaTemplate;
+    /* Geometrija + mekani rub (+ labele): aktivni kad je red ODABRAN (uređivanje postojećeg)
+       ili kad je upisan naziv (novi unos) */
+    var odabran = okvirSel >= 0 && okvirSel < okviriState.length;
+    var enable = imaTemplate && (odabran || trim(valId('edit_okvir_naziv')) !== '');
+    ['edit_okvir_x', 'edit_okvir_y', 'edit_okvir_sirina', 'edit_okvir_visina', 'edit_okvir_ymeka'].forEach(function (id) {
+      var e = byId(id); if (e) e.disabled = !enable;
     });
+    syncLabele();
   }
 
   function azurirajOkvirTraka() {
-    var imaNaziv = trim(vEdit('naziv')) !== '';
+    var imaNaziv = trim(vEdit('naziv')) !== '';                         /* template imenovan */
+    var imaOkvirNaziv = trim(valId('edit_okvir_naziv')) !== '';         /* naziv okvira upisan */
     var ima = okvirSel >= 0 && okvirSel < okviriState.length;
     var d = byId('okvirDodaj'), o = byId('okvirObrisi'), g = byId('okvirGore'), dj = byId('okvirDolje');
-    if (d) d.disabled = !imaNaziv;
+    if (d) d.disabled = !(imaNaziv && imaOkvirNaziv);                   /* Dodaj traži naziv okvira (bez bezimenih) */
     if (o) o.disabled = !(ima && imaNaziv);
     if (g) g.disabled = !(ima && imaNaziv && okvirSel > 0);
     if (dj) dj.disabled = !(ima && imaNaziv && okvirSel < okviriState.length - 1);
@@ -487,20 +543,30 @@
   }
 
   function dodajOkvir() {
-    if (trim(vEdit('naziv')) === '') return;
+    if (trim(vEdit('naziv')) === '' || trim(valId('edit_okvir_naziv')) === '') return;   /* traži naziv okvira */
     var d = dimsStranice();
     var ml = vBroj('margina_lijevo_mm'), mg = vBroj('margina_gore_mm'), mr = vBroj('margina_desno_mm');
     var tijeloW = Math.max(10, (d.w || 100) - ml - mr);
-    okviriState.push({ naziv: '', x_mm: ml || 0, y_mm: mg || 0, sirina_mm: Math.round(tijeloW / 2), visina_mm: 40, y_meka: 1 });
-    okvirSel = okviriState.length - 1;
-    renderOkviriLista(); popuniOkvirEdit(); azurirajOkvirTraka(); renderPreview();
+    function dimOrDef(id, def) { var v = trim(valId(id)); return v === '' ? def : (parseFloat(v.replace(',', '.')) || 0); }
+    var ym = byId('edit_okvir_ymeka');
+    okviriState.push({
+      naziv: trim(valId('edit_okvir_naziv')),
+      x_mm: dimOrDef('edit_okvir_x', ml || 0),
+      y_mm: dimOrDef('edit_okvir_y', mg || 0),
+      sirina_mm: dimOrDef('edit_okvir_sirina', Math.round(tijeloW / 2)),
+      visina_mm: dimOrDef('edit_okvir_visina', 40),
+      y_meka: ym ? (ym.checked ? 1 : 0) : 1
+    });
+    /* nakon dodavanja: očisti kontrole i ukloni selekciju (spremno za sljedeći unos) */
+    okvirSel = -1;
+    renderOkviriTablica(); popuniOkvirEdit(); azurirajOkvirTraka(); renderPreview();
   }
 
   function obrisiOkvir() {
     if (okvirSel < 0 || okvirSel >= okviriState.length) return;
     okviriState.splice(okvirSel, 1);
     if (okvirSel >= okviriState.length) okvirSel = okviriState.length - 1;
-    renderOkviriLista(); popuniOkvirEdit(); azurirajOkvirTraka(); renderPreview();
+    renderOkviriTablica(); popuniOkvirEdit(); azurirajOkvirTraka(); renderPreview();
   }
 
   function pomakniOkvir(delta) {
@@ -508,7 +574,7 @@
     if (okvirSel < 0 || j < 0 || j >= okviriState.length) return;
     var t = okviriState[okvirSel]; okviriState[okvirSel] = okviriState[j]; okviriState[j] = t;
     okvirSel = j;
-    renderOkviriLista(); popuniOkvirEdit(); azurirajOkvirTraka(); renderPreview();
+    renderOkviriTablica(); popuniOkvirEdit(); azurirajOkvirTraka(); renderPreview();
   }
 
   function ucitajOkvire(arr) {
@@ -519,8 +585,8 @@
         y_meka: (o.y_meka === 1 || o.y_meka === '1' || o.y_meka === true) ? 1 : 0
       };
     }) : [];
-    okvirSel = okviriState.length ? 0 : -1;
-    renderOkviriLista(); popuniOkvirEdit(); azurirajOkvirTraka();
+    okvirSel = -1;   // bez auto-selekcije: klik na bilo koji red (i prvi) vidljivo popuni kontrole
+    renderOkviriTablica(); popuniOkvirEdit(); azurirajOkvirTraka();
   }
 
   function okviriPayload() {
@@ -654,14 +720,20 @@
     });
   })();
 
+  /* Nakon CRUD akcije (upis/izmjena/brisanje) vrati prikaz na prvi tab (Stranica). */
+  function vratiNaPrviTab() {
+    var r = byId('templateTab');
+    if (r && typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(r, 0);
+  }
+
   function obradiOdgovor(res, kodUspjeha) {
     if (res === 'OK') {
       if (typeof window.showPorukaModal === 'function') {
         window.showPorukaModal(kodUspjeha, [], function () {
           if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
-          clearForm(); osvjeziTablicu();
+          clearForm(); vratiNaPrviTab(); osvjeziTablicu();
         });
-      } else { clearForm(); osvjeziTablicu(); }
+      } else { clearForm(); vratiNaPrviTab(); osvjeziTablicu(); }
       return;
     }
     porukaIzKoda(res, res.indexOf('002') === 0 ? ['Naziv opisa'] : null);
@@ -692,7 +764,7 @@
           if (typeof window.showPorukaModal === 'function') {
             window.showPorukaModal('003', [], function () {
               if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
-              clearForm(); osvjeziTablicu();
+              clearForm(); vratiNaPrviTab(); osvjeziTablicu();
             });
           }
         } else { porukaIzKoda(res); }
@@ -732,17 +804,44 @@
     var dol = byId('okvirDolje'); if (dol) dol.addEventListener('click', function () { pomakniOkvir(1); });
     ['edit_okvir_x', 'edit_okvir_y', 'edit_okvir_sirina', 'edit_okvir_visina'].forEach(function (id) {
       var e = byId(id); if (!e) return;
-      e.addEventListener('input', function () { procitajOkvirEdit(); renderOkviriLista(); renderPreview(); });
-      e.addEventListener('blur', function () { normalizirajBroj(e, false); procitajOkvirEdit(); renderOkviriLista(); renderPreview(); });
+      e.addEventListener('input', function () { procitajOkvirEdit(); renderPreview(); });
+      e.addEventListener('blur', function () { normalizirajBroj(e, false); procitajOkvirEdit(); azurirajOkvirRedLabel(); renderPreview(); });
     });
     var nz = byId('edit_okvir_naziv');
-    if (nz) nz.addEventListener('input', function () { procitajOkvirEdit(); renderOkviriLista(); });
+    if (nz) {
+      /* na input SAMO osvježi enable stanje (NE spremaj) — X-clear komponente dispatcha input pa bi
+         procitajOkvirEdit upisao prazan naziv u trenutni okvir (korupcija). Naziv se sprema na change/blur. */
+      nz.addEventListener('input', function () { azurirajOkvirEditDisabled(); azurirajOkvirTraka(); });
+      nz.addEventListener('change', function () { procitajOkvirEdit(); azurirajOkvirRedLabel(); });
+      var nzWrap = nz.closest('.kontrola-edit-delete');
+      if (nzWrap) nzWrap.addEventListener('kontrole-edit-delete-clear', function () {
+        /* X: očisti sva edit polja okvira i ukloni selekciju s tablice (1. kolona) */
+        okvirSel = -1;
+        if (okviriTablicaApi && typeof okviriTablicaApi.clearSelection === 'function') {
+          okviriProgSel = true; okviriTablicaApi.clearSelection(); okviriProgSel = false;
+        }
+        popuniOkvirEdit();
+        azurirajOkvirTraka();
+        renderPreview();
+      });
+    }
     var ym = byId('edit_okvir_ymeka');
     if (ym) ym.addEventListener('change', function () { procitajOkvirEdit(); });
   })();
 
   /* ---- Init ---- */
   if (typeof KontroleTabInit === 'function') KontroleTabInit(byId('templateTab'));
+  CommonCRUD.initTablica('okviriTablicaContainer', OKVIRI_TABLICA, {
+    getRowId: function (row) { return row && row[1] != null ? row[1] : null; },
+    onReady: function (api) { okviriTablicaApi = api; },
+    onSelectionChange: function () {
+      if (okviriProgSel) return;
+      /* prethodni okvir je već spremljen živim uređivanjem (input/blur/change) → samo učitaj odabrani */
+      var id = CommonCRUD.getSelectedRowId(okviriTablicaApi);
+      okvirSel = (id == null) ? -1 : parseInt(id, 10);
+      popuniOkvirEdit(); azurirajOkvirTraka(); renderPreview();
+    }
+  });
   ucitajPodatkeTablica(function (rows) {
     CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, PDF_TemplateCRUD.Tablica_Zaglavlje);
     requestAnimationFrame(fiksirajMinVisinuTablice);

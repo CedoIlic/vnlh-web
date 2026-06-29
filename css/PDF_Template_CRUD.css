@@ -144,10 +144,14 @@
 .pdf-template-crud__cetiri > .pdf-template-crud__kolona:nth-child(2) { flex-grow: 2; }
 .pdf-template-crud__cetiri > .pdf-template-crud__kolona:nth-child(3),
 .pdf-template-crud__cetiri > .pdf-template-crud__kolona:nth-child(4) { flex-grow: 3; }
-/* Tab Brojač/Naslovna (3 kolone): 1. ~40%, 2. ~26.7%, 3. ~33.3% (omjer 6/4/5) */
-.pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(1) { flex-grow: 6; }
-.pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(2) { flex-grow: 4; }
-.pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(3) { flex-grow: 5; }
+/* Tab Brojač/Naslovna (3 kolone): 1. ~40%, 2. ~26.7%, 3. ~33.3% (omjer 6/4/5) — scoped na panel */
+#templateTabPanel2 .pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(1) { flex-grow: 6; }
+#templateTabPanel2 .pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(2) { flex-grow: 4; }
+#templateTabPanel2 .pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(3) { flex-grow: 5; }
+/* Tab Vezani tekst blokovi (3 kolone): 1. ~33%, 2. ~40% (+20%), 3. ~26.7% (−20%) — omjer 5/6/4 */
+#templateTabPanel3 .pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(1) { flex-grow: 5; }
+#templateTabPanel3 .pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(2) { flex-grow: 6; }
+#templateTabPanel3 .pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(3) { flex-grow: 4; }
 /* Kontrola/polje poravnano uz dno kolone (poravnanje s donjim rubom susjednog edita) */
 .pdf-template-crud__dno { margin-top: auto; }
 /* Polje s labelom lijevo od kontrole (umjesto iznad) */
@@ -175,46 +179,53 @@
 .pdf-template-crud__zona-polja .pdf-template-crud__unos-mjera { width: 100%; }
 .pdf-template-crud__zona-polja .pdf-template-crud__num { flex: 1 1 auto; width: auto; min-width: 0; }
 
-/* ===== Tab Vezani tekst blokovi (okviri) — provizoran raspored ===== */
-.pdf-template-crud__okviri { display: flex; gap: 0.9rem; align-items: stretch; }
-.pdf-template-crud__okviri-lista-wrap { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.pdf-template-crud__okviri-edit {
-  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem;
-  padding-left: 0.9rem; border-left: 1px solid var(--edit_border, #ced4da);
-}
-.pdf-template-crud__okviri-traka { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-.pdf-template-crud__okviri-lista {
+/* ===== Tab Vezani tekst blokovi (okviri) ===== */
+/* margin-top = +100% razmaka od kontrole iznad (gap kolone 0.6rem + 0.6rem) */
+.pdf-template-crud__okviri-traka { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.6rem; }
+/* Ikona-gumbi trake (uzorci ikona + sjena/behavior kao PDF_Dokument_CRUD ellipsis-btn): Dodaj (SVG), Obriši (trash), ▲/▼ (trokut) */
+.pdf-template-crud__okvir-akcija {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
   border: 1px solid var(--edit_border, #ced4da);
   border-radius: var(--edit_radius, 6px);
-  background: var(--edit_bg, #fff);
-  min-height: 6rem;
-  max-height: 16rem;
-  overflow-y: auto;
-  padding: 0.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-.pdf-template-crud__okvir-red {
-  display: block;
-  width: 100%;
-  text-align: left;
-  border: 1px solid transparent;
-  border-radius: var(--edit_radius, 6px);
-  background: transparent;
-  padding: 0.3rem 0.5rem;
-  cursor: pointer;
-  font: inherit;
+  background: var(--panel_body_bg, #fff);
   color: var(--label_text, #333);
+  cursor: pointer;
+  box-shadow: var(--kontrole_sjena_slaba_2);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
 }
-@media (hover: hover) { .pdf-template-crud__okvir-red:hover:not(:disabled) { background: var(--c-gray-100, #eee); } }
-.pdf-template-crud__okvir-red--aktivan,
-.pdf-template-crud__okvir-red--aktivan:hover {
-  background: var(--tab_kontrola_header_text, #2d6da3);
-  color: var(--tab_kontrola_body_bg, #fff);
-  -webkit-text-fill-color: var(--tab_kontrola_body_bg, #fff);
+.pdf-template-crud__okvir-akcija svg { width: 1.15rem; height: 1.15rem; display: block; }
+.pdf-template-crud__okvir-akcija .kontrola-icon--trash {
+  width: 1.15rem; height: 1.15rem;
+  mask-size: 1.15rem 1.15rem; -webkit-mask-size: 1.15rem 1.15rem;
 }
-.pdf-template-crud__okvir-red:disabled { cursor: not-allowed; color: var(--label_text_disabled, #999); }
+.pdf-template-crud__okvir-trokut { font-size: 0.8rem; line-height: 1; }
+.pdf-template-crud__okvir-akcija:hover:not(:disabled) {
+  background: var(--c-gray-100, #eee);
+  box-shadow: var(--kontrole_sjena_slaba_1);
+}
+.pdf-template-crud__okvir-akcija:active:not(:disabled) {
+  box-shadow: inset 0 2px 4px var(--c-shadow-30);
+}
+.pdf-template-crud__okvir-akcija:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: var(--edit_focus_shadow_disabled);
+}
+/* Tablica blokova: 3 vidljiva retka (mehanizam komponente — token na kontejneru, ne max-height) */
+.pdf-template-crud__okviri-tablica { --tablica_vidljivih_redova: 3; }
+/* Jedina kolona nije sortabilna: bez pointer kursora i bez hover-inverta zaglavlja.
+   (Globalni th:hover invert ima višu specifičnost od globalnog __th--no-sort:hover, pa ga nadjačavamo
+   scoped pravilom iste specifičnosti — kasnije učitano u ovoj datoteci pa pobjeđuje.) */
+.pdf-template-crud__okviri-tablica th { cursor: default; }
+.pdf-template-crud__okviri-tablica:not(.kontrola-tablica--disabled):not(.kontrola-tablica--readonly) th:hover {
+  background: var(--tablica_head_bg);
+}
 
 /* Prikaz okvira u shemi stranice (schematic, kao zone/margine) */
 .pdf-template-crud__okvir-prikaz {
@@ -336,7 +347,9 @@
 .pdf-template-crud__stranica {
   position: relative;
   background: #fff;
-  border: 1px solid #9aa3ad;
+  /* outline (ne border) — ne troši prostor pa apsolutno pozicionirani okviri i margine dijele isti
+     koordinatni sustav (border bi suzio padding-box za 2px → okvir bi prelazio marginu za ~2px/mm) */
+  outline: 1px solid #9aa3ad;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
   box-sizing: border-box;
 }
