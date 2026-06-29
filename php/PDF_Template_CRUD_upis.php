@@ -15,6 +15,7 @@ if ($polja === null) {
 }
 
 $naziv = $polja[0][2]; // prvi je 'naziv'
+$okviri = pdf_template_citaj_okvire();
 
 try {
     // Duplikat naziva
@@ -43,6 +44,7 @@ try {
         return $f[2];
     }, $polja);
 
+    $mysqli->begin_transaction();
     $stmt = $mysqli->prepare("INSERT INTO pdf_template ($cols) VALUES ($ph)");
     if (!$stmt) {
         echo '200,' . $mysqli->errno;
@@ -50,9 +52,15 @@ try {
     }
     call_user_func_array([$stmt, 'bind_param'], pdf_template_bind_refs($types, $vals));
     $stmt->execute();
-    echo 'OK';
+    $template_id = (int) $mysqli->insert_id;
     $stmt->close();
+
+    pdf_template_upisi_okvire($mysqli, $template_id, $okviri);
+
+    $mysqli->commit();
+    echo 'OK';
 } catch (mysqli_sql_exception $e) {
+    $mysqli->rollback();
     echo '200,' . $e->getCode();
 }
 $mysqli->close();

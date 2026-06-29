@@ -1,17 +1,22 @@
 /* PDF_Template_CRUD — opis stranice (pdf_template). Desktop only. Bez boja → bez kontrola-boja. */
 
-/* ===== Raspored: lijevo 1/3 (tablica + edit), desno 2/3 (pregled) ===== */
+/* ===== Raspored: gornji red (tablica 1/2 + pregled 1/2), ispod tab panel pune širine ===== */
 .pdf-template-crud__layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+/* Gornji red: tablica (lijevo) + pregled (desno), 50/50 */
+.pdf-template-crud__gornji-red {
   display: flex;
   align-items: stretch;
   gap: 0.75rem;
 }
-.pdf-template-crud__lijevo {
+.pdf-template-crud__tablica-wrap {
   flex: 1 1 0;            /* 1/2 */
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
 }
 .pdf-template-crud__desno {
   flex: 1 1 0;            /* 1/2 */
@@ -22,6 +27,7 @@
 .pdf-template-crud__panel-tablica {
   flex: 0 0 auto;
 }
+/* Tab panel: puna širina ispod gornjeg reda */
 .pdf-template-crud #edit_panel {
   flex: 1 1 auto;
   min-height: 0;
@@ -109,24 +115,128 @@
 /* U redu: rastegnuta polja dijele širinu reda (u stupcu se NE rastežu vertikalno) */
 .pdf-template-crud__red > .pdf-template-crud__polje--rastegni { flex: 1 1 0; }
 
-/* Gornji dio taba u dva stupca s pregradnom linijom */
-.pdf-template-crud__dva-stupca { display: flex; align-items: stretch; margin-bottom: 0.85rem; }
-.pdf-template-crud__stupac {
+/* Buduće (Uvezna margina): uvijek disabled; stupac koji ispuni kolonu — Dvostrano pri vrhu (u ravnini s
+   „Brojač stranica"), „Proširi za" gurnut uz dno (u ravnini sa selektom Zona) preko __dno */
+#tmpl_buduce_red { display: flex; flex-direction: column; flex: 1 1 auto; gap: 0.6rem; }
+
+/* ===== Tabovi s kolonama (Stranica: 4, Zaglavlje/Podnožje: 3) ===== */
+.pdf-template-crud__cetiri,
+.pdf-template-crud__tri { display: flex; align-items: stretch; }
+.pdf-template-crud__kolona {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
   flex: 1 1 0;
   min-width: 0;
+  padding: 0 0.9rem;
 }
-.pdf-template-crud__stupac:first-child {
-  padding-right: 0.9rem;
-  border-right: 1px solid var(--edit_border, #ced4da);
+.pdf-template-crud__kolona:first-child { padding-left: 0; }
+.pdf-template-crud__kolona:last-child { padding-right: 0; }
+.pdf-template-crud__kolona + .pdf-template-crud__kolona {
+  border-left: 1px solid var(--edit_border, #ced4da);
 }
-.pdf-template-crud__stupac:last-child { padding-left: 0.9rem; }
-/* Stupac širine sadržaja (kontrole popune red); drugi stupac preuzme ostatak */
-.pdf-template-crud__stupac--usko { flex: 0 1 auto; }
-/* Buduće (dvostrano + vezna margina): Vezna podignuta uz checkbox */
-#tmpl_buduce_red .pdf-template-crud__red { align-items: center; }
+/* Razmak među redovima kolone dolazi iz gap-a (ne dupliciraj margin reda) */
+.pdf-template-crud__kolona > .pdf-template-crud__red { margin-bottom: 0; }
+/* Naslov kolone (npr. „Uvezna margina") */
+.pdf-template-crud__kolona-naslov { font-weight: 600; }
+/* Omjeri širina kolona: 1.+2. po 20%, 3.+4. po 30% */
+.pdf-template-crud__cetiri > .pdf-template-crud__kolona:nth-child(1),
+.pdf-template-crud__cetiri > .pdf-template-crud__kolona:nth-child(2) { flex-grow: 2; }
+.pdf-template-crud__cetiri > .pdf-template-crud__kolona:nth-child(3),
+.pdf-template-crud__cetiri > .pdf-template-crud__kolona:nth-child(4) { flex-grow: 3; }
+/* Tab Brojač/Naslovna (3 kolone): 1. ~40%, 2. ~26.7%, 3. ~33.3% (omjer 6/4/5) */
+.pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(1) { flex-grow: 6; }
+.pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(2) { flex-grow: 4; }
+.pdf-template-crud__tri > .pdf-template-crud__kolona:nth-child(3) { flex-grow: 5; }
+/* Kontrola/polje poravnano uz dno kolone (poravnanje s donjim rubom susjednog edita) */
+.pdf-template-crud__dno { margin-top: auto; }
+/* Polje s labelom lijevo od kontrole (umjesto iznad) */
+.pdf-template-crud__polje--inline { flex-direction: row; align-items: center; gap: 0.4rem; }
+.pdf-template-crud__polje--inline .kontrola-labela { white-space: nowrap; }
+/* Napomena ispuni visinu kolone */
+.pdf-template-crud__kolona--napomena .kontrola-napomena {
+  flex: 1 1 auto;
+  min-height: 6rem;
+  resize: vertical;
+}
+/* Margine 2×2: dva polja po retku (gore/dolje · lijevo/desno) */
+.pdf-template-crud__red--margine2 {
+  flex-wrap: nowrap;
+  gap: 0.4rem 0.5rem;
+  margin-bottom: 0;
+}
+.pdf-template-crud__red--margine2 .pdf-template-crud__polje { flex: 1 1 0; min-width: 0; }
+.pdf-template-crud__red--margine2 .pdf-template-crud__unos-mjera { width: 100%; }
+.pdf-template-crud__red--margine2 .pdf-template-crud__num { flex: 1 1 auto; width: auto; min-width: 0; }
+
+/* Tab Zaglavlje/Podnožje: polja zone ispod čekboksa (Visina/Razmak/Od stranice) */
+.pdf-template-crud__zona-polja { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.pdf-template-crud__zona-polja .pdf-template-crud__polje { flex: 1 1 5rem; min-width: 0; }
+.pdf-template-crud__zona-polja .pdf-template-crud__unos-mjera { width: 100%; }
+.pdf-template-crud__zona-polja .pdf-template-crud__num { flex: 1 1 auto; width: auto; min-width: 0; }
+
+/* ===== Tab Vezani tekst blokovi (okviri) — provizoran raspored ===== */
+.pdf-template-crud__okviri { display: flex; gap: 0.9rem; align-items: stretch; }
+.pdf-template-crud__okviri-lista-wrap { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.pdf-template-crud__okviri-edit {
+  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.6rem;
+  padding-left: 0.9rem; border-left: 1px solid var(--edit_border, #ced4da);
+}
+.pdf-template-crud__okviri-traka { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.pdf-template-crud__okviri-lista {
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--edit_bg, #fff);
+  min-height: 6rem;
+  max-height: 16rem;
+  overflow-y: auto;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.pdf-template-crud__okvir-red {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: var(--edit_radius, 6px);
+  background: transparent;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--label_text, #333);
+}
+@media (hover: hover) { .pdf-template-crud__okvir-red:hover:not(:disabled) { background: var(--c-gray-100, #eee); } }
+.pdf-template-crud__okvir-red--aktivan,
+.pdf-template-crud__okvir-red--aktivan:hover {
+  background: var(--tab_kontrola_header_text, #2d6da3);
+  color: var(--tab_kontrola_body_bg, #fff);
+  -webkit-text-fill-color: var(--tab_kontrola_body_bg, #fff);
+}
+.pdf-template-crud__okvir-red:disabled { cursor: not-allowed; color: var(--label_text_disabled, #999); }
+
+/* Prikaz okvira u shemi stranice (schematic, kao zone/margine) */
+.pdf-template-crud__okvir-prikaz {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid rgba(31, 122, 90, 0.85);
+  background: rgba(31, 122, 90, 0.10);
+  pointer-events: none;
+}
+.pdf-template-crud__okvir-prikaz--aktivan {
+  border-color: rgba(31, 122, 90, 1);
+  background: rgba(31, 122, 90, 0.20);
+}
+.pdf-template-crud__okvir-broj {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  font-size: 9px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #145c43;
+}
 
 /* Numerički input + jedinica */
 .pdf-template-crud__num { width: 5rem; text-align: right; }
@@ -134,50 +244,22 @@
 .pdf-template-crud__mjera { flex: 0 0 auto; white-space: nowrap; font-size: 0.9em; opacity: 0.75; }
 .pdf-template-crud__format-edit { width: 100%; box-sizing: border-box; }
 
-/* Margine u jednom redu: vodeća labela „Margine" + 4 edita (gore/dolje/lijevo/desno) koja popune red */
-.pdf-template-crud__red--margine {
-  flex-wrap: nowrap;
-  align-items: flex-end;
-  gap: 0.4rem 0.5rem;
-}
-.pdf-template-crud__red--margine .pdf-template-crud__polje { flex: 1 1 0; min-width: 0; }
-.pdf-template-crud__red--margine .pdf-template-crud__unos-mjera { width: 100%; }
-.pdf-template-crud__red--margine .pdf-template-crud__num { flex: 1 1 auto; width: auto; min-width: 0; }
-.pdf-template-crud__margine-naslov {
-  flex: 0 0 auto;
-  align-self: flex-end;
-  padding-bottom: 0.45rem;
-  white-space: nowrap;
-  color: var(--label_text, inherit);
-}
-.pdf-template-crud__margine-naslov--disabled { color: var(--label_text_disabled, #999); }
-/* Red zone (zaglavlje/podnožje): checkbox + visina + razmak + primjena/od stranice u jednom redu */
-.pdf-template-crud__red--zona { flex-wrap: nowrap; gap: 0.5rem; }
-.pdf-template-crud__red--zona .pdf-template-crud__num { width: 3.5rem; }
-/* Checkbox „stog": kućica gore, tekst centriran ispod */
-.pdf-template-crud__cb--stog {
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  text-align: center;
-}
-.pdf-template-crud__cb--stog .kontrola-labela { white-space: normal; }
-
 .pdf-template-crud__cb { display: inline-flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
+/* Brojač checkbox podignut s dna reda (poravnanje s Dvostrano u 3. koloni) */
+.pdf-template-crud__cb--sredina { align-self: center; }
 .pdf-template-crud__cb .kontrola-labela { white-space: nowrap; }
+/* Nevidljivi placeholder reda čekboksa — gura kontrolu ispod u „drugi red" (poravnanje) */
+.pdf-template-crud__cb--placeholder { visibility: hidden; }
 
-.pdf-template-crud__sekcija-naslov { font-weight: 600; margin: 0.3rem 0 0; }
-.pdf-template-crud__sekcija-linija { border: 0; border-top: 1px solid var(--edit_border, #ced4da); margin: 0.3rem 0 0.6rem; }
 .pdf-template-crud__hint { margin: 0.1rem 0 0.5rem; color: var(--label_text, #333); opacity: 0.85; }
-
-.pdf-template-crud__napomena-red { display: flex; flex-direction: column; gap: 0.2rem; }
 
 /* Footer */
 .pdf-template-crud__edit-footer { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
 .pdf-template-crud__footer-left, .pdf-template-crud__footer-right { display: flex; gap: 0.5rem; }
 
 /* ===== Pregled (HTML/CSS shema stranice) ===== */
-.pdf-template-crud__preview-panel { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 24rem; }
+/* min-height 0 (ne 24rem) da pregled prati visinu reda koju diktira tablica i njen resize — i pri smanjenju */
+.pdf-template-crud__preview-panel { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
 .pdf-template-crud__preview-header {
   font-weight: 600;
   display: flex;

@@ -13,9 +13,31 @@ if (!$result) {
     exit;
 }
 $rows = [];
+$indexPoId = [];
 while ($row = $result->fetch_assoc()) {
-    $rows[] = $row;
+    $row['okviri'] = [];
+    $rows[count($rows)] = $row;
+    if (isset($row['id'])) {
+        $indexPoId[(int) $row['id']] = count($rows) - 1;
+    }
 }
+
+// Okviri (pdf_template_okvir) — pripoji svakom templateu po redoslijedu lanca.
+// Tolerantno: ako tablica još ne postoji (prije ručnog SQL-a u Heidiju), preskoči bez greške.
+try {
+    $ro = $mysqli->query('SELECT * FROM pdf_template_okvir ORDER BY template_id ASC, redoslijed ASC, id ASC');
+    if ($ro) {
+        while ($o = $ro->fetch_assoc()) {
+            $tid = isset($o['template_id']) ? (int) $o['template_id'] : 0;
+            if (isset($indexPoId[$tid])) {
+                $rows[$indexPoId[$tid]]['okviri'][] = $o;
+            }
+        }
+    }
+} catch (mysqli_sql_exception $e) {
+    // 1146 = tablica ne postoji → okviri ostaju prazni
+}
+
 header('Content-Type: application/json; charset=utf-8');
 echo json_encode($rows, JSON_UNESCAPED_UNICODE);
 $mysqli->close();

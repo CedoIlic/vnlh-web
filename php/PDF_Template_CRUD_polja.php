@@ -189,3 +189,92 @@ function pdf_template_bind_refs(&$types, array &$vals)
     }
     return $refs;
 }
+
+/**
+ * Pročita i validira okvire (pdf_template_okvir) iz POST['okviri'] (JSON niz).
+ * Vraća listu redova [redoslijed, naziv|null, x_mm, y_mm, sirina_mm, visina_mm, y_meka].
+ * Degenerirani okviri (sirina<=0 ili visina<=0) se preskaču. Nikad ne vraća null
+ * (prazan/nevaljan payload = nema okvira). Redoslijed se renormalizira 1..N po dolasku.
+ * @return array
+ */
+function pdf_template_citaj_okvire()
+{
+    $raw = isset($_POST['okviri']) ? (string) $_POST['okviri'] : '';
+    if (trim($raw) === '') {
+        return [];
+    }
+    $arr = json_decode($raw, true);
+    if (!is_array($arr)) {
+        return [];
+    }
+    $out = [];
+    $red = 0;
+    foreach ($arr as $it) {
+        if (!is_array($it)) {
+            continue;
+        }
+        $dec = function ($key, $min, $max, $def) use ($it) {
+            if (!isset($it[$key])) {
+                return $def;
+            }
+            $v = str_replace(',', '.', trim((string) $it[$key]));
+            if (!is_numeric($v)) {
+                return $def;
+            }
+            $f = (float) $v;
+            if ($f < $min) {
+                $f = $min;
+            }
+            if ($f > $max) {
+                $f = $max;
+            }
+            return $f;
+        };
+        $sirina = $dec('sirina_mm', 0, 9999.99, 0);
+        $visina = $dec('visina_mm', 0, 9999.99, 0);
+        if ($sirina <= 0 || $visina <= 0) {
+            continue;   // degeneriran okvir — preskoči
+        }
+        $x = $dec('x_mm', 0, 9999.99, 0);
+        $y = $dec('y_mm', 0, 9999.99, 0);
+        $naziv = isset($it['naziv']) ? trim((string) $it['naziv']) : '';
+        if ($naziv === '') {
+            $naziv = null;
+        } elseif (mb_strlen($naziv, 'UTF-8') > 50) {
+            $naziv = mb_substr($naziv, 0, 50, 'UTF-8');
+        }
+        $ym = (isset($it['y_meka']) && in_array($it['y_meka'], [1, '1', true, 'true'], true)) ? 1 : 0;
+        $red++;
+        $out[] = [$red, $naziv, $x, $y, $sirina, $visina, $ym];
+    }
+    return $out;
+}
+
+/**
+ * Ubaci okvire za dati template_id (unutar tekuće transakcije; baca mysqli_sql_exception na grešku).
+ * @param mysqli $mysqli
+ * @param int    $template_id
+ * @param array  $okviri  rezultat pdf_template_citaj_okvire()
+ */
+function pdf_template_upisi_okvire($mysqli, $template_id, array $okviri)
+{
+    if (empty($okviri)) {
+        return;
+    }
+    $stmt = $mysqli->prepare(
+        'INSERT INTO pdf_template_okvir (template_id, redoslijed, naziv, x_mm, y_mm, sirina_mm, visina_mm, y_meka)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    );
+    foreach ($okviri as $o) {
+        $red = (int) $o[0];
+        $naziv = $o[1];
+        $x = (float) $o[2];
+        $y = (float) $o[3];
+        $sir = (float) $o[4];
+        $vis = (float) $o[5];
+        $ym = (int) $o[6];
+        $stmt->bind_param('iisddddi', $template_id, $red, $naziv, $x, $y, $sir, $vis, $ym);
+        $stmt->execute();
+    }
+    $stmt->close();
+}

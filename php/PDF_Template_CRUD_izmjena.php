@@ -21,6 +21,7 @@ if ($polja === null) {
 }
 
 $naziv = $polja[0][2];
+$okviri = pdf_template_citaj_okvire();
 
 try {
     // Duplikat naziva osim tekućeg sloga
@@ -49,6 +50,7 @@ try {
     }, $polja);
     $vals[] = $id;
 
+    $mysqli->begin_transaction();
     $stmt = $mysqli->prepare("UPDATE pdf_template SET $set WHERE id = ?");
     if (!$stmt) {
         echo '200,' . $mysqli->errno;
@@ -56,9 +58,19 @@ try {
     }
     call_user_func_array([$stmt, 'bind_param'], pdf_template_bind_refs($types, $vals));
     $stmt->execute();
-    echo 'OK';
     $stmt->close();
+
+    // Replace okvira: obriši stare pa upiši nove
+    $del = $mysqli->prepare('DELETE FROM pdf_template_okvir WHERE template_id = ?');
+    $del->bind_param('i', $id);
+    $del->execute();
+    $del->close();
+    pdf_template_upisi_okvire($mysqli, $id, $okviri);
+
+    $mysqli->commit();
+    echo 'OK';
 } catch (mysqli_sql_exception $e) {
+    $mysqli->rollback();
     echo '200,' . $e->getCode();
 }
 $mysqli->close();

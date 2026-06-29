@@ -252,6 +252,25 @@
       }
     }
 
+    /* okviri (vezani tekst blokovi) — lanac, samo na 1. stranici */
+    if (_stranica === 1) {
+      okviriState.forEach(function (o, i) {
+        var ox = parseFloat(String(o.x_mm).replace(',', '.')) || 0,
+            oy = parseFloat(String(o.y_mm).replace(',', '.')) || 0,
+            ow = parseFloat(String(o.sirina_mm).replace(',', '.')) || 0,
+            oh = parseFloat(String(o.visina_mm).replace(',', '.')) || 0;
+        if (ow <= 0 || oh <= 0) return;
+        var fr = el('div', 'pdf-template-crud__okvir-prikaz' + (i === okvirSel ? ' pdf-template-crud__okvir-prikaz--aktivan' : ''));
+        fr.style.left = (ox * scale) + 'px';
+        fr.style.top = (oy * scale) + 'px';
+        fr.style.width = (ow * scale) + 'px';
+        fr.style.height = (oh * scale) + 'px';
+        var num = el('span', 'pdf-template-crud__okvir-broj'); num.textContent = String(i + 1);
+        fr.appendChild(num);
+        stranica.appendChild(fr);
+      });
+    }
+
     area.innerHTML = '';
     area.appendChild(stranica);
   }
@@ -397,10 +416,125 @@
     if (imaNaziv) primijeniDinamiku();
     refreshSveSelekte();
     syncLabele();
-    /* „Margine" labela prati disabled stanje edita margina */
-    var mgEl = byId('edit_margina_gore_mm');
-    var margNaslov = document.querySelector('.pdf-template-crud__margine-naslov');
-    if (margNaslov) margNaslov.classList.toggle('pdf-template-crud__margine-naslov--disabled', !!(mgEl && mgEl.disabled));
+    azurirajOkvirTraka();
+    azurirajOkvirEditDisabled();
+  }
+
+  /* ===== Okviri (vezani tekst blokovi) — lanac, samo 1. stranica ===== */
+  var okviriState = [];   /* [{naziv,x_mm,y_mm,sirina_mm,visina_mm,y_meka}] */
+  var okvirSel = -1;      /* indeks odabranog okvira */
+
+  function valId(id) { var e = byId(id); return e ? e.value : ''; }
+  function numId(id) { var n = parseFloat(String(valId(id)).replace(',', '.')); return isNaN(n) ? 0 : n; }
+
+  function renderOkviriLista() {
+    var box = byId('okviriLista');
+    if (!box) return;
+    box.innerHTML = '';
+    okviriState.forEach(function (o, i) {
+      var row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'pdf-template-crud__okvir-red' + (i === okvirSel ? ' pdf-template-crud__okvir-red--aktivan' : '');
+      row.setAttribute('role', 'option');
+      var naziv = (o.naziv != null && trim(o.naziv) !== '') ? trim(o.naziv) : ('Okvir ' + (i + 1));
+      row.textContent = (i + 1) + '. ' + naziv + ' (' + (brojNiz(o.sirina_mm) || '0') + '×' + (brojNiz(o.visina_mm) || '0') + ' mm)';
+      row.disabled = trim(vEdit('naziv')) === '';
+      row.addEventListener('click', function () { okvirSel = i; popuniOkvirEdit(); renderOkviriLista(); azurirajOkvirTraka(); renderPreview(); });
+      box.appendChild(row);
+    });
+  }
+
+  function popuniOkvirEdit() {
+    var o = (okvirSel >= 0 && okvirSel < okviriState.length) ? okviriState[okvirSel] : null;
+    var nz = byId('edit_okvir_naziv'), x = byId('edit_okvir_x'), y = byId('edit_okvir_y'),
+        s = byId('edit_okvir_sirina'), v = byId('edit_okvir_visina'), ym = byId('edit_okvir_ymeka');
+    if (nz) nz.value = o ? (o.naziv != null ? o.naziv : '') : '';
+    if (x) x.value = o ? brojNiz(o.x_mm) : '';
+    if (y) y.value = o ? brojNiz(o.y_mm) : '';
+    if (s) s.value = o ? brojNiz(o.sirina_mm) : '';
+    if (v) v.value = o ? brojNiz(o.visina_mm) : '';
+    if (ym) ym.checked = o ? !!(o.y_meka === 1 || o.y_meka === '1' || o.y_meka === true) : true;
+    azurirajOkvirEditDisabled();
+  }
+
+  function azurirajOkvirEditDisabled() {
+    var imaNaziv = trim(vEdit('naziv')) !== '';
+    var ima = okvirSel >= 0 && okvirSel < okviriState.length;
+    ['edit_okvir_naziv', 'edit_okvir_x', 'edit_okvir_y', 'edit_okvir_sirina', 'edit_okvir_visina', 'edit_okvir_ymeka'].forEach(function (id) {
+      var e = byId(id); if (e) e.disabled = !(ima && imaNaziv);
+    });
+  }
+
+  function azurirajOkvirTraka() {
+    var imaNaziv = trim(vEdit('naziv')) !== '';
+    var ima = okvirSel >= 0 && okvirSel < okviriState.length;
+    var d = byId('okvirDodaj'), o = byId('okvirObrisi'), g = byId('okvirGore'), dj = byId('okvirDolje');
+    if (d) d.disabled = !imaNaziv;
+    if (o) o.disabled = !(ima && imaNaziv);
+    if (g) g.disabled = !(ima && imaNaziv && okvirSel > 0);
+    if (dj) dj.disabled = !(ima && imaNaziv && okvirSel < okviriState.length - 1);
+  }
+
+  function procitajOkvirEdit() {
+    if (okvirSel < 0 || okvirSel >= okviriState.length) return;
+    var o = okviriState[okvirSel];
+    o.naziv = trim(valId('edit_okvir_naziv'));
+    o.x_mm = numId('edit_okvir_x');
+    o.y_mm = numId('edit_okvir_y');
+    o.sirina_mm = numId('edit_okvir_sirina');
+    o.visina_mm = numId('edit_okvir_visina');
+    var ym = byId('edit_okvir_ymeka'); o.y_meka = (ym && ym.checked) ? 1 : 0;
+  }
+
+  function dodajOkvir() {
+    if (trim(vEdit('naziv')) === '') return;
+    var d = dimsStranice();
+    var ml = vBroj('margina_lijevo_mm'), mg = vBroj('margina_gore_mm'), mr = vBroj('margina_desno_mm');
+    var tijeloW = Math.max(10, (d.w || 100) - ml - mr);
+    okviriState.push({ naziv: '', x_mm: ml || 0, y_mm: mg || 0, sirina_mm: Math.round(tijeloW / 2), visina_mm: 40, y_meka: 1 });
+    okvirSel = okviriState.length - 1;
+    renderOkviriLista(); popuniOkvirEdit(); azurirajOkvirTraka(); renderPreview();
+  }
+
+  function obrisiOkvir() {
+    if (okvirSel < 0 || okvirSel >= okviriState.length) return;
+    okviriState.splice(okvirSel, 1);
+    if (okvirSel >= okviriState.length) okvirSel = okviriState.length - 1;
+    renderOkviriLista(); popuniOkvirEdit(); azurirajOkvirTraka(); renderPreview();
+  }
+
+  function pomakniOkvir(delta) {
+    var j = okvirSel + delta;
+    if (okvirSel < 0 || j < 0 || j >= okviriState.length) return;
+    var t = okviriState[okvirSel]; okviriState[okvirSel] = okviriState[j]; okviriState[j] = t;
+    okvirSel = j;
+    renderOkviriLista(); popuniOkvirEdit(); azurirajOkvirTraka(); renderPreview();
+  }
+
+  function ucitajOkvire(arr) {
+    okviriState = Array.isArray(arr) ? arr.map(function (o) {
+      return {
+        naziv: o.naziv != null ? String(o.naziv) : '',
+        x_mm: o.x_mm, y_mm: o.y_mm, sirina_mm: o.sirina_mm, visina_mm: o.visina_mm,
+        y_meka: (o.y_meka === 1 || o.y_meka === '1' || o.y_meka === true) ? 1 : 0
+      };
+    }) : [];
+    okvirSel = okviriState.length ? 0 : -1;
+    renderOkviriLista(); popuniOkvirEdit(); azurirajOkvirTraka();
+  }
+
+  function okviriPayload() {
+    return JSON.stringify(okviriState.map(function (o, i) {
+      return {
+        redoslijed: i + 1,
+        naziv: trim(o.naziv || ''),
+        x_mm: brojNiz(o.x_mm) || '0',
+        y_mm: brojNiz(o.y_mm) || '0',
+        sirina_mm: brojNiz(o.sirina_mm) || '0',
+        visina_mm: brojNiz(o.visina_mm) || '0',
+        y_meka: o.y_meka ? 1 : 0
+      };
+    }));
   }
 
   /* ---- Punjenje / čišćenje ---- */
@@ -418,6 +552,7 @@
       } else { e.value = (v != null ? String(v) : (f.def || '')); }
     });
     if (!skipNaziv) { var ns = byId('edit_naslijedi'); if (ns) ns.value = ''; }
+    ucitajOkvire(o.okviri || []);
     refreshSveSelekte();
     azurirajDisableTaba();
     renderPreview();
@@ -433,6 +568,7 @@
     var nazivEl = byId('edit_naziv');
     if (nazivEl) nazivEl.dispatchEvent(new Event('input', { bubbles: true }));
     var ns = byId('edit_naslijedi'); if (ns) ns.value = '';
+    ucitajOkvire([]);
     refreshSveSelekte();
     azurirajDisableTaba();
     renderPreview();
@@ -446,6 +582,7 @@
       if (f.type === 'check') { p[f.col] = e.checked ? '1' : '0'; }
       else { p[f.col] = trim(e.value); }
     });
+    p.okviri = okviriPayload();
     return p;
   }
 
@@ -585,6 +722,23 @@
       popuniIzObjekta(o, true);
       updateCrudUpisiState();
     });
+  })();
+
+  /* ---- Okviri: traka + edit listeneri ---- */
+  (function () {
+    var dod = byId('okvirDodaj'); if (dod) dod.addEventListener('click', dodajOkvir);
+    var obr = byId('okvirObrisi'); if (obr) obr.addEventListener('click', obrisiOkvir);
+    var gor = byId('okvirGore'); if (gor) gor.addEventListener('click', function () { pomakniOkvir(-1); });
+    var dol = byId('okvirDolje'); if (dol) dol.addEventListener('click', function () { pomakniOkvir(1); });
+    ['edit_okvir_x', 'edit_okvir_y', 'edit_okvir_sirina', 'edit_okvir_visina'].forEach(function (id) {
+      var e = byId(id); if (!e) return;
+      e.addEventListener('input', function () { procitajOkvirEdit(); renderOkviriLista(); renderPreview(); });
+      e.addEventListener('blur', function () { normalizirajBroj(e, false); procitajOkvirEdit(); renderOkviriLista(); renderPreview(); });
+    });
+    var nz = byId('edit_okvir_naziv');
+    if (nz) nz.addEventListener('input', function () { procitajOkvirEdit(); renderOkviriLista(); });
+    var ym = byId('edit_okvir_ymeka');
+    if (ym) ym.addEventListener('change', function () { procitajOkvirEdit(); });
   })();
 
   /* ---- Init ---- */
