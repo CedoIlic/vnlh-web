@@ -337,7 +337,7 @@
                 <div class="pdf-dokument-crud__polje" id="polje_format_datuma">
                     <label class="kontrola-labela mb-0" for="st_format_datuma">Format datuma</label>
                     <div class="pdf-dokument-crud__edit-with-ellipsis">
-                        <input id="st_format_datuma" type="text" class="kontrola-edit" placeholder="npr. DD. MM. YYYY. ili GIS" maxlength="64" autocomplete="off">
+                        <input id="st_format_datuma" type="text" class="kontrola-edit" placeholder="npr. DD. MM. YYYY. ili GIS / DOB" maxlength="64" autocomplete="off">
                         <button type="button" id="btnFormatPomoc" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--pomoc" title="Upute / formati" aria-label="Upute za format datuma">?</button>
                     </div>
                 </div>
@@ -472,6 +472,8 @@ dddd, D. mmmm YYYY.  → ponedjeljak, 1. lipanj 2026.</pre>
                 <hr>
                 <p><strong>GIS</strong> — upiši <code>GIS</code> (umjesto uzorka) da se datum pretvori u <em>godinu istinske svjetlosti</em>:</p>
                 <pre>GIS → 1. dan 4. mjeseca 6026. godine</pre>
+                <p><strong>DOB</strong> — upiši <code>DOB</code> da se datum rođenja pretvori u <em>starost</em> (na današnji dan):</p>
+                <pre>DOB → 51 godina   |   32 godine</pre>
             </div>
         </div>
         <div class="kontrola-modal__footer">

@@ -161,6 +161,19 @@ function pdf_gis_datum($Y, $M, $D)
     return $D . '. dan ' . $mjRim . ' mjeseca ' . ($Y + 4000) . '. godine';
 }
 
+/** Dob/starost iz datuma rođenja (relativno na današnji datum servera) → "N godina"/"N godine".
+ *  Hrv. mutacija: završetak 2,3,4 → "godine"; 1,5,6,7,8,9,0 → "godina"; iznimka 11–14 → "godina". */
+function pdf_dob_godine($Y, $M, $D)
+{
+    $dob = (int) date('Y') - (int) $Y;
+    $tm = (int) date('n'); $td = (int) date('j');
+    if ($tm < (int) $M || ($tm === (int) $M && $td < (int) $D)) $dob--;
+    if ($dob < 0) $dob = 0;
+    $dd = $dob % 100; $d1 = $dob % 10;
+    $rijec = ($dd >= 11 && $dd <= 14) ? 'godina' : (($d1 >= 2 && $d1 <= 4) ? 'godine' : 'godina');
+    return $dob . ' ' . $rijec;
+}
+
 /** Formatira datumsku vrijednost po uzorku (tokeni) ili keyword "GIS".
     Prazan format ili vrijednost koja nije datum → vrijednost se vraća nepromijenjena.
     Tokeni: dddd dan u tjednu, mmmm mjesec imenom, DD/D dan, MM/M mjesec broj, YYYY/YY godina, HH/mm/ss vrijeme. */
@@ -172,6 +185,7 @@ function pdf_formatiraj_datum($vrijednost, $format)
     $d = pdf_parse_datum($vrijednost);
     if ($d === null) return $vrijednost;
     if ($format === 'GIS') return pdf_gis_datum($d['Y'], $d['M'], $d['D']);
+    if ($format === 'DOB') return pdf_dob_godine($d['Y'], $d['M'], $d['D']);
     $mjeseci = ['', 'siječanj', 'veljača', 'ožujak', 'travanj', 'svibanj', 'lipanj', 'srpanj', 'kolovoz', 'rujan', 'listopad', 'studeni', 'prosinac'];
     $dani = ['nedjelja', 'ponedjeljak', 'utorak', 'srijeda', 'četvrtak', 'petak', 'subota'];
     $dow = pdf_dan_u_tjednu($d['Y'], $d['M'], $d['D']);

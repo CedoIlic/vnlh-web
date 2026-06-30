@@ -117,6 +117,29 @@
     return D + '. dan ' + mjRim + ' mjeseca ' + Ynova + '. godine';
   };
 
+  /** Dob/starost iz datuma rođenja → "N godina"/"N godine" (relativno na danas). Prima Date/'YYYY-MM-DD'/'DD.MM.YYYY'.
+   *  Hrv. mutacija: završetak 2,3,4 → "godine"; 1,5,6,7,8,9,0 → "godina"; iznimka 11–14 → "godina". */
+  window.Izračun_Dobi = function (datum) {
+    var D, M, Y, m;
+    if (datum instanceof Date) {
+      if (isNaN(datum.getTime())) return '';
+      D = datum.getDate(); M = datum.getMonth() + 1; Y = datum.getFullYear();
+    } else if (typeof datum === 'string') {
+      var s = trim(datum);
+      if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ].*)?$/))) { Y = +m[1]; M = +m[2]; D = +m[3]; }
+      else if ((m = s.match(/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\.?$/))) { D = +m[1]; M = +m[2]; Y = +m[3]; }
+      else { return ''; }
+    } else { return ''; }
+    if (!(Y >= 1) || M < 1 || M > 12 || D < 1 || D > 31) return '';
+    var sad = new Date();
+    var dob = sad.getFullYear() - Y;
+    if ((sad.getMonth() + 1) < M || ((sad.getMonth() + 1) === M && sad.getDate() < D)) dob--;
+    if (dob < 0) dob = 0;
+    var dd = dob % 100, d1 = dob % 10;
+    var rijec = (dd >= 11 && dd <= 14) ? 'godina' : ((d1 >= 2 && d1 <= 4) ? 'godine' : 'godina');
+    return dob + ' ' + rijec;
+  };
+
   /* --- Blok: Meni – hover kašnjenje: 116 = glavna stavka (prvi dropdown), 115 = podmeni/ugniježđeni (114 = Traži, ne miješati) --- */
   var VNLH_VAR_ID_MENI_MAIN_HOVER_MS = 116;
   var VNLH_VAR_ID_MENI_DROPDOWN_HOVER_MS = 115;
