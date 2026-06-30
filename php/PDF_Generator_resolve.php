@@ -381,6 +381,17 @@ if ($template_id > 0) {
 }
 if (!$template) pdf_err('Template nije pronađen.');
 
+// --- Vezani tekst blokovi (okviri) templatea — geometrija za render prelijevanja ---
+$okviri = [];
+if ($template_id > 0) {
+    $stmt = $mysqli->prepare('SELECT id, naziv, x_mm, y_mm, sirina_mm, visina_mm, y_meka FROM pdf_template_okvir WHERE template_id = ? ORDER BY redoslijed, id');
+    $stmt->bind_param('i', $template_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res) while ($row = $res->fetch_assoc()) $okviri[] = $row;
+    $stmt->close();
+}
+
 // --- Whitelist (izvor_id -> tablica/kolona/tip) -------------------------
 $izvori = [];
 $r = $mysqli->query('SELECT id, tablica, kolona, tip_podatka FROM pdf_dozvoljeni_izvori');
@@ -842,6 +853,7 @@ while ($i < $n) {
             if ($nx >= $n) break;                                               // nema sljedeće
             if (($stavke[$nx]['vrsta'] ?? '') !== 'tekst') break;               // ne-tekst prekida lanac
             if (($stavke[$nx]['zona'] ?? 'tijelo') !== $zona) break;            // promjena zone prekida
+            if ((int) ($stavke[$nx]['okvir_id'] ?? 0) !== (int) ($s['okvir_id'] ?? 0)) break;   // promjena vezanog bloka prekida
             $k = $nx;
         }
         // Stil/font cijele linije = PRVE stavke u lancu.
@@ -901,6 +913,7 @@ while ($i < $n) {
         $rec = [
             'redoslijed' => isset($first['redoslijed']) ? (int) $first['redoslijed'] : 0,
             'zona' => $zona,
+            'okvir_id' => !empty($first['okvir_id']) ? (int) $first['okvir_id'] : null,
             'vrsta' => 'tekst',
             'greska' => null,
             'paragraf_id' => $parId ?: null,
@@ -929,6 +942,7 @@ while ($i < $n) {
     $rec = [
         'redoslijed' => isset($s['redoslijed']) ? (int) $s['redoslijed'] : 0,
         'zona' => $zona,
+        'okvir_id' => !empty($s['okvir_id']) ? (int) $s['okvir_id'] : null,
         'vrsta' => $vrsta,
         'greska' => null
     ];
@@ -970,17 +984,18 @@ $fontoviOut = [];
 $videni = [];
 foreach ($fontPoId as $f) {
     $k = $f['pdfmake_kljuc'];
-    if (!isset($videni[$k])) { $videni[$k] = true; $fontoviOut[] = ['kljuc' => $k, 'porodica' => $f['porodica']]; }
+    if (!isset($videni[$k])) { $videni[$k] = true; $fontoviOut[] = ['kljuc' => $k, 'porodica' => $f['porodica'], 'lh' => pdf_font_lh_faktor($fontDir, $f['porodica'])]; }
 }
 // DejaVuSans uvijek (default font za pdfmake — i kad nema teksta; inače Roboto kojeg nema u vfs).
 if (!isset($videni[$kljucFallback])) {
-    $fontoviOut[] = ['kljuc' => $kljucFallback, 'porodica' => $porodicaFallback];
+    $fontoviOut[] = ['kljuc' => $kljucFallback, 'porodica' => $porodicaFallback, 'lh' => pdf_font_lh_faktor($fontDir, $porodicaFallback)];
 }
 
 $mysqli->close();
 
 echo json_encode([
     'template' => $template,
+    'okviri' => $okviri,
     'stavke' => $out,
     'stilovi_paragraf' => $parStilovi,
     'stilovi_slika' => $slikaStilovi,

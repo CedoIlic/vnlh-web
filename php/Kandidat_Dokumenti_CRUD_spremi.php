@@ -19,14 +19,20 @@ if ($id_clan <= 0) { echo '105'; exit; }
 $zivotopis = isset($d['zivotopis']) ? trim((string) $d['zivotopis']) : '';
 $zivotopis = ($zivotopis !== '') ? $zivotopis : null;
 
+// upisao/vrijeme_upisa: pune se SAMO kod prvog upisa (INSERT), ne kod izmjene
+// (zato nisu u ON DUPLICATE KEY UPDATE) — isto kao kod eseja.
+$upisao = (int) ($_SESSION['id_korisnik'] ?? 0) ?: null;
+
 try {
+    // id_loza: denormalizirano iz clanovi.loza (most za PDF logo/ime lože u jednom skoku).
+    // Postavlja se i na upisu i na izmjeni (ostaje u sync s ložom člana).
     // 1:1 po članu (UNIQUE id_clan) → INSERT ... ON DUPLICATE KEY UPDATE.
     $stmt = $mysqli->prepare('
-        INSERT INTO kandidat_dokumenti_zivotopis (id_clan, zivotopis)
-        VALUES (?, ?)
-        ON DUPLICATE KEY UPDATE zivotopis = VALUES(zivotopis)
+        INSERT INTO kandidat_dokumenti_zivotopis (id_clan, id_loza, zivotopis, upisao, vrijeme_upisa)
+        VALUES (?, (SELECT loza FROM clanovi WHERE id = ?), ?, ?, NOW())
+        ON DUPLICATE KEY UPDATE zivotopis = VALUES(zivotopis), id_loza = VALUES(id_loza)
     ');
-    $stmt->bind_param('is', $id_clan, $zivotopis);
+    $stmt->bind_param('iisi', $id_clan, $id_clan, $zivotopis, $upisao);
     $stmt->execute();
     $stmt->close();
     echo 'OK';

@@ -11,15 +11,15 @@
     <meta charset="UTF-8">
     <title>Dokumenti kandidata</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" href="../slike/VNLH_Favicon.png?v=__VNLH_ASSET_V__" type="image/png" sizes="32x32">
-    <link rel="stylesheet" href="../css/0-Common.css?v=__VNLH_ASSET_V__">
-    <link rel="stylesheet" href="../css/0-Kontrole.css?v=__VNLH_ASSET_V__">
-    <link rel="stylesheet" href="../css/0-Obrada_Slike.css?v=__VNLH_ASSET_V__">
-    <link rel="stylesheet" href="../css/0-Poruke.css?v=__VNLH_ASSET_V__">
-    <link rel="stylesheet" href="../css/0-Kontrole_Tab.css?v=__VNLH_ASSET_V__">
-    <link rel="stylesheet" href="../css/Clanovi_CRUD.css?v=__VNLH_ASSET_V__">
-    <link rel="stylesheet" href="../css/Clanovi_Loza_CRUD.css?v=__VNLH_ASSET_V__">
-    <link rel="stylesheet" href="../css/Kandidat_Dokumenti_CRUD.css?v=__VNLH_ASSET_V__">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=1.0.241" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/0-Obrada_Slike.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/0-Kontrole_Tab.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/Clanovi_CRUD.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/Clanovi_Loza_CRUD.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/Kandidat_Dokumenti_CRUD.css?v=1.0.241">
 </head>
 <body class="vnlh-page-kandidat-dokumenti-crud">
 <div class="naslov-forme"><h2>Dokumentacija kandidata</h2></div>
@@ -51,7 +51,6 @@
                                 <option value="">— Odaberi državu —</option>
                             </select>
                         </div>
-                        <button type="button" id="btn_reload_tablica" class="clanovi-crud__reload-btn clanovi-loza-crud__reload-btn" aria-label="Ponovno punjenje tablice" title="Puni tablicu"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
                     </div>
                     <label class="kontrola-labela mb-0" for="select_regija">Regija</label>
                     <div class="kontrola-select">
@@ -71,6 +70,7 @@
                             <input id="kandidat_dok_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" aria-label="Filtriraj redove u tablici">
                             <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti traženje" title="Očisti"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
                         </div>
+                        <button type="button" id="btn_reload_tablica" class="clanovi-crud__reload-btn clanovi-loza-crud__reload-btn" aria-label="Ponovno punjenje tablice" title="Puni tablicu"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
                     </div>
                 </div>
             </div>
@@ -90,8 +90,24 @@
                 <div class="kontrola-tab__tijelo" role="presentation">
                     <div class="kontrola-tab__panel kontrola-tab__panel--aktivna kandidat-dokumenti-crud__tab-panel--zivotopis" role="tabpanel" id="kandidatKontrolaTabPanel0" aria-labelledby="kandidatKontrolaTabKart0">
                         <div class="kandidat-dokumenti-crud__zivotopis-blok" role="group" aria-label="Životopis kandidata">
-                            <div class="kandidat-dokumenti-crud__scrol-omot">
-                                <div id="kandidat_zivotopis" class="kontrola-napomena kandidat-dokumenti-crud__zivotopis-kontrola" contenteditable="false" role="textbox" aria-multiline="true" aria-label="Životopis" spellcheck="true"></div>
+                            <div class="kandidat-dokumenti-crud__zivotopis-red">
+                                <div class="kandidat-dokumenti-crud__scrol-omot">
+                                    <div id="kandidat_zivotopis" class="kontrola-napomena kandidat-dokumenti-crud__zivotopis-kontrola" contenteditable="false" role="textbox" aria-multiline="true" aria-label="Životopis" spellcheck="true"></div>
+                                </div>
+                                <div class="kandidat-dokumenti-crud__zivotopis-akcije">
+                                    <button type="button" id="kandidat_btn_pdf" class="kandidat-dokumenti-crud__pdf-btn" disabled aria-label="Generiraj PDF životopisa" title="Generiraj PDF">
+                                        <svg class="kandidat-dokumenti-crud__pdf-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                                                  fill="none" stroke="currentColor" stroke-width="1.5"
+                                                  stroke-linecap="round" stroke-linejoin="round"/>
+                                            <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor"
+                                                      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="5" y="14" width="14" height="6" rx="1" fill="currentColor"/>
+                                            <text x="12" y="18.4" font-family="Arial, sans-serif" font-size="3.8"
+                                                  font-weight="bold" fill="white" text-anchor="middle">PDF</text>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -109,13 +125,54 @@
         </div>
     </div>
 </div>
-<script src="../js/00-Version.js?v=__VNLH_ASSET_V__"></script>
-<script src="../js/0-Kontrole.js?v=__VNLH_ASSET_V__"></script>
-<script src="../js/0-Common.js?v=__VNLH_ASSET_V__"></script>
-<script src="../js/0-Poruke.js?v=__VNLH_ASSET_V__"></script>
-<script src="../js/0-Poruke_Tekstovi.js?v=__VNLH_ASSET_V__"></script>
-<script src="../js/0-Kontrole_Tab.js?v=__VNLH_ASSET_V__"></script>
-<script src="../js/0-Filteri_Po_Ogranicenjima.js?v=__VNLH_ASSET_V__"></script>
-<script src="../js/Kandidat_Dokumenti_CRUD.js?v=__VNLH_ASSET_V__"></script>
+<!-- Modal: PDF pregled životopisa (render dokumenta „Životopis kandidata" iz baze + uživo podešavanje extra-proreda) -->
+<div id="kandidatModalPdf" class="kandidat-dokumenti-crud__modal-pdf" role="dialog" aria-label="PDF životopisa" aria-modal="true" aria-hidden="true">
+    <div class="kandidat-dokumenti-crud__modal-pdf-overlay"></div>
+    <div class="kandidat-dokumenti-crud__modal-pdf-dialog">
+        <div class="kandidat-dokumenti-crud__modal-pdf-header">
+            <div class="kandidat-dokumenti-crud__modal-pdf-naslov">PDF životopisa</div>
+            <div class="kandidat-dokumenti-crud__modal-pdf-alati" role="group" aria-label="Alati PDF-a">
+                <label class="kontrola-labela mb-0" for="kandidat_pdf_prored">Prored</label>
+                <div class="kandidat-dokumenti-crud__stepper">
+                    <input id="kandidat_pdf_prored" type="text" class="kontrola-edit kandidat-dokumenti-crud__stepper-input" inputmode="decimal" value="1,00" aria-label="Množitelj proreda (0,80–2,00)">
+                    <span class="kandidat-dokumenti-crud__stepper-strelice">
+                        <button type="button" id="kandidat_pdf_prored_gore" class="kandidat-dokumenti-crud__stepper-btn" aria-label="Povećaj prored za 0,1" tabindex="-1">&#9650;</button>
+                        <button type="button" id="kandidat_pdf_prored_dolje" class="kandidat-dokumenti-crud__stepper-btn" aria-label="Smanji prored za 0,1" tabindex="-1">&#9660;</button>
+                    </span>
+                </div>
+                <button type="button" id="kandidat_pdf_save" class="kandidat-dokumenti-crud__modal-pdf-ikona-btn" aria-label="Spremi prored" title="Spremi prored">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/>
+                        <path d="M17 21v-8H7v8M7 3v5h8"/>
+                    </svg>
+                </button>
+                <span class="kandidat-dokumenti-crud__modal-pdf-slot" aria-hidden="true"></span>
+                <span class="kandidat-dokumenti-crud__modal-pdf-slot" aria-hidden="true"></span>
+                <button type="button" id="kandidat_pdf_refresh" class="kandidat-dokumenti-crud__modal-pdf-ikona-btn" aria-label="Osvježi PDF" title="Osvježi PDF">
+                    <span class="kontrola-icon--arrow-path" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-body">
+            <iframe id="kandidat_pdf_okvir" class="kandidat-dokumenti-crud__modal-pdf-iframe" title="PDF pregled životopisa"></iframe>
+            <div id="kandidat_pdf_spiner" class="kontrola-spiner-overlay" aria-hidden="true">
+                <span class="kontrola-spiner kontrola-spiner--segment" role="status" aria-label="Učitavanje"></span>
+            </div>
+            <div class="kandidat-dokumenti-crud__modal-pdf-info" id="kandidat_pdf_info" aria-live="polite"></div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-footer">
+            <button type="button" id="kandidat_pdf_povratak" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=1.0.241"></script>
+<script src="../js/0-Kontrole.js?v=1.0.241"></script>
+<script src="../js/0-Common.js?v=1.0.241"></script>
+<script src="../js/0-Poruke.js?v=1.0.241"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=1.0.241"></script>
+<script src="../js/0-Kontrole_Tab.js?v=1.0.241"></script>
+<script src="../js/0-Filteri_Po_Ogranicenjima.js?v=1.0.241"></script>
+<script src="../js/pdf-render.js?v=1.0.241"></script>
+<script src="../js/Kandidat_Dokumenti_CRUD.js?v=1.0.241"></script>
 </body>
 </html>

@@ -557,6 +557,7 @@
     function dimOrDef(id, def) { var v = trim(valId(id)); return v === '' ? def : (parseFloat(v.replace(',', '.')) || 0); }
     var ym = byId('edit_okvir_ymeka');
     okviriState.push({
+      id: 0,   /* novi okvir */
       naziv: trim(valId('edit_okvir_naziv')),
       x_mm: dimOrDef('edit_okvir_x', ml || 0),
       y_mm: dimOrDef('edit_okvir_y', mg || 0),
@@ -587,6 +588,7 @@
   function ucitajOkvire(arr) {
     okviriState = Array.isArray(arr) ? arr.map(function (o) {
       return {
+        id: (o.id != null && o.id !== '') ? parseInt(o.id, 10) : 0,   /* postojeći okvir → čuvaj id (referencira ga okvir_id u dokumentima) */
         naziv: o.naziv != null ? String(o.naziv) : '',
         x_mm: o.x_mm, y_mm: o.y_mm, sirina_mm: o.sirina_mm, visina_mm: o.visina_mm,
         y_meka: (o.y_meka === 1 || o.y_meka === '1' || o.y_meka === true) ? 1 : 0
@@ -599,6 +601,7 @@
   function okviriPayload() {
     return JSON.stringify(okviriState.map(function (o, i) {
       return {
+        id: o.id || 0,   /* >0 = postojeći (UPDATE, čuva id/reference), 0 = novi (INSERT) */
         redoslijed: i + 1,
         naziv: trim(o.naziv || ''),
         x_mm: brojNiz(o.x_mm) || '0',

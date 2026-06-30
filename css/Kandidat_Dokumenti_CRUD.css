@@ -33,6 +33,22 @@
   flex: 1 1 auto;
 }
 
+/* --- Reload ikona premještena desno od pretrage (samo ova forma) ---
+   Red pretrage postaje flex: edit raste, reload ikona fiksna desno. --- */
+.vnlh-page-kandidat-dokumenti-crud .clanovi-loza-crud__header-kontrole__trazi {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.vnlh-page-kandidat-dokumenti-crud .clanovi-loza-crud__header-kontrole__trazi .kontrola-edit-delete {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.vnlh-page-kandidat-dokumenti-crud .clanovi-loza-crud__header-kontrole__trazi .clanovi-loza-crud__reload-btn {
+  flex: 0 0 auto;
+}
+
 /* --- Slika kandidata: samo prikaz (bez dvoklika/obrade/brisanja) --- */
 .kandidat-dokumenti-crud__image-area {
   cursor: default;
@@ -65,6 +81,68 @@
   flex: 1 1 auto;
   min-height: 0;
   gap: 0.25rem;
+}
+
+/* --- Red: editor životopisa + PDF ikona desno (ikona poravnata uz vrh) --- */
+.kandidat-dokumenti-crud__zivotopis-red {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 0.5rem;
+}
+.kandidat-dokumenti-crud__zivotopis-red .kandidat-dokumenti-crud__scrol-omot {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.kandidat-dokumenti-crud__zivotopis-akcije {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- PDF ikona-gumb (uzor Esej_CRUD; isti tokeni, bez hardkodiranih boja) --- */
+.kandidat-dokumenti-crud__pdf-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  color: var(--label_text, #1d1d1f);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2, 0 1px 2px rgba(0, 0, 0, 0.06));
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.kandidat-dokumenti-crud__pdf-btn:hover:not(:disabled) {
+  background: var(--c-gray-100, #eee);
+  box-shadow: var(--kontrole_sjena_slaba_1, 0 1px 3px rgba(0, 0, 0, 0.1));
+}
+.kandidat-dokumenti-crud__pdf-btn:active:not(:disabled) {
+  box-shadow: inset 0 2px 4px var(--c-shadow-30, rgba(0, 0, 0, 0.12));
+}
+.kandidat-dokumenti-crud__pdf-btn:focus-visible {
+  outline: 2px solid var(--edit_focus_ring, #0d6efd);
+  outline-offset: 2px;
+}
+.kandidat-dokumenti-crud__pdf-btn:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--label_text_disabled);
+  cursor: not-allowed;
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+}
+.kandidat-dokumenti-crud__pdf-icon {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.kandidat-dokumenti-crud__pdf-btn:disabled .kandidat-dokumenti-crud__pdf-icon text {
+  fill: var(--label_text);
 }
 
 /* --- Scrol-omot: wrapper s okvirom/radiusom, kliP scrollbara (uzor esej) ---
@@ -138,4 +216,170 @@
 }
 .kandidat-dokumenti-crud__zivotopis-kontrola::-webkit-scrollbar-thumb:hover {
   background: var(--tablica_scroll_klizac_hover, var(--tablica_scroll_klizac));
+}
+
+/* =====================================================
+   Modal: PDF pregled životopisa (klon Esej_CRUD modala; isti --modal_tablica_* / --edit_* tokeni)
+   ===================================================== */
+.kandidat-dokumenti-crud__modal-pdf {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.kandidat-dokumenti-crud__modal-pdf.kandidat-dokumenti-crud__modal-pdf--open { display: flex; }
+.kandidat-dokumenti-crud__modal-pdf-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--modal_tablica_overlay_bg);
+}
+.kandidat-dokumenti-crud__modal-pdf-dialog {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(900px, 95vw);
+  height: 92vh;
+  max-width: 95vw;
+  max-height: 95vh;
+  border: var(--modal_tablica_border_w) solid var(--modal_tablica_border);
+  border-radius: var(--modal_tablica_border_radius);
+  box-shadow: var(--modal_tablica_sjena);
+  background: var(--modal_tablica_body_bg);
+  overflow: hidden;
+}
+.kandidat-dokumenti-crud__modal-pdf-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: var(--modal_tablica_header_padding_y) var(--modal_tablica_header_padding_x);
+  background: var(--modal_tablica_header_bg);
+  color: var(--modal_tablica_header_text);
+  border-bottom: var(--modal_tablica_header_border_bottom);
+}
+.kandidat-dokumenti-crud__modal-pdf-naslov {
+  font-family: var(--modal_tablica_header_font_family);
+  font-size: var(--modal_tablica_header_font_size);
+  font-weight: var(--modal_tablica_header_font_weight);
+}
+.kandidat-dokumenti-crud__modal-pdf-alati {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+/* Stepper (širina edita 100px). */
+.kandidat-dokumenti-crud__stepper {
+  position: relative;
+  display: inline-flex;
+}
+.kandidat-dokumenti-crud__stepper-input {
+  width: 100px;
+  text-align: center;
+  padding-right: 1.5rem;
+}
+.kandidat-dokumenti-crud__stepper-strelice {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 1.35rem;
+  display: flex;
+  flex-direction: column;
+}
+.kandidat-dokumenti-crud__stepper-btn {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 0.6rem;
+  line-height: 1;
+  border: none;
+  background: var(--c-gray-50, #f8f9fa);
+  color: var(--c-text, #333);
+  cursor: pointer;
+}
+.kandidat-dokumenti-crud__stepper-btn:first-child {
+  border-bottom: 1px solid var(--edit_border, #ced4da);
+  border-top-right-radius: var(--edit_radius, 6px);
+}
+.kandidat-dokumenti-crud__stepper-btn:last-child {
+  border-bottom-right-radius: var(--edit_radius, 6px);
+}
+@media (hover: hover) {
+  .kandidat-dokumenti-crud__stepper-btn:hover { background: var(--c-gray-100, #eee); }
+}
+/* Ikona-tipke (save / refresh) u zaglavlju. */
+.kandidat-dokumenti-crud__modal-pdf-ikona-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--edit_height);
+  height: var(--edit_height);
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  box-shadow: var(--tablica_sjena);
+  color: var(--edit_text);
+  cursor: pointer;
+}
+.kandidat-dokumenti-crud__modal-pdf-ikona-btn:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--edit_text_disabled);
+  border-color: var(--edit_border_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled);
+  cursor: var(--edit_cursor_disabled);
+}
+@media (hover: hover) {
+  .kandidat-dokumenti-crud__modal-pdf-ikona-btn:hover:not(:disabled) { background: var(--c-gray-100, #eee); }
+}
+.kandidat-dokumenti-crud__modal-pdf-ikona-btn:active:not(:disabled) { transform: translateY(1px); }
+.kandidat-dokumenti-crud__modal-pdf-slot {
+  display: inline-block;
+  width: var(--edit_height);
+  height: var(--edit_height);
+}
+.kandidat-dokumenti-crud__modal-pdf-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--c-gray-200, #e9ecef);
+}
+.kandidat-dokumenti-crud__modal-pdf-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: var(--c-gray-200, #e9ecef);
+}
+.kandidat-dokumenti-crud__modal-pdf-info {
+  position: absolute;
+  left: 0.5rem;
+  bottom: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  color: var(--c-text, #333);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+  pointer-events: none;
+}
+.kandidat-dokumenti-crud__modal-pdf-info:empty { display: none; }
+.kandidat-dokumenti-crud__modal-pdf-footer {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: var(--modal_tablica_footer_padding_y, 0.6rem) var(--modal_tablica_footer_padding_x, 0.75rem);
+  border-top: 1px solid var(--edit_border, #ced4da);
+  background: var(--modal_tablica_body_bg, #fff);
 }

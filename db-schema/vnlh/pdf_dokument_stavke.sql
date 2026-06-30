@@ -3,6 +3,7 @@ CREATE TABLE `pdf_dokument_stavke` (
   `dokument_id`      int(11) unsigned NOT NULL COMMENT 'FK na pdf_dokument',
   `redoslijed`       int(11) NOT NULL DEFAULT 0 COMMENT 'Poredak iscrtavanja unutar dokumenta',
   `zona`             enum('tijelo','zaglavlje','podnozje','naslovna') NOT NULL DEFAULT 'tijelo' COMMENT 'Zona stranice u koju se stavka crta',
+  `okvir_id`         int(11) unsigned DEFAULT NULL COMMENT 'FK na pdf_template_okvir — kad je postavljen, stavka se renderira u tom vezanom tekst-bloku (prelijevanje punom širinom ispod bloka); NULL = obična zona',
   `vrsta`            enum('tekst','slika') NOT NULL COMMENT 'Vrsta stavke: tekst ili slika',
   `izvor_id`         int(11) unsigned DEFAULT NULL COMMENT 'FK na pdf_dozvoljeni_izvori (NULL kad izvor_tip=korisnicki)',
   `izvor_tip`        enum('staticki','dinamicki','po_vrijednosti','korisnicki','relacija_broj','relacija_lista','relacija_redak','relacija_grupe') NOT NULL COMMENT 'staticki=fiksni red; dinamicki=id iz konteksta; po_vrijednosti=red po vrijednosti kolone; korisnicki=upisani tekst (literal_tekst); relacija_broj=broj redova 1-na-više veze (relacija_id) → mapa; relacija_lista=spojeni nazivi redova 1-na-više veze; relacija_redak=jedan redak po vezi iz predloška (redak_predlozak); relacija_grupe=grupirani popis po tipu (grupa: labela: imena)',
@@ -33,8 +34,11 @@ CREATE TABLE `pdf_dokument_stavke` (
   KEY `fk_stavka_paragraf` (`paragraf_id`),
   KEY `fk_stavka_slika_stil` (`slika_stil_id`),
   KEY `fk_stavka_relacija` (`relacija_id`),
+  KEY `fk_stavka_okvir` (`okvir_id`),
   CONSTRAINT `fk_stavka_dokument`
     FOREIGN KEY (`dokument_id`) REFERENCES `pdf_dokument` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_stavka_okvir`
+    FOREIGN KEY (`okvir_id`) REFERENCES `pdf_template_okvir` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_izvor`
     FOREIGN KEY (`izvor_id`) REFERENCES `pdf_dozvoljeni_izvori` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_preko_izvor`

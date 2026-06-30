@@ -12,6 +12,8 @@
   var API_BASE = '../php/';
   var data = [];                 /* svi članovi lože (filtrirani na kandidat=1) */
   var _zivotopisPostoji = false; /* ima li odabrani kandidat zapis u kandidat_dokumenti_zivotopis */
+  var _zivotopisRowId = null;    /* id reda u kandidat_dokumenti_zivotopis (kontekst ID_Zivotopis); null kad nema zapisa */
+  var _zivotopisProred = null;   /* kandidat_dokumenti_zivotopis.dokument_prored odabranog; null = nije postavljen */
   var _geoAutoLockedDrzava = false, _geoAutoLockedRegija = false, _geoAutoLockedLoza = false;
   var _pravaCrudUpis = 1, _pravaCrudBrisanje = 1;
 
@@ -62,6 +64,7 @@
   var btnUpisiLabel = btnUpisi ? btnUpisi.querySelector('.kontrola-btn__label') : null;
   var btnIzbrisi = document.getElementById('btnIzbrisi');
   var zivotopisEl = document.getElementById('kandidat_zivotopis');
+  var btnPdf = document.getElementById('kandidat_btn_pdf');
   var zivotopisKartica = document.getElementById('kandidatKontrolaTabKart0');
   if (btnIzbrisi) { btnIzbrisi.style.display = 'none'; btnIzbrisi.disabled = true; }
 
@@ -214,11 +217,21 @@
     }
     var smijeBrisati = imaSelekciju && _zivotopisPostoji && _pravaCrudBrisanje === 1;
     if (btnIzbrisi) { btnIzbrisi.style.display = smijeBrisati ? '' : 'none'; btnIzbrisi.disabled = !smijeBrisati; }
+    updatePdfState();
+  }
+
+  /* PDF ikona: omogućena kad je životopis učitan (kontrola ima sadržaj), inače onemogućena. */
+  function updatePdfState() {
+    if (!btnPdf) return;
+    var imaSelekciju = getSelectedRowId() != null;
+    btnPdf.disabled = !(imaSelekciju && zivotopisGetTekst() != null);
   }
 
   /* ===== Učitavanje životopisa odabranog kandidata ===== */
   function ucitajZivotopis(idClan, cb) {
     _zivotopisPostoji = false;
+    _zivotopisRowId = null;
+    _zivotopisProred = null;
     zivotopisSetTekst('');
     if (idClan == null || typeof fetch !== 'function') { if (cb) cb(); return; }
     fetch(API_BASE + 'Kandidat_Dokumenti_CRUD_jedan.php?id_clan=' + encodeURIComponent(idClan))
@@ -230,6 +243,8 @@
           try {
             var o = JSON.parse(text);
             _zivotopisPostoji = !!o.postoji;
+            _zivotopisRowId = (o.id != null && o.id !== '') ? o.id : null;
+            _zivotopisProred = (o.dokument_prored != null && o.dokument_prored !== '') ? o.dokument_prored : null;
             zivotopisSetTekst(o.zivotopis != null ? o.zivotopis : '');
           } catch (e) {}
         }
@@ -386,6 +401,9 @@
   }
 
   /* ===== Event wiring ===== */
+  /* Životopis: pri svakoj izmjeni teksta osvježi stanje PDF ikone (učitan/prazan). */
+  if (zivotopisEl) zivotopisEl.addEventListener('input', updatePdfState);
+
   if (selectDrzava) selectDrzava.addEventListener('change', function () {
     if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection();
     clearSlika();
@@ -619,4 +637,234 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initForma);
   else initForma();
+
+  /* ============================================================
+   * PDF modal životopisa: render dokumenta „Životopis kandidata"
+   * (kontekst ID_Clan = id_clan, ID_Zivotopis = id reda u kandidat_dokumenti_zivotopis)
+   * + uživo podešavanje extra-proreda (kandidat_dokumenti_zivotopis.dokument_prored).
+   * Uzor: Esej_CRUD initPdfModal.
+   * ============================================================ */
+  (function initPdfModal() {
+    var ZIV_DOK_NAZIV = 'Životopis kandidata';   /* dokument u pdf_dokument (referenca po nazivu) */
+    var PRORED_MIN = 0.80, PRORED_MAX = 2.00, PRORED_KORAK = 0.1, PRORED_DEF = 1.00;
+    var MSG_SPREMLJEN = 'Prored spremljen.';
+
+    var modal       = document.getElementById('kandidatModalPdf');
+    if (!btnPdf || !modal) return;
+    var overlay     = modal.querySelector('.kandidat-dokumenti-crud__modal-pdf-overlay');
+    var okvir       = document.getElementById('kandidat_pdf_okvir');
+    var info        = document.getElementById('kandidat_pdf_info');
+    var inpProred   = document.getElementById('kandidat_pdf_prored');
+    var btnGore     = document.getElementById('kandidat_pdf_prored_gore');
+    var btnDolje    = document.getElementById('kandidat_pdf_prored_dolje');
+    var btnSave     = document.getElementById('kandidat_pdf_save');
+    var btnRefresh  = document.getElementById('kandidat_pdf_refresh');
+    var btnPovratak = document.getElementById('kandidat_pdf_povratak');
+    var spiner      = document.getElementById('kandidat_pdf_spiner');
+
+    var _dokument = null;        /* {dokument, stavke} za „Životopis kandidata" — svjež dohvat pri svakom otvaranju */
+    var _proredStilId = null;    /* dokument.dokument_prored_default_stil */
+    var _clanIdAktivni = null;   /* id_clan za koji je modal otvoren */
+    var _zivIdAktivni = null;    /* id reda životopisa za koji je modal otvoren (ID_Zivotopis) */
+    var _zauzet = false;         /* render u tijeku */
+
+    function postJson(url, data, cb) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+      xhr.onreadystatechange = function () { if (xhr.readyState === 4 && cb) cb(xhr.responseText, xhr.status); };
+      xhr.send(JSON.stringify(data));
+    }
+
+    function fmtProred(n) { return n.toFixed(2).replace('.', ','); }
+    function parseProred(v) {
+      var n = parseFloat(String(v == null ? '' : v).replace(',', '.'));
+      if (isNaN(n)) n = PRORED_DEF;
+      if (n < PRORED_MIN) n = PRORED_MIN;
+      if (n > PRORED_MAX) n = PRORED_MAX;
+      return Math.round(n * 100) / 100;
+    }
+    function getProred() { return parseProred(inpProred ? inpProred.value : PRORED_DEF); }
+    function setProred(n) { if (inpProred) inpProred.value = fmtProred(parseProred(n)); }
+    function postaviInfo(t) { if (info) info.textContent = t || ''; }
+    function porukaSpremljenOcisti() { if (info && info.textContent === MSG_SPREMLJEN) postaviInfo(''); }
+    function spinerShow() { if (typeof KontroleSpinerShow === 'function') KontroleSpinerShow(spiner); }
+    function spinerHide() { if (typeof KontroleSpinerHide === 'function') KontroleSpinerHide(spiner); }
+    function krajRendera(poruka) { _zauzet = false; spinerHide(); postaviInfo(poruka || ''); }
+
+    /* Početni „Prored": zapis.dokument_prored → inače prored default-stila dokumenta → inače PRORED_DEF. */
+    function postaviPocetniProred() {
+      var v;
+      if (_zivotopisProred != null && trim(String(_zivotopisProred)) !== '') v = _zivotopisProred;
+      else if (_dokument && _dokument.default_stil_prored != null && trim(String(_dokument.default_stil_prored)) !== '') v = _dokument.default_stil_prored;
+      else v = PRORED_DEF;
+      setProred(v);
+    }
+
+    function ocistiIframe() {
+      if (okvir) {
+        if (okvir._url) { try { URL.revokeObjectURL(okvir._url); } catch (e) {} okvir._url = null; }
+        okvir.removeAttribute('src');
+      }
+    }
+    function otvoriModal() {
+      modal.classList.add('kandidat-dokumenti-crud__modal-pdf--open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+    function zatvoriModal() {
+      modal.classList.remove('kandidat-dokumenti-crud__modal-pdf--open');
+      modal.setAttribute('aria-hidden', 'true');
+      ocistiIframe();
+      spinerHide();
+      postaviInfo('');
+      try { btnPdf.focus(); } catch (e) {}
+    }
+
+    function ucitajFontove(lista, cb, err) {
+      lista = lista || [];
+      if (!lista.length) { cb(); return; }
+      var preostalo = lista.length, greska = false;
+      lista.forEach(function (f) {
+        window.PdfRender.Fontovi.osiguraj(f.kljuc, f.porodica,
+          function () { if (--preostalo === 0) { greska ? err() : cb(); } },
+          function () { greska = true; if (--preostalo === 0) { err(); } });
+      });
+    }
+
+    /* Resolve stavki (kontekst ID_Clan/ID_Zivotopis) → pdf-render → blob u iframe. */
+    function renderiraj() {
+      if (_zauzet) return;
+      spinerShow();
+      if (!window.PdfRender) { krajRendera('PDF biblioteka nije učitana.'); return; }
+      if (!_dokument || !_dokument.dokument) { krajRendera('Dokument „' + ZIV_DOK_NAZIV + '" nije pronađen.'); return; }
+      if (!_clanIdAktivni) { krajRendera('Životopis nije učitan.'); return; }
+      var dok = _dokument.dokument;
+      var stavke = _dokument.stavke || [];
+      /* Kontekst: ID_Zivotopis → id reda životopisa; svaki drugi ključ (ID_Clan…) → id_clan. */
+      var kontekst = {};
+      stavke.forEach(function (s) {
+        var k = s.kontekst_kljuc != null ? trim(String(s.kontekst_kljuc)) : '';
+        if (k === '') return;
+        if (k === 'ID_Zivotopis') { if (_zivIdAktivni != null) kontekst[k] = parseInt(_zivIdAktivni, 10); }
+        else kontekst[k] = parseInt(_clanIdAktivni, 10);
+      });
+      var payload = {
+        template_id: dok.template_id ? parseInt(dok.template_id, 10) : 0,
+        kontekst: kontekst,
+        broj_stranice_paragraf_id: dok.broj_stranice_paragraf_id ? parseInt(dok.broj_stranice_paragraf_id, 10) : null,
+        stavke: stavke.map(function (s) {
+          return {
+            redoslijed: s.redoslijed, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta,
+            izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id,
+            kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id,
+            trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost,
+            literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id,
+            bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke,
+            preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
+            format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, sakrij_ako_prazno: s.sakrij_ako_prazno,
+            relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
+            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold
+          };
+        })
+      };
+      var proredVrijednost = getProred();
+      _zauzet = true;
+      postaviInfo('Dohvaćam…');
+      postJson(API_BASE + 'PDF_Generator_resolve.php', payload, function (res) {
+        var model;
+        try { model = JSON.parse(res); } catch (e) { krajRendera('Greška dohvata modela.'); return; }
+        if (!model || model.greska) { krajRendera('Greška: ' + ((model && model.greska) || 'nepoznata')); return; }
+        postaviInfo('Pripremam slike…');
+        window.PdfRender.pripremiSlike(model, function (model) {
+          postaviInfo('Gradim PDF…');
+          var dd = window.PdfRender.sastaviDocDefinition(model, { proredStilId: _proredStilId, proredVrijednost: proredVrijednost });
+          window.PdfRender.Pdf.ucitaj(function () {
+            ucitajFontove(model.fontovi, function () {
+              try {
+                /* data URL (ne blob:) — izbjegava Chrome particioniranje blob URL-ova u iframeu. */
+                pdfMake.createPdf(dd).getDataUrl(function (dataUrl) {
+                  ocistiIframe();
+                  okvir.src = dataUrl;
+                  krajRendera('');
+                });
+              } catch (e) { krajRendera('Greška pri renderu: ' + e); }
+            }, function () { krajRendera('Greška pri učitavanju fontova.'); });
+          }, function () { krajRendera('Greška pri učitavanju pdfmake biblioteke.'); });
+        });
+      });
+    }
+
+    /* Dohvati dokument „Životopis kandidata" SVAKI put (bez keša) + renderiraj. */
+    function ucitajDokumentIRenderiraj(resetProred) {
+      spinerShow();
+      postaviInfo('Učitavam dokument…');
+      var url = API_BASE + 'PDF_Dokument_po_nazivu.php?naziv=' + encodeURIComponent(ZIV_DOK_NAZIV);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        var data = null;
+        try { data = JSON.parse((xhr.responseText || '').replace(/^﻿/, '').trim()); } catch (e) {}
+        if (!data || data.greska || !data.dokument) { krajRendera('Dokument „' + ZIV_DOK_NAZIV + '" nije pronađen.'); return; }
+        _dokument = data;
+        _proredStilId = data.dokument.dokument_prored_default_stil ? parseInt(data.dokument.dokument_prored_default_stil, 10) : null;
+        if (resetProred) postaviPocetniProred();
+        renderiraj();
+      };
+      xhr.send();
+    }
+
+    btnPdf.addEventListener('click', function () {
+      if (btnPdf.disabled) return;
+      var idClan = getSelectedRowId();
+      if (idClan == null) return;
+      _clanIdAktivni = idClan;
+      _zivIdAktivni = _zivotopisRowId;
+      otvoriModal();
+      ucitajDokumentIRenderiraj(true);
+    });
+
+    function korak(d) { setProred(getProred() + d); porukaSpremljenOcisti(); }
+    if (btnGore)  btnGore.addEventListener('click', function () { korak(PRORED_KORAK); });
+    if (btnDolje) btnDolje.addEventListener('click', function () { korak(-PRORED_KORAK); });
+    if (inpProred) {
+      inpProred.addEventListener('input', function () {
+        var c = inpProred.value.replace(/[^0-9.,]/g, '');
+        if (inpProred.value !== c) inpProred.value = c;
+        porukaSpremljenOcisti();
+      });
+      inpProred.addEventListener('blur', function () { setProred(getProred()); });
+      inpProred.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); setProred(getProred()); renderiraj(); }
+      });
+    }
+
+    /* Save: spremi prored u bazu (kandidat_dokumenti_zivotopis.dokument_prored) po id_clan. */
+    if (btnSave) {
+      btnSave.addEventListener('click', function () {
+        if (_clanIdAktivni == null) return;
+        var p = getProred();
+        setProred(p);
+        btnSave.disabled = true;
+        postJson(API_BASE + 'Kandidat_Dokumenti_CRUD_prored.php', { id_clan: parseInt(_clanIdAktivni, 10), prored: fmtProred(p) }, function (res, status) {
+          btnSave.disabled = false;
+          res = (res || '').trim();
+          if (status >= 200 && status < 300 && res === 'OK') {
+            _zivotopisProred = p;   /* zapamti za sljedeće otvaranje */
+            postaviInfo(MSG_SPREMLJEN);
+          } else {
+            var pk = parseResponseCode(res);
+            poruka(pk ? pk.code : '200', pk ? pk.replacements : []);
+          }
+        });
+      });
+    }
+
+    if (btnRefresh)  btnRefresh.addEventListener('click', function () { setProred(getProred()); ucitajDokumentIRenderiraj(false); });
+    if (btnPovratak) btnPovratak.addEventListener('click', zatvoriModal);
+    if (overlay)     overlay.addEventListener('click', zatvoriModal);
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && modal.classList.contains('kandidat-dokumenti-crud__modal-pdf--open')) zatvoriModal();
+    });
+  }());
 })();

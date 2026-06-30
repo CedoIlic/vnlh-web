@@ -598,6 +598,10 @@
           if (xhr.readyState !== 4) return;
           var u = String(xhr._vnlhXhrUrl || '');
           if (/Login\.php/i.test(u)) return;
+          // responseText je čitljiv samo za responseType '' ili 'text'; binarni odgovori
+          // (npr. pdfMake učitava fontove kao 'arraybuffer') inače bacaju InvalidStateError.
+          var rt = xhr.responseType;
+          if (rt !== '' && rt !== 'text') return;
           var text = (xhr.responseText || '').trim();
           if (xhr.status === 403 && text === 'PASS_CHANGE_REQUIRED') {
             if (typeof window.vnlhMarkInternalAppNavigation === 'function') window.vnlhMarkInternalAppNavigation();

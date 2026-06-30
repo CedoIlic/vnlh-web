@@ -188,25 +188,43 @@
   /* Slika-stavka → pdfmake image element (dataurl + dimenzije/poravnanje iz pdf_slika_stil). */
   function sastaviSliku(stil, dataurl, opts) {
     var img = { image: dataurl };
-    if (stil) {
-      var w = mm(stil, 'sirina_mm'), h = mm(stil, 'visina_mm');
-      if (w > 0 && h > 0) {
-        if (str(stil.skaliranje) === 'razvuci') { img.width = w; img.height = h; }
-        else { img.fit = [w, h]; }              /* uklopi = čuva proporcije */
-      } else if (w > 0) { img.width = w; }
-      var ph = str(stil.poravnanje_h);
-      if (ph === 'centar') img.alignment = 'center';
-      else if (ph === 'desno') img.alignment = 'right';
-      else if (ph === 'lijevo') img.alignment = 'left';
-      /* Apsolutno pozicioniranje: x/y (mm→pt) od ishodišta zone (opts.origin), zadano gornji-lijevi rub stranice. */
-      if (str(stil.pozicioniranje) === 'apsolutno') {
-        var o = (opts && opts.origin) || { x: 0, y: 0 };
-        img.absolutePosition = { x: (o.x || 0) + mm(stil, 'pozicija_x_mm'), y: (o.y || 0) + mm(stil, 'pozicija_y_mm') };
-      }
+    if (!stil) { img.fit = [200, 200]; return img; }   /* bez stila: razuman default okvir */
+
+    var w = mm(stil, 'sirina_mm'), h = mm(stil, 'visina_mm');
+    if (w > 0 && h > 0) {
+      if (str(stil.skaliranje) === 'razvuci') { img.width = w; img.height = h; }
+      else { img.fit = [w, h]; }              /* uklopi = čuva proporcije */
+    } else if (w > 0) { img.width = w; }
+
+    /* Okvir (pdfmake slika nema border) → omotaj sliku u tablicu w×h s obrubom, kao placeholder.
+       Aktivira se samo kad stil ima okvir + debljinu i poznate dimenzije. */
+    var okvirW = (bool(stil.okvir) && mm(stil, 'okvir_debljina_mm') > 0) ? mm(stil, 'okvir_debljina_mm') : 0;
+    var el;
+    if (okvirW > 0 && w > 0 && h > 0) {
+      var okvirBoja = str(stil.okvir_boja) || '#000000';
+      el = {
+        table: { widths: [w], heights: [h], body: [[ { image: dataurl, fit: [w, h], alignment: 'center' } ]] },
+        layout: {
+          hLineWidth: function () { return okvirW; }, vLineWidth: function () { return okvirW; },
+          hLineColor: function () { return okvirBoja; }, vLineColor: function () { return okvirBoja; },
+          paddingLeft: function () { return 0; }, paddingRight: function () { return 0; },
+          paddingTop: function () { return 0; }, paddingBottom: function () { return 0; }
+        }
+      };
     } else {
-      img.fit = [200, 200];                     /* bez stila: razuman default okvir */
+      el = img;
     }
-    return img;
+
+    var ph = str(stil.poravnanje_h);
+    if (ph === 'centar') el.alignment = 'center';
+    else if (ph === 'desno') el.alignment = 'right';
+    else if (ph === 'lijevo') el.alignment = 'left';
+    /* Apsolutno pozicioniranje: x/y (mm→pt) od ishodišta zone (opts.origin), zadano gornji-lijevi rub stranice. */
+    if (str(stil.pozicioniranje) === 'apsolutno') {
+      var o = (opts && opts.origin) || { x: 0, y: 0 };
+      el.absolutePosition = { x: (o.x || 0) + mm(stil, 'pozicija_x_mm'), y: (o.y || 0) + mm(stil, 'pozicija_y_mm') };
+    }
+    return el;
   }
 
   /* Placeholder za NERAZRIJEŠENU dinamičku sliku (npr. uređivanje/pregled bez konteksta):
@@ -247,6 +265,53 @@
       box.absolutePosition = { x: (o.x || 0) + mm(stil, 'pozicija_x_mm'), y: (o.y || 0) + mm(stil, 'pozicija_y_mm') };
     }
     return box;
+  }
+
+  /* ===== Vezani tekst blokovi: mjerenje teksta + prelijevanje (obtjecanje) =====
+     Dvije podesive konstante (fidelity):
+       OBTJ_LH_FAKTOR — odnos stvarnog proreda u pdfmake-u i (velicina_pt × prored). pdfkit natural
+                        line ≈ 1.15× veličine; ako blok prima previše/premalo redova, ugodi ovo.
+       Mjerni font     — širina lomljenja mjeri se canvasom u istoj porodici; točno od 2. rendera
+                        (1. render može biti grub dok se font ne registrira). */
+  var OBTJ_LH_FAKTOR = 1.15;   /* fallback visine reda dok font nije učitan (1. render) */
+  var OBTJ_LH_FINO = 1.0;      /* fino doštimavanje izmjerene visine reda (ako blok prima red previše/premalo) */
+  var _mjerCanvas = null, _mjerFontReg = {};
+  function _mjerCtx() {
+    if (typeof global.document === 'undefined' || !global.document.createElement) return null;
+    if (!_mjerCanvas) _mjerCanvas = global.document.createElement('canvas');
+    return _mjerCanvas.getContext ? _mjerCanvas.getContext('2d') : null;
+  }
+  /* Registriraj mjerni font (FontFace) iz vfs-a ili s URL-a — točnije lomljenje na sljedećim renderima. */
+  function _registrirajMjerniFont(porodica) {
+    if (!porodica || _mjerFontReg[porodica]) return;
+    _mjerFontReg[porodica] = true;
+    try {
+      if (typeof global.FontFace === 'undefined' || typeof global.document === 'undefined' || !global.document.fonts) return;
+      var file = porodica + '-Regular.ttf';
+      var src = (global.pdfMake && global.pdfMake.vfs && global.pdfMake.vfs[file])
+        ? 'url(data:font/ttf;base64,' + global.pdfMake.vfs[file] + ')'
+        : 'url(' + appUrl('fontovi/' + file) + ')';
+      var ff = new global.FontFace(porodica, src);
+      ff.load().then(function (l) { try { global.document.fonts.add(l); } catch (e) {} }).catch(function () {});
+    } catch (e) {}
+  }
+  /* Lomi JEDAN odlomak na linije (canvas), uz uvlaku prvog reda (prvi red ima manju širinu).
+     Vraća niz linija (stringova); za split bloka i brojanje redova u prelijevanju okvira. */
+  function _lomiOdlomak(tekst, maxW, indentPt, fontStr) {
+    var ctx = _mjerCtx();
+    var rijeci = String(tekst == null ? '' : tekst).split(/\s+/).filter(function (w) { return w.length; });
+    if (!rijeci.length) return [''];
+    if (!ctx) return [String(tekst)];
+    ctx.font = fontStr;
+    var lines = [], cur = '', prvi = true;
+    for (var i = 0; i < rijeci.length; i++) {
+      var probe = cur ? (cur + ' ' + rijeci[i]) : rijeci[i];
+      var w = prvi ? (maxW - (indentPt || 0)) : maxW;
+      if (cur && ctx.measureText(probe).width > w) { lines.push(cur); cur = rijeci[i]; prvi = false; }
+      else cur = probe;
+    }
+    lines.push(cur);
+    return lines;
   }
 
   /* Dimenzije stranice u pt (s orijentacijom). Za izračun ishodišta apsolutnih slika (npr. podnožje). */
@@ -355,8 +420,16 @@
     }
 
     var content = [], headerTxt = [], headerSlike = [], footer = [];   /* headerSlike: { el, stil } radi potiskuje */
+    var okviriPoId = {};
+    (model.okviri || []).forEach(function (o) { if (o && o.id != null) okviriPoId[String(o.id)] = o; });
+    var okvirStavke = {};   /* okvir_id → [raw stavke] (vezani tekst blokovi) */
     stavke.forEach(function (s) {
       if (!s || s.greska || s.sakrij) return;
+      /* Vezani tekst blok: skupi RAW stavke po okviru (render = prelijevanje u geometriji bloka). */
+      if (s.okvir_id && okviriPoId[String(s.okvir_id)]) {
+        (okvirStavke[String(s.okvir_id)] = okvirStavke[String(s.okvir_id)] || []).push(s);
+        return;
+      }
       if (s.zona === 'zaglavlje') {
         if (s.vrsta === 'slika') {
           var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
@@ -375,6 +448,139 @@
       if (!el.length) return;
       if (s.zona === 'podnozje') footer = footer.concat(el);
       else content = content.concat(el);        /* tijelo + (zasad) naslovna */
+    });
+
+    /* Okviri (vezani tekst blokovi) → tekst se lomi: M redova u bloku (širina bloka), ostatak
+       PUNOM ŠIRINOM (margina–margina) ispod bloka. M = visina bloka / prored; meki rub = ceil
+       (prelivni red cijel), tvrdi = floor. Mjerenje širine lomljenja: canvas u istoj porodici. */
+    Object.keys(okvirStavke).forEach(function (oid) {
+      var o = okviriPoId[oid];
+      var bx = mm(o, 'x_mm'), by = mm(o, 'y_mm'), bw = mm(o, 'sirina_mm'), bh = mm(o, 'visina_mm');
+      if (bw <= 0 || bh <= 0) return;
+      var lista = okvirStavke[oid];
+      /* Ne-tekst (slike) u okviru → apsolutno u blok (bez prelijevanja). */
+      lista.forEach(function (s) {
+        if (s.vrsta !== 'tekst') { var elx = elementi(s); if (elx.length) content.push({ stack: elx, width: bw, absolutePosition: { x: bx, y: by } }); }
+      });
+      var tekstStavke = lista.filter(function (s) { return s.vrsta === 'tekst' && s.odlomci && s.odlomci.length; });
+      if (!tekstStavke.length) return;
+      var first = tekstStavke[0];
+      var ps = (first.paragraf_id && parStilovi[first.paragraf_id]) ? parStilovi[first.paragraf_id] : {};
+      var fsPt = broj(ps.velicina_pt) || 12;
+      var prored = broj(ps.prored) || 1;
+      /* Extra prored dokumenta (modal stepper): override SAMO na stilu dokument_prored_default_stil
+         (proredStilId) — mijenja mrežu (lhPt) i pdfmake lineHeight okvir-teksta. */
+      if (opts.proredVrijednost != null && opts.proredStilId && ps && +ps.id === +opts.proredStilId) prored = broj(opts.proredVrijednost);
+      var por = str(ps.poravnanje) || 'left';
+      var boja = str(ps.boja) || '#000000';
+      var kljuc = first.font_kljuc || undefined;
+      var porodica = null, serverLh = null;
+      (model.fontovi || []).forEach(function (f) { if (f.kljuc === kljuc) { porodica = f.porodica; if (f.lh != null) serverLh = broj(f.lh); } });
+      _registrirajMjerniFont(porodica);
+      var fontStr = fsPt + 'px "' + (porodica || 'sans-serif') + '", sans-serif';
+      /* Visina reda (mreža za blok + nastavak → jedinstven prored, točan meki rub):
+         1) točna metrika fonta sa servera (OS/2 typo) — stabilno, neovisno o renderu;
+         2) fallback: prirodna visina reda iz canvasa (fontBoundingBox) kad je font učitan;
+         3) fallback: konstanta OBTJ_LH_FAKTOR. Fino ugađanje preko OBTJ_LH_FINO. */
+      var lhFaktor = OBTJ_LH_FAKTOR;
+      if (serverLh && serverLh > 0.8 && serverLh < 2.2) {
+        lhFaktor = serverLh;
+      } else {
+        var _mc = _mjerCtx();
+        if (_mc && porodica && global.document && global.document.fonts && global.document.fonts.check) {
+          try {
+            if (global.document.fonts.check(fontStr)) {
+              _mc.font = fontStr;
+              var _mt = _mc.measureText('Hg');
+              if (_mt && _mt.fontBoundingBoxAscent != null && _mt.fontBoundingBoxDescent != null) {
+                var _nat = (_mt.fontBoundingBoxAscent + _mt.fontBoundingBoxDescent) / fsPt;
+                if (_nat > 0.8 && _nat < 2.2) lhFaktor = _nat;
+              }
+            }
+          } catch (e) {}
+        }
+      }
+      var lhPt = fsPt * prored * lhFaktor * OBTJ_LH_FINO;
+      /* Spoji sav tekst okvira (odlomak po odlomak iz svih tekst-stavki). */
+      var paragrafi = [];
+      tekstStavke.forEach(function (s) {
+        (s.odlomci || []).forEach(function (od) {
+          var t2 = ''; for (var r = 0; r < od.length; r++) t2 += (od[r] && od[r].text != null ? od[r].text : '');
+          paragrafi.push(t2);
+        });
+      });
+      var puniTekst = paragrafi.join('\n');
+      var paras = puniTekst.split('\n');
+      var uvlPt = mm(ps, 'uvlaka_prvi_red_mm');      /* uvlaka prvog reda odlomka */
+      var razPosPt = mm(ps, 'razmak_poslije_mm');    /* razmak iza odlomka */
+      var meka = (o.y_meka === 1 || o.y_meka === '1' || o.y_meka === true);
+      var paraLines = [];
+      for (var pli = 0; pli < paras.length; pli++) paraLines.push(_lomiOdlomak(paras[pli], bw, uvlPt, fontStr));
+      /* Hod kroz odlomke/linije: nakupljaj visinu (lhPt po liniji + razmak_poslije po odlomku);
+         meki rub uključuje liniju koja straddla dno bloka. Split = prva linija iznad dna bloka. */
+      var usedH = 0, splitPara = paras.length, splitLine = 0, gotovo = false;
+      for (var wpi = 0; wpi < paras.length && !gotovo; wpi++) {
+        var lns = paraLines[wpi];
+        for (var wli = 0; wli < lns.length; wli++) {
+          var over = meka ? (usedH >= bh - 0.01) : (usedH + lhPt > bh + 0.01);
+          if (over) { splitPara = wpi; splitLine = wli; gotovo = true; break; }
+          usedH += lhPt;
+        }
+        if (gotovo) break;
+        if (wpi < paras.length - 1) usedH += razPosPt;   /* razmak iza odlomka (ne iza zadnjeg) */
+      }
+      /* Jedan odlomak → pdfmake element (uvlaka prvog reda + razmak iza). Zadnji red odlomka pdfmake
+         ostavlja lijevo poravnat (kraj odlomka) — što je ispravno za PUNE odlomke. */
+      function odlomakEl(tekst, indent, marginDolje) {
+        var el = { text: tekst, fontSize: fsPt, lineHeight: prored, alignment: por, color: boja, margin: [0, 0, 0, marginDolje || 0] };
+        if (kljuc) el.font = kljuc;
+        if (indent && uvlPt) el.leadingIndent = uvlPt;
+        return el;
+      }
+      /* Ručno obostrano poravnanje JEDNE linije: riječi kao 'auto' stupci, '*' razmaci IZMEĐU riječi
+         (jednolika raspodjela viška, bez praznine na kraju). Koristi se za blokove redove odlomka koji
+         se NASTAVLJA (svi se justifiraju, pa i zadnji u bloku) — bez pdfmake filler-trika i završnog razmaka. */
+      function justifyRed(rijeci, indentPt) {
+        if (por !== 'justify' || rijeci.length < 2) {
+          var el = { text: rijeci.join(' '), fontSize: fsPt, lineHeight: prored, alignment: por, color: boja, margin: [indentPt || 0, 0, 0, 0] };
+          if (kljuc) el.font = kljuc;
+          return el;
+        }
+        var cols = [];
+        if (indentPt) cols.push({ text: '', width: indentPt });
+        for (var ji = 0; ji < rijeci.length; ji++) {
+          var w = { text: rijeci[ji], width: 'auto', fontSize: fsPt, lineHeight: prored, color: boja };
+          if (kljuc) w.font = kljuc;
+          cols.push(w);
+          if (ji < rijeci.length - 1) cols.push({ text: '', width: '*' });
+        }
+        return { columns: cols, columnGap: 0 };
+      }
+      var blockStack = [], contStack = [];
+      for (var bpi = 0; bpi <= splitPara && bpi < paras.length; bpi++) {
+        if (bpi < splitPara) {
+          blockStack.push(odlomakEl(paras[bpi], true, razPosPt));               /* cijeli odlomak u bloku */
+        } else if (splitLine > 0) {
+          /* Dio odlomka koji se NASTAVLJA → svi blokovi redovi ručno justifirani (i zadnji). */
+          var spRows = [], spLines = paraLines[bpi].slice(0, splitLine);
+          for (var sl = 0; sl < spLines.length; sl++) spRows.push(justifyRed(spLines[sl].split(' ').filter(Boolean), sl === 0 ? uvlPt : 0));
+          blockStack.push({ stack: spRows });
+        }
+      }
+      if (splitPara < paras.length) {
+        if (splitLine === 0) {
+          contStack.push(odlomakEl(paras[splitPara], true, razPosPt));          /* cijeli odlomak ide u nastavak */
+        } else {
+          var contTxt = paraLines[splitPara].slice(splitLine).join(' ');         /* ostatak odlomka (bez uvlake) */
+          if (contTxt) contStack.push(odlomakEl(contTxt, false, razPosPt));
+        }
+        for (var cpi = splitPara + 1; cpi < paras.length; cpi++) contStack.push(odlomakEl(paras[cpi], true, razPosPt));
+      }
+      if (blockStack.length) content.push({ stack: blockStack, width: bw, absolutePosition: { x: bx, y: by } });
+      if (contStack.length) {
+        var mLpt = mm(t, 'margina_lijevo_mm'), mRpt = mm(t, 'margina_desno_mm');
+        content.push({ stack: contStack, width: dimPt.w - mLpt - mRpt, absolutePosition: { x: mLpt, y: by + usedH } });
+      }
     });
 
     /* Margine tijela moraju poštovati zaglavlje/podnožje. pdfmake ima JEDNU pageMargins za sve stranice, pa:

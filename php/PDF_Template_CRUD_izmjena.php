@@ -60,12 +60,9 @@ try {
     $stmt->execute();
     $stmt->close();
 
-    // Replace okvira: obriši stare pa upiši nove
-    $del = $mysqli->prepare('DELETE FROM pdf_template_okvir WHERE template_id = ?');
-    $del->bind_param('i', $id);
-    $del->execute();
-    $del->close();
-    pdf_template_upisi_okvire($mysqli, $id, $okviri);
+    // Okviri: UPDATE postojećih (čuva id) + INSERT novih + DELETE samo uklonjenih.
+    // Ne smije se raditi DELETE-all jer FK ON DELETE SET NULL ponuli okvir_id u dokumentima.
+    pdf_template_spremi_okvire($mysqli, $id, $okviri);
 
     $mysqli->commit();
     echo 'OK';

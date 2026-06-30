@@ -120,6 +120,52 @@ if (!function_exists('pdf_font_subtables_cache')) {
     }
 }
 
+if (!function_exists('pdf_font_table_offset')) {
+    /** Offset TTF tablice po tagu (npr. 'head','OS/2','hhea') ili null. */
+    function pdf_font_table_offset($data, $tag)
+    {
+        if (strlen($data) < 12) return null;
+        $num = unpack('n', substr($data, 4, 2))[1];
+        $off = 12;
+        for ($i = 0; $i < $num; $i++) {
+            if ($off + 16 > strlen($data)) break;
+            if (substr($data, $off, 4) === $tag) return unpack('N', substr($data, $off + 8, 4))[1];
+            $off += 16;
+        }
+        return null;
+    }
+}
+
+if (!function_exists('pdf_font_lh_faktor')) {
+    /** Faktor visine reda fonta = (ascender - descender + lineGap) / unitsPerEm.
+     *  Primarno OS/2 sTypo metrike (kao većina layout engina), fallback hhea. null ako ne uspije.
+     *  Množi se s velicina_pt × prored da se dobije visina reda (mreža za prelijevanje okvira). */
+    function pdf_font_lh_faktor($dir, $porodica, $varijanta = 'Regular')
+    {
+        static $cache = [];
+        $path = $dir . '/' . $porodica . '-' . $varijanta . '.ttf';
+        if (array_key_exists($path, $cache)) return $cache[$path];
+        $data = @file_get_contents($path);
+        if ($data === false) { $cache[$path] = null; return null; }
+        $s16 = function ($o) use ($data) { if ($o + 2 > strlen($data)) return null; $v = unpack('n', substr($data, $o, 2))[1]; return ($v >= 0x8000) ? ($v - 0x10000) : $v; };
+        $headOff = pdf_font_table_offset($data, 'head');
+        if ($headOff === null || $headOff + 20 > strlen($data)) { $cache[$path] = null; return null; }
+        $upm = unpack('n', substr($data, $headOff + 18, 2))[1];
+        if ($upm <= 0) { $cache[$path] = null; return null; }
+        $asc = $desc = $gap = null;
+        $os2 = pdf_font_table_offset($data, 'OS/2');
+        if ($os2 !== null && $os2 + 74 <= strlen($data)) { $asc = $s16($os2 + 68); $desc = $s16($os2 + 70); $gap = $s16($os2 + 72); }
+        if ($asc === null) {
+            $hhea = pdf_font_table_offset($data, 'hhea');
+            if ($hhea !== null && $hhea + 10 <= strlen($data)) { $asc = $s16($hhea + 4); $desc = $s16($hhea + 6); $gap = $s16($hhea + 8); }
+        }
+        if ($asc === null || $desc === null) { $cache[$path] = null; return null; }
+        $f = ($asc - $desc + (int) $gap) / $upm;
+        $cache[$path] = $f;
+        return $f;
+    }
+}
+
 if (!function_exists('pdf_font_pokriva_cp')) {
     /** Pokriva li font (rezultat pdf_font_subtables_cache) kodnu točku $cp? */
     function pdf_font_pokriva_cp($font, $cp)

@@ -192,7 +192,8 @@ function pdf_template_bind_refs(&$types, array &$vals)
 
 /**
  * Pročita i validira okvire (pdf_template_okvir) iz POST['okviri'] (JSON niz).
- * Vraća listu redova [redoslijed, naziv|null, x_mm, y_mm, sirina_mm, visina_mm, y_meka].
+ * Vraća listu redova [id, redoslijed, naziv|null, x_mm, y_mm, sirina_mm, visina_mm, y_meka].
+ * id > 0 = postojeći okvir (UPDATE, čuva id koji referenciraju dokumenti); 0 = novi (INSERT).
  * Degenerirani okviri (sirina<=0 ili visina<=0) se preskaču. Nikad ne vraća null
  * (prazan/nevaljan payload = nema okvira). Redoslijed se renormalizira 1..N po dolasku.
  * @return array
@@ -244,17 +245,17 @@ function pdf_template_citaj_okvire()
             $naziv = mb_substr($naziv, 0, 50, 'UTF-8');
         }
         $ym = (isset($it['y_meka']) && in_array($it['y_meka'], [1, '1', true, 'true'], true)) ? 1 : 0;
+        $oid = (isset($it['id']) && (int) $it['id'] > 0) ? (int) $it['id'] : 0;
         $red++;
-        $out[] = [$red, $naziv, $x, $y, $sirina, $visina, $ym];
+        $out[] = [$oid, $red, $naziv, $x, $y, $sirina, $visina, $ym];
     }
     return $out;
 }
 
 /**
- * Ubaci okvire za dati template_id (unutar tekuće transakcije; baca mysqli_sql_exception na grešku).
- * @param mysqli $mysqli
- * @param int    $template_id
- * @param array  $okviri  rezultat pdf_template_citaj_okvire()
+ * Ubaci okvire za dati template_id (NOVI template — svi okviri su novi; id iz payloada se ignorira).
+ * Unutar tekuće transakcije; baca mysqli_sql_exception na grešku.
+ * @param array $okviri  rezultat pdf_template_citaj_okvire() — redovi [id, red, naziv, x, y, sir, vis, ym]
  */
 function pdf_template_upisi_okvire($mysqli, $template_id, array $okviri)
 {
@@ -266,15 +267,57 @@ function pdf_template_upisi_okvire($mysqli, $template_id, array $okviri)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     );
     foreach ($okviri as $o) {
-        $red = (int) $o[0];
-        $naziv = $o[1];
-        $x = (float) $o[2];
-        $y = (float) $o[3];
-        $sir = (float) $o[4];
-        $vis = (float) $o[5];
-        $ym = (int) $o[6];
+        $red = (int) $o[1];
+        $naziv = $o[2];
+        $x = (float) $o[3];
+        $y = (float) $o[4];
+        $sir = (float) $o[5];
+        $vis = (float) $o[6];
+        $ym = (int) $o[7];
         $stmt->bind_param('iisddddi', $template_id, $red, $naziv, $x, $y, $sir, $vis, $ym);
         $stmt->execute();
     }
     $stmt->close();
+}
+
+/**
+ * Spremi okvire postojećeg templatea ČUVAJUĆI id-eve (UPDATE postojećih, INSERT novih,
+ * DELETE samo onih kojih više nema u payloadu). Time okvir_id u dokumentima ostaje valjan kad se
+ * okvir samo uređuje; FK ON DELETE SET NULL okida se SAMO za stvarno uklonjene okvire (namjerno).
+ * Unutar tekuće transakcije; baca mysqli_sql_exception na grešku.
+ * @param array $okviri  redovi [id, red, naziv, x, y, sir, vis, ym] (id>0 postojeći, 0 novi)
+ */
+function pdf_template_spremi_okvire($mysqli, $template_id, array $okviri)
+{
+    // Obriši okvire kojih više nema (postojeći id-evi iz payloada se zadržavaju)
+    $zadrzi = [];
+    foreach ($okviri as $o) { if ((int) $o[0] > 0) $zadrzi[] = (int) $o[0]; }
+    if (empty($zadrzi)) {
+        $del = $mysqli->prepare('DELETE FROM pdf_template_okvir WHERE template_id = ?');
+        $del->bind_param('i', $template_id);
+        $del->execute();
+        $del->close();
+    } else {
+        // $zadrzi su int-evi (cast iznad) → sigurno za interpolaciju
+        $inList = implode(',', array_map('intval', $zadrzi));
+        $mysqli->query('DELETE FROM pdf_template_okvir WHERE template_id = ' . (int) $template_id . ' AND id NOT IN (' . $inList . ')');
+    }
+    if (empty($okviri)) {
+        return;
+    }
+    $upd = $mysqli->prepare('UPDATE pdf_template_okvir SET redoslijed = ?, naziv = ?, x_mm = ?, y_mm = ?, sirina_mm = ?, visina_mm = ?, y_meka = ? WHERE id = ? AND template_id = ?');
+    $ins = $mysqli->prepare('INSERT INTO pdf_template_okvir (template_id, redoslijed, naziv, x_mm, y_mm, sirina_mm, visina_mm, y_meka) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    foreach ($okviri as $o) {
+        $oid = (int) $o[0]; $red = (int) $o[1]; $naziv = $o[2];
+        $x = (float) $o[3]; $y = (float) $o[4]; $sir = (float) $o[5]; $vis = (float) $o[6]; $ym = (int) $o[7];
+        if ($oid > 0) {
+            $upd->bind_param('isddddiii', $red, $naziv, $x, $y, $sir, $vis, $ym, $oid, $template_id);
+            $upd->execute();
+        } else {
+            $ins->bind_param('iisddddi', $template_id, $red, $naziv, $x, $y, $sir, $vis, $ym);
+            $ins->execute();
+        }
+    }
+    $upd->close();
+    $ins->close();
 }

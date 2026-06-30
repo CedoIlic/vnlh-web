@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/require_login_api.php';
 // Kandidat_Dokumenti_CRUD_jedan.php – dohvat životopisa kandidata po id_clan.
-// GET id_clan. Vraća JSON { id_clan, postoji (bool), zivotopis (string|null) }.
+// GET id_clan. Vraća JSON { id_clan, id (red u tablici|null), postoji (bool), zivotopis (string|null), dokument_prored (string|null) }.
 
 $db_ret = require_once __DIR__ . '/00_db.php';
 if ($db_ret !== -1) { header('Content-Type: text/plain'); echo $db_ret; exit; }
@@ -16,16 +16,16 @@ if ($id_clan <= 0) {
 }
 
 try {
-    $stmt = $mysqli->prepare('SELECT zivotopis FROM kandidat_dokumenti_zivotopis WHERE id_clan = ? LIMIT 1');
+    $stmt = $mysqli->prepare('SELECT id, zivotopis, dokument_prored FROM kandidat_dokumenti_zivotopis WHERE id_clan = ? LIMIT 1');
     $stmt->bind_param('i', $id_clan);
     $stmt->execute();
     $res = $stmt->get_result();
     $row = $res->fetch_assoc();
     $stmt->close();
     if ($row) {
-        echo json_encode(['id_clan' => $id_clan, 'postoji' => true, 'zivotopis' => $row['zivotopis']], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['id_clan' => $id_clan, 'id' => (int) $row['id'], 'postoji' => true, 'zivotopis' => $row['zivotopis'], 'dokument_prored' => $row['dokument_prored']], JSON_UNESCAPED_UNICODE);
     } else {
-        echo json_encode(['id_clan' => $id_clan, 'postoji' => false, 'zivotopis' => null], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['id_clan' => $id_clan, 'id' => null, 'postoji' => false, 'zivotopis' => null, 'dokument_prored' => null], JSON_UNESCAPED_UNICODE);
     }
 } catch (mysqli_sql_exception $e) {
     echo json_encode(['greska' => '200,' . $e->getCode()], JSON_UNESCAPED_UNICODE);
