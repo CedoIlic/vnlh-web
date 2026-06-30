@@ -1,0 +1,213 @@
+/* PDF_Stilovi_Tablice_CRUD — stil tablice (pdf_tablica_stil + _kolona). Desktop only. */
+
+/* PDF boje 6-hex bez prozirnosti → gasi alpha klizač (JS čita token s :root). */
+:root { --kontrola_boja_alpha: 0; }
+
+/* Raspored (uzor PDF_Template): gornji red = tablica lijevo + pregled desno; edit pune širine ispod. */
+.pdf-stilovi-tablice-crud__gornji-red {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.pdf-stilovi-tablice-crud__panel-tablica {
+  flex: 0 0 22rem;
+  min-height: 22rem;
+  margin-bottom: 0;
+}
+.pdf-stilovi-tablice-crud__desno {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+.pdf-stilovi-tablice-crud__desno .pdf-stilovi-tablice-crud__preview-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 0;
+}
+.pdf-stilovi-tablice-crud__panel-edit { width: 100%; }
+
+/* Aktivni tab u negativu + disabled kartica */
+.pdf-stilovi-tablice-crud__tab .kontrola-tab__kartica--aktivna:not(:disabled) {
+  background: var(--tab_kontrola_header_text);
+  color: var(--tab_kontrola_body_bg);
+  -webkit-text-fill-color: var(--tab_kontrola_body_bg);
+  border-color: var(--tab_kontrola_header_text);
+}
+.pdf-stilovi-tablice-crud__tab .kontrola-tab__kartica:disabled {
+  opacity: 1;
+  color: var(--label_text_disabled);
+  -webkit-text-fill-color: var(--label_text_disabled);
+  background: var(--edit_bg_disabled);
+  border-color: var(--edit_border_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled, none);
+  cursor: not-allowed;
+}
+
+.pdf-stilovi-tablice-crud__edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Naziv + Nasljedi */
+.pdf-stilovi-tablice-crud__naziv-red {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+.pdf-stilovi-tablice-crud__naziv-polje,
+.pdf-stilovi-tablice-crud__naslijedi-polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.pdf-stilovi-tablice-crud__naslijedi-polje[hidden] { display: none; }
+.pdf-stilovi-tablice-crud__naziv-kontrola,
+.pdf-stilovi-tablice-crud__naslijedi { width: 100%; }
+
+/* Redovi / polja */
+.pdf-stilovi-tablice-crud__red {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.pdf-stilovi-tablice-crud__red:last-child { margin-bottom: 0; }
+.pdf-stilovi-tablice-crud__red--cekboxi { align-items: center; gap: 1.5rem; }
+.pdf-stilovi-tablice-crud__red--boja-cb { align-items: center; gap: 1rem; }
+.pdf-stilovi-tablice-crud__red[hidden],
+.pdf-stilovi-tablice-crud__polje[hidden] { display: none; }
+
+.pdf-stilovi-tablice-crud__polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+/* Dva stupca s pregradnom linijom */
+.pdf-stilovi-tablice-crud__dva-stupca { display: flex; align-items: stretch; }
+.pdf-stilovi-tablice-crud__stupac {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.pdf-stilovi-tablice-crud__stupac:first-child {
+  padding-right: 1.25rem;
+  border-right: 1px solid var(--edit_border, #ced4da);
+}
+.pdf-stilovi-tablice-crud__stupac:last-child { padding-left: 1.25rem; }
+.pdf-stilovi-tablice-crud__stupac .pdf-stilovi-tablice-crud__red { margin-bottom: 0; }
+
+/* Naslov bloka (Zaglavlje / Podaci / Linije / Ispune …) */
+.pdf-stilovi-tablice-crud__blok-naslov {
+  font-weight: 600;
+  color: var(--label_text, #333);
+  border-bottom: 1px solid var(--edit_border, #ced4da);
+  padding-bottom: 0.2rem;
+}
+
+/* Rastegnuto polje */
+.pdf-stilovi-tablice-crud__polje--rastegni { min-width: 0; }
+.pdf-stilovi-tablice-crud__polje--rastegni .pdf-stilovi-tablice-crud__unos-mjera { width: 100%; }
+.pdf-stilovi-tablice-crud__polje--rastegni .pdf-stilovi-tablice-crud__num { flex: 1 1 auto; width: auto; min-width: 0; }
+.pdf-stilovi-tablice-crud__polje--rastegni .kontrola-select { width: 100%; }
+.pdf-stilovi-tablice-crud__red > .pdf-stilovi-tablice-crud__polje--rastegni { flex: 1 1 0; }
+
+/* Numerički + jedinica */
+.pdf-stilovi-tablice-crud__num { width: 5rem; text-align: right; }
+.pdf-stilovi-tablice-crud__unos-mjera { display: flex; align-items: center; gap: 0.35rem; }
+.pdf-stilovi-tablice-crud__mjera { flex: 0 0 auto; white-space: nowrap; font-size: 0.9em; opacity: 0.75; }
+
+/* Boja puni širinu ćelije */
+.pdf-stilovi-tablice-crud__polje--boja .kontrola-boja { display: flex; width: 100%; }
+.pdf-stilovi-tablice-crud__polje--boja .kontrola-boja__hex { flex: 1 1 auto; width: auto; min-width: 0; }
+
+/* Linija-red (Grafika): label | debljina mm | boja */
+.pdf-stilovi-tablice-crud__linija-red {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.pdf-stilovi-tablice-crud__linija-label {
+  flex: 0 0 9rem;
+  white-space: nowrap;
+}
+.pdf-stilovi-tablice-crud__linija-red .kontrola-boja { flex: 1 1 auto; display: flex; min-width: 0; }
+.pdf-stilovi-tablice-crud__linija-red .kontrola-boja__hex { flex: 1 1 auto; width: auto; min-width: 0; }
+
+/* Otvoreni select smije izaći iz tab kontrole */
+.pdf-stilovi-tablice-crud__tab:has(.kontrola-select--open),
+.pdf-stilovi-tablice-crud__tab .kontrola-tab__tijelo:has(.kontrola-select--open),
+.pdf-stilovi-tablice-crud__tab .kontrola-tab__panel:has(.kontrola-select--open) { overflow: visible; }
+
+/* Tabovi: jednaki fontovi */
+.pdf-stilovi-tablice-crud__tab .kontrola-tab__tijelo,
+.pdf-stilovi-tablice-crud__tab .kontrola-tab__tijelo .kontrola-labela,
+.pdf-stilovi-tablice-crud__tab .kontrola-tab__tijelo .kontrola-edit,
+.pdf-stilovi-tablice-crud__tab .kontrola-tab__tijelo .kontrola-select select {
+  font-family: var(--tab_kontrola_body_font_family);
+  font-size: var(--tab_kontrola_body_font_size);
+  font-weight: var(--tab_kontrola_body_font_weight);
+  font-style: normal;
+}
+
+/* Checkbox + labela */
+.pdf-stilovi-tablice-crud__cb { display: inline-flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
+.pdf-stilovi-tablice-crud__cb .kontrola-labela { white-space: nowrap; }
+
+/* ===== Tab Kolone ===== */
+.pdf-stilovi-tablice-crud__kolone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.pdf-stilovi-tablice-crud__kolone-traka { display: flex; gap: 0.4rem; }
+.pdf-stilovi-tablice-crud__kolone-tablica { height: 8rem; }
+.pdf-stilovi-tablice-crud__kolone-tablica .kontrola-tablica { height: 100%; }
+.pdf-stilovi-tablice-crud__kolone-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-top: 1px solid var(--edit_border, #ced4da);
+  padding-top: 0.6rem;
+}
+
+/* Napomena + footer */
+.pdf-stilovi-tablice-crud__napomena-red { display: flex; flex-direction: column; gap: 0.25rem; }
+.pdf-stilovi-tablice-crud__edit-footer { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.pdf-stilovi-tablice-crud__footer-left,
+.pdf-stilovi-tablice-crud__footer-right { display: flex; gap: 0.5rem; }
+
+/* ===== Pregled (pdfmake iframe) ===== */
+.pdf-stilovi-tablice-crud__preview-header {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.pdf-stilovi-tablice-crud__preview-panel { height: 22rem; min-height: 18rem; }
+.pdf-stilovi-tablice-crud__preview-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  background: var(--c-gray-200, #e9ecef);
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+.pdf-stilovi-tablice-crud__preview-panel--disabled .pdf-stilovi-tablice-crud__preview-body { background: var(--edit_bg_disabled, #e9ecef); }
+.pdf-stilovi-tablice-crud__preview-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+  border-radius: var(--edit_radius, 6px);
+}

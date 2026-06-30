@@ -1,0 +1,56 @@
+-- Stil tablice za PDF generator: vizual (fontovi/linije/ispune/padding) + globalne opcije.
+-- Definicija stupaca je u pdf_tablica_stil_kolona; podaci (relacija/redovi) dolaze iz stavke pdf_dokument.
+CREATE TABLE `pdf_tablica_stil` (
+  `id`                            int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `naziv`                         varchar(50) NOT NULL COMMENT 'Naziv stila tablice (jedinstven)',
+  `napomena`                      varchar(1024) DEFAULT NULL COMMENT 'Interna napomena administratora',
+  -- Osnovno: fontovi (zaglavlje / podaci)
+  `zaglavlje_font_id`             int(11) unsigned DEFAULT NULL COMMENT 'FK pdf_fontovi — font zaglavlja',
+  `zaglavlje_velicina_pt`         decimal(5,2) DEFAULT NULL COMMENT 'Veličina fonta zaglavlja (pt)',
+  `zaglavlje_bold`                tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Zaglavlje podebljano',
+  `zaglavlje_italic`              tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Zaglavlje kurziv',
+  `zaglavlje_podcrtano`           tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Zaglavlje podcrtano',
+  `zaglavlje_boja`                varchar(7) DEFAULT NULL COMMENT 'Boja teksta zaglavlja (#RRGGBB)',
+  `podaci_font_id`                int(11) unsigned DEFAULT NULL COMMENT 'FK pdf_fontovi — font podataka',
+  `podaci_velicina_pt`            decimal(5,2) DEFAULT NULL COMMENT 'Veličina fonta podataka (pt)',
+  `podaci_bold`                   tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Podaci podebljano',
+  `podaci_italic`                 tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Podaci kurziv',
+  `podaci_podcrtano`              tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Podaci podcrtano',
+  `podaci_boja`                   varchar(7) DEFAULT NULL COMMENT 'Boja teksta podataka (#RRGGBB)',
+  -- Grafika: linije (debljina mm + boja)
+  `okvir_debljina_mm`             decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Vanjski okvir tablice (sve 4 strane); 0 = bez',
+  `okvir_boja`                    varchar(7) DEFAULT NULL COMMENT 'Boja vanjskog okvira',
+  `zaglavlje_linija_debljina_mm`  decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Debljina linije ISPOD zaglavlja',
+  `zaglavlje_linija_boja`         varchar(7) DEFAULT NULL COMMENT 'Boja linije ispod zaglavlja',
+  `linija_vert_debljina_mm`       decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Debljina okomitih linija (između stupaca)',
+  `linija_vert_boja`              varchar(7) DEFAULT NULL COMMENT 'Boja okomitih linija',
+  `linija_red_debljina_mm`        decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Debljina vodoravnih linija između redaka podataka',
+  `linija_red_boja`               varchar(7) DEFAULT NULL COMMENT 'Boja linija između redaka',
+  -- Grafika: ispune
+  `zaglavlje_pozadina`            tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Ima li zaglavlje pozadinu',
+  `zaglavlje_pozadina_boja`       varchar(7) DEFAULT NULL COMMENT 'Boja pozadine zaglavlja',
+  `zebra`                         tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Naizmjenična pozadina parnih redova',
+  `zebra_boja`                    varchar(7) DEFAULT NULL COMMENT 'Boja zebra-pozadine',
+  -- Grafika: vertikalni padding ćelije (per regija)
+  `zaglavlje_padding_gore_mm`     decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Vert. padding ćelije zaglavlja — gore',
+  `zaglavlje_padding_dolje_mm`    decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Vert. padding ćelije zaglavlja — dolje',
+  `podaci_padding_gore_mm`        decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Vert. padding ćelije podataka — gore',
+  `podaci_padding_dolje_mm`       decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Vert. padding ćelije podataka — dolje',
+  -- Ostalo
+  `razdvajac`                     varchar(8) NOT NULL DEFAULT '|' COMMENT 'Razdvajač vrijednosti reda iz stavke (znak kojeg nema u podacima)',
+  `prikazi_zaglavlje`             tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Prikaži red zaglavlja',
+  `zaglavlje_ponavljanje`         enum('prva','svaka') NOT NULL DEFAULT 'prva' COMMENT 'Zaglavlje samo na 1. stranici / ponovi na svim (pdfmake headerRows)',
+  `ne_lomi_red`                   tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Red ne smije prijeći preko stranice (pdfmake dontBreakRows)',
+  `razmak_prije_mm`               decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Razmak iznad tablice',
+  `razmak_poslije_mm`             decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Razmak ispod tablice',
+  `pozicioniranje`                enum('u_tijeku','apsolutno') NOT NULL DEFAULT 'u_tijeku' COMMENT 'U toku dokumenta / apsolutno (x,y)',
+  `poravnanje`                    enum('lijevo','centar','desno') NOT NULL DEFAULT 'lijevo' COMMENT 'Poravnanje tablice kad nije puna širina (u_tijeku)',
+  `pozicija_x_mm`                 decimal(6,2) DEFAULT NULL COMMENT 'Apsolutno: x gornjeg-lijevog kuta (mm)',
+  `pozicija_y_mm`                 decimal(6,2) DEFAULT NULL COMMENT 'Apsolutno: y gornjeg-lijevog kuta (mm)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_tablica_stil_naziv` (`naziv`),
+  KEY `fk_tablica_stil_zag_font` (`zaglavlje_font_id`),
+  KEY `fk_tablica_stil_pod_font` (`podaci_font_id`),
+  CONSTRAINT `fk_tablica_stil_zag_font` FOREIGN KEY (`zaglavlje_font_id`) REFERENCES `pdf_fontovi` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_tablica_stil_pod_font` FOREIGN KEY (`podaci_font_id`) REFERENCES `pdf_fontovi` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
