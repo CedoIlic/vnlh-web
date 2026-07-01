@@ -12,7 +12,8 @@
 }
 .pdf-stilovi-tablice-crud__panel-tablica {
   flex: 0 0 22rem;
-  min-height: 22rem;
+  height: 28.6rem;        /* init +30% (22 → 28.6); isti kao desni Pregled */
+  min-height: 28.6rem;    /* bez smanjivanja ispod inicijalne */
   margin-bottom: 0;
 }
 .pdf-stilovi-tablice-crud__desno {
@@ -50,21 +51,7 @@
   gap: 0.75rem;
 }
 
-/* Naziv + Nasljedi */
-.pdf-stilovi-tablice-crud__naziv-red {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-}
-.pdf-stilovi-tablice-crud__naziv-polje,
-.pdf-stilovi-tablice-crud__naslijedi-polje {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  flex: 1 1 0;
-  min-width: 0;
-}
-.pdf-stilovi-tablice-crud__naslijedi-polje[hidden] { display: none; }
+/* Naziv + Nasljedi (kolona 1 taba Osnovno) */
 .pdf-stilovi-tablice-crud__naziv-kontrola,
 .pdf-stilovi-tablice-crud__naslijedi { width: 100%; }
 
@@ -78,6 +65,17 @@
 }
 .pdf-stilovi-tablice-crud__red:last-child { margin-bottom: 0; }
 .pdf-stilovi-tablice-crud__red--cekboxi { align-items: center; gap: 1.5rem; }
+.pdf-stilovi-tablice-crud__red--biu-velicina { justify-content: space-between; align-items: flex-end; gap: 1rem; }
+.pdf-stilovi-tablice-crud__red--stack { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+
+/* Polje s labelom lijevo od kontrole (umjesto iznad) */
+.pdf-stilovi-tablice-crud__polje.pdf-stilovi-tablice-crud__polje--inline { flex-direction: row; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.pdf-stilovi-tablice-crud__polje--inline > .kontrola-labela { flex: 0 0 auto; white-space: nowrap; }
+.pdf-stilovi-tablice-crud__polje--inline > .kontrola-edit { width: 5rem; }
+
+/* Fiksna širina (Kolone): mm edit uži za 30% (5rem → 3.5rem) */
+#kol_sirina_mm { width: 3.5rem; }
+.pdf-stilovi-tablice-crud__biu { display: inline-flex; align-items: center; gap: 1.25rem; flex: 0 0 auto; }
 .pdf-stilovi-tablice-crud__red--boja-cb { align-items: center; gap: 1rem; }
 .pdf-stilovi-tablice-crud__red[hidden],
 .pdf-stilovi-tablice-crud__polje[hidden] { display: none; }
@@ -98,12 +96,32 @@
   flex: 1 1 0;
   min-width: 0;
 }
-.pdf-stilovi-tablice-crud__stupac:first-child {
+.pdf-stilovi-tablice-crud__dva-stupca > .pdf-stilovi-tablice-crud__stupac:first-child {
   padding-right: 1.25rem;
   border-right: 1px solid var(--edit_border, #ced4da);
 }
-.pdf-stilovi-tablice-crud__stupac:last-child { padding-left: 1.25rem; }
+.pdf-stilovi-tablice-crud__dva-stupca > .pdf-stilovi-tablice-crud__stupac:last-child { padding-left: 1.25rem; }
 .pdf-stilovi-tablice-crud__stupac .pdf-stilovi-tablice-crud__red { margin-bottom: 0; }
+
+/* Tri / četiri stupca s pregradnim linijama (tabovi Osnovno, Grafika) */
+.pdf-stilovi-tablice-crud__tri-stupca,
+.pdf-stilovi-tablice-crud__cetiri-stupca { display: flex; align-items: stretch; }
+.pdf-stilovi-tablice-crud__tri-stupca > .pdf-stilovi-tablice-crud__stupac,
+.pdf-stilovi-tablice-crud__cetiri-stupca > .pdf-stilovi-tablice-crud__stupac {
+  padding: 0 1.25rem;
+  border-right: 1px solid var(--edit_border, #ced4da);
+}
+.pdf-stilovi-tablice-crud__tri-stupca > .pdf-stilovi-tablice-crud__stupac:first-child,
+.pdf-stilovi-tablice-crud__cetiri-stupca > .pdf-stilovi-tablice-crud__stupac:first-child { padding-left: 0; }
+.pdf-stilovi-tablice-crud__tri-stupca > .pdf-stilovi-tablice-crud__stupac:last-child,
+.pdf-stilovi-tablice-crud__cetiri-stupca > .pdf-stilovi-tablice-crud__stupac:last-child { padding-right: 0; border-right: none; }
+
+/* Grafika: prva kolona (Linije) 100% šira (dvostruko) od ostalih */
+.pdf-stilovi-tablice-crud__tri-stupca--siroka-prva > .pdf-stilovi-tablice-crud__stupac:first-child { flex-grow: 2; }
+
+/* Napomena puni visinu kolone 4 */
+.pdf-stilovi-tablice-crud__polje--napomena { flex: 1 1 auto; }
+.pdf-stilovi-tablice-crud__polje--napomena .kontrola-napomena { flex: 1 1 auto; resize: vertical; }
 
 /* Naslov bloka (Zaglavlje / Podaci / Linije / Ispune …) */
 .pdf-stilovi-tablice-crud__blok-naslov {
@@ -125,22 +143,54 @@
 .pdf-stilovi-tablice-crud__unos-mjera { display: flex; align-items: center; gap: 0.35rem; }
 .pdf-stilovi-tablice-crud__mjera { flex: 0 0 auto; white-space: nowrap; font-size: 0.9em; opacity: 0.75; }
 
+/* Strelice (spinner) UNUTAR edit kontrole veličine — povećaj/smanji */
+.pdf-stilovi-tablice-crud__spin { position: relative; display: inline-flex; flex: 0 0 auto; }
+.pdf-stilovi-tablice-crud__spin .pdf-stilovi-tablice-crud__num {
+  width: 4rem;
+  padding-right: 1.4rem;   /* prostor za strelice unutar kontrole */
+  text-align: right;
+}
+.pdf-stilovi-tablice-crud__spin-btns {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0 var(--edit_radius) var(--edit_radius) 0;
+}
+.pdf-stilovi-tablice-crud__spin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--edit_border);
+  background: var(--edit_bg);
+  color: var(--edit_text);
+  font-size: 0.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.pdf-stilovi-tablice-crud__spin-btn:first-child { border-bottom: 1px solid var(--edit_border); }
+.pdf-stilovi-tablice-crud__spin-btn:hover:not(:disabled) { background: var(--c-gray-100); }
+.pdf-stilovi-tablice-crud__spin-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
 /* Boja puni širinu ćelije */
 .pdf-stilovi-tablice-crud__polje--boja .kontrola-boja { display: flex; width: 100%; }
 .pdf-stilovi-tablice-crud__polje--boja .kontrola-boja__hex { flex: 1 1 auto; width: auto; min-width: 0; }
 
-/* Linija-red (Grafika): label | debljina mm | boja */
-.pdf-stilovi-tablice-crud__linija-red {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-.pdf-stilovi-tablice-crud__linija-label {
-  flex: 0 0 9rem;
-  white-space: nowrap;
-}
-.pdf-stilovi-tablice-crud__linija-red .kontrola-boja { flex: 1 1 auto; display: flex; min-width: 0; }
-.pdf-stilovi-tablice-crud__linija-red .kontrola-boja__hex { flex: 1 1 auto; width: auto; min-width: 0; }
+/* Linija-set (Grafika): label lijevo, desno red [debljina mm | boja] */
+.pdf-stilovi-tablice-crud__linija-set { flex-direction: row; align-items: center; gap: 0.6rem; }
+.pdf-stilovi-tablice-crud__linija-set > .kontrola-labela { flex: 0 0 9rem; white-space: nowrap; }
+.pdf-stilovi-tablice-crud__linija-set > .pdf-stilovi-tablice-crud__linija-kontrole { flex: 1 1 auto; min-width: 0; }
+.pdf-stilovi-tablice-crud__linija-kontrole { display: flex; align-items: center; gap: 0.6rem; }
+.pdf-stilovi-tablice-crud__linija-kontrole .kontrola-boja { flex: 1 1 auto; display: flex; min-width: 0; }
+.pdf-stilovi-tablice-crud__linija-kontrole .kontrola-boja__hex { flex: 1 1 auto; width: auto; min-width: 0; }
 
 /* Otvoreni select smije izaći iz tab kontrole */
 .pdf-stilovi-tablice-crud__tab:has(.kontrola-select--open),
@@ -162,25 +212,71 @@
 .pdf-stilovi-tablice-crud__cb { display: inline-flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
 .pdf-stilovi-tablice-crud__cb .kontrola-labela { white-space: nowrap; }
 
-/* ===== Tab Kolone ===== */
+/* ===== Tab Kolone (4 kolone: tablica | Naziv/Širina/Tekst | Zaglavlje ćelije | Podaci ćelije) ===== */
 .pdf-stilovi-tablice-crud__kolone {
+  display: flex;
+  align-items: stretch;
+}
+/* Kolona 1: alatna traka + tablica stupaca (izvan kolEditWrap → „Dodaj" ostaje aktivan) */
+.pdf-stilovi-tablice-crud__kolone-col1 {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  padding-right: 1.25rem;
+  border-right: 1px solid var(--edit_border, #ced4da);
 }
-.pdf-stilovi-tablice-crud__kolone-traka { display: flex; gap: 0.4rem; }
-.pdf-stilovi-tablice-crud__kolone-tablica { height: 8rem; }
-.pdf-stilovi-tablice-crud__kolone-tablica .kontrola-tablica { height: 100%; }
+/* Set ikona (Dodaj/Obriši/▲/▼) desno od tablice, okomito — uzor PDF_Template okviri */
+.pdf-stilovi-tablice-crud__kolone-tablica-red { display: flex; gap: 0.4rem; align-items: flex-start; }
+.pdf-stilovi-tablice-crud__kolone-tablica-red .pdf-stilovi-tablice-crud__kolone-tablica { flex: 1 1 auto; min-width: 0; }
+.pdf-stilovi-tablice-crud__kol-traka { display: flex; flex-direction: column; gap: 0.4rem; flex: 0 0 auto; }
+.pdf-stilovi-tablice-crud__kol-akcija {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  color: var(--label_text, #333);
+  cursor: pointer;
+  box-shadow: var(--kontrole_sjena_slaba_2);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.pdf-stilovi-tablice-crud__kol-akcija svg { width: 1.15rem; height: 1.15rem; display: block; }
+.pdf-stilovi-tablice-crud__kol-akcija .kontrola-icon--trash {
+  width: 1.15rem; height: 1.15rem;
+  mask-size: 1.15rem 1.15rem; -webkit-mask-size: 1.15rem 1.15rem;
+}
+.pdf-stilovi-tablice-crud__kol-trokut { font-size: 0.8rem; line-height: 1; }
+/* Tekst zaglavlja (textarea): snižena visina da se donji rub poravna s Prefiks editom u 3. koloni */
+.pdf-stilovi-tablice-crud__ta-zaglavlje { height: 2.6rem; min-height: 2.6rem; resize: vertical; }
+.pdf-stilovi-tablice-crud__kol-akcija:hover:not(:disabled) { background: var(--c-gray-100, #eee); box-shadow: var(--kontrole_sjena_slaba_1); }
+.pdf-stilovi-tablice-crud__kol-akcija:active:not(:disabled) { box-shadow: inset 0 2px 4px var(--c-shadow-30); }
+.pdf-stilovi-tablice-crud__kol-akcija:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: var(--edit_focus_shadow_disabled); }
+/* Pod-tablica stupaca: N vidljivih redova preko tokena komponente (ne fiksni height —
+   inače min-height komponente probije okvir i tablica prekrije edit ispod). Uzor: PDF_Template okviri. */
+.pdf-stilovi-tablice-crud__kolone-tablica .kontrola-tablica { --tablica_vidljivih_redova: 4; }
+/* Kolone 2–4: edit grupa (kolEditWrap) = red od 3 stupca s pregradama */
 .pdf-stilovi-tablice-crud__kolone-edit {
+  flex: 3 1 0;
+  min-width: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  border-top: 1px solid var(--edit_border, #ced4da);
-  padding-top: 0.6rem;
+  align-items: stretch;
 }
+.pdf-stilovi-tablice-crud__kolone-edit > .pdf-stilovi-tablice-crud__stupac {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 1.25rem;
+  border-right: 1px solid var(--edit_border, #ced4da);
+}
+.pdf-stilovi-tablice-crud__kolone-edit > .pdf-stilovi-tablice-crud__stupac:last-child { padding-right: 0; border-right: none; }
 
-/* Napomena + footer */
-.pdf-stilovi-tablice-crud__napomena-red { display: flex; flex-direction: column; gap: 0.25rem; }
+/* Footer */
 .pdf-stilovi-tablice-crud__edit-footer { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
 .pdf-stilovi-tablice-crud__footer-left,
 .pdf-stilovi-tablice-crud__footer-right { display: flex; gap: 0.5rem; }
@@ -193,7 +289,7 @@
   justify-content: space-between;
   gap: 0.5rem;
 }
-.pdf-stilovi-tablice-crud__preview-panel { height: 22rem; min-height: 18rem; }
+.pdf-stilovi-tablice-crud__preview-panel { height: 28.6rem; min-height: 28.6rem; }
 .pdf-stilovi-tablice-crud__preview-body {
   position: relative;
   flex: 1 1 auto;

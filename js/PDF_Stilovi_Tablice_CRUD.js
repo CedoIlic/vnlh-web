@@ -28,13 +28,13 @@
     { col: 'naziv', type: 'text' },
     { col: 'napomena', type: 'text' },
     { col: 'zaglavlje_font_id', type: 'select', def: '' },
-    { col: 'zaglavlje_velicina_pt', type: 'num', def: '' },
+    { col: 'zaglavlje_velicina_pt', type: 'num', def: '12' },
     { col: 'zaglavlje_bold', type: 'check' },
     { col: 'zaglavlje_italic', type: 'check' },
     { col: 'zaglavlje_podcrtano', type: 'check' },
     { col: 'zaglavlje_boja', type: 'color', nullable: true, def: '' },
     { col: 'podaci_font_id', type: 'select', def: '' },
-    { col: 'podaci_velicina_pt', type: 'num', def: '' },
+    { col: 'podaci_velicina_pt', type: 'num', def: '12' },
     { col: 'podaci_bold', type: 'check' },
     { col: 'podaci_italic', type: 'check' },
     { col: 'podaci_podcrtano', type: 'check' },
@@ -177,7 +177,7 @@
     var lista = Object.keys(stilPoId).map(function (id) { return stilPoId[id]; }).sort(function (a, b) { return String(a.naziv).localeCompare(String(b.naziv), 'hr', { sensitivity: 'base' }); });
     while (sel.options.length > 1) sel.remove(1);
     lista.forEach(function (o) { var op = document.createElement('option'); op.value = String(o.id); op.textContent = o.naziv != null ? o.naziv : ('#' + o.id); sel.appendChild(op); });
-    sel.value = ''; wrap.hidden = lista.length === 0; refreshSelect('edit_naslijedi');
+    sel.value = ''; wrap.hidden = false; refreshSelect('edit_naslijedi');
   }
   function osvjeziTablicu() { ucitajPodatkeTablica(function (rows) { CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, TablicaStilCRUD.Tablica_Zaglavlje); }); }
 
@@ -250,6 +250,7 @@
   function azurirajKolTraka() {
     var ima = kolSel >= 0 && kolSel < kolonState.length;
     var b;
+    if ((b = byId('kolDodaj'))) b.disabled = false;   /* Dodaj je unutar kolEditWrap-a → uvijek aktivan (grupni disable ga inače ugasi) */
     if ((b = byId('kolObrisi'))) b.disabled = !ima;
     if ((b = byId('kolGore'))) b.disabled = !(ima && kolSel > 0);
     if ((b = byId('kolDolje'))) b.disabled = !(ima && kolSel < kolonState.length - 1);
@@ -333,12 +334,15 @@
   function azurirajDisable() {
     var imaNaziv = trim(vEdit('naziv')) !== '';
     var tijelo = document.querySelector('.pdf-stilovi-tablice-crud__tab .kontrola-tab__tijelo');
-    if (tijelo) Array.prototype.forEach.call(tijelo.querySelectorAll('input, select, button, textarea'), function (el) { el.disabled = !imaNaziv; });
+    if (tijelo) Array.prototype.forEach.call(tijelo.querySelectorAll('input, select, button, textarea'), function (el) {
+      if (el.closest('.pdf-stilovi-tablice-crud__naziv-kontrola')) return;   /* Naziv stila je uvijek aktivan (sad je u tijelu taba) */
+      el.disabled = !imaNaziv;
+    });
     var tabRoot = byId('tablicaTab');
     if (tabRoot) Array.prototype.forEach.call(tabRoot.querySelectorAll('.kontrola-tab__kartica'), function (k) { k.disabled = !imaNaziv; });
     var nap = byId('edit_napomena'); if (nap) nap.disabled = !imaNaziv;
     var nasl = byId('edit_naslijedi'); if (nasl) { nasl.disabled = !imaNaziv; refreshSelect('edit_naslijedi'); }
-    if (imaNaziv) { azurirajGrafikaDinamiku(); azurirajOstaloDinamiku(); azurirajKolTraka(); if (kolSel < 0) postaviGrupaDisabled('kolEditWrap', true); }
+    if (imaNaziv) { azurirajGrafikaDinamiku(); azurirajOstaloDinamiku(); if (kolSel < 0) postaviGrupaDisabled('kolEditWrap', true); azurirajKolTraka(); }
     ['zaglavlje_font_id', 'podaci_font_id', 'zaglavlje_ponavljanje', 'pozicioniranje', 'poravnanje'].forEach(function (c) { refreshSelect('edit_' + c); });
     postaviPreviewDisabled(!imaNaziv);
     syncLabele();
@@ -435,6 +439,27 @@
     var naslEl = byId('edit_naslijedi');
     if (naslEl) naslEl.addEventListener('change', function () { var id = naslEl.value; if (!id) return; var o = stilPoId[String(id)]; if (!o) return; popuniIzObjekta(o, true); updateCrudUpisiState(); });
     FIELDS.forEach(function (f) { if (f.type === 'num') { var e = elOf(f); if (e) e.addEventListener('blur', function () { normalizirajBroj(e); }); } });
+  })();
+
+  /* Strelice (spinner) za veličinu: povećaj/smanji (korak 1, min 1, def 12). */
+  (function () {
+    var SPIN_MIN = 1, SPIN_MAX = 200, SPIN_KORAK = 1, SPIN_DEF = 12;
+    function spin(targetId, smjer) {
+      var el = byId(targetId); if (!el || el.disabled) return;
+      var n = parseFloat(String(el.value).replace(',', '.'));
+      if (isNaN(n)) n = SPIN_DEF;
+      n += smjer * SPIN_KORAK;
+      if (n < SPIN_MIN) n = SPIN_MIN;
+      if (n > SPIN_MAX) n = SPIN_MAX;
+      el.value = String(n);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('[data-spin]'), function (btn) {
+      btn.addEventListener('click', function () {
+        spin(btn.getAttribute('data-spin-target'), btn.getAttribute('data-spin') === 'down' ? -1 : 1);
+      });
+    });
   })();
 
   function obradiOdgovor(res, kod) {
