@@ -200,8 +200,8 @@
     }
   });
   function kolLabel(o, i) {
-    var z = trim(o.zaglavlje || ''), n = trim(o.naziv || '');
-    return (i + 1) + '. ' + (z || n || '(stupac)');
+    var n = trim(o.naziv || ''), z = trim(o.zaglavlje || '');
+    return n || z || '(stupac)';
   }
   function renderKoloneTablica() {
     if (!koloneApi) return;
@@ -302,6 +302,17 @@
       };
     }));
   }
+  /* Mjerna polja: samo znamenke + decimalni zarez (0-Common helper; vodeći minus za Poziciju X/Y).
+     Veže se PRIJE kolonskog input handlera da očisti vrijednost prije čitanja u stanje. */
+  (function () {
+    if (typeof window.initDecimalnaMjera !== 'function') return;
+    var minusZa = { edit_pozicija_x_mm: 1, edit_pozicija_y_mm: 1 };
+    Array.prototype.forEach.call(document.querySelectorAll('.pdf-stilovi-tablice-crud__num'), function (el) {
+      var mm = /_mm$/.test(el.id || '');   /* sve mm mjere: 1 decimala; pt (veličina): bez ograničenja */
+      window.initDecimalnaMjera(el, !!minusZa[el.id], mm ? 1 : undefined);
+    });
+  })();
+
   /* Kolone edit: live u stanje */
   KOL_FIELDS.forEach(function (k) {
     var el = byId('kol_' + k); if (!el) return;
@@ -407,6 +418,7 @@
   }
 
   onCrudSelectionChange = function () {
+    naPrviTab();   /* svaka promjena selekcije u tablici → prvi tab */
     var id = getSelectedRowId();
     if (id == null) clearForm();
     else { var o = stilPoId[String(id)]; if (o) popuniIzObjekta(o); var n = byId('edit_naziv'); if (n) n.dispatchEvent(new Event('input', { bubbles: true })); }
@@ -471,18 +483,17 @@
     });
   })();
 
-  function aktivniTabIndex() {
-    var root = byId('tablicaTab'); if (!root) return 0;
-    var kartice = root.querySelectorAll('.kontrola-tab__kartica');
-    for (var i = 0; i < kartice.length; i++) if (kartice[i].classList.contains('kontrola-tab__kartica--aktivna')) return i;
-    return 0;
-  }
-  function vratiTab(idx) { if (typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(byId('tablicaTab'), idx); }
+  function naPrviTab() { if (typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(byId('tablicaTab'), 0); }
   function obradiOdgovor(res, kod) {
     if (res === 'OK') {
-      var tabIdx = aktivniTabIndex();   /* zapamti aktivni tab (clearForm ga disable-a → izgubi aktivni izgled) */
-      if (typeof window.showPorukaModal === 'function') window.showPorukaModal(kod, [], function () { if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection(); clearForm(); osvjeziTablicu(); vratiTab(tabIdx); });
-      else { clearForm(); osvjeziTablicu(); vratiTab(tabIdx); }
+      var resetForme = function () {
+        naPrviTab();                                                                /* 1) prvi tab (dok su kontrole još aktivne) */
+        if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection();   /* 2) odznači (okida clearForm) */
+        clearForm();                                                                /* 3) čišćenje edita/selekta + disable (uklj. tabove) */
+        osvjeziTablicu();
+      };
+      if (typeof window.showPorukaModal === 'function') window.showPorukaModal(kod, [], resetForme);
+      else resetForme();
       return;
     }
     porukaIzKoda(res, res.indexOf('002') === 0 ? ['Naziv stila'] : null);
@@ -615,7 +626,7 @@
         paddingTop: function (i, node) { return 0; },
         paddingBottom: function (i, node) { return 0; }
       },
-      margin: [0, 0, 0, 0]
+      margin: [0, MM(vBroj('razmak_prije_mm')), 0, MM(vBroj('razmak_poslije_mm'))]   /* prije=gore, poslije=dolje (mm→pt) */
     };
     /* Vert. padding po retku (zaglavlje vs podaci) preko paddingTop/Bottom koji znaju red. */
     tablica.layout.paddingTop = function (rowIndex) { return (imaZag && rowIndex === 0) ? zPadG : pPadG; };

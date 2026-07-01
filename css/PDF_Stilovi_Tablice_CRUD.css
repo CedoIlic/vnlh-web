@@ -264,11 +264,17 @@
 .pdf-stilovi-tablice-crud__kol-akcija:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: var(--edit_focus_shadow_disabled); }
 /* Pod-tablica stupaca: N vidljivih redova preko tokena komponente (ne fiksni height —
    inače min-height komponente probije okvir i tablica prekrije edit ispod). Uzor: PDF_Template okviri. */
-.pdf-stilovi-tablice-crud__kolone-tablica { flex: 1 1 auto; min-height: 0; }
-.pdf-stilovi-tablice-crud__kolone-tablica .kontrola-tablica { --tablica_vidljivih_redova: 4; height: 100%; }
+.pdf-stilovi-tablice-crud__kolone-tablica { flex: 0 0 auto; }
+/* Fiksna visina ≈ prijašnja (4 retka), ali .5 → pola 5. retka viri (scroll affordance). */
+.pdf-stilovi-tablice-crud__kolone-tablica .kontrola-tablica { --tablica_vidljivih_redova: 4.5; }
+/* Bez pregledničkog crnog focus okvira pri navigaciji strelicama (pod-tablica nije u .kontrola-panel-tablica). */
+.pdf-stilovi-tablice-crud__kolone-tablica .kontrola-tablica:focus,
+.pdf-stilovi-tablice-crud__kolone-tablica .kontrola-tablica__scroll:focus,
+.pdf-stilovi-tablice-crud__kolone-tablica .kontrola-tablica:focus-visible,
+.pdf-stilovi-tablice-crud__kolone-tablica .kontrola-tablica__scroll:focus-visible { outline: none; }
 /* Ikone na dno kolone 1 (tablica se proširi do njih) */
 .pdf-stilovi-tablice-crud__kol-traka { margin-top: auto; }
-/* Kolone 2–4: edit grupa (kolEditWrap) = red od 3 stupca s pregradama */
+/* Kolone 2–4: edit grupa (kolEditWrap) = red od 3 stupca s pregradama. Sve 4 kolone jednake (25%): col1 grow 1 : edit grow 3. */
 .pdf-stilovi-tablice-crud__kolone-edit {
   flex: 3 1 0;
   min-width: 0;

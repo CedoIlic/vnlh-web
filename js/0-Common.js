@@ -345,6 +345,52 @@
   window.upis_maila = upis_maila;
   window.initSamoNumerika = initSamoNumerika;
 
+  /**
+   * Očisti string decimalne mjere: samo znamenke + jedan decimalni zarez (točka→zarez),
+   * bez vodećih nula (0000,3 → 0,3; 007 → 7), opcijski vodeći minus.
+   * @param {string} val
+   * @param {boolean} [dopustiMinus] - dozvoli vodeći minus (npr. koordinate)
+   * @returns {string}
+   */
+  function filtrirajDecimalnu(val, dopustiMinus, maxDec) {
+    var s = String(val == null ? '' : val);
+    var neg = !!dopustiMinus && s.charAt(0) === '-';
+    s = s.replace(/\./g, ',').replace(/[^0-9,]/g, '');
+    var i = s.indexOf(',');
+    var cijeli, dec = null;
+    if (i === -1) { cijeli = s; }
+    else { cijeli = s.slice(0, i); dec = s.slice(i + 1).replace(/,/g, ''); }   /* samo prvi zarez */
+    cijeli = cijeli.replace(/^0+(?=\d)/, '');           /* vodeće nule (ostavi jednu 0) */
+    if (cijeli === '' && dec !== null) cijeli = '0';    /* ,5 → 0,5 */
+    if (dec !== null && maxDec != null && maxDec >= 0) dec = dec.slice(0, maxDec);   /* broj decimala */
+    var out = cijeli + (dec !== null ? ',' + dec : '');
+    if (neg) out = '-' + out;
+    return out;
+  }
+
+  /**
+   * Veže filter decimalne mjere na input (uživo, uz očuvanje pozicije kursora).
+   * @param {HTMLInputElement} input
+   * @param {boolean} [dopustiMinus]
+   * @param {number} [maxDec] - najviše decimalnih mjesta (npr. 1 za mm); undefined = bez ograničenja
+   */
+  function initDecimalnaMjera(input, dopustiMinus, maxDec) {
+    if (!input || input.tagName !== 'INPUT') return;
+    input.inputMode = 'decimal';
+    input.addEventListener('input', function () {
+      var v = this.value;
+      var f = filtrirajDecimalnu(v, dopustiMinus, maxDec);
+      if (f !== v) {
+        var p = this.selectionStart, d = v.length - f.length;
+        this.value = f;
+        try { this.setSelectionRange(p - d, p - d); } catch (e) {}
+      }
+    });
+  }
+
+  window.CommonFiltrirajDecimalnu = filtrirajDecimalnu;
+  window.initDecimalnaMjera = initDecimalnaMjera;
+
   /** Relativni URL stranice prijave (php/Login.php – GET forma i POST API). */
   function vnlhLoginPageUrl() {
     var p = window.location.pathname || '';
