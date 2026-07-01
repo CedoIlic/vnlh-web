@@ -38,6 +38,7 @@ CREATE TABLE `pdf_tablica_stil` (
   `podaci_padding_dolje_mm`       decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Vert. padding ćelije podataka — dolje',
   -- Ostalo
   `razdvajac`                     varchar(8) NOT NULL DEFAULT '|' COMMENT 'Razdvajač vrijednosti reda iz stavke (znak kojeg nema u podacima)',
+  `meki_prijelom`                 varchar(8) DEFAULT NULL COMMENT 'Znak za meki prijelom reda unutar ćelije (npr. ^ → tekst nakon znaka ide u novi red)',
   `prikazi_zaglavlje`             tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Prikaži red zaglavlja',
   `zaglavlje_ponavljanje`         enum('prva','svaka') NOT NULL DEFAULT 'prva' COMMENT 'Zaglavlje samo na 1. stranici / ponovi na svim (pdfmake headerRows)',
   `ne_lomi_red`                   tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Red ne smije prijeći preko stranice (pdfmake dontBreakRows)',

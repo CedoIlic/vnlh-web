@@ -314,6 +314,65 @@
     return lines;
   }
 
+  /* Javno: broj prelomljenih redaka + visina reda (pt) za tekst na zadanoj širini/fontu.
+     Koristi isti FontFace-mjerni mehanizam kao render (točno kao pdfmake lom). Za V poravnanje ćelija tablice. */
+  function mjeriRedove(text, maxWpt, porodica, fsPt, bold) {
+    _registrirajMjerniFont(porodica);
+    var fs = broj(fsPt) || 12;
+    var fontStr = (bold ? 'bold ' : '') + fs + 'px "' + (porodica || 'sans-serif') + '", sans-serif';
+    var mc = _mjerCtx();
+    if (mc) mc.font = fontStr;
+    /* Predugačku liniju (riječ šira od stupca) pdfmake lomi po znaku — nadopuni preko lomOdlomka (koji lomi samo po razmaku). */
+    function podredovi(linija) {
+      if (!mc || !linija) return 1;
+      if (mc.measureText(linija).width <= maxWpt) return 1;
+      var n = 0, rest = linija;
+      while (rest.length > 0) {
+        var fit = 1;
+        while (fit < rest.length && mc.measureText(rest.slice(0, fit + 1)).width <= maxWpt) fit++;
+        n++; rest = rest.slice(fit);
+      }
+      return Math.max(1, n);
+    }
+    var redova = 0, par = String(text == null ? '' : text).split('\n');
+    for (var i = 0; i < par.length; i++) {
+      var lin = _lomiOdlomak(par[i], maxWpt, 0, fontStr);
+      for (var j = 0; j < lin.length; j++) redova += podredovi(lin[j]);
+    }
+    var lh = fs;
+    if (mc && porodica && global.document && global.document.fonts && global.document.fonts.check) {
+      try {
+        if (global.document.fonts.check(fontStr)) {
+          mc.font = fontStr;
+          var mt = mc.measureText('Hg');
+          if (mt && mt.fontBoundingBoxAscent != null && mt.fontBoundingBoxDescent != null) {
+            var nat = mt.fontBoundingBoxAscent + mt.fontBoundingBoxDescent;
+            if (nat > 0) lh = nat;
+          }
+        }
+      } catch (e) {}
+    }
+    return { redova: Math.max(1, redova), visinaReda: lh };
+  }
+
+  /* Gornja margina (pt) za V poravnanje ćelije: 'gore/top'=0, 'centar/center/middle'=½ razlike, 'dolje/bottom'=puna. */
+  function vMarginaCelije(valign, nRedaka, maxRedaka, lhPt) {
+    var extra = Math.max(0, (maxRedaka || 1) - (nRedaka || 1));
+    if (extra <= 0) return 0;
+    if (valign === 'centar' || valign === 'center' || valign === 'middle') return extra / 2 * (lhPt || 0);
+    if (valign === 'dolje' || valign === 'bottom') return extra * (lhPt || 0);
+    return 0;
+  }
+  /* Za skup ćelija ISTOG fonta (npr. svi zaglavlje ili svi podaci jednog reda): izmjeri i vrati marginu po ćeliji.
+     celije: [{ text, valign, sirinaPt }] → [{ redova, marginaGore }]. Za V poravnanje ćelija pdfmake tablice. */
+  function valignCelije(celije, porodica, fsPt, bold) {
+    var mj = (celije || []).map(function (c) { return mjeriRedove(c.text, c.sirinaPt, porodica, fsPt, bold); });
+    var maxR = mj.reduce(function (m, x) { return Math.max(m, x.redova); }, 1);
+    return (celije || []).map(function (c, i) {
+      return { redova: mj[i].redova, marginaGore: vMarginaCelije(c.valign, mj[i].redova, maxR, mj[i].visinaReda) };
+    });
+  }
+
   /* Dimenzije stranice u pt (s orijentacijom). Za izračun ishodišta apsolutnih slika (npr. podnožje). */
   var FORMATI_MM = { A4: [210, 297], A5: [148, 210], A3: [297, 420], Letter: [215.9, 279.4], Legal: [215.9, 355.6] };
   function dimsPt(t) {
@@ -863,6 +922,9 @@
     sastaviSliku: sastaviSliku,
     sastaviPlaceholder: sastaviPlaceholder,
     sastaviDocDefinition: sastaviDocDefinition,
+    mjeriRedove: mjeriRedove,
+    vMarginaCelije: vMarginaCelije,
+    valignCelije: valignCelije,
     pripremiSlike: pripremiSlike,
     Pdf: Pdf,
     Fontovi: Fontovi

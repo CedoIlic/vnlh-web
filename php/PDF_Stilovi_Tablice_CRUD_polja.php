@@ -135,6 +135,7 @@ function pdf_tablica_stil_citaj_polja(&$code)
         ['podaci_padding_dolje_mm', 'd', pdf_tbl_dec('podaci_padding_dolje_mm', 0, 999.99, 0)],
         // Ostalo
         ['razdvajac', 's', (function () { $v = isset($_POST['razdvajac']) ? (string) $_POST['razdvajac'] : '|'; $v = ($v === '') ? '|' : mb_substr($v, 0, 8, 'UTF-8'); return $v; })()],
+        ['meki_prijelom', 's', (function () { $v = isset($_POST['meki_prijelom']) ? trim((string) $_POST['meki_prijelom']) : ''; return ($v === '') ? null : mb_substr($v, 0, 8, 'UTF-8'); })()],
         ['prikazi_zaglavlje', 'i', isset($_POST['prikazi_zaglavlje']) ? pdf_tbl_bool('prikazi_zaglavlje') : 1],
         ['zaglavlje_ponavljanje', 's', pdf_tbl_enum('zaglavlje_ponavljanje', ['prva', 'svaka'], 'prva')],
         ['ne_lomi_red', 'i', pdf_tbl_bool('ne_lomi_red')],
@@ -201,6 +202,8 @@ function pdf_tablica_stil_citaj_kolone()
             $enum('pod_orijentacija', ['lijevo', 'centar', 'desno'], 'lijevo'),
             $dec('pod_padding_lijevo_mm', 0, 999.99), $dec('pod_padding_desno_mm', 0, 999.99),
             $str('pod_prefix', 50), $str('pod_sufiks', 50),
+            $enum('zag_valign', ['gore', 'centar', 'dolje'], 'gore'),   // [16]
+            $enum('pod_valign', ['gore', 'centar', 'dolje'], 'gore'),   // [17]
         ];
     }
     return $out;
@@ -224,18 +227,19 @@ function pdf_tablica_stil_spremi_kolone($mysqli, $stil_id, array $kolone)
         $mysqli->query('DELETE FROM pdf_tablica_stil_kolona WHERE tablica_stil_id = ' . (int) $stil_id . ' AND id NOT IN (' . $inList . ')');
     }
     if (empty($kolone)) return;
-    $cols = 'redoslijed, naziv, zaglavlje, sirina_tip, sirina_mm, zag_orijentacija, zag_padding_lijevo_mm, zag_padding_desno_mm, zag_prefix, zag_sufiks, pod_orijentacija, pod_padding_lijevo_mm, pod_padding_desno_mm, pod_prefix, pod_sufiks';
-    $upd = $mysqli->prepare('UPDATE pdf_tablica_stil_kolona SET redoslijed=?, naziv=?, zaglavlje=?, sirina_tip=?, sirina_mm=?, zag_orijentacija=?, zag_padding_lijevo_mm=?, zag_padding_desno_mm=?, zag_prefix=?, zag_sufiks=?, pod_orijentacija=?, pod_padding_lijevo_mm=?, pod_padding_desno_mm=?, pod_prefix=?, pod_sufiks=? WHERE id=? AND tablica_stil_id=?');
-    $ins = $mysqli->prepare("INSERT INTO pdf_tablica_stil_kolona (tablica_stil_id, $cols) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $cols = 'redoslijed, naziv, zaglavlje, sirina_tip, sirina_mm, zag_orijentacija, zag_padding_lijevo_mm, zag_padding_desno_mm, zag_prefix, zag_sufiks, zag_valign, pod_orijentacija, pod_padding_lijevo_mm, pod_padding_desno_mm, pod_prefix, pod_sufiks, pod_valign';
+    $upd = $mysqli->prepare('UPDATE pdf_tablica_stil_kolona SET redoslijed=?, naziv=?, zaglavlje=?, sirina_tip=?, sirina_mm=?, zag_orijentacija=?, zag_padding_lijevo_mm=?, zag_padding_desno_mm=?, zag_prefix=?, zag_sufiks=?, zag_valign=?, pod_orijentacija=?, pod_padding_lijevo_mm=?, pod_padding_desno_mm=?, pod_prefix=?, pod_sufiks=?, pod_valign=? WHERE id=? AND tablica_stil_id=?');
+    $ins = $mysqli->prepare("INSERT INTO pdf_tablica_stil_kolona (tablica_stil_id, $cols) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     foreach ($kolone as $k) {
         $oid = (int) $k[0]; $red = (int) $k[1]; $naziv = $k[2]; $zag = $k[3]; $st = $k[4]; $sm = $k[5];
         $zo = $k[6]; $zpl = (float) $k[7]; $zpd = (float) $k[8]; $zpf = $k[9]; $zsf = $k[10];
         $po = $k[11]; $ppl = (float) $k[12]; $ppd = (float) $k[13]; $ppf = $k[14]; $psf = $k[15];
+        $zv = $k[16]; $pv = $k[17];
         if ($oid > 0) {
-            $upd->bind_param('isssdsddsssddssii', $red, $naziv, $zag, $st, $sm, $zo, $zpl, $zpd, $zpf, $zsf, $po, $ppl, $ppd, $ppf, $psf, $oid, $stil_id);
+            $upd->bind_param('isssdsddssssddsssii', $red, $naziv, $zag, $st, $sm, $zo, $zpl, $zpd, $zpf, $zsf, $zv, $po, $ppl, $ppd, $ppf, $psf, $pv, $oid, $stil_id);
             $upd->execute();
         } else {
-            $ins->bind_param('iisssdsddsssddss', $stil_id, $red, $naziv, $zag, $st, $sm, $zo, $zpl, $zpd, $zpf, $zsf, $po, $ppl, $ppd, $ppf, $psf);
+            $ins->bind_param('iisssdsddssssddsss', $stil_id, $red, $naziv, $zag, $st, $sm, $zo, $zpl, $zpd, $zpf, $zsf, $zv, $po, $ppl, $ppd, $ppf, $psf, $pv);
             $ins->execute();
         }
     }

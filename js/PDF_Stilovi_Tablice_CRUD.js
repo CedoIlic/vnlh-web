@@ -40,13 +40,13 @@
     { col: 'podaci_podcrtano', type: 'check' },
     { col: 'podaci_boja', type: 'color', nullable: true, def: '' },
     { col: 'okvir_debljina_mm', type: 'num', def: '' },
-    { col: 'okvir_boja', type: 'color', nullable: true, def: '' },
+    { col: 'okvir_boja', type: 'color', nullable: true, def: '#000000' },
     { col: 'zaglavlje_linija_debljina_mm', type: 'num', def: '' },
-    { col: 'zaglavlje_linija_boja', type: 'color', nullable: true, def: '' },
+    { col: 'zaglavlje_linija_boja', type: 'color', nullable: true, def: '#000000' },
     { col: 'linija_vert_debljina_mm', type: 'num', def: '' },
-    { col: 'linija_vert_boja', type: 'color', nullable: true, def: '' },
+    { col: 'linija_vert_boja', type: 'color', nullable: true, def: '#000000' },
     { col: 'linija_red_debljina_mm', type: 'num', def: '' },
-    { col: 'linija_red_boja', type: 'color', nullable: true, def: '' },
+    { col: 'linija_red_boja', type: 'color', nullable: true, def: '#000000' },
     { col: 'zaglavlje_pozadina', type: 'check' },
     { col: 'zaglavlje_pozadina_boja', type: 'color', nullable: true, def: '' },
     { col: 'zebra', type: 'check' },
@@ -56,6 +56,7 @@
     { col: 'podaci_padding_gore_mm', type: 'num', def: '' },
     { col: 'podaci_padding_dolje_mm', type: 'num', def: '' },
     { col: 'razdvajac', type: 'text', def: '|' },
+    { col: 'meki_prijelom', type: 'text', def: '' },
     { col: 'prikazi_zaglavlje', type: 'check' },
     { col: 'zaglavlje_ponavljanje', type: 'select', def: 'prva' },
     { col: 'ne_lomi_red', type: 'check' },
@@ -68,7 +69,7 @@
   ];
 
   /* Stupci stila (edit fields kol_<naziv>). */
-  var KOL_FIELDS = ['naziv', 'zaglavlje', 'sirina_tip', 'sirina_mm', 'zag_orijentacija', 'zag_padding_lijevo_mm', 'zag_padding_desno_mm', 'zag_prefix', 'zag_sufiks', 'pod_orijentacija', 'pod_padding_lijevo_mm', 'pod_padding_desno_mm', 'pod_prefix', 'pod_sufiks'];
+  var KOL_FIELDS = ['naziv', 'zaglavlje', 'sirina_tip', 'sirina_mm', 'zag_orijentacija', 'zag_valign', 'zag_padding_lijevo_mm', 'zag_padding_desno_mm', 'zag_prefix', 'zag_sufiks', 'pod_orijentacija', 'pod_valign', 'pod_padding_lijevo_mm', 'pod_padding_desno_mm', 'pod_prefix', 'pod_sufiks'];
 
   function byId(id) { return document.getElementById(id); }
   function elOf(f) { return byId('edit_' + f.col); }
@@ -80,6 +81,12 @@
   function vBroj(col) { return parseFloat(String(vEdit(col)).replace(',', '.')) || 0; }
   function brojNiz(v) { var n = parseFloat(v); return isNaN(n) ? '' : String(n); }
   function MM(n) { return (parseFloat(String(n).replace(',', '.')) || 0) * 2.83465; }
+  function poravnanjePdf(v) { return v === 'centar' ? 'center' : (v === 'desno' ? 'right' : 'left'); }   /* hr → pdfmake alignment */
+  /* V poravnanje ćelija reda (isti font) → margine; koristi PdfRender (FontFace-točno mjerenje). Fallback: bez margina. */
+  function valignRed(celije, porodica, fsPt, bold) {
+    if (window.PdfRender && PdfRender.valignCelije) return PdfRender.valignCelije(celije, porodica, fsPt, bold);
+    return celije.map(function () { return { marginaGore: 0 }; });
+  }
   function normalizirajBroj(el) {
     if (!el) return;
     var raw = trim(el.value); if (raw === '') return;
@@ -212,7 +219,7 @@
       el.value = o ? (o[k] != null ? String(o[k]) : '') : '';
     });
     var st = byId('kol_sirina_tip'); if (st && !o) st.value = 'popuni';
-    refreshSelect('kol_sirina_tip'); refreshSelect('kol_zag_orijentacija'); refreshSelect('kol_pod_orijentacija');
+    refreshSelect('kol_sirina_tip'); refreshSelect('kol_zag_orijentacija'); refreshSelect('kol_pod_orijentacija'); refreshSelect('kol_zag_valign'); refreshSelect('kol_pod_valign');
     azurirajKolSirina();
     postaviGrupaDisabled('kolEditWrap', !o);
   }
@@ -230,7 +237,7 @@
     if (td) td.textContent = kolLabel(kolonState[kolSel], kolSel);
   }
   function dodajKolona() {
-    kolonState.push({ id: 0, naziv: '', zaglavlje: '', sirina_tip: 'popuni', sirina_mm: '', zag_orijentacija: 'lijevo', zag_padding_lijevo_mm: '', zag_padding_desno_mm: '', zag_prefix: '', zag_sufiks: '', pod_orijentacija: 'lijevo', pod_padding_lijevo_mm: '', pod_padding_desno_mm: '', pod_prefix: '', pod_sufiks: '' });
+    kolonState.push({ id: 0, naziv: '', zaglavlje: '', sirina_tip: 'popuni', sirina_mm: '', zag_orijentacija: 'lijevo', zag_valign: 'gore', zag_padding_lijevo_mm: '', zag_padding_desno_mm: '', zag_prefix: '', zag_sufiks: '', pod_orijentacija: 'lijevo', pod_valign: 'gore', pod_padding_lijevo_mm: '', pod_padding_desno_mm: '', pod_prefix: '', pod_sufiks: '' });
     kolSel = kolonState.length - 1;
     renderKoloneTablica(); popuniKolEdit(); azurirajKolTraka(); renderPreview();
   }
@@ -269,11 +276,13 @@
         sirina_tip: (o.sirina_tip === 'fiksna') ? 'fiksna' : 'popuni',
         sirina_mm: (o.sirina_mm != null && o.sirina_mm !== '') ? brojNiz(o.sirina_mm) : '',
         zag_orijentacija: o.zag_orijentacija || 'lijevo',
+        zag_valign: o.zag_valign || 'gore',
         zag_padding_lijevo_mm: (o.zag_padding_lijevo_mm != null) ? brojNiz(o.zag_padding_lijevo_mm) : '',
         zag_padding_desno_mm: (o.zag_padding_desno_mm != null) ? brojNiz(o.zag_padding_desno_mm) : '',
         zag_prefix: o.zag_prefix != null ? String(o.zag_prefix) : '',
         zag_sufiks: o.zag_sufiks != null ? String(o.zag_sufiks) : '',
         pod_orijentacija: o.pod_orijentacija || 'lijevo',
+        pod_valign: o.pod_valign || 'gore',
         pod_padding_lijevo_mm: (o.pod_padding_lijevo_mm != null) ? brojNiz(o.pod_padding_lijevo_mm) : '',
         pod_padding_desno_mm: (o.pod_padding_desno_mm != null) ? brojNiz(o.pod_padding_desno_mm) : '',
         pod_prefix: o.pod_prefix != null ? String(o.pod_prefix) : '',
@@ -288,8 +297,8 @@
       return {
         id: o.id || 0, redoslijed: i + 1, naziv: trim(o.naziv || ''), zaglavlje: trim(o.zaglavlje || ''),
         sirina_tip: (o.sirina_tip === 'fiksna') ? 'fiksna' : 'popuni', sirina_mm: brojNiz(o.sirina_mm),
-        zag_orijentacija: o.zag_orijentacija || 'lijevo', zag_padding_lijevo_mm: brojNiz(o.zag_padding_lijevo_mm) || '0', zag_padding_desno_mm: brojNiz(o.zag_padding_desno_mm) || '0', zag_prefix: o.zag_prefix || '', zag_sufiks: o.zag_sufiks || '',
-        pod_orijentacija: o.pod_orijentacija || 'lijevo', pod_padding_lijevo_mm: brojNiz(o.pod_padding_lijevo_mm) || '0', pod_padding_desno_mm: brojNiz(o.pod_padding_desno_mm) || '0', pod_prefix: o.pod_prefix || '', pod_sufiks: o.pod_sufiks || ''
+        zag_orijentacija: o.zag_orijentacija || 'lijevo', zag_valign: o.zag_valign || 'gore', zag_padding_lijevo_mm: brojNiz(o.zag_padding_lijevo_mm) || '0', zag_padding_desno_mm: brojNiz(o.zag_padding_desno_mm) || '0', zag_prefix: o.zag_prefix || '', zag_sufiks: o.zag_sufiks || '',
+        pod_orijentacija: o.pod_orijentacija || 'lijevo', pod_valign: o.pod_valign || 'gore', pod_padding_lijevo_mm: brojNiz(o.pod_padding_lijevo_mm) || '0', pod_padding_desno_mm: brojNiz(o.pod_padding_desno_mm) || '0', pod_prefix: o.pod_prefix || '', pod_sufiks: o.pod_sufiks || ''
       };
     }));
   }
@@ -372,7 +381,7 @@
     FIELDS.forEach(function (f) {
       var el = elOf(f); if (!el) return;
       if (f.type === 'check') el.checked = (f.col === 'prikazi_zaglavlje');   /* default prikazi_zaglavlje=1 */
-      else if (f.type === 'color') { el.value = ''; if (window.KontroleBojaRefresh) KontroleBojaRefresh('edit_' + f.col); }
+      else if (f.type === 'color') { el.value = (f.def != null ? f.def : ''); if (window.KontroleBojaRefresh) KontroleBojaRefresh('edit_' + f.col); }
       else el.value = (f.def != null ? f.def : '');
     });
     ucitajKolone([]);
@@ -462,10 +471,18 @@
     });
   })();
 
+  function aktivniTabIndex() {
+    var root = byId('tablicaTab'); if (!root) return 0;
+    var kartice = root.querySelectorAll('.kontrola-tab__kartica');
+    for (var i = 0; i < kartice.length; i++) if (kartice[i].classList.contains('kontrola-tab__kartica--aktivna')) return i;
+    return 0;
+  }
+  function vratiTab(idx) { if (typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(byId('tablicaTab'), idx); }
   function obradiOdgovor(res, kod) {
     if (res === 'OK') {
-      if (typeof window.showPorukaModal === 'function') window.showPorukaModal(kod, [], function () { if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection(); clearForm(); osvjeziTablicu(); });
-      else { clearForm(); osvjeziTablicu(); }
+      var tabIdx = aktivniTabIndex();   /* zapamti aktivni tab (clearForm ga disable-a → izgubi aktivni izgled) */
+      if (typeof window.showPorukaModal === 'function') window.showPorukaModal(kod, [], function () { if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection(); clearForm(); osvjeziTablicu(); vratiTab(tabIdx); });
+      else { clearForm(); osvjeziTablicu(); vratiTab(tabIdx); }
       return;
     }
     porukaIzKoda(res, res.indexOf('002') === 0 ? ['Naziv stila'] : null);
@@ -522,30 +539,52 @@
     var stupci = uzorakStupci();
     var imaZag = cEdit('prikazi_zaglavlje');
     var zagStil = celStil('zaglavlje'), podStil = celStil('podaci');
+    var meki = trim(vEdit('meki_prijelom'));
+    var mekiLom = function (t) { return meki ? String(t).split(meki).join('\n') : t; };   /* znak → prijelom reda u ćeliji */
     var zPadG = MM(vBroj('zaglavlje_padding_gore_mm')), zPadD = MM(vBroj('zaglavlje_padding_dolje_mm'));
     var pPadG = MM(vBroj('podaci_padding_gore_mm')), pPadD = MM(vBroj('podaci_padding_dolje_mm'));
 
     var widths = stupci.map(function (s) { return (s.sirina_tip === 'fiksna' && vBrojX(s.sirina_mm) > 0) ? MM(s.sirina_mm) : '*'; });
-    var body = [];
-    if (imaZag) {
-      body.push(stupci.map(function (s) {
-        var t = trim(s.zag_prefix || '') + trim(s.zaglavlje || '') + trim(s.zag_sufiks || '');
-        var c = Object.assign({ text: t || ' ', alignment: s.zag_orijentacija || 'lijevo' }, zagStil);
-        return c;
-      }));
-    }
-    for (var r = 0; r < 3; r++) {
-      body.push(stupci.map(function (s, ci) {
-        var t = trim(s.pod_prefix || '') + 'Podatak ' + (ci + 1) + trim(s.pod_sufiks || '');
-        var c = Object.assign({ text: t, alignment: s.pod_orijentacija || 'lijevo' }, podStil);
-        return c;
-      }));
-    }
 
     var okvirD = MM(vBroj('okvir_debljina_mm')), okvirB = vEdit('okvir_boja') || '#000000';
     var zagLinD = MM(vBroj('zaglavlje_linija_debljina_mm')), zagLinB = vEdit('zaglavlje_linija_boja') || '#000000';
     var vertD = MM(vBroj('linija_vert_debljina_mm')), vertB = vEdit('linija_vert_boja') || '#000000';
     var redD = MM(vBroj('linija_red_debljina_mm')), redB = vEdit('linija_red_boja') || '#000000';
+
+    /* Širina sadržaja svakog stupca (A4 sadržaj − linije − paddinzi; '*' dijele ostatak) — za brojanje prelomljenih redaka. */
+    var contentW = 595.28 - 40;   // A4 širina − margine [20,20]
+    var padCol = function (i, strana) { var s = stupci[i] || {}; return MM(vBrojX(s['pod_padding_' + strana + '_mm'])) || MM(vBrojX(s['zag_padding_' + strana + '_mm'])) || 2; };
+    var nCol = stupci.length, fixedSum = 0, nStar = 0, padSum = 0;
+    for (var i = 0; i < nCol; i++) { padSum += padCol(i, 'lijevo') + padCol(i, 'desno'); if (widths[i] === '*') nStar++; else fixedSum += widths[i]; }
+    var bordersW = okvirD * 2 + vertD * Math.max(0, nCol - 1);
+    var starW = nStar > 0 ? Math.max(10, (contentW - bordersW - padSum - fixedSum) / nStar) : 0;
+    var colSirina = function (i) { return Math.max(4, widths[i] === '*' ? starW : widths[i]); };
+
+    var body = [];
+    if (imaZag) {
+      var fzc = fontZa('edit_zaglavlje_font_id'); var famZ = fzc && fzc.porodica;
+      var zCel = stupci.map(function (s, ci) {
+        return { s: s, text: mekiLom(trim(s.zag_prefix || '') + trim(s.zaglavlje || '') + trim(s.zag_sufiks || '')) || ' ', valign: s.zag_valign, sirinaPt: colSirina(ci) };
+      });
+      var zV = valignRed(zCel, famZ, zagStil.fontSize || 10, !!zagStil.bold);
+      body.push(zCel.map(function (c, ci) {
+        var cell = Object.assign({ text: c.text, alignment: poravnanjePdf(c.s.zag_orijentacija) }, zagStil);
+        if (zV[ci].marginaGore > 0) cell.margin = [0, zV[ci].marginaGore, 0, 0];
+        return cell;
+      }));
+    }
+    var fpc = fontZa('edit_podaci_font_id'); var famP = fpc && fpc.porodica;
+    for (var r = 0; r < 3; r++) {
+      var pCel = stupci.map(function (s, ci) {
+        return { s: s, text: mekiLom(trim(s.pod_prefix || '') + 'Podatak ' + (ci + 1) + trim(s.pod_sufiks || '')), valign: s.pod_valign, sirinaPt: colSirina(ci) };
+      });
+      var pV = valignRed(pCel, famP, podStil.fontSize || 10, !!podStil.bold);
+      body.push(pCel.map(function (c, ci) {
+        var cell = Object.assign({ text: c.text, alignment: poravnanjePdf(c.s.pod_orijentacija) }, podStil);
+        if (pV[ci].marginaGore > 0) cell.margin = [0, pV[ci].marginaGore, 0, 0];
+        return cell;
+      }));
+    }
     var brR = body.length;
     var zagPoz = cEdit('zaglavlje_pozadina') ? (vEdit('zaglavlje_pozadina_boja') || null) : null;
     var zebra = cEdit('zebra') ? (vEdit('zebra_boja') || null) : null;
@@ -587,7 +626,10 @@
 
     var por = vEdit('poravnanje');
     var content;
-    if (vEdit('pozicioniranje') !== 'apsolutno' && (por === 'centar' || por === 'desno')) {
+    if (vEdit('pozicioniranje') === 'apsolutno') {
+      tablica.absolutePosition = { x: MM(vBroj('pozicija_x_mm')), y: MM(vBroj('pozicija_y_mm')) };   /* mm → pt, od gornjeg-lijevog kuta stranice */
+      content = [tablica];
+    } else if (por === 'centar' || por === 'desno') {
       content = [{ columns: (por === 'centar') ? [{ width: '*', text: '' }, Object.assign({ width: 'auto' }, tablica), { width: '*', text: '' }] : [{ width: '*', text: '' }, Object.assign({ width: 'auto' }, tablica)] }];
     } else content = [tablica];
 

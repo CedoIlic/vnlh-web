@@ -270,19 +270,17 @@
                     <div class="kontrola-tab__panel" role="tabpanel" id="tabPanel2" aria-labelledby="tabKart2" hidden>
                         <div class="pdf-stilovi-tablice-crud__kolone">
 
-                            <!-- Kolona 1: tablica stupaca + set ikona desno (okomito) -->
+                            <!-- Kolona 1: tablica stupaca + set ikona ispod -->
                             <div class="pdf-stilovi-tablice-crud__kolone-col1">
-                                <div class="pdf-stilovi-tablice-crud__kolone-tablica-red">
-                                    <div class="pdf-stilovi-tablice-crud__kolone-tablica">
-                                        <div id="koloneTablicaContainer" class="kontrola-tablica"></div>
-                                    </div>
-                                    <!-- Set ikona (Dodaj/Obriši/▲/▼) desno od tablice, okomito — uzor PDF_Template okviri -->
-                                    <div class="pdf-stilovi-tablice-crud__kol-traka">
-                                        <button type="button" id="kolDodaj" class="pdf-stilovi-tablice-crud__kol-akcija" title="Dodaj stupac" aria-label="Dodaj stupac"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h18v2.5H3V4zm0 5.75h10v2.5H3v-2.5z"/><path d="M16 13h2.5v3.5H22V19h-3.5v3.5H16V19h-3.5v-2.5H16V13z"/></svg></button>
-                                        <button type="button" id="kolObrisi" class="pdf-stilovi-tablice-crud__kol-akcija" disabled title="Obriši stupac" aria-label="Obriši stupac"><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
-                                        <button type="button" id="kolGore" class="pdf-stilovi-tablice-crud__kol-akcija" disabled title="Pomakni gore" aria-label="Pomakni gore"><span class="pdf-stilovi-tablice-crud__kol-trokut" aria-hidden="true">▲</span></button>
-                                        <button type="button" id="kolDolje" class="pdf-stilovi-tablice-crud__kol-akcija" disabled title="Pomakni dolje" aria-label="Pomakni dolje"><span class="pdf-stilovi-tablice-crud__kol-trokut" aria-hidden="true">▼</span></button>
-                                    </div>
+                                <div class="pdf-stilovi-tablice-crud__kolone-tablica">
+                                    <div id="koloneTablicaContainer" class="kontrola-tablica"></div>
+                                </div>
+                                <!-- Set ikona (Dodaj/Obriši/▲/▼) ispod tablice — uzor PDF_Template okviri -->
+                                <div class="pdf-stilovi-tablice-crud__kol-traka">
+                                    <button type="button" id="kolDodaj" class="pdf-stilovi-tablice-crud__kol-akcija" title="Dodaj stupac" aria-label="Dodaj stupac"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h18v2.5H3V4zm0 5.75h10v2.5H3v-2.5z"/><path d="M16 13h2.5v3.5H22V19h-3.5v3.5H16V19h-3.5v-2.5H16V13z"/></svg></button>
+                                    <button type="button" id="kolObrisi" class="pdf-stilovi-tablice-crud__kol-akcija" disabled title="Obriši stupac" aria-label="Obriši stupac"><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
+                                    <button type="button" id="kolGore" class="pdf-stilovi-tablice-crud__kol-akcija" disabled title="Pomakni gore" aria-label="Pomakni gore"><span class="pdf-stilovi-tablice-crud__kol-trokut" aria-hidden="true">▲</span></button>
+                                    <button type="button" id="kolDolje" class="pdf-stilovi-tablice-crud__kol-akcija" disabled title="Pomakni dolje" aria-label="Pomakni dolje"><span class="pdf-stilovi-tablice-crud__kol-trokut" aria-hidden="true">▼</span></button>
                                 </div>
                             </div>
 
@@ -305,7 +303,7 @@
                                             <input id="kol_sirina_mm" type="text" class="kontrola-edit pdf-stilovi-tablice-crud__num" inputmode="decimal" placeholder="0,0">
                                         </div>
                                     </div>
-                                    <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni">
+                                    <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni pdf-stilovi-tablice-crud__polje--napomena">
                                         <label class="kontrola-labela mb-0" for="kol_zaglavlje">Tekst zaglavlja</label>
                                         <textarea id="kol_zaglavlje" class="kontrola-napomena pdf-stilovi-tablice-crud__ta-zaglavlje" rows="2" maxlength="100" placeholder="Tekst zaglavlja stupca..."></textarea>
                                     </div>
@@ -314,8 +312,12 @@
                                 <!-- Kolona 3: Zaglavlje ćelije -->
                                 <div class="pdf-stilovi-tablice-crud__stupac">
                                     <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni">
-                                        <label class="kontrola-labela mb-0" for="kol_zag_orijentacija">Poravnanje ćelije zaglavlja</label>
+                                        <label class="kontrola-labela mb-0" for="kol_zag_orijentacija">H pozicija zaglavlja</label>
                                         <div class="kontrola-select"><select id="kol_zag_orijentacija"><option value="lijevo">Lijevo</option><option value="centar">Centar</option><option value="desno">Desno</option></select></div>
+                                    </div>
+                                    <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni">
+                                        <label class="kontrola-labela mb-0" for="kol_zag_valign">V pozicija zaglavlja</label>
+                                        <div class="kontrola-select"><select id="kol_zag_valign"><option value="gore">Gore</option><option value="centar">Centar</option><option value="dolje">Dolje</option></select></div>
                                     </div>
                                     <div class="pdf-stilovi-tablice-crud__red">
                                         <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni"><label class="kontrola-labela mb-0" for="kol_zag_padding_lijevo_mm">Pad ←</label><div class="pdf-stilovi-tablice-crud__unos-mjera"><input id="kol_zag_padding_lijevo_mm" type="text" class="kontrola-edit pdf-stilovi-tablice-crud__num" inputmode="decimal" placeholder="0,0"><span class="pdf-stilovi-tablice-crud__mjera">mm</span></div></div>
@@ -330,8 +332,12 @@
                                 <!-- Kolona 4: Podaci ćelije -->
                                 <div class="pdf-stilovi-tablice-crud__stupac">
                                     <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni">
-                                        <label class="kontrola-labela mb-0" for="kol_pod_orijentacija">Poravnanje ćelije podataka</label>
+                                        <label class="kontrola-labela mb-0" for="kol_pod_orijentacija">H pozicija podataka</label>
                                         <div class="kontrola-select"><select id="kol_pod_orijentacija"><option value="lijevo">Lijevo</option><option value="centar">Centar</option><option value="desno">Desno</option></select></div>
+                                    </div>
+                                    <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni">
+                                        <label class="kontrola-labela mb-0" for="kol_pod_valign">V pozicija podataka</label>
+                                        <div class="kontrola-select"><select id="kol_pod_valign"><option value="gore">Gore</option><option value="centar">Centar</option><option value="dolje">Dolje</option></select></div>
                                     </div>
                                     <div class="pdf-stilovi-tablice-crud__red">
                                         <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni"><label class="kontrola-labela mb-0" for="kol_pod_padding_lijevo_mm">Pad ←</label><div class="pdf-stilovi-tablice-crud__unos-mjera"><input id="kol_pod_padding_lijevo_mm" type="text" class="kontrola-edit pdf-stilovi-tablice-crud__num" inputmode="decimal" placeholder="0,0"><span class="pdf-stilovi-tablice-crud__mjera">mm</span></div></div>
@@ -349,10 +355,14 @@
 
                     <!-- TAB 3: Ostalo -->
                     <div class="kontrola-tab__panel" role="tabpanel" id="tabPanel3" aria-labelledby="tabKart3" hidden>
-                        <div class="pdf-stilovi-tablice-crud__tri-stupca">
+                        <div class="pdf-stilovi-tablice-crud__tri-stupca pdf-stilovi-tablice-crud__tri-stupca--siroka-treca">
 
                             <!-- Kolona 1 -->
                             <div class="pdf-stilovi-tablice-crud__stupac">
+                                <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--inline">
+                                    <label class="kontrola-labela mb-0" for="edit_meki_prijelom">Meki prijelom reda</label>
+                                    <input id="edit_meki_prijelom" type="text" class="kontrola-edit" maxlength="8" placeholder="^" autocomplete="off">
+                                </div>
                                 <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--inline">
                                     <label class="kontrola-labela mb-0" for="edit_razdvajac">Razdvajač podataka</label>
                                     <input id="edit_razdvajac" type="text" class="kontrola-edit" maxlength="8" placeholder="|" autocomplete="off">
@@ -383,13 +393,13 @@
                                     <label class="kontrola-labela mb-0" for="edit_pozicioniranje">Pozicioniranje</label>
                                     <div class="kontrola-select"><select id="edit_pozicioniranje"><option value="u_tijeku">U toku dokumenta</option><option value="apsolutno">Apsolutno (x/y)</option></select></div>
                                 </div>
-                                <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni" id="ostalo_poravnanje_wrap">
+                                <div class="pdf-stilovi-tablice-crud__red pdf-stilovi-tablice-crud__red--xy" id="ostalo_xy_wrap" hidden>
+                                    <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--inline"><label class="kontrola-labela mb-0" for="edit_pozicija_x_mm">Pozicija X</label><div class="pdf-stilovi-tablice-crud__unos-mjera"><input id="edit_pozicija_x_mm" type="text" class="kontrola-edit pdf-stilovi-tablice-crud__num" inputmode="decimal" placeholder="0,0"><span class="pdf-stilovi-tablice-crud__mjera">mm</span></div></div>
+                                    <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--inline"><label class="kontrola-labela mb-0" for="edit_pozicija_y_mm">Pozicija Y</label><div class="pdf-stilovi-tablice-crud__unos-mjera"><input id="edit_pozicija_y_mm" type="text" class="kontrola-edit pdf-stilovi-tablice-crud__num" inputmode="decimal" placeholder="0,0"><span class="pdf-stilovi-tablice-crud__mjera">mm</span></div></div>
+                                </div>
+                                <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--inline" id="ostalo_poravnanje_wrap">
                                     <label class="kontrola-labela mb-0" for="edit_poravnanje">Poravnanje tablice</label>
                                     <div class="kontrola-select"><select id="edit_poravnanje"><option value="lijevo">Lijevo</option><option value="centar">Centar</option><option value="desno">Desno</option></select></div>
-                                </div>
-                                <div class="pdf-stilovi-tablice-crud__red pdf-stilovi-tablice-crud__red--stack" id="ostalo_xy_wrap" hidden>
-                                    <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni"><label class="kontrola-labela mb-0" for="edit_pozicija_x_mm">Pozicija X</label><div class="pdf-stilovi-tablice-crud__unos-mjera"><input id="edit_pozicija_x_mm" type="text" class="kontrola-edit pdf-stilovi-tablice-crud__num" inputmode="decimal" placeholder="0,0"><span class="pdf-stilovi-tablice-crud__mjera">mm</span></div></div>
-                                    <div class="pdf-stilovi-tablice-crud__polje pdf-stilovi-tablice-crud__polje--rastegni"><label class="kontrola-labela mb-0" for="edit_pozicija_y_mm">Pozicija Y</label><div class="pdf-stilovi-tablice-crud__unos-mjera"><input id="edit_pozicija_y_mm" type="text" class="kontrola-edit pdf-stilovi-tablice-crud__num" inputmode="decimal" placeholder="0,0"><span class="pdf-stilovi-tablice-crud__mjera">mm</span></div></div>
                                 </div>
                             </div>
 
