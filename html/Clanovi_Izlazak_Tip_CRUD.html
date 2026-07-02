@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="../css/0-Common.css?v=1.0.241">
     <link rel="stylesheet" href="../css/0-Kontrole.css?v=1.0.241">
     <link rel="stylesheet" href="../css/0-Poruke.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/Clanovi_Izlazak_Tip_CRUD.css?v=1.0.241">
 </head>
 <body>
 <div class="naslov-forme"><h2 data-i18n="clanovi_izlazak_tip_crud.naslov">Tipovi izlazaka iz lože</h2></div>
@@ -29,6 +30,7 @@
                 <input id="edit_redosljed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" aria-label="Redosljed 0 do 100" data-i18n-aria="clanovi_izlazak_tip_crud.redosljed.aria" style="width: 5rem; text-align: right; flex: 0 0 auto;">
                 <label class="kontrola-labela mb-0" for="edit_kljuc" data-i18n="clanovi_izlazak_tip_crud.labela.kljuc">Ključ</label>
                 <input id="edit_kljuc" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" aria-label="Ključ 0 do 100" data-i18n-aria="clanovi_izlazak_tip_crud.kljuc.aria" style="width: 5rem; text-align: right; flex: 0 0 auto;">
+                <button type="button" id="btnKljucPomoc" class="clanovi-izlazak-tip-crud__pomoc-btn" title="Upute za ključeve" aria-label="Upute za ključeve">?</button>
             </div>
         </div>
         <div class="kontrola-panel__footer clanovi-izlazak-tip-crud__edit-footer">
@@ -39,6 +41,23 @@
             <div class="clanovi-izlazak-tip-crud__footer-right">
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
             </div>
+        </div>
+    </div>
+</div>
+<!-- ===== Popup: upute za Ključeve ===== -->
+<div class="kontrola-modal kontrola-modal--dim" id="kljucPomocModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="kljucPomocModal_overlay"></div>
+    <div class="kontrola-modal__dialog clanovi-izlazak-tip-crud__pomoc-modal">
+        <div class="kontrola-modal__header" id="kljucPomocModal_header">Ključevi — upute</div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content clanovi-izlazak-tip-crud__pomoc">
+                <p><strong>Ključ 1:</strong> Koristi se kod prelaska iz lože u ložu unutar obedijencije. Promijenit će ložu odabranog člana i postaviti za datum ulaska u ložu datum koji je upisan u formi koja koristi ovaj popis. Ostali parametri člana neće biti dirani.</p>
+                <p><strong>Ključ 2:</strong> Koristi se kada član napušta ložu zbog odlaska u drugu obedijenciju ili pokrivanja. Aktivnost člana bit će postavljena na neaktivno i bit će upisan datum njegovog izlaska.</p>
+                <p>Ostali ključevi za daljnju upotrebu.</p>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="btnKljucPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
         </div>
     </div>
 </div>

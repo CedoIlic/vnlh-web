@@ -1,0 +1,47 @@
+/* Clanovi_Izlazak_Tip_CRUD — help („?") gumb uz Ključ + popup uputa.
+   Uzor: PDF_Dokument_CRUD (__ellipsis-btn--pomoc + __pomoc-modal). Koristi 0-Common tokene. */
+
+.clanovi-izlazak-tip-crud__pomoc-btn {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--edit_border, #ced4da);
+  border-radius: var(--edit_radius, 6px);
+  background: var(--panel_body_bg, #fff);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kontrole_sjena_slaba_2);
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+  font-family: var(--font_family);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--label_text);
+}
+.clanovi-izlazak-tip-crud__pomoc-btn:hover:not(:disabled) {
+  background: var(--c-gray-100, #eee);
+  box-shadow: var(--kontrole_sjena_slaba_1);
+}
+.clanovi-izlazak-tip-crud__pomoc-btn:active:not(:disabled) {
+  box-shadow: inset 0 2px 4px var(--c-shadow-30);
+}
+.clanovi-izlazak-tip-crud__pomoc-btn:disabled {
+  background: var(--kontrola_boja_trigger_disabled_bg, #e9ecef);
+  border-color: var(--kontrola_boja_trigger_disabled_border, #ddd);
+  color: var(--label_text_disabled, #999);
+  box-shadow: var(--kontrola_boja_trigger_disabled_sjena, none);
+  cursor: not-allowed;
+}
+
+/* Popup uputa: fiksna širina, centriran (drag preko zaglavlja). */
+.clanovi-izlazak-tip-crud__pomoc-modal { min-width: 34rem; max-width: 34rem; }
+.kontrola-modal__dialog.clanovi-izlazak-tip-crud__pomoc-modal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}

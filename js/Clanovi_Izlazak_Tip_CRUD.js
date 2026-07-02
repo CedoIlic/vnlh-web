@@ -12,11 +12,10 @@
 // Tablica_Zaglavlje – parametri kolone: key, title, SQL_Naziv, sortable, sortable_icon, type, width, suffix, align, row_align, mobitel_prikaz, cell_readonly.
 // =============================================================================
   const Clanovi_Izlazak_TipCRUD = {
-    Broj_Kolona: 4,
+    Broj_Kolona: 3,
     Reload_Ikona: 0,
     CrudCssPrefix: 'clanovi-izlazak-tip-crud',
     Tablica_Zaglavlje: [
-      { key: "id", title: "ID", SQL_Naziv: "id", sortable: 1, sortable_icon: 0, type: "n", width: 100, suffix: "", align: "C", row_align: "C", mobitel_prikaz: 1 },
       { key: "naziv", title: "Tip izlaska iz lože", SQL_Naziv: "naziv", sortable: 1, sortable_icon: 0, type: "t", width: 0, suffix: "", align: "L", row_align: "L", mobitel_prikaz: 1 },
       { key: "redosljed", title: "Red", SQL_Naziv: "redosljed", sortable: 1, sortable_icon: 0, type: "n", width: 100, suffix: "", align: "C", row_align: "C", mobitel_prikaz: 1 },
       { key: "kljuc", title: "Ključ", SQL_Naziv: "kljuc", sortable: 1, sortable_icon: 0, type: "n", width: 100, suffix: "", align: "C", row_align: "C", mobitel_prikaz: 1 },
@@ -33,8 +32,8 @@
   }
 
   CommonCRUD.initTablica('tablicaContainer', Clanovi_Izlazak_TipCRUD, {
-    /* id je skriveni zadnji element retka ([id, naziv, redosljed, kljuc, id]); selekcija ide po njemu. */
-    getRowId: function (row) { return row && row[4] != null ? row[4] : (row && row.length > 1 ? row[1] : null); },
+    /* id je skriveni zadnji element retka ([naziv, redosljed, kljuc, id]); selekcija ide po njemu. */
+    getRowId: function (row) { return row && row[3] != null ? row[3] : null; },
     onReady: function (api) { tablicaApi = api; },
     onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
   });
@@ -59,10 +58,10 @@
       var editEl = document.getElementById('edit_naziv');
       var data = tablicaApi.getData();
       for (var i = 0; i < data.length; i++) {
-        if (data[i][4] == id) {
-          if (editEl) editEl.value = data[i][1] != null ? data[i][1] : '';
-          if (editRedosljed) editRedosljed.value = data[i][2] != null ? String(data[i][2]) : '';
-          if (editKljuc) editKljuc.value = data[i][3] != null ? String(data[i][3]) : '';
+        if (data[i][3] == id) {
+          if (editEl) editEl.value = data[i][0] != null ? data[i][0] : '';
+          if (editRedosljed) editRedosljed.value = data[i][1] != null ? String(data[i][1]) : '';
+          if (editKljuc) editKljuc.value = data[i][2] != null ? String(data[i][2]) : '';
           break;
         }
       }
@@ -98,6 +97,19 @@
       btnUpisi.disabled = !imaSadrzaj;
     }
     if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
+
+    // Redosljed + Ključ (s labelama): enable kad ima selekcija ILI sadržaj u „Tip izlaska"; inače disable.
+    var kontroleEnabled = imaSelekciju || imaSadrzaj;
+    var elRed = document.getElementById('edit_redosljed');
+    var elKljuc = document.getElementById('edit_kljuc');
+    if (elRed) elRed.disabled = !kontroleEnabled;
+    if (elKljuc) elKljuc.disabled = !kontroleEnabled;
+    var btnKljucPomoc = document.getElementById('btnKljucPomoc');
+    if (btnKljucPomoc) btnKljucPomoc.disabled = !kontroleEnabled; // help ikona prati Ključ edit
+    var lblRed = document.querySelector('label[for="edit_redosljed"]');
+    var lblKljuc = document.querySelector('label[for="edit_kljuc"]');
+    if (lblRed) lblRed.classList.toggle('kontrola-labela--disabled', !kontroleEnabled);
+    if (lblKljuc) lblKljuc.classList.toggle('kontrola-labela--disabled', !kontroleEnabled);
   }
 
   (function () {
@@ -233,7 +245,6 @@
           for (var i = 0; i < arr.length; i++) {
             var id = arr[i].id != null ? arr[i].id : 0;
             rows.push([
-              id,
               arr[i].naziv != null ? arr[i].naziv : '',
               arr[i].redosljed != null ? arr[i].redosljed : 0,
               arr[i].kljuc != null ? arr[i].kljuc : 0,
@@ -281,6 +292,20 @@
   function trim(s) {
     return window.CommonTrim ? window.CommonTrim(s) : (s != null ? String(s).replace(/^\s+|\s+$/g, '') : '');
   }
+
+  /* Popup uputa za Ključeve (uzor: PDF_Dokument_CRUD help modal). */
+  (function () {
+    var m = document.getElementById('kljucPomocModal');
+    if (!m) return;
+    function otvori() { m.setAttribute('aria-hidden', 'false'); m.classList.add('kontrola-modal--open'); }
+    function zatvori() { m.setAttribute('aria-hidden', 'true'); m.classList.remove('kontrola-modal--open'); }
+    var bp = document.getElementById('btnKljucPomoc'); if (bp) bp.addEventListener('click', otvori);
+    var ok = document.getElementById('btnKljucPomocOk'); if (ok) ok.addEventListener('click', zatvori);
+    var ov = document.getElementById('kljucPomocModal_overlay'); if (ov) ov.addEventListener('click', zatvori);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && m.getAttribute('aria-hidden') === 'false') zatvori(); });
+    var dlg = m.querySelector('.kontrola-modal__dialog'), hdr = document.getElementById('kljucPomocModal_header');
+    if (dlg && hdr && typeof KontroleModalDrag === 'function') KontroleModalDrag(dlg, hdr);
+  })();
 
   updateCrudUpisiState();
   window.Clanovi_Izlazak_TipCRUD = Clanovi_Izlazak_TipCRUD;
