@@ -70,6 +70,13 @@
                 <div class="kontrola-tab__traka" role="presentation">
                     <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="cplTabKart0" aria-selected="true" aria-controls="cplTabPanel0" data-tab-index="0">Promjena Lože - izlazak</button>
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="cplTabKart1" aria-selected="false" aria-controls="cplTabPanel1" data-tab-index="1" tabindex="-1">Zapisi o promjeni lože - izlascima</button>
+                    <div class="clanovi-promjena-loze-izlazak-crud__tab-trazi">
+                        <div class="kontrola-edit-delete clanovi-loza-crud__trazi-edit-delete">
+                            <span class="clanovi-loza-crud__trazi-lupe" aria-hidden="true"><span class="kontrola-icon--magnifying-glass"></span></span>
+                            <input id="cpl_zapisi_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" aria-label="Filtriraj zapise">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti traženje" title="Očisti"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                        </div>
+                    </div>
                 </div>
                 <div class="kontrola-tab__tijelo" role="presentation">
                     <div class="kontrola-tab__panel kontrola-tab__panel--aktivna" role="tabpanel" id="cplTabPanel0" aria-labelledby="cplTabKart0">
@@ -132,6 +139,14 @@
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
             </div>
         </div>
+    </div>
+</div>
+<!-- Popup: napomena zapisa (Tab 2) -->
+<div id="zapisiNapomenaPopup" class="clanovi-promjena-loze-izlazak-crud__napomena-popup" hidden>
+    <div class="clanovi-promjena-loze-izlazak-crud__napomena-popup-naslov">Napomena</div>
+    <div class="clanovi-promjena-loze-izlazak-crud__napomena-popup-tekst" id="zapisiNapomenaPopupTekst"></div>
+    <div class="clanovi-promjena-loze-izlazak-crud__napomena-popup-footer">
+        <button type="button" id="zapisiNapomenaPopupIzlaz" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izlaz</span></span></span></button>
     </div>
 </div>
 <script src="../js/00-Version.js?v=1.0.241"></script>

@@ -380,6 +380,7 @@
         }
       }
     }
+    updateEnabledState();   /* preračunaj i bolt uz Šifru nakon popune polja (inače ostane na starom stanju) */
     updateCrudUpisiState();
     updateSlikaPreview();
   };

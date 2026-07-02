@@ -56,6 +56,94 @@
   --tablica_vidljivih_redova: 5;
 }
 
+/* Traka taba: simetričan gornji/donji padding (da search edit ima jednak razmak gore/dolje). */
+.vnlh-page-clanovi-promjena-loze-izlazak-crud .kontrola-tab__traka {
+  padding-bottom: var(--tab_kontrola_header_padding_y);
+}
+
+/* Search u traci taba (desno) — filtrira zapise Tab 2 (uzor: traži ispod geo grupe). */
+.clanovi-promjena-loze-izlazak-crud__tab-trazi {
+  margin-left: auto;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  flex: 0 1 18rem;
+  min-width: 0;
+}
+.clanovi-promjena-loze-izlazak-crud__tab-trazi .kontrola-edit-delete {
+  width: 100%;
+}
+
+/* Row akcije (elipsis + trash) — uzor Zapisnik. */
+.clanovi-promjena-loze-izlazak-crud__zapisi-akcije {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  justify-content: center;
+}
+.clanovi-promjena-loze-izlazak-crud__zapisi-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  color: var(--edit_text);
+  cursor: pointer;
+  box-shadow: var(--button_outer_shadow);
+}
+@media (hover: hover) {
+  .clanovi-promjena-loze-izlazak-crud__zapisi-btn:hover:not(:disabled) {
+    border-color: var(--edit_border_focus);
+    background: var(--edit_bg_hover, var(--c-gray-100));
+    box-shadow: var(--edit_focus_shadow);
+  }
+}
+
+/* Napomena popup (uzor Esej_CRUD ključne riječi). */
+.clanovi-promjena-loze-izlazak-crud__napomena-popup {
+  position: fixed;
+  z-index: 10200;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel_body_bg, #fff);
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius, 6px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  max-width: 320px;
+  min-width: 160px;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  color: var(--text);
+}
+.clanovi-promjena-loze-izlazak-crud__napomena-popup[hidden] {
+  display: none !important;
+}
+.clanovi-promjena-loze-izlazak-crud__napomena-popup-naslov {
+  padding: 0.4rem 0.75rem 0.3rem;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid var(--edit_border);
+}
+.clanovi-promjena-loze-izlazak-crud__napomena-popup-tekst {
+  padding: 0.5rem 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.clanovi-promjena-loze-izlazak-crud__napomena-popup-footer {
+  padding: 0.3rem 0.5rem 0.4rem;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--edit_border);
+}
+
 /* Tab kontrola disable (bez selekcije): kartice neaktivne + prigušene. */
 .clanovi-promjena-loze-izlazak-crud__tab .kontrola-tab__kartica:disabled {
   cursor: not-allowed;

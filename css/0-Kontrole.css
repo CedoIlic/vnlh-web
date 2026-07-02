@@ -420,8 +420,8 @@ body {
   margin-right: auto;
 }
 
-/* Hover zaglavlja tablice – invertiraj gradient (osim kad je tablica disabled ili readonly) */
-.kontrola-tablica:not(.kontrola-tablica--disabled):not(.kontrola-tablica--readonly) th:hover {
+/* Hover zaglavlja tablice – invertiraj gradient (osim kad je tablica disabled/readonly ili kolona nije sortabilna) */
+.kontrola-tablica:not(.kontrola-tablica--disabled):not(.kontrola-tablica--readonly) th:not(.kontrola-tablica__th--no-sort):hover {
   background: linear-gradient(
     to bottom,
     var(--tablica_head_bg_2),

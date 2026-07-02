@@ -17,6 +17,7 @@ if ($id_loza <= 0) {
 $sql = "SELECT
             ci.id,
             ci.datum_izlaska,
+            ci.napomena,
             c.prezime,
             c.ime,
             t.naziv AS tip_naziv,

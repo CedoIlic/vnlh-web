@@ -105,6 +105,7 @@ var MODAL_MESSAGES = {
   '125': '125|Zapisnik|(OK)|information||Nema dostupnih članova za odabir. U tabu Prisustvo dodaj u desnu tablicu osobe čiji tip unosa dopušta dužnosnike, ili ukloni postojeće odabire iz drugih dužnosti.',   /* Zapisnik_CRUD: modal Izbor dužnosnika — prazan skup nakon filtra tip + već dodijeljeni ID-jevi */
   '126': '126|Zapisnik|OK,(Cancel)|warning||Brisanje zapisnika brisati će i sve pripadajuće podatke o ložama učesnicama, prisustvu i dužnosnicima. Jesi li siguran da želiš brisati zapisnik?',   /* Zapisnik_CRUD Izbriši: kaskadno brisanje svih vezanih slogova; OK / Odustani, default Odustani */
   '127': '127|Zapisnik|(OK)|information||Odabrani esej je već dodan u ovaj zapisnik.',   /* Zapisnik_CRUD: pokušaj duplikata eseja u tablici Eseji */
+  '128': '128|Promjena lože|OK,(Cancel)|warning||Jesi li siguran da želiš poništiti ovu stavku?',   /* Clanovi_Promjena_Loze_Izlazak_CRUD: potvrda brisanja (poništavanja) zapisa; OK / Odustani, default Odustani */
   '154': '154|Baza podataka|(OK)|error||Shema tablica za ovu formu nije ažurna (nedostaje stupac, npr. redosljed). Pokreni u bazi sql/sustav_odgovori_razvoja_dodaj_redosljed_obje_tablice.sql (ili pojedinačno *_boje_* i *_poruke_*), zatim osvježi stranicu.',
   '155': '155|Odgovori razvoja|(OK)|error||Tekst predloška ne smije sadržavati znak „#“ (korišten je u formatu odgovora).',
   '156': '156|Odgovori razvoja||ok||Svi odgovori su uklonjeni; poruka je snimljena bez sufiksnih odgovora.',   /* Gumb „Ukloni sve odgovore“: očisti #kod*tekst# i UPDATE polja poruka */
