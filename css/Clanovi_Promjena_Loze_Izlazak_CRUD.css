@@ -51,9 +51,9 @@
   flex: 1 1 0;
   min-width: 0;
 }
-.clanovi-promjena-loze-izlazak-crud__zapisi-placeholder {
-  padding: 1rem;
-  color: var(--label_text_disabled, #999);
+/* Tab 2: tablica zapisa — 5 vidljivih redova (KontroleTablica sama računa visinu iz tokena). */
+.clanovi-promjena-loze-izlazak-crud__zapisi-tablica {
+  --tablica_vidljivih_redova: 5;
 }
 
 /* Tab kontrola disable (bez selekcije): kartice neaktivne + prigušene. */
@@ -66,6 +66,12 @@
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
+}
+.clanovi-promjena-loze-izlazak-crud__footer-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
 }
 .clanovi-promjena-loze-izlazak-crud__footer-right {
   display: flex;

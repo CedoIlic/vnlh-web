@@ -119,12 +119,15 @@
                         </div>
                     </div>
                     <div class="kontrola-tab__panel" role="tabpanel" id="cplTabPanel1" aria-labelledby="cplTabKart1" hidden>
-                        <div class="clanovi-promjena-loze-izlazak-crud__zapisi-placeholder">Zapisi o promjeni lože - izlascima (u izradi).</div>
+                        <div id="zapisiTablicaContainer" class="kontrola-tablica clanovi-promjena-loze-izlazak-crud__zapisi-tablica"></div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="kontrola-panel__footer clanovi-promjena-loze-izlazak-crud__edit-footer">
+            <div class="clanovi-promjena-loze-izlazak-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi" style="display: none;"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upiši</span></span></span></button>
+            </div>
             <div class="clanovi-promjena-loze-izlazak-crud__footer-right">
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
             </div>

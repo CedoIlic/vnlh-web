@@ -33,6 +33,10 @@
       window.showPorukaModal(code, repl || [], cb);
     } else if (typeof cb === 'function') { cb(); }
   }
+  function postFormData(url, params, cb) {
+    if (window.CommonPostFormData) window.CommonPostFormData(url, params, cb);
+    else if (cb) cb('');
+  }
 
   /* --- Tablica: Prezime, Ime, St. (stupanj) --- */
   var PromjenaLozeCRUD = {
@@ -53,6 +57,59 @@
     onReady: function (api) { tablicaApi = api; },
     onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
   });
+
+  /* --- Tab 2: tablica zapisa (jedna kolona; sort iz SQL-a: datum_izlaska DESC) --- */
+  var ZapisiCRUD = {
+    Broj_Kolona: 1,
+    Reload_Ikona: 0,
+    CrudCssPrefix: 'clanovi-promjena-loze-izlazak-crud-zapisi',
+    Tablica_Zaglavlje: [
+      { key: 'tekst', title: 'Popis stavki promjene lože člana ili napuštanje obedijencije te pokrivanja', SQL_Naziv: 'tekst', sortable: 0, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
+    ]
+  };
+  var zapisiApi = null;
+  CommonCRUD.initTablica('zapisiTablicaContainer', ZapisiCRUD, {
+    getRowId: function (row) { return (row && row.id != null) ? row.id : null; },
+    onReady: function (api) { zapisiApi = api; }
+  });
+
+  function formatDatumHR(s) {
+    if (!s) return '';
+    var m = String(s).split('-');
+    return (m.length === 3) ? (m[2] + '.' + m[1] + '.' + m[0] + '.') : String(s);
+  }
+
+  /* Popuni Tab 2 zapisima iz clanovi_izlazak; tekst retka: „datum, Prezime Ime, tip[, odlaska → dolaska]". */
+  function loadZapisi() {
+    var idLoza = selectLoza ? trim(selectLoza.value) : '';
+    if (!idLoza) {
+      if (zapisiApi) CommonCRUD.setDataTablica(zapisiApi, 'zapisiTablicaContainer', [], ZapisiCRUD.Tablica_Zaglavlje);
+      return;
+    }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', API_BASE + 'Clanovi_Promjena_Loze_Izlazak_CRUD_zapisi.php?id_loza=' + encodeURIComponent(idLoza), true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      var text = (xhr.responseText || '').trim();
+      var rows = [];
+      if (text !== '' && text.charAt(0) === '[') {
+        try {
+          var arr = JSON.parse(text) || [];
+          for (var i = 0; i < arr.length; i++) {
+            var r = arr[i];
+            var ime = ((r.prezime || '') + ' ' + (r.ime || '')).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+            var tekst = formatDatumHR(r.datum_izlaska) + ', ' + ime + ', ' + (r.tip_naziv || '');
+            if (String(r.tip_kljuc) === '1') {
+              tekst += ', ' + (r.loza_odlaska_naziv || '') + ' → ' + (r.loza_dolaska_naziv || '');
+            }
+            rows.push({ id: r.id != null ? r.id : '', 0: tekst });
+          }
+        } catch (e) { rows = []; }
+      }
+      if (zapisiApi) CommonCRUD.setDataTablica(zapisiApi, 'zapisiTablicaContainer', rows, ZapisiCRUD.Tablica_Zaglavlje);
+    };
+    xhr.send();
+  }
 
   var selectDrzava = document.getElementById('select_drzava');
   var selectRegija = document.getElementById('select_regija');
@@ -121,6 +178,29 @@
     var lblOdl = document.querySelector('label[for="select_loza_odlazi"]');
     if (lblNap) lblNap.classList.toggle('kontrola-labela--disabled', !kljuc1);
     if (lblOdl) lblOdl.classList.toggle('kontrola-labela--disabled', !kljuc1);
+    updateUpisiButton();
+  }
+
+  /* Gumb „Upiši" (Izmjeni/Izbriši nema u ovoj formi). Pojavljuje se prema tipu izlaska:
+     - ključ 1 (prelazak): kad je upisan ispravan Datum izlaska I odabrana Loža u koju odlazi.
+     - ključ 2 (izlazak/pokrivanje): dovoljan je ispravan Datum izlaska.
+     - ostali ključevi: (definirat ćemo naknadno) — zasad skriven. */
+  function updateUpisiButton() {
+    var btn = document.getElementById('btnUpisi');
+    if (!btn) return;
+    var vidljivo = false;
+    if (_tabEnabled) {
+      var kljuc = tipIzlaskaKljuc();
+      var dv = editDatumIzlaska ? editDatumIzlaska.value : '';
+      var datumOk = dv !== '' && !isNaN(new Date(dv).getTime());
+      if (kljuc === '1') {
+        var lozaOk = selectLozaOdlazi && selectLozaOdlazi.value !== '';
+        vidljivo = !!(datumOk && lozaOk);
+      } else if (kljuc === '2') {
+        vidljivo = datumOk;
+      }
+    }
+    btn.style.display = vidljivo ? '' : 'none';
   }
 
   /* Popis svih loža → napušta (RO, cijeli popis) + spremi za filtriranje odlazne lože. */
@@ -150,7 +230,8 @@
     var filtrirane = [];
     if (srcTip != null && String(srcTip) !== '') {
       for (var j = 0; j < _lozeSve.length; j++) {
-        if (String(_lozeSve[j].id_tip_loze) === String(srcTip)) filtrirane.push(_lozeSve[j]);
+        /* Isti tip lože, ali NE i sama izvorna (napušta) loža. */
+        if (String(_lozeSve[j].id_tip_loze) === String(srcTip) && String(_lozeSve[j].id) !== srcId) filtrirane.push(_lozeSve[j]);
       }
     }
     popuniSelectIzKeša(selectLozaOdlazi, filtrirane, '— Odaberi ložu —', 'select_loza_odlazi');
@@ -161,12 +242,9 @@
      loža koja se napušta uvijek disabled = prikaz vrijednosti), labele normalne. */
   function setTabEnabled(enabled) {
     _tabEnabled = enabled;
-    var cplTab = document.getElementById('cplTab');
-    if (cplTab) {
-      var kartice = cplTab.querySelectorAll('.kontrola-tab__kartica');
-      for (var i = 0; i < kartice.length; i++) kartice[i].disabled = !enabled;
-      cplTab.classList.toggle('kontrola-tab--disabled', !enabled);
-    }
+    /* Kartica Tab 1 („Promjena Lože - izlazak") ovisi o selekciji člana; Tab 2 kartica se vodi po loži (updateEnabledState). */
+    var cplKart0 = document.getElementById('cplTabKart0');
+    if (cplKart0) cplKart0.disabled = !enabled;
     if (editDatumUlaska) editDatumUlaska.disabled = !enabled;   /* RO (readonly); disable samo kad je tab disabled */
     if (editDatumIzlaska) editDatumIzlaska.disabled = !enabled;
     if (selectIzlazakTip) { selectIzlazakTip.disabled = !enabled; refreshSelect('select_izlazak_tip'); }
@@ -233,6 +311,9 @@
     if (selectLoza) selectLoza.disabled = _geoAutoLockedLoza || !(selectRegija && trim(selectRegija.value) !== '');
     if (typeof KontroleRefreshCustomSelect === 'function' && selectLoza) KontroleRefreshCustomSelect('select_loza');
     if (btnReloadTablica) btnReloadTablica.disabled = !imaLozu;
+    /* Tab 2 („Zapisi") kartica: enable čim je odabrana loža (neovisno o selekciji člana). */
+    var cplKart1 = document.getElementById('cplTabKart1');
+    if (cplKart1) cplKart1.disabled = !imaLozu;
     var btnPovratak = document.getElementById('btnPovratak');
     if (btnPovratak) btnPovratak.disabled = false;
   }
@@ -324,7 +405,7 @@
     xhr.send();
   }
   function osvjeziTablicu(cb) {
-    ucitajClanove(selectLoza ? trim(selectLoza.value) : '', function () { updateEnabledState(); if (cb) cb(); });
+    ucitajClanove(selectLoza ? trim(selectLoza.value) : '', function () { updateEnabledState(); loadZapisi(); if (cb) cb(); });
   }
 
   /* ===== GEO (Država/Regija/Loža) — uzor Kandidat_Dokumenti_CRUD ===== */
@@ -429,8 +510,55 @@
     if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection();
     osvjeziTablicu();
   });
-  /* Promjena tipa izlaska → osvježi loža selekte (enabled samo na ključ 1). */
+  /* Promjena tipa izlaska → osvježi loža selekte (enabled samo na ključ 1) + gumb Upiši. */
   if (selectIzlazakTip) selectIzlazakTip.addEventListener('change', updateLozaSelekti);
+  /* Datum izlaska / loža odlaska → osvježi pojavljivanje gumba Upiši. */
+  if (editDatumIzlaska) {
+    editDatumIzlaska.addEventListener('input', updateUpisiButton);
+    editDatumIzlaska.addEventListener('change', updateUpisiButton);
+  }
+  if (selectLozaOdlazi) selectLozaOdlazi.addEventListener('change', updateUpisiButton);
+  /* Otvaranje Tab 2 („Zapisi") → osvježi/prerenderaj tablicu zapisa (i za slučaj hidden-inita). */
+  (function () {
+    var kart1 = document.getElementById('cplTabKart1');
+    if (kart1) kart1.addEventListener('click', loadZapisi);
+  })();
+
+  /* Klik „Upiši" — postupak ovisi o ključu (za sada ključ 1 = promjena lože). */
+  (function () {
+    var btnUpisi = document.getElementById('btnUpisi');
+    if (!btnUpisi) return;
+    btnUpisi.addEventListener('click', function () {
+      if (btnUpisi.style.display === 'none') return;         /* skriven = uvjeti nisu zadovoljeni */
+      var idClan = getSelectedRowId();
+      if (idClan == null) return;
+      var params = {
+        id_clan: String(idClan),
+        kljuc: tipIzlaskaKljuc(),
+        id_izlazak_tip: selectIzlazakTip ? selectIzlazakTip.value : '',
+        id_loza_odlaska: selectLozaNapusta ? selectLozaNapusta.value : '',   /* loža iz koje izlazi */
+        id_loza_dolaska: selectLozaOdlazi ? selectLozaOdlazi.value : '',     /* loža u koju odlazi */
+        datum_ulaska: editDatumUlaska ? editDatumUlaska.value : '',
+        datum_izlaska: editDatumIzlaska ? editDatumIzlaska.value : '',
+        napomena: editNapomena ? editNapomena.value : ''
+      };
+      postFormData(API_BASE + 'Clanovi_Promjena_Loze_Izlazak_CRUD_upis.php', params, function (res) {
+        res = (res || '').trim();
+        if (res === 'OK') {
+          poruka('001', [], function () {
+            /* Čišćenje + povratak na prvi tab + uklanjanje selekcije + refresh tablice. */
+            if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection();  /* → clearTabFields + setTabEnabled(false) */
+            var cplTab = document.getElementById('cplTab');
+            if (cplTab && typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(cplTab, 0);
+            osvjeziTablicu();   /* osvježi listu članova + Tab 2 zapise */
+          });
+        } else {
+          var p = parseResponseCode(res);
+          poruka(p ? p.code : '200', p ? p.replacements : []);
+        }
+      });
+    });
+  })();
   (function () {
     var inp = document.getElementById('cpl_trazi');
     if (!inp) return;
@@ -491,9 +619,10 @@
     var cplTab = document.getElementById('cplTab');
     if (cplTab && typeof KontroleTabInit === 'function') KontroleTabInit(cplTab);
     if (cplTab && typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(cplTab, 0);
-    /* Punjenje selekata Tab 1 (jednom). */
+    /* Punjenje selekata Tab 1 (jednom) + zapisa Tab 2. */
     loadTipoviIzlaska();
     loadLoze();
+    loadZapisi();
     /* Bez selekcije na startu → tab kontrola disable. */
     setTabEnabled(false);
 
