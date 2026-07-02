@@ -42,6 +42,8 @@ try {
     $datum_rodjenja = isset($_POST['datum_rodjenja']) && trim((string)$_POST['datum_rodjenja']) !== '' ? trim((string)$_POST['datum_rodjenja']) : null;
     $oib_raw = isset($_POST['oib']) ? preg_replace('/\D/', '', (string)$_POST['oib']) : '';
     $oib = ($oib_raw === '') ? null : substr($oib_raw, 0, 11);
+    $datum_ulaska_lozu = isset($_POST['datum_ulaska_lozu']) && trim((string)$_POST['datum_ulaska_lozu']) !== '' ? trim((string)$_POST['datum_ulaska_lozu']) : null;
+    $datum_izlaska_pokrivanja = isset($_POST['datum_izlaska_pokrivanja']) && trim((string)$_POST['datum_izlaska_pokrivanja']) !== '' ? trim((string)$_POST['datum_izlaska_pokrivanja']) : null;
     $datum_inicijacije = isset($_POST['datum_inicijacije']) && trim((string)$_POST['datum_inicijacije']) !== '' ? trim((string)$_POST['datum_inicijacije']) : null;
     $datum_stupnja = isset($_POST['datum_stupnja']) && trim((string)$_POST['datum_stupnja']) !== '' ? trim((string)$_POST['datum_stupnja']) : null;
 
@@ -228,6 +230,8 @@ try {
 
     $set_parts[] = 'datum_rodjenja=?'; $bind_types .= 's'; $bind_values[] = &$datum_rodjenja;
     $set_parts[] = ($oib === null ? 'oib=NULL' : 'oib=?'); if ($oib !== null) { $bind_types .= 's'; $bind_values[] = &$oib; }
+    $set_parts[] = 'datum_ulaska_lozu=?'; $bind_types .= 's'; $bind_values[] = &$datum_ulaska_lozu;
+    $set_parts[] = 'datum_izlaska_pokrivanja=?'; $bind_types .= 's'; $bind_values[] = &$datum_izlaska_pokrivanja;
     $set_parts[] = 'datum_inicijacije=?'; $bind_types .= 's'; $bind_values[] = &$datum_inicijacije;
 
     $set_parts[] = ($porijeklo === null ? 'porijeklo=NULL' : 'porijeklo=?'); if ($porijeklo !== null) { $bind_types .= 'i'; $bind_values[] = &$porijeklo; }

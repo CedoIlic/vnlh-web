@@ -117,20 +117,32 @@
                             <input id="edit_oib" type="text" class="kontrola-edit" inputmode="numeric" maxlength="11" placeholder="Upiši oib">
                         </div>
                     </div>
-                    <div class="clanovi-crud__edit-row">
-                        <label class="kontrola-labela mb-0" for="select_porijeklo">Porijeklo</label>
-                        <div class="kontrola-select">
-                            <select id="select_porijeklo" aria-label="Odaberi porijeklo">
-                                <option value="">— Odaberi porijeklo —</option>
-                            </select>
+                    <div class="clanovi-crud__edit-row clanovi-loza-crud__edit-row--ulazak-porijeklo">
+                        <div class="clanovi-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="edit_datum_ulaska_lozu">Datum ulaska</label>
+                            <input id="edit_datum_ulaska_lozu" type="date" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                        </div>
+                        <div class="clanovi-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="select_porijeklo">Porijeklo</label>
+                            <div class="kontrola-select">
+                                <select id="select_porijeklo" aria-label="Odaberi porijeklo">
+                                    <option value="">— Odaberi porijeklo —</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div class="clanovi-crud__edit-row">
-                        <label class="kontrola-labela mb-0" for="select_na_prijedlog">Na prijedlog</label>
-                        <div class="kontrola-select">
-                            <select id="select_na_prijedlog" aria-label="Na prijedlog">
-                                <option value="">— Odaberi —</option>
-                            </select>
+                    <div class="clanovi-crud__edit-row clanovi-loza-crud__edit-row--naprijedlog-inicijacija">
+                        <div class="clanovi-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="edit_datum_inicijacije">Datum inicijacije</label>
+                            <input id="edit_datum_inicijacije" type="date" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                        </div>
+                        <div class="clanovi-crud__edit-cell">
+                            <label class="kontrola-labela mb-0" for="select_na_prijedlog">Na prijedlog</label>
+                            <div class="kontrola-select">
+                                <select id="select_na_prijedlog" aria-label="Na prijedlog">
+                                    <option value="">— Odaberi —</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="clanovi-crud__edit-row">

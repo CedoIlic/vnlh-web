@@ -8,6 +8,8 @@ CREATE TABLE `clanovi` (
   `spol` smallint(6) NOT NULL DEFAULT 0,
   `datum_rodjenja` date DEFAULT NULL,
   `oib` char(11) DEFAULT NULL,
+  `datum_ulaska_lozu` date DEFAULT NULL COMMENT 'Datum ulaska člana u ovu ložu',
+  `datum_izlaska_pokrivanja` date DEFAULT NULL COMMENT 'Datum napuštanja obedijencije ili pokrivanja člana',
   `datum_inicijacije` date DEFAULT NULL,
   `porijeklo` int(11) unsigned DEFAULT NULL,
   `stupanj` int(11) unsigned DEFAULT NULL,

@@ -229,12 +229,14 @@
   }
 
   function clearControlsFromSelection() {
-    var ids = ['edit_prezime', 'edit_ime', 'edit_datum_rodjenja', 'edit_oib', 'edit_telefon', 'edit_email', 'edit_adresa_1', 'edit_adresa_2', 'edit_grad', 'edit_posta', 'edit_napomena'];
+    var ids = ['edit_prezime', 'edit_ime', 'edit_datum_rodjenja', 'edit_oib', 'edit_datum_ulaska_lozu', 'edit_datum_inicijacije', 'edit_telefon', 'edit_email', 'edit_adresa_1', 'edit_adresa_2', 'edit_grad', 'edit_posta', 'edit_napomena'];
     for (var i = 0; i < ids.length; i++) {
       var el = document.getElementById(ids[i]);
       if (el) { el.value = ''; if (ids[i] === 'edit_prezime') el.dispatchEvent(new Event('input', { bubbles: true })); }
     }
     syncDatumEmptyClass(document.getElementById('edit_datum_rodjenja'));
+    syncDatumEmptyClass(document.getElementById('edit_datum_ulaska_lozu'));
+    syncDatumEmptyClass(document.getElementById('edit_datum_inicijacije'));
     if (selectSpol) selectSpol.value = '0';
     if (selectPorijeklo) selectPorijeklo.value = '';
     if (selectNaPrijedlog) selectNaPrijedlog.value = '';
@@ -316,7 +318,11 @@
         if (editDatumRodjenja) { editDatumRodjenja.value = found.datum_rodjenja != null ? found.datum_rodjenja : ''; syncDatumEmptyClass(editDatumRodjenja); }
         var editOibSel = document.getElementById('edit_oib');
         if (editOibSel) editOibSel.value = found.oib != null ? found.oib : '';
+        var editDatumUlaska = document.getElementById('edit_datum_ulaska_lozu');
+        if (editDatumUlaska) { editDatumUlaska.value = found.datum_ulaska_lozu != null ? found.datum_ulaska_lozu : ''; syncDatumEmptyClass(editDatumUlaska); }
         if (selectPorijeklo) selectPorijeklo.value = (found.porijeklo != null && found.porijeklo !== '') ? String(found.porijeklo) : '';
+        var editDatumInicijacije = document.getElementById('edit_datum_inicijacije');
+        if (editDatumInicijacije) { editDatumInicijacije.value = found.datum_inicijacije != null ? found.datum_inicijacije : ''; syncDatumEmptyClass(editDatumInicijacije); }
         populateNaPrijedlog(id);
         if (selectNaPrijedlog) selectNaPrijedlog.value = (found.na_prijedlog != null && found.na_prijedlog !== '') ? String(found.na_prijedlog) : '';
         var editTelefon = document.getElementById('edit_telefon');
@@ -2953,7 +2959,7 @@
   if (btnAdresaEllipsis) btnAdresaEllipsis.addEventListener('click', function () { if (this.disabled) return; openClanoviEllipsisModal('adresa', this); });
 
   (function () {
-    var dateIds = ['edit_datum_rodjenja'];
+    var dateIds = ['edit_datum_rodjenja', 'edit_datum_ulaska_lozu', 'edit_datum_inicijacije'];
     for (var d = 0; d < dateIds.length; d++) {
       var el = document.getElementById(dateIds[d]);
       if (el) {

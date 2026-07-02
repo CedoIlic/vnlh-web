@@ -44,6 +44,8 @@ try {
     $datum_rodjenja = isset($_POST['datum_rodjenja']) && trim((string)$_POST['datum_rodjenja']) !== '' ? trim((string)$_POST['datum_rodjenja']) : null;
     $oib_raw = isset($_POST['oib']) ? preg_replace('/\D/', '', (string)$_POST['oib']) : '';
     $oib = ($oib_raw === '') ? null : substr($oib_raw, 0, 11);
+    $datum_ulaska_lozu = isset($_POST['datum_ulaska_lozu']) && trim((string)$_POST['datum_ulaska_lozu']) !== '' ? trim((string)$_POST['datum_ulaska_lozu']) : null;
+    $datum_izlaska_pokrivanja = isset($_POST['datum_izlaska_pokrivanja']) && trim((string)$_POST['datum_izlaska_pokrivanja']) !== '' ? trim((string)$_POST['datum_izlaska_pokrivanja']) : null;
     $datum_inicijacije = isset($_POST['datum_inicijacije']) && trim((string)$_POST['datum_inicijacije']) !== '' ? trim((string)$_POST['datum_inicijacije']) : null;
     $datum_stupnja = isset($_POST['datum_stupnja']) && trim((string)$_POST['datum_stupnja']) !== '' ? trim((string)$_POST['datum_stupnja']) : null;
 
@@ -199,7 +201,7 @@ try {
     // INSERT u clanovi (bez telefona/e_mail/adresa – oni idu naknadno).
     $cols = [
         'sifra', 'loza', 'drzava', 'prezime', 'ime', 'spol',
-        'datum_rodjenja', 'oib', 'datum_inicijacije', 'porijeklo', 'stupanj', 'datum_stupnja',
+        'datum_rodjenja', 'oib', 'datum_ulaska_lozu', 'datum_izlaska_pokrivanja', 'datum_inicijacije', 'porijeklo', 'stupanj', 'datum_stupnja',
         'telefon', 'e_mail', 'adresa', 'na_prijedlog',
         'slika', 'slika_mime', 'slika_thumbnail', 'slika_thumbnail_mime', 'slika_thumb_round', 'slika_thumb_round_mime', 'slika_thumb_round_position',
         'napomena', 'upisano', 'aktivnost', 'kandidat', 'zastavice'
@@ -225,6 +227,8 @@ try {
     // datumi
     $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$datum_rodjenja;
     $vals[] = ($oib === null ? 'NULL' : '?'); if ($oib !== null) { $bind_types .= 's'; $bind_values[] = &$oib; }
+    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$datum_ulaska_lozu;
+    $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$datum_izlaska_pokrivanja;
     $vals[] = '?'; $bind_types .= 's'; $bind_values[] = &$datum_inicijacije;
     // porijeklo, stupanj (mogu NULL)
     $vals[] = ($porijeklo === null ? 'NULL' : '?'); if ($porijeklo !== null) { $bind_types .= 'i'; $bind_values[] = &$porijeklo; }

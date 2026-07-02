@@ -37,6 +37,8 @@ $sql = "SELECT
             c.spol,
             c.datum_rodjenja,
             c.oib,
+            c.datum_ulaska_lozu,
+            c.datum_izlaska_pokrivanja,
             c.datum_inicijacije,
             c.porijeklo,
             c.stupanj,

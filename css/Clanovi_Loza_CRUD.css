@@ -101,6 +101,70 @@
   }
 }
 
+/* Jedan red: datum ulaska (RO) | porijeklo.
+   3-stupčani grid (kao --datum-spol) da datum ima ISTU širinu kao Datum rođenja (1 stupac);
+   porijeklo se rastegne preko 2.–3. stupca. */
+.clanovi-crud__edit-body .clanovi-crud__edit-row.clanovi-loza-crud__edit-row--ulazak-porijeklo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: end;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--ulazak-porijeklo .clanovi-crud__edit-cell:nth-child(2) {
+  grid-column: 2 / 4;
+}
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--ulazak-porijeklo .clanovi-crud__edit-cell .kontrola-edit,
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--ulazak-porijeklo .clanovi-crud__edit-cell .kontrola-select,
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--ulazak-porijeklo .clanovi-crud__edit-cell select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+@media (max-width: 640px) {
+  .clanovi-crud__edit-body .clanovi-crud__edit-row.clanovi-loza-crud__edit-row--ulazak-porijeklo {
+    grid-template-columns: 1fr;
+  }
+  .clanovi-crud__edit-body .clanovi-loza-crud__edit-row--ulazak-porijeklo .clanovi-crud__edit-cell:nth-child(2) {
+    grid-column: auto;
+  }
+}
+
+/* Jedan red: datum inicijacije (RO) | na prijedlog.
+   3-stupčani grid: datum inicijacije = 1. stupac (ista širina kao Datum ulaska / Datum rođenja),
+   na prijedlog se rastegne preko 2.–3. stupca. */
+.clanovi-crud__edit-body .clanovi-crud__edit-row.clanovi-loza-crud__edit-row--naprijedlog-inicijacija {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: end;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--naprijedlog-inicijacija .clanovi-crud__edit-cell:nth-child(2) {
+  grid-column: 2 / 4;
+}
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--naprijedlog-inicijacija .clanovi-crud__edit-cell .kontrola-edit,
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--naprijedlog-inicijacija .clanovi-crud__edit-cell .kontrola-select,
+.clanovi-crud__edit-body .clanovi-loza-crud__edit-row--naprijedlog-inicijacija .clanovi-crud__edit-cell select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+@media (max-width: 640px) {
+  .clanovi-crud__edit-body .clanovi-crud__edit-row.clanovi-loza-crud__edit-row--naprijedlog-inicijacija {
+    grid-template-columns: 1fr;
+  }
+  .clanovi-crud__edit-body .clanovi-loza-crud__edit-row--naprijedlog-inicijacija .clanovi-crud__edit-cell:nth-child(2) {
+    grid-column: auto;
+  }
+}
+
 /* =============================================================================
    Zaglavlje panela tablice: logo lijevo (kvadrat 1:1), kontrole desno.
    Logo je position:absolute (izvan flex toka) da visina zaglavlja ostane pt + h(kontrole) + pb –

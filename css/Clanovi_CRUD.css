@@ -332,7 +332,26 @@ body.vnlh-page-clanovi-crud {
   align-items: flex-end;
 }
 /* Datum inicijacije 30% širine stupca */
-.clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-porijeklo {
+.clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-izlazak {
+  display: grid;
+  grid-template-columns: 30% minmax(0, 1fr) 30%;
+  gap: 0.75rem;
+  align-items: flex-end;
+  width: 100%;
+  box-sizing: border-box;
+}
+/* Datum izlaska/pokrivanja u 3. stupcu = uz desni rub stupca (2. stupac je razmak) */
+.clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-izlazak .clanovi-crud__edit-cell--izlazak {
+  grid-column: 3;
+}
+.clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-izlazak #edit_datum_inicijacije,
+.clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-izlazak #edit_datum_izlaska_pokrivanja {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+/* Novi red: Datum ulaska u ložu (30%) | Porijeklo */
+.clanovi-crud__edit-body .clanovi-crud__edit-row--ulazak-porijeklo {
   display: grid;
   grid-template-columns: 30% minmax(0, 1fr);
   gap: 0.75rem;
@@ -340,7 +359,7 @@ body.vnlh-page-clanovi-crud {
   width: 100%;
   box-sizing: border-box;
 }
-.clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-porijeklo #edit_datum_inicijacije {
+.clanovi-crud__edit-body .clanovi-crud__edit-row--ulazak-porijeklo #edit_datum_ulaska_lozu {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -374,12 +393,18 @@ body.vnlh-page-clanovi-crud {
    var() u @media nije podržan u CSS-u – koristi se fiksna vrijednost; token u 0-Common.css je samo referenca. */
 @media (max-width: 900px) {
   .clanovi-crud__edit-body .clanovi-crud__edit-row--sifra-spol,
-  .clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-porijeklo,
+  .clanovi-crud__edit-body .clanovi-crud__edit-row--ulazak-porijeklo,
+  .clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-izlazak,
   .clanovi-crud__edit-body .clanovi-crud__edit-row--datum-stupnj-na-prijedlog {
     grid-template-columns: 1fr;
   }
+  /* Datum izlaska/pokrivanja: na uskom ekranu ide u normalni tok (bez fiksne 3. kolone) */
+  .clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-izlazak .clanovi-crud__edit-cell--izlazak {
+    grid-column: auto;
+  }
   .clanovi-crud__edit-body .clanovi-crud__edit-row--sifra-spol .clanovi-crud__edit-cell,
-  .clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-porijeklo .clanovi-crud__edit-cell,
+  .clanovi-crud__edit-body .clanovi-crud__edit-row--ulazak-porijeklo .clanovi-crud__edit-cell,
+  .clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-izlazak .clanovi-crud__edit-cell,
   .clanovi-crud__edit-body .clanovi-crud__edit-row--datum-stupnj-na-prijedlog .clanovi-crud__edit-cell {
     max-width: 100%;
   }
@@ -387,9 +412,11 @@ body.vnlh-page-clanovi-crud {
   .clanovi-crud__edit-body .clanovi-crud__edit-row--sifra-spol #edit_datum_rodjenja,
   .clanovi-crud__edit-body .clanovi-crud__edit-row--sifra-spol .clanovi-crud__edit-cell .kontrola-select,
   .clanovi-crud__edit-body .clanovi-crud__edit-row--sifra-spol .clanovi-crud__edit-cell select,
-  .clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-porijeklo #edit_datum_inicijacije,
-  .clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-porijeklo .kontrola-select,
-  .clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-porijeklo select,
+  .clanovi-crud__edit-body .clanovi-crud__edit-row--ulazak-porijeklo #edit_datum_ulaska_lozu,
+  .clanovi-crud__edit-body .clanovi-crud__edit-row--ulazak-porijeklo .kontrola-select,
+  .clanovi-crud__edit-body .clanovi-crud__edit-row--ulazak-porijeklo select,
+  .clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-izlazak #edit_datum_inicijacije,
+  .clanovi-crud__edit-body .clanovi-crud__edit-row--inicijacija-izlazak #edit_datum_izlaska_pokrivanja,
   .clanovi-crud__edit-body .clanovi-crud__edit-row--datum-stupnj-na-prijedlog #edit_datum_stupnja,
   .clanovi-crud__edit-body .clanovi-crud__edit-row--datum-stupnj-na-prijedlog .kontrola-select,
   .clanovi-crud__edit-body .clanovi-crud__edit-row--datum-stupnj-na-prijedlog select {
@@ -412,7 +439,8 @@ body.vnlh-page-clanovi-crud {
   .clanovi-crud__edit-col:first-child .clanovi-crud__edit-row:nth-child(5) { order: 5; }
   .clanovi-crud__edit-col:first-child .clanovi-crud__edit-row:nth-child(6) { order: 6; }
   .clanovi-crud__edit-col:first-child .clanovi-crud__edit-row:nth-child(7) { order: 7; }
-  /* 8. red lijevog stupca = Vrijeme+Aktivnost+Kandidat – order 14 ispod, da bude iznad Napomene */
+  .clanovi-crud__edit-col:first-child .clanovi-crud__edit-row:nth-child(8) { order: 8; }
+  /* 9. red lijevog stupca = Vrijeme+Aktivnost+Kandidat – order 14 ispod, da bude iznad Napomene */
   .clanovi-crud__edit-col:nth-child(2) .clanovi-crud__edit-row:nth-child(1) { order: 8; }
   .clanovi-crud__edit-col:nth-child(2) .clanovi-crud__edit-row:nth-child(2) { order: 9; }
   .clanovi-crud__edit-col:nth-child(2) .clanovi-crud__edit-row:nth-child(3) { order: 10; }
@@ -539,10 +567,13 @@ body.vnlh-page-clanovi-crud {
 
 .clanovi-crud__edit-row--napomena {
   margin-top: 0;
+  flex: 1 1 auto; /* popuni slobodan prostor ispod u desnom stupcu */
 }
 #edit_napomena {
   resize: vertical;
   min-height: var(--edit_height);
+  flex: 1 1 auto; /* textarea raste zajedno s redom */
+  height: 100%;
 }
 
 .clanovi-crud__edit-row--checkbox {

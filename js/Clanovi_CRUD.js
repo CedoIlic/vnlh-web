@@ -227,12 +227,14 @@
   }
 
   function clearControlsFromSelection() {
-    var ids = ['edit_prezime', 'edit_ime', 'edit_sifra', 'edit_datum_rodjenja', 'edit_oib', 'edit_datum_inicijacije', 'edit_datum_stupnja', 'edit_telefon', 'edit_email', 'edit_adresa_1', 'edit_adresa_2', 'edit_grad', 'edit_posta', 'edit_napomena', 'edit_stupanj', 'edit_date_time_stamp'];
+    var ids = ['edit_prezime', 'edit_ime', 'edit_sifra', 'edit_datum_rodjenja', 'edit_oib', 'edit_datum_ulaska_lozu', 'edit_datum_izlaska_pokrivanja', 'edit_datum_inicijacije', 'edit_datum_stupnja', 'edit_telefon', 'edit_email', 'edit_adresa_1', 'edit_adresa_2', 'edit_grad', 'edit_posta', 'edit_napomena', 'edit_stupanj', 'edit_date_time_stamp'];
     for (var i = 0; i < ids.length; i++) {
       var el = document.getElementById(ids[i]);
       if (el) { el.value = ''; if (ids[i] === 'edit_prezime') el.dispatchEvent(new Event('input', { bubbles: true })); }
     }
     syncDatumEmptyClass(document.getElementById('edit_datum_rodjenja'));
+    syncDatumEmptyClass(document.getElementById('edit_datum_ulaska_lozu'));
+    syncDatumEmptyClass(document.getElementById('edit_datum_izlaska_pokrivanja'));
     syncDatumEmptyClass(document.getElementById('edit_datum_inicijacije'));
     syncDatumEmptyClass(document.getElementById('edit_datum_stupnja'));
     if (selectSpol) selectSpol.value = '0';
@@ -328,6 +330,10 @@
         if (editDatumRodjenja) { editDatumRodjenja.value = found.datum_rodjenja != null ? found.datum_rodjenja : ''; syncDatumEmptyClass(editDatumRodjenja); }
         var editOib = document.getElementById('edit_oib');
         if (editOib) editOib.value = found.oib != null ? found.oib : '';
+        var editDatumUlaska = document.getElementById('edit_datum_ulaska_lozu');
+        if (editDatumUlaska) { editDatumUlaska.value = found.datum_ulaska_lozu != null ? found.datum_ulaska_lozu : ''; syncDatumEmptyClass(editDatumUlaska); }
+        var editDatumIzlaska = document.getElementById('edit_datum_izlaska_pokrivanja');
+        if (editDatumIzlaska) { editDatumIzlaska.value = found.datum_izlaska_pokrivanja != null ? found.datum_izlaska_pokrivanja : ''; syncDatumEmptyClass(editDatumIzlaska); }
         var editDatumInicijacije = document.getElementById('edit_datum_inicijacije');
         if (editDatumInicijacije) { editDatumInicijacije.value = found.datum_inicijacije != null ? found.datum_inicijacije : ''; syncDatumEmptyClass(editDatumInicijacije); }
         if (selectPorijeklo) selectPorijeklo.value = (found.porijeklo != null && found.porijeklo !== '') ? String(found.porijeklo) : '';
@@ -515,10 +521,11 @@
     var imaSelekciju = getSelectedRowId() != null;
     if (btnIzbrisi) btnIzbrisi.disabled = !imaSelekciju;
 
-    // Ikona bolt uz Šifru iskaznice: disabled kad je edit Šifra iskaznice disabled ili kad postoji selektirani red
+    // Ikona bolt uz Šifru iskaznice: enable dok je polje Šifra iskaznice upotrebljivo I prazno.
+    // Time je pokriven i novi unos (nema selekcije, šifra prazna) i selektirani član bez šifre.
     var editSifra = document.getElementById('edit_sifra');
     var btnSifraBolt = document.getElementById('btn_sifra_bolt');
-    if (btnSifraBolt) btnSifraBolt.disabled = (editSifra && editSifra.disabled) || imaSelekciju;
+    if (btnSifraBolt) btnSifraBolt.disabled = !editSifra || editSifra.disabled || trim(editSifra.value) !== '';
 
     // Ikone ellipsis uz Telefon, E-mail, Adresa: enable samo kod selekcije (izmjena) – pri dodavanju novog nema id.
     var editTelefon = document.getElementById('edit_telefon');
@@ -622,6 +629,8 @@
     fd.append('spol', payload.spol);
     if (payload.datum_rodjenja != null) fd.append('datum_rodjenja', payload.datum_rodjenja);
     if (payload.oib != null) fd.append('oib', payload.oib);
+    if (payload.datum_ulaska_lozu != null) fd.append('datum_ulaska_lozu', payload.datum_ulaska_lozu);
+    if (payload.datum_izlaska_pokrivanja != null) fd.append('datum_izlaska_pokrivanja', payload.datum_izlaska_pokrivanja);
     if (payload.datum_inicijacije != null) fd.append('datum_inicijacije', payload.datum_inicijacije);
     if (payload.datum_stupnja != null) fd.append('datum_stupnja', payload.datum_stupnja);
     if (payload.porijeklo != null) fd.append('porijeklo', payload.porijeklo);
@@ -673,6 +682,14 @@
         handleEditPrezimeChange();
       });
     }
+  })();
+
+  /* Šifra iskaznice: promjena sadržaja mijenja enable/disable bolt ikone (enable dok je prazna). */
+  (function () {
+    var editSifra = document.getElementById('edit_sifra');
+    if (!editSifra) return;
+    editSifra.addEventListener('input', updateEnabledState);
+    editSifra.addEventListener('change', updateEnabledState);
   })();
 
   /* =========================================================================
@@ -2701,6 +2718,7 @@
         var t = (text || '').trim();
         if (t.indexOf('-') >= 0 && /^\d{4}-\d{1,6}$/.test(t)) {
           editSifraEl.value = t;
+          updateEnabledState(); // šifra sad ima vrijednost → bolt se onemogući
         } else if (t === '105' && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['105'] && typeof window.showPorukaModal === 'function') {
           window.showPorukaModal('105', []);
         } else if (t === '100' && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['100'] && typeof window.showPorukaModal === 'function') {
@@ -2724,7 +2742,7 @@
   }
 
   (function () {
-    var dateIds = ['edit_datum_rodjenja', 'edit_datum_inicijacije', 'edit_datum_stupnja'];
+    var dateIds = ['edit_datum_rodjenja', 'edit_datum_ulaska_lozu', 'edit_datum_izlaska_pokrivanja', 'edit_datum_inicijacije', 'edit_datum_stupnja'];
     for (var d = 0; d < dateIds.length; d++) {
       var el = document.getElementById(dateIds[d]);
       if (el) {
@@ -2830,6 +2848,8 @@
       var editPosta = document.getElementById('edit_posta');
       var editNapomena = document.getElementById('edit_napomena');
       var editDatumRodjenja = document.getElementById('edit_datum_rodjenja');
+      var editDatumUlaska = document.getElementById('edit_datum_ulaska_lozu');
+      var editDatumIzlaska = document.getElementById('edit_datum_izlaska_pokrivanja');
       var editDatumInicijacije = document.getElementById('edit_datum_inicijacije');
       var editDatumStupnja = document.getElementById('edit_datum_stupnja');
 
@@ -2883,6 +2903,8 @@
       }
 
       var datumRodjenjaVal = editDatumRodjenja && editDatumRodjenja.value ? trim(editDatumRodjenja.value) : null;
+      var datumUlaskaVal = editDatumUlaska && editDatumUlaska.value ? trim(editDatumUlaska.value) : null;
+      var datumIzlaskaVal = editDatumIzlaska && editDatumIzlaska.value ? trim(editDatumIzlaska.value) : null;
       var datumInicVal = editDatumInicijacije && editDatumInicijacije.value ? trim(editDatumInicijacije.value) : null;
       var datumStupnjaVal = editDatumStupnja && editDatumStupnja.value ? trim(editDatumStupnja.value) : null;
 
@@ -2904,6 +2926,8 @@
         spol: selectSpol ? trim(selectSpol.value) : '0',
         datum_rodjenja: datumRodjenjaVal,
         oib: oibVal !== '' ? oibVal : null,
+        datum_ulaska_lozu: datumUlaskaVal,
+        datum_izlaska_pokrivanja: datumIzlaskaVal,
         datum_inicijacije: datumInicVal,
         datum_stupnja: datumStupnjaVal,
         porijeklo: idPorijeklo !== '' ? idPorijeklo : null,
