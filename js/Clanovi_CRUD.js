@@ -516,6 +516,11 @@
     if (imageArea) imageArea.classList.toggle('clanovi-crud__edit-image-area--disabled', !imaSadrzaj);
     if (imageFrame) imageFrame.classList.toggle('kontrola-slika--disabled', !imaSadrzaj);
     if (btnReloadTablica) btnReloadTablica.disabled = !imaLozu;
+    // Checkbox „Neaktivni": disable dok nije odabrana loža.
+    var chkNeaktivniEl = document.getElementById('chk_neaktivni');
+    if (chkNeaktivniEl) chkNeaktivniEl.disabled = !imaLozu;
+    var lblNeaktivni = document.querySelector('label[for="chk_neaktivni"]');
+    if (lblNeaktivni) lblNeaktivni.classList.toggle('kontrola-labela--disabled', !imaLozu);
 
     // Tipka Izbriši: može biti enable isključivo kada postoji selekcija u tablici.
     var imaSelekciju = getSelectedRowId() != null;
@@ -888,7 +893,9 @@
   function ucitajClanove(idLoza, callback) {
     if (!idLoza) { data = []; if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje); scrollTablicaClanoviToTop(); populateNaPrijedlog(null); if (callback) callback(); return; }
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', API_BASE + 'Clanovi_CRUD_sve.php?id_loza=' + encodeURIComponent(idLoza), true);
+    var chkNeaktivni = document.getElementById('chk_neaktivni');
+    var endpoint = (chkNeaktivni && chkNeaktivni.checked) ? 'Clanovi_CRUD_sve_neaktivni.php' : 'Clanovi_CRUD_sve.php';
+    xhr.open('GET', API_BASE + endpoint + '?id_loza=' + encodeURIComponent(idLoza), true);
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
       var text = (xhr.responseText || '').trim();
@@ -1092,6 +1099,20 @@
       osvjeziTablicu();
     });
   }
+
+  /* Checkbox „Neaktivni": 1 = puni tablicu samo neaktivnima (aktivnost=0); mijenja endpoint + refresh. */
+  (function () {
+    var chkNeaktivni = document.getElementById('chk_neaktivni');
+    if (!chkNeaktivni) return;
+    chkNeaktivni.addEventListener('change', function () {
+      if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection();
+      clearControlsFromSelection();
+      clearSlikaFromControl();
+      osvjeziTablicu();
+      updateEnabledState();
+      updateCrudUpisiState();
+    });
+  })();
 
   var CLANOVI_ELLIPSIS_STORAGE_PREFIX = 'clanovi_ellipsis_modal_';
   var CLANOVI_ELLIPSIS_DEFAULT_W = 400;

@@ -6,6 +6,7 @@ CREATE TABLE `clanovi_izlazak` (
   `id_izlazak_tip` int(11) unsigned NOT NULL COMMENT 'Id tipova napuštanja lože',
   `datum_ulaska` date DEFAULT NULL COMMENT 'Datum kada je član ušao u ložu koju je napustio',
   `datum_izlaska` date NOT NULL COMMENT 'Datum kada je član napustio matičnu ložu',
+  `napomena` varchar(1024) NOT NULL DEFAULT '' COMMENT 'Napomena uz izlazak/prelazak člana',
   PRIMARY KEY (`id`),
   KEY `ix_clanovi_izlazak_clan` (`id_clan`),
   KEY `ix_clanovi_izlazak_loza_odlaska` (`id_loza_odlaska`),

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<!--
+  Clanovi_Promjena_Loze_Izlazak_CRUD.html – promjena lože / izlazak (pokrivanje) člana.
+  Prvi panel = panel tablica: zaglavlje (logo lože lijevo + Država/Regija/Loža + traži + reload),
+  tijelo = tablica članova (Prezime, Ime, St.). Ispod: edit panel (polja se dodaju kasnije).
+  Uzor: Kandidat_Dokumenti_CRUD / Clanovi_Loza_CRUD (geo/logo/tablica). Samo desktop (device=1).
+-->
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Promjena Lože - izlazak</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=1.0.241" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/0-Kontrole_Tab.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/Clanovi_CRUD.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/Clanovi_Loza_CRUD.css?v=1.0.241">
+    <link rel="stylesheet" href="../css/Clanovi_Promjena_Loze_Izlazak_CRUD.css?v=1.0.241">
+</head>
+<body class="vnlh-page-clanovi-promjena-loze-izlazak-crud">
+<div class="naslov-forme"><h2>Promjena Lože - izlazak</h2></div>
+<div class="page-container clanovi-loza-crud clanovi-promjena-loze-izlazak-crud">
+    <div class="kontrola-panel-tablica kontrola-panel-tablica--has-header kontrola-panel-tablica--has-header-four-rows kontrola-panel kontrola-panel--resize-y mb-3 clanovi-crud__panel-tablica clanovi-loza-crud__panel-tablica">
+        <div class="kontrola-panel__header clanovi-crud__tablica-header clanovi-loza-crud__tablica-header">
+            <div class="clanovi-loza-crud__tablica-header-logo-wrap" aria-hidden="true">
+                <div class="clanovi-loza-crud__tablica-header-logo-frame">
+                    <img id="cpl_loza_logo" class="clanovi-loza-crud__tablica-header-logo-img" alt="" decoding="async" hidden src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                </div>
+            </div>
+            <div class="clanovi-loza-crud__tablica-header-kontrole">
+                <label class="kontrola-labela mb-0" for="select_drzava">Država</label>
+                <div class="clanovi-loza-crud__drzava-select-reload">
+                    <div class="kontrola-select clanovi-loza-crud__header-select-drzava">
+                        <select id="select_drzava" aria-label="Odaberi državu">
+                            <option value="">— Odaberi državu —</option>
+                        </select>
+                    </div>
+                </div>
+                <label class="kontrola-labela mb-0" for="select_regija">Regija</label>
+                <div class="kontrola-select">
+                    <select id="select_regija" aria-label="Odaberi regiju" disabled>
+                        <option value="">— Odaberi regiju —</option>
+                    </select>
+                </div>
+                <label class="kontrola-labela mb-0" for="select_loza">Loža</label>
+                <div class="kontrola-select">
+                    <select id="select_loza" aria-label="Odaberi ložu" disabled>
+                        <option value="">— Odaberi ložu —</option>
+                    </select>
+                </div>
+                <div class="clanovi-loza-crud__header-kontrole__trazi">
+                    <div class="kontrola-edit-delete clanovi-loza-crud__trazi-edit-delete">
+                        <span class="clanovi-loza-crud__trazi-lupe" aria-hidden="true"><span class="kontrola-icon--magnifying-glass"></span></span>
+                        <input id="cpl_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" aria-label="Filtriraj redove u tablici">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti traženje" title="Očisti"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                    </div>
+                    <button type="button" id="btn_reload_tablica" class="clanovi-crud__reload-btn clanovi-loza-crud__reload-btn" aria-label="Ponovno punjenje tablice" title="Puni tablicu"><span class="kontrola-icon--arrow-path" aria-hidden="true"></span></button>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body clanovi-promjena-loze-izlazak-crud__edit-body">
+            <div class="kontrola-tab clanovi-promjena-loze-izlazak-crud__tab" id="cplTab" role="tablist" aria-label="Promjena lože / zapisi">
+                <div class="kontrola-tab__traka" role="presentation">
+                    <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="cplTabKart0" aria-selected="true" aria-controls="cplTabPanel0" data-tab-index="0">Promjena Lože - izlazak</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="cplTabKart1" aria-selected="false" aria-controls="cplTabPanel1" data-tab-index="1" tabindex="-1">Zapisi o promjeni lože - izlascima</button>
+                </div>
+                <div class="kontrola-tab__tijelo" role="presentation">
+                    <div class="kontrola-tab__panel kontrola-tab__panel--aktivna" role="tabpanel" id="cplTabPanel0" aria-labelledby="cplTabKart0">
+                        <div class="clanovi-promjena-loze-izlazak-crud__tab-red">
+                            <div class="clanovi-promjena-loze-izlazak-crud__cell-grupa">
+                                <div class="clanovi-promjena-loze-izlazak-crud__cell">
+                                    <label class="kontrola-labela mb-0" for="edit_datum_ulaska">Datum ulaska</label>
+                                    <input id="edit_datum_ulaska" type="date" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                </div>
+                                <div class="clanovi-promjena-loze-izlazak-crud__cell">
+                                    <label class="kontrola-labela mb-0" for="edit_datum_izlaska">Datum izlaska</label>
+                                    <input id="edit_datum_izlaska" type="date" class="kontrola-edit">
+                                </div>
+                            </div>
+                            <div class="clanovi-promjena-loze-izlazak-crud__cell">
+                                <label class="kontrola-labela mb-0" for="select_izlazak_tip">Tip izlaska</label>
+                                <div class="kontrola-select">
+                                    <select id="select_izlazak_tip" aria-label="Tip izlaska">
+                                        <option value="">— Odaberi tip —</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clanovi-promjena-loze-izlazak-crud__tab-red">
+                            <div class="clanovi-promjena-loze-izlazak-crud__cell">
+                                <label class="kontrola-labela mb-0" for="select_loza_napusta">Lože iz koje član izlazi</label>
+                                <div class="kontrola-select">
+                                    <select id="select_loza_napusta" aria-label="Lože iz koje član izlazi" disabled>
+                                        <option value="">—</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="clanovi-promjena-loze-izlazak-crud__cell">
+                                <label class="kontrola-labela mb-0" for="select_loza_odlazi">Loža u koju član odlazi</label>
+                                <div class="kontrola-select">
+                                    <select id="select_loza_odlazi" aria-label="Loža u koju član odlazi">
+                                        <option value="">— Odaberi ložu —</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clanovi-promjena-loze-izlazak-crud__tab-red">
+                            <div class="clanovi-promjena-loze-izlazak-crud__cell">
+                                <label class="kontrola-labela mb-0" for="edit_napomena">Napomena</label>
+                                <textarea id="edit_napomena" class="kontrola-edit" rows="3" placeholder="Napomena"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kontrola-tab__panel" role="tabpanel" id="cplTabPanel1" aria-labelledby="cplTabKart1" hidden>
+                        <div class="clanovi-promjena-loze-izlazak-crud__zapisi-placeholder">Zapisi o promjeni lože - izlascima (u izradi).</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="kontrola-panel__footer clanovi-promjena-loze-izlazak-crud__edit-footer">
+            <div class="clanovi-promjena-loze-izlazak-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=1.0.241"></script>
+<script src="../js/0-Kontrole.js?v=1.0.241"></script>
+<script src="../js/0-Kontrole_Tab.js?v=1.0.241"></script>
+<script src="../js/0-Common.js?v=1.0.241"></script>
+<script src="../js/0-Poruke.js?v=1.0.241"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=1.0.241"></script>
+<script src="../js/0-Filteri_Po_Ogranicenjima.js?v=1.0.241"></script>
+<script src="../js/Clanovi_Promjena_Loze_Izlazak_CRUD.js?v=1.0.241"></script>
+</body>
+</html>

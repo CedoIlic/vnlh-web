@@ -100,6 +100,17 @@ body.vnlh-page-clanovi-crud {
   flex: 1 1 auto;
   min-width: 0;
 }
+.clanovi-crud__header-loza-wrap .clanovi-crud__neaktivni-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-right: 0.5rem;
+}
+.clanovi-crud__neaktivni-wrap .kontrola-labela {
+  cursor: pointer;
+}
 .clanovi-crud__reload-btn {
   flex-shrink: 0;
   width: 2.25rem;

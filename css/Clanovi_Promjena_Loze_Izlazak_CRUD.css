@@ -1,0 +1,75 @@
+/* Clanovi_Promjena_Loze_Izlazak_CRUD — forma-specifični stilovi.
+   Geo zaglavlje, logo i tablica preuzeti iz Clanovi_CRUD.css + Clanovi_Loza_CRUD.css.
+   Ovdje samo dopune; polja edit panela dodaju se kasnije. Samo desktop (device=1). */
+
+/* Reload ikona desno od pretrage (kao životopis): red pretrage = flex, edit raste, reload fiksan desno. */
+.vnlh-page-clanovi-promjena-loze-izlazak-crud .clanovi-loza-crud__header-kontrole__trazi {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.vnlh-page-clanovi-promjena-loze-izlazak-crud .clanovi-loza-crud__header-kontrole__trazi .kontrola-edit-delete {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.vnlh-page-clanovi-promjena-loze-izlazak-crud .clanovi-loza-crud__header-kontrole__trazi .clanovi-loza-crud__reload-btn {
+  flex: 0 0 auto;
+}
+
+/* Tab 1: redovi kontrola (ćelija = labela iznad kontrole; ćelije se ravnomjerno dijele). */
+.clanovi-promjena-loze-izlazak-crud__tab-red {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.clanovi-promjena-loze-izlazak-crud__tab-red:last-child {
+  margin-bottom: 0;
+}
+.clanovi-promjena-loze-izlazak-crud__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.clanovi-promjena-loze-izlazak-crud__cell .kontrola-edit,
+.clanovi-promjena-loze-izlazak-crud__cell .kontrola-select,
+.clanovi-promjena-loze-izlazak-crud__cell select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+/* Red 1: lijeva grupa (Datum ulaska + Datum izlaska) = 50% reda → ista ukupna širina kao
+   selekt „Lože iz koje član izlazi" (50% u redu 2); Tip izlaska = 50% (poravnat s „Loža odlazi"). */
+.clanovi-promjena-loze-izlazak-crud__cell-grupa {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.clanovi-promjena-loze-izlazak-crud__zapisi-placeholder {
+  padding: 1rem;
+  color: var(--label_text_disabled, #999);
+}
+
+/* Tab kontrola disable (bez selekcije): kartice neaktivne + prigušene. */
+.clanovi-promjena-loze-izlazak-crud__tab .kontrola-tab__kartica:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.clanovi-promjena-loze-izlazak-crud__edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.clanovi-promjena-loze-izlazak-crud__footer-right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
