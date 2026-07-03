@@ -3105,6 +3105,139 @@
     global.KontroleSpinerShow = KontroleSpinerShow;
     global.KontroleSpinerHide = KontroleSpinerHide;
 
+    /* ========== ZAUZETA KONTROLA (busy/lock) — bug 7.a ==========
+       Tipka utone (klasa kontrola-zauzeto = zamrznuti :active) i nije klikabilna dok traje async
+       operacija; spiner nakon praga; min-trajanje da i brza operacija vidljivo utone; sigurnosni
+       timeout ako async ne javi kraj. Sloj A: CommonPostFormData poziva KontrolaZauzeto oko POST-a
+       na zadnje aktiviranu tipku (tracker niže). Sloj B: globalni capture guard/debounce.
+       Parametri iz sustav_varijable (122–125) preko window.vnlhGetBusyMs; fallback = DB default. */
+    var BUSY_DEFAULT = { debounce: 400, spinerPrag: 350, minTrajanje: 150, safety: 15000 };
+    function busyMs(kljuc, id) {
+      if (typeof global.vnlhGetBusyMs === 'function') {
+        var v = global.vnlhGetBusyMs(id);
+        if (typeof v === 'number' && !isNaN(v) && v >= 0) return v;
+      }
+      return BUSY_DEFAULT[kljuc];
+    }
+
+    function busyPrikaziSpiner(el) {
+      var inner = el.querySelector('.kontrola-btn__inner') || el;
+      if (inner.querySelector('.kontrola-zauzeto__spiner')) return;
+      var sp = document.createElement('span');
+      sp.className = 'kontrola-spiner kontrola-spiner--dot kontrola-zauzeto__spiner';
+      sp.setAttribute('aria-hidden', 'true');
+      inner.appendChild(sp);
+      /* Klasu dodaj PRIJE inita da spiner pročita ispravan --spiner_promjer (ikona = 16px, tipka = 20px). */
+      el.classList.add('kontrola-zauzeto--spiner');
+      KontroleSpinerInit(sp);
+    }
+    function busyUkloniSpiner(el) {
+      el.classList.remove('kontrola-zauzeto--spiner');
+      var sp = el.querySelector('.kontrola-zauzeto__spiner');
+      if (sp && sp.parentNode) sp.parentNode.removeChild(sp);
+    }
+    function busyZavrsi(el) {
+      el._vnlhZauzeto = false;
+      el.classList.remove('kontrola-zauzeto');
+      el.removeAttribute('aria-busy');
+      if (el._vnlhBusySpinerT) { clearTimeout(el._vnlhBusySpinerT); el._vnlhBusySpinerT = null; }
+      if (el._vnlhBusySafetyT) { clearTimeout(el._vnlhBusySafetyT); el._vnlhBusySafetyT = null; }
+      busyUkloniSpiner(el);
+    }
+
+    /**
+     * Uključuje/isključuje „zauzeto" (busy) stanje kontrole. Dok je uključeno: kontrola je utonula i
+     * nije klikabilna; nakon praga (var 123) prikaže spiner. Isključivanje poštuje min-trajanje (var 124)
+     * pa se i brza operacija vidljivo prikaže. Idempotentno (dupli on/off se ignorira).
+     * @param {HTMLElement} el – kontrola (tipka .kontrola-btn; kasnije i ikone)
+     * @param {boolean} on – true = zauzeto, false = otpusti
+     */
+    function KontrolaZauzeto(el, on) {
+      if (!el) return;
+      if (on) {
+        if (el._vnlhZauzeto) return;
+        el._vnlhZauzeto = true;
+        el._vnlhZauzetoOd = Date.now();
+        el.classList.add('kontrola-zauzeto');
+        el.setAttribute('aria-busy', 'true');
+        if (el._vnlhBusyOtkljucajT) { clearTimeout(el._vnlhBusyOtkljucajT); el._vnlhBusyOtkljucajT = null; }
+        el._vnlhBusySpinerT = setTimeout(function () {
+          el._vnlhBusySpinerT = null;
+          if (el._vnlhZauzeto) busyPrikaziSpiner(el);
+        }, busyMs('spinerPrag', 123));
+        el._vnlhBusySafetyT = setTimeout(function () {
+          el._vnlhBusySafetyT = null;
+          if (el._vnlhZauzeto) busyZavrsi(el);
+        }, busyMs('safety', 125));
+      } else {
+        if (!el._vnlhZauzeto) return;
+        var minMs = busyMs('minTrajanje', 124);
+        var proteklo = Date.now() - (el._vnlhZauzetoOd || 0);
+        if (proteklo < minMs) {
+          if (el._vnlhBusyOtkljucajT) clearTimeout(el._vnlhBusyOtkljucajT);
+          el._vnlhBusyOtkljucajT = setTimeout(function () {
+            el._vnlhBusyOtkljucajT = null;
+            busyZavrsi(el);
+          }, minMs - proteklo);
+        } else {
+          busyZavrsi(el);
+        }
+      }
+    }
+    global.KontrolaZauzeto = KontrolaZauzeto;
+
+    /* Tracker zadnje aktivirane tipke (capture click/pointerdown) – Sloj A ga „uzme" pri POST-u. */
+    var _vnlhZadnjaTipka = null;
+    var _vnlhZadnjaTipkaTs = 0;
+    /**
+     * Vraća i „troši" zadnju aktiviranu .kontrola-btn ako je unutar maxAge ms (default 1500); inače null.
+     * Koristi CommonPostFormData da veže POST za tipku koja ga je pokrenula (auto-lock).
+     */
+    global.VnlhBusyUzmiZadnjuTipku = function (maxAge) {
+      var limit = (typeof maxAge === 'number' && maxAge > 0) ? maxAge : 1500;
+      var el = _vnlhZadnjaTipka;
+      if (!el) return null;
+      if (Date.now() - _vnlhZadnjaTipkaTs > limit) { _vnlhZadnjaTipka = null; return null; }
+      _vnlhZadnjaTipka = null;             /* potroši (jedan POST po kliku) */
+      if (!el.isConnected) return null;
+      return el;
+    };
+
+    /* „Potvrdi → akcija" tokovi (npr. trash ikona → modal 128 → OK → POST): modal pri otvaranju zapamti
+       kontrolu koja ga je pokrenula (trenutni tracker = trash ikona), a pri potvrdi vrati tracker na nju
+       (svjež timestamp) prije onClose → POST unutar onClose zaključa BAŠ tu kontrolu, ne modalni OK gumb. */
+    var _vnlhBusyOriginator = null;
+    global.VnlhBusySnapshotOriginator = function () { _vnlhBusyOriginator = _vnlhZadnjaTipka; };
+    global.VnlhBusyRestoreOriginator = function () {
+      if (_vnlhBusyOriginator && _vnlhBusyOriginator.isConnected) {
+        _vnlhZadnjaTipka = _vnlhBusyOriginator;
+        _vnlhZadnjaTipkaTs = Date.now();
+      }
+      _vnlhBusyOriginator = null;
+    };
+
+    /* Globalni capture guard: (1) blokira klik na zauzetu kontrolu (pokriva i tipkovnicu jer Enter/Space
+       šalje click event); (2) debounce brzih ponovljenih klikova (var 122); (3) puni tracker zadnje kontrole.
+       Selektor `button` obuhvaća i .kontrola-btn tipke i klikabilne ikone (reload/trash/elipsis/× su <button>). */
+    function busyGlobalClickGuard(e) {
+      var t = e.target;
+      var zauzeta = t && t.closest ? t.closest('.kontrola-zauzeto') : null;
+      if (zauzeta) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+      var btn = t && t.closest ? t.closest('button') : null;
+      if (!btn || btn.hasAttribute('disabled')) return;
+      var now = Date.now();
+      var last = btn._vnlhBusyLastClickTs || 0;
+      if (now - last < busyMs('debounce', 122)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+      }
+      btn._vnlhBusyLastClickTs = now;
+      _vnlhZadnjaTipka = btn;
+      _vnlhZadnjaTipkaTs = now;
+    }
+    document.addEventListener('click', busyGlobalClickGuard, true);
+
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function () {
         runScrollbarStyles();
@@ -3227,6 +3360,8 @@
       }
 
       function showPorukaModal(code, replacements, onClose) {
+        /* Zapamti kontrolu koja otvara modal (busy originator) — za lock baš nje pri potvrdi (npr. trash). */
+        if (typeof global.VnlhBusySnapshotOriginator === 'function') global.VnlhBusySnapshotOriginator();
         ensureModal();
         if (!headerEl || !imageEl || !contentEl || !footerEl) return;
         porukaModalPreviousFocus = document.activeElement;
@@ -3277,6 +3412,8 @@
             (function (btnKey) {
               btn.addEventListener('click', function () {
                 closePorukaModal();
+                /* Vrati busy tracker na kontrolu koja je otvorila modal (npr. trash) da POST u onClose zaključa nju. */
+                if (typeof global.VnlhBusyRestoreOriginator === 'function') global.VnlhBusyRestoreOriginator();
                 if (typeof onClose === 'function') onClose(btnKey);
               });
             })(b.key);

@@ -403,12 +403,13 @@
 
   if (passEl) {
     passEl.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') pokreniLogin();
+      /* Enter → klik na „Prijava" (ne izravni pokreniLogin) da busy/lock uhvati gumb (bug 7.a). */
+      if (e.key === 'Enter') { if (btnSubmit) btnSubmit.click(); else pokreniLogin(); }
     });
   }
   if (passConfirmEl) {
     passConfirmEl.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') pokreniLogin();
+      if (e.key === 'Enter') { if (btnSubmit) btnSubmit.click(); else pokreniLogin(); }
     });
   }
   if (userEl) {

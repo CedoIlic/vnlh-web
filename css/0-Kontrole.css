@@ -2341,6 +2341,81 @@ input.kontrola-checkbox[type="checkbox"].kontrola-checkbox--readonly:checked::af
   }
 }
 
+/* =========================================================
+   ZAUZETA KONTROLA (busy/lock)
+   Tipka ostaje „utonula" (zamrznuti :active) dok traje async operacija; nije klikabilna
+   (pointer-events:none + JS guard). Kad operacija prijeđe prag (var 123) – spiner umjesto natpisa.
+   API: KontrolaZauzeto(el, on) u 0-Kontrole.js. Vidi bug 7.a.
+   ========================================================= */
+.kontrola-btn.kontrola-zauzeto {
+  pointer-events: none;
+  cursor: default;
+}
+/* Zamrznuti puni „pritisnuti" izgled = :hover (utonula inset-sjena) + :active (scale). Busy ima
+   pointer-events:none pa nema pravog hovera → sjenu repliciramo ovdje da tipka izgleda utonulo. */
+.kontrola-btn.kontrola-zauzeto .kontrola-btn__inner {
+  transform: scale(0.96);
+  filter: brightness(0.92);
+  clip-path: inset(
+    clamp(1px, 0.0625em, 2px) clamp(1px, 0.0625em, 2px)
+      clamp(1px, 0.0625em, 2px) clamp(1px, 0.0625em, 2px) round var(--button_radius)
+  );
+  box-shadow:
+    0.1em 0.15em 0.05em 0 inset var(--c-near-black-75),
+    -0.025em -0.03em 0.05em 0.025em inset var(--c-near-black-50),
+    0.25em 0.25em 0.2em 0 inset var(--c-near-black-50),
+    0 0 0.05em 0.5em inset var(--c-white-15),
+    0 0 0 0 inset var(--c-white),
+    0.12em 0.12em 0.12em inset var(--c-white-25),
+    -0.075em -0.12em 0.2em 0.1em inset var(--c-near-black-25);
+}
+.kontrola-btn.kontrola-zauzeto .kontrola-btn__outer {
+  box-shadow:
+    0 0 0 0 var(--c-near-black),
+    0 0 0 0 var(--c-near-black-50),
+    0 0 0 0 var(--c-near-black-25);
+}
+.kontrola-btn.kontrola-zauzeto .kontrola-btn__label {
+  transform: scale(0.975);
+}
+/* Spiner u tipki: sakrij natpis, centriraj spiner (__inner je position:relative). */
+.kontrola-btn.kontrola-zauzeto--spiner .kontrola-btn__label {
+  visibility: hidden;
+}
+/* Dvije klase (.kontrola-spiner.kontrola-zauzeto__spiner) da position:absolute nadjača kasniji
+   .kontrola-spiner{position:relative} (ista specifičnost inače → izgubi centriranje). */
+.kontrola-spiner.kontrola-zauzeto__spiner {
+  --spiner_promjer: 20px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--c-red-900);
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Faza 2 — ikone: generička zauzeta kontrola za bilo koji <button> koji NIJE .kontrola-btn
+   (reload, trash, elipsis, ×, tab kartica…). Utonuće = blaži scale; nije klikabilna; spiner centriran. */
+button.kontrola-zauzeto {
+  pointer-events: none;
+  cursor: default;
+}
+button.kontrola-zauzeto:not(.kontrola-btn) {
+  position: relative;
+  transform: scale(0.92);
+  filter: brightness(0.92);
+}
+/* Spiner u ikoni: sakrij sadržaj (ikonu), prikaži samo spiner; boja prati tekst ikone (currentColor). */
+button.kontrola-zauzeto--spiner:not(.kontrola-btn) > * {
+  visibility: hidden;
+}
+button.kontrola-zauzeto--spiner:not(.kontrola-btn) > .kontrola-zauzeto__spiner {
+  visibility: visible;
+  --spiner_promjer: 16px;
+  color: var(--c-red-900);
+}
+
 .kontrola-btn:focus-visible {
   outline: none;
   box-shadow:

@@ -58,7 +58,7 @@
         sortable: 1,
         sortable_icon: 0,
         type: 't',
-        width: -22,
+        width: -30,
         suffix: '',
         align: 'L',
         row_align: 'L',
@@ -71,24 +71,25 @@
         sortable: 1,
         sortable_icon: 0,
         type: 't',
-        width: -28,
+        width: -50,
         suffix: '',
         align: 'L',
         row_align: 'L',
         mobitel_prikaz: 1
       },
       {
+        /* Opis: umjesto teksta – elipsis ikona (hover/klik → popup s opisom); sadržaj ćelije ubrizgava injectOpisIkone. */
         key: 'opis',
         title: 'Opis',
         SQL_Naziv: 'opis',
-        sortable: 1,
+        sortable: 0,
         sortable_icon: 0,
         type: 't',
-        width: 0,
+        width: -8,
         suffix: '',
-        align: 'L',
-        row_align: 'L',
-        mobitel_prikaz: 0
+        align: 'C',
+        row_align: 'C',
+        mobitel_prikaz: 1
       }
     ]
   };
@@ -605,7 +606,7 @@
               String(rid),
               r.varijabla != null ? String(r.varijabla) : '',
               r.naziv != null ? String(r.naziv) : '',
-              r.opis != null ? String(r.opis) : '',
+              '',                                   /* Opis kolona: ikona se ubrizgava (injectOpisIkone); tekst je u dataIzvor */
               rid
             ]);
           }
@@ -625,7 +626,139 @@
 
   function setDataTablica(rows) {
     CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, VarijableSustavaCRUD.Tablica_Zaglavlje);
+    injectOpisIkone();
   }
+
+  /* ===== Opis kolona: elipsis ikona (hover/klik → popup s opisom) ===== */
+
+  /** Opis za dani id retka iz dataIzvor (tablica se može sortirati → mapiraj po data-row-id, ne po indeksu). */
+  function opisZaRowId(rowId) {
+    for (var i = 0; i < dataIzvor.length; i++) {
+      if (String(dataIzvor[i].id) === String(rowId)) {
+        return dataIzvor[i].opis != null ? String(dataIzvor[i].opis) : '';
+      }
+    }
+    return '';
+  }
+
+  /** U zadnju (Opis) ćeliju svakog retka ubrizga elipsis gumb – samo ako redak ima opis. */
+  function injectOpisIkone() {
+    var container = document.getElementById('tablicaContainer');
+    if (!container) return;
+    var trs = container.querySelectorAll('.kontrola-tablica__scroll tbody tr');
+    for (var i = 0; i < trs.length; i++) {
+      var tr = trs[i];
+      var cells = tr.querySelectorAll('td');
+      if (!cells.length) continue;
+      var opisCell = cells[cells.length - 1];
+      var inner = opisCell.querySelector('.kontrola-tablica__cell-inner') || opisCell;
+      var opis = opisZaRowId(tr.dataset.rowId);
+      inner.innerHTML = '';
+      if (opis.replace(/^\s+|\s+$/g, '') === '') continue;
+      var wrap = document.createElement('div');
+      wrap.className = 'alati-var-sust-crud__opis-akcije';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'alati-var-sust-crud__opis-btn';
+      btn.setAttribute('aria-label', 'Opis');
+      btn.setAttribute('data-opis', opis);
+      /* Klik na gumb (target faza) – zaustavi propagaciju PRIJE nego stigne do <tr> (inače <tr> selektira red). */
+      btn.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        opisPopupPokazi(this.getAttribute('data-opis') || '', this, true);
+      });
+      var sp = document.createElement('span');
+      sp.className = 'kontrola-icon--ellipsis-horizontal';
+      sp.setAttribute('aria-hidden', 'true');
+      btn.appendChild(sp);
+      wrap.appendChild(btn);
+      inner.appendChild(wrap);
+    }
+  }
+
+  /* Sort/re-render tablice (KontroleTablica prepravi tbody) briše ubrizgane ikone → re-ubrizgaj.
+     childList bez subtree: reagira na zamjenu redova, ne na vlastito ubrizgavanje u ćelije (bez petlje). */
+  (function () {
+    requestAnimationFrame(function () {
+      var tbody = document.querySelector('#tablicaContainer .kontrola-tablica__scroll table tbody');
+      if (!tbody || typeof MutationObserver === 'undefined') return;
+      var pending = null;
+      var mo = new MutationObserver(function () {
+        if (pending != null) return;
+        pending = requestAnimationFrame(function () { pending = null; injectOpisIkone(); });
+      });
+      mo.observe(tbody, { childList: true });
+    });
+  })();
+
+  /* ===== Opis popup ===== */
+  var _opisHideT = null;
+  var _opisPinned = false;   /* popup otvoren klikom = „prikvačen": zatvara se samo gumbom, hover se ignorira dok je otvoren */
+  function opisPopupSakrij() {
+    if (_opisHideT) { clearTimeout(_opisHideT); _opisHideT = null; }
+    _opisPinned = false;
+    var p = document.getElementById('varSustOpisPopup');
+    if (p) p.hidden = true;
+  }
+  function opisPopupSakrijOdgoda() {
+    if (_opisHideT) clearTimeout(_opisHideT);
+    _opisHideT = setTimeout(function () { _opisHideT = null; opisPopupSakrij(); }, 300);
+  }
+  function opisPopupPokazi(tekst, targetBtn, naKlik) {
+    if (_opisHideT) { clearTimeout(_opisHideT); _opisHideT = null; }
+    var p = document.getElementById('varSustOpisPopup');
+    if (!p) return;
+    _opisPinned = !!naKlik;
+    var t = document.getElementById('varSustOpisPopupTekst');
+    if (t) t.textContent = (tekst != null && tekst !== '') ? tekst : '—';
+    /* Footer s gumbom „Izlaz" samo kad je popup otvoren klikom; na hover se sam zatvara pa gumb nije potreban. */
+    var f = p.querySelector('.alati-var-sust-crud__opis-popup-footer');
+    if (f) f.hidden = !naKlik;
+    p.hidden = false;
+    p.style.left = '-9999px'; p.style.top = '-9999px';
+    var pw = p.offsetWidth || 280, ph = p.offsetHeight || 120;
+    var rect = targetBtn.getBoundingClientRect();
+    var vw = window.innerWidth || 800, vh = window.innerHeight || 600;
+    var left = rect.left - pw - 6;                 /* preferiraj lijevo od gumba */
+    if (left < 4) left = rect.right + 6;           /* nema mjesta → desno */
+    if (left + pw > vw - 4) left = vw - pw - 4;
+    var top = rect.top;
+    if (top + ph > vh - 4) top = vh - ph - 4;
+    if (top < 4) top = 4;
+    p.style.left = left + 'px'; p.style.top = top + 'px';
+  }
+  (function () {
+    var container = document.getElementById('tablicaContainer');
+    if (container) {
+      container.addEventListener('mouseover', function (ev) {
+        if (_opisPinned) return;   /* dok je popup otvoren klikom, hover ne radi */
+        var b = ev.target && ev.target.closest ? ev.target.closest('.alati-var-sust-crud__opis-btn') : null;
+        if (b) opisPopupPokazi(b.getAttribute('data-opis') || '', b);
+      });
+      container.addEventListener('mouseout', function (ev) {
+        if (_opisPinned) return;   /* prikvačen popup se ne zatvara na mouseout, samo gumbom */
+        var b = ev.target && ev.target.closest ? ev.target.closest('.alati-var-sust-crud__opis-btn') : null;
+        if (b) opisPopupSakrijOdgoda();
+      });
+      /* Klik se obrađuje na samom gumbu (injectOpisIkone) da stopPropagation stigne prije <tr> selekcije. */
+    }
+    var p = document.getElementById('varSustOpisPopup');
+    if (p) {
+      p.addEventListener('mouseenter', function () { if (_opisHideT) { clearTimeout(_opisHideT); _opisHideT = null; } });
+      p.addEventListener('mouseleave', function () { if (_opisPinned) return; opisPopupSakrijOdgoda(); });
+    }
+    var btnIzlaz = document.getElementById('varSustOpisPopupIzlaz');
+    if (btnIzlaz) btnIzlaz.addEventListener('click', opisPopupSakrij);
+    document.addEventListener('click', function (ev) {
+      var pp = document.getElementById('varSustOpisPopup');
+      if (!pp || pp.hidden) return;
+      if (_opisPinned) return;   /* prikvačen (klik) popup se zatvara samo gumbom „Izlaz" */
+      if (pp.contains(ev.target)) return;
+      if (ev.target && ev.target.closest && ev.target.closest('.alati-var-sust-crud__opis-btn')) return;
+      opisPopupSakrij();
+    });
+  })();
 
   function varijableAdd(id, varijabla, naziv, opis, callback) {
     var body = {

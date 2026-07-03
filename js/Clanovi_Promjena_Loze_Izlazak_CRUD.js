@@ -625,6 +625,9 @@
       _pravaCrudUpis = g.upis_izmjena != null ? parseInt(g.upis_izmjena, 10) : 0;
       _pravaCrudBrisanje = g.brisanje_sloga != null ? parseInt(g.brisanje_sloga, 10) : 0;
       if (typeof vnlhPrimijeniPravaCrud === 'function') vnlhPrimijeniPravaCrud(_pravaCrudUpis, _pravaCrudBrisanje);
+      /* Prava (upis=1) otkriju btnUpisi (display:''), ali gumb je uvjetno skriven do odabira člana/datuma/tipa;
+         vrati uvjetnu vidljivost odmah da ne ostane vidljiv na init-u (bug „ostaje Upiši" nakon hard reloada). */
+      updateUpisiButton();
       if (drz.length === 1 && selectDrzava) {
         selectDrzava.value = String(drz[0].id); selectDrzava.disabled = true; _geoAutoLockedDrzava = true;
         if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_drzava');

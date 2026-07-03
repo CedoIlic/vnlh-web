@@ -6,7 +6,7 @@
 /* --- Blok: Dva stupca (30% / ostatak); oba stupca iste visine (stretch) --- */
 .alati-var-sust-crud__edit-split {
   display: grid;
-  grid-template-columns: 30% minmax(0, 1fr);
+  grid-template-columns: 44% minmax(0, 1fr);
   align-items: stretch;
   gap: 1rem 1.25rem;
   width: 100%;
@@ -95,4 +95,78 @@
   align-items: center;
   gap: 0.4rem;
   flex-wrap: nowrap;
+}
+
+/* --- Blok: Opis kolona u tablici – elipsis ikona umjesto teksta (uzor Promjena Lože) --- */
+.alati-var-sust-crud__opis-akcije {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  justify-content: center;
+}
+.alati-var-sust-crud__opis-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  color: var(--edit_text);
+  cursor: pointer;
+  box-shadow: var(--button_outer_shadow);
+}
+@media (hover: hover) {
+  .alati-var-sust-crud__opis-btn:hover:not(:disabled) {
+    border-color: var(--edit_border_focus);
+    background: var(--edit_bg_hover, var(--c-gray-100));
+    box-shadow: var(--edit_focus_shadow);
+  }
+}
+
+/* --- Blok: Opis popup (hover/klik na elipsis) --- */
+.alati-var-sust-crud__opis-popup {
+  position: fixed;
+  z-index: 10200;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel_body_bg, #fff);
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius, 6px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  max-width: 320px;
+  min-width: 160px;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  color: var(--text);
+}
+.alati-var-sust-crud__opis-popup[hidden] {
+  display: none !important;
+}
+.alati-var-sust-crud__opis-popup-naslov {
+  padding: 0.4rem 0.75rem 0.3rem;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid var(--edit_border);
+}
+.alati-var-sust-crud__opis-popup-tekst {
+  padding: 0.5rem 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.alati-var-sust-crud__opis-popup-footer {
+  padding: 0.3rem 0.5rem 0.4rem;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--edit_border);
+}
+/* hidden atribut mora nadjačati display:flex (footer vidljiv samo kad je popup otvoren klikom) */
+.alati-var-sust-crud__opis-popup-footer[hidden] {
+  display: none !important;
 }

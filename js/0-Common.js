@@ -88,6 +88,51 @@
     xhr.send();
   };
 
+  /* --- Blok: Busy/lock/spiner parametri (sustav_varijable 122–125) — bug 7.a ---
+     122 = debounce ponovljenog klika, 123 = prag spinera, 124 = min trajanje utonuća, 125 = sigurnosni timeout.
+     Čita KontrolaZauzeto/guard u 0-Kontrole.js preko window.vnlhGetBusyMs; do dohvata rade defaulti (= DB vrijednosti). */
+  var VNLH_BUSY_IDS = [122, 123, 124, 125];
+  var VNLH_BUSY_DEFAULT = { 122: 400, 123: 350, 124: 150, 125: 15000 };
+  window.__VNLH_BUSY_MS = {};
+  window.vnlhGetBusyMs = function (id) {
+    var x = window.__VNLH_BUSY_MS[id];
+    if (typeof x === 'number' && !isNaN(x) && x >= 0) return x;
+    return VNLH_BUSY_DEFAULT[id] != null ? VNLH_BUSY_DEFAULT[id] : 0;
+  };
+  window.vnlhLoadBusyVars = function (apiBase) {
+    var base = apiBase != null && String(apiBase) !== '' ? String(apiBase) : '../php/';
+    base = base.replace(/\/?$/, '/');
+    VNLH_BUSY_IDS.forEach(function (id) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', base + 'common_sustav_varijable.php?id=' + id, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        var raw = trim(xhr.responseText || '');
+        /* API vraća '100'/'120' pri grešci; uspjeh = broj (ms) iz stupca varijabla. */
+        if (xhr.status === 200 && raw !== '' && raw !== '100' && raw !== '120') {
+          var n = parseInt(raw, 10);
+          if (!isNaN(n) && n >= 0) window.__VNLH_BUSY_MS[id] = n;
+        }
+      };
+      xhr.send();
+    });
+  };
+  function vnlhBusyVarsAutoLoad() {
+    /* Ne dohvaćaj na login stranici: nema sesije → common_sustav_varijable.php vraća 401 → globalni
+       XHR-401 redirect bi vrtio petlju. Busy/lock na loginu radi s defaultima (122–125). */
+    try {
+      var jeLogin = (document.body && document.body.classList && document.body.classList.contains('login-win'))
+        || /Login\.(html|php)\b/i.test(location.pathname || '');
+      if (jeLogin) return;
+    } catch (e) {}
+    window.vnlhLoadBusyVars('../php/');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', vnlhBusyVarsAutoLoad);
+  } else {
+    vnlhBusyVarsAutoLoad();
+  }
+
   /* --- Blok: Godina istinske svjetlosti (pretvorba datuma u „budući" kalendar) ---
      Naputak: docs/Izracun_datuma.md. Y_nova = Y + 4000; M_novi = ((M-3+12) mod 12)+1 (ožujak=1); dan ostaje.
      Ulaz: Date objekt, ili string "YYYY-MM-DD" (DB/ISO, uz opc. vrijeme) ili "D.M.YYYY"/"DD.MM.YYYY" (lokalni).
@@ -657,10 +702,33 @@
     var origSend = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.open = function () {
       this._vnlhXhrUrl = arguments[1];
+      this._vnlhXhrMethod = arguments[0];
       return origOpen.apply(this, arguments);
     };
     XMLHttpRequest.prototype.send = function () {
       var xhr = this;
+      /* Sloj A za sirovi XHR (busy/lock, bug 7.a): non-GET (upis) pokrenut klikom drži tipku/ikonu zauzetom
+         dok traje. postFormData sam potroši tracker PRIJE send-a → ovdje dobije null (bez dupliranja). GET se ne locka. */
+      if (!xhr._vnlhBusyHooked) {
+        xhr._vnlhBusyHooked = true;
+        var _m = String(xhr._vnlhXhrMethod || 'GET').toUpperCase();
+        if (_m !== 'GET' && _m !== 'HEAD') {
+          var _busyEl = (typeof window.VnlhBusyUzmiZadnjuTipku === 'function') ? window.VnlhBusyUzmiZadnjuTipku() : null;
+          if (_busyEl && typeof window.KontrolaZauzeto === 'function') {
+            window.KontrolaZauzeto(_busyEl, true);
+            var _released = false;
+            var _otpusti = function () {
+              if (_released) return; _released = true;
+              var d = vnlhDebugDelayMs();
+              if (d > 0) setTimeout(function () { window.KontrolaZauzeto(_busyEl, false); }, d);
+              else window.KontrolaZauzeto(_busyEl, false);
+            };
+            xhr.addEventListener('readystatechange', function () { if (xhr.readyState === 4) _otpusti(); });
+            xhr.addEventListener('error', _otpusti);
+            xhr.addEventListener('abort', _otpusti);
+          }
+        }
+      }
       if (!xhr._vnlh401Listener) {
         xhr._vnlh401Listener = true;
         xhr.addEventListener('readystatechange', function () {
@@ -686,14 +754,70 @@
     };
   })();
 
+  /* Sloj A za fetch-put (busy/lock, bug 7.a — faza 2b): omotaj window.fetch tako da UPIS (metoda ≠ GET/HEAD)
+     pokrenut klikom drži tipku/ikonu „zauzetom" dok fetch traje. Samo upisi troše tracker → GET-load i
+     pozadinski fetchovi (session ping, version check, poruke) NE zaključavaju ništa. Wrapper je transparentan
+     (vraća izvorni promise); otključavanje na settle (+ sigurnosni timeout u KontrolaZauzeto). */
+  (function installVnlhFetchBusy() {
+    if (typeof window.fetch !== 'function') return;
+    var origFetch = window.fetch;
+    window.fetch = function () {
+      var method = 'GET';
+      try {
+        var init = arguments[1];
+        if (init && init.method) method = String(init.method).toUpperCase();
+        else if (arguments[0] && typeof arguments[0] === 'object' && arguments[0].method) method = String(arguments[0].method).toUpperCase();
+      } catch (eM) {}
+      var jeUpis = (method !== 'GET' && method !== 'HEAD');
+      var busyEl = null;
+      if (jeUpis && typeof window.VnlhBusyUzmiZadnjuTipku === 'function') {
+        busyEl = window.VnlhBusyUzmiZadnjuTipku();
+        if (busyEl && typeof window.KontrolaZauzeto === 'function') window.KontrolaZauzeto(busyEl, true);
+      }
+      function busyOtpusti() {
+        if (busyEl && typeof window.KontrolaZauzeto === 'function') { window.KontrolaZauzeto(busyEl, false); busyEl = null; }
+      }
+      var p;
+      try {
+        p = origFetch.apply(this, arguments);
+      } catch (e) {
+        busyOtpusti();
+        throw e;
+      }
+      if (p && typeof p.then === 'function') p.then(busyOtpusti, busyOtpusti);
+      else busyOtpusti();
+      return p;
+    };
+  })();
+
+  /* DEBUG: umjetno kašnjenje odgovora (ms) da se vidi ponašanje „zauzete" tipke (simulacija spore baze).
+     Uključi u konzoli:  localStorage.setItem('vnlh_debug_delay_ms','3000')  ili  window.__VNLH_DEBUG_DELAY_MS=3000
+     Isključi:           localStorage.removeItem('vnlh_debug_delay_ms')      ili  window.__VNLH_DEBUG_DELAY_MS=0
+     Drži < sigurnosnog timeouta (var 125 = 15000), inače se tipka otključa prije isteka kašnjenja. */
+  function vnlhDebugDelayMs() {
+    try {
+      var v = window.__VNLH_DEBUG_DELAY_MS;
+      if (v == null) v = localStorage.getItem('vnlh_debug_delay_ms');
+      var n = parseInt(v, 10);
+      return (!isNaN(n) && n > 0) ? n : 0;
+    } catch (e) { return 0; }
+  }
+
   /** POST na url s params (objekt); callback prima odgovor (trimani string). */
   function postFormData(url, params, callback) {
     var formData = new FormData();
     for (var key in params) if (params.hasOwnProperty(key)) formData.append(key, params[key]);
     var xhr = new XMLHttpRequest();
     xhr.open('POST', url, true);
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
+    /* Sloj A (busy/lock, bug 7.a): veži POST za tipku koja ga je pokrenula (zadnja aktivirana .kontrola-btn)
+       i drži je „zauzetom" dok POST traje. Otključavanje: prvo u rs4 + onerror; sigurnosni timeout je u KontrolaZauzeto. */
+    var busyEl = (typeof window.VnlhBusyUzmiZadnjuTipku === 'function') ? window.VnlhBusyUzmiZadnjuTipku() : null;
+    if (busyEl && typeof window.KontrolaZauzeto === 'function') window.KontrolaZauzeto(busyEl, true);
+    function busyOtpusti() {
+      if (busyEl && typeof window.KontrolaZauzeto === 'function') { window.KontrolaZauzeto(busyEl, false); busyEl = null; }
+    }
+    function dovrsi() {
+      busyOtpusti();
       var t = xhr.responseText ? xhr.responseText.trim() : '';
       if (xhr.status === 401 || t === '401') {
         if (typeof window.vnlhMarkInternalAppNavigation === 'function') window.vnlhMarkInternalAppNavigation();
@@ -706,7 +830,14 @@
         return;
       }
       callback(t);
+    }
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      var dbg = vnlhDebugDelayMs();
+      if (dbg > 0) { setTimeout(dovrsi, dbg); } else { dovrsi(); }
     };
+    xhr.addEventListener('error', busyOtpusti);
+    xhr.addEventListener('abort', busyOtpusti);
     xhr.send(formData);
   }
 

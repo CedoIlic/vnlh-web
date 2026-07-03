@@ -1,0 +1,144 @@
+/* =========================================================
+   Clanovi_Privremeni_Otpust_CRUD.css
+   Edit panel: privremeni raspored (Član, Datum od/do, Napomena, audit RO).
+   Zaglavlje tablice (logo + geo + traži) koristi Clanovi_CRUD.css / Clanovi_Loza_CRUD.css.
+   Raspored polja finaliziramo kasnije.
+   ========================================================= */
+
+/* Zaglavlje tablice: „pretraži" i reload u ISTOM redu (reload desno od pretraži).
+   Scope na ovu formu (.clanovi-privremeni-otpust-crud) da ne dira uzor. */
+.clanovi-privremeni-otpust-crud .clanovi-loza-crud__header-kontrole__trazi {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.clanovi-privremeni-otpust-crud .clanovi-loza-crud__header-kontrole__trazi .kontrola-edit-delete {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.clanovi-privremeni-otpust-crud .clanovi-loza-crud__reload-btn {
+  flex: 0 0 auto;
+}
+/* Checkbox „Prikaži sve privremene otpuste" desno u zaglavlju (uz reload). */
+.clanovi-privremeni-otpust-crud__prikazi-sve {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.clanovi-privremeni-otpust-crud__prikazi-sve .kontrola-checkbox {
+  flex: 0 0 auto;
+}
+/* Prigušeno dok je disabled (nema odabrane lože). */
+.clanovi-privremeni-otpust-crud__prikazi-sve:has(.kontrola-checkbox:disabled) {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Neaktivni otpust (nije trenutni; vidljiv uz „Prikaži sve") — prigušen tekst reda. */
+.clanovi-privremeni-otpust-crud .clanovi-privremeni-otpust-crud__row--neaktivan td {
+  color: var(--c-gray-300);
+}
+
+/* Dvije kolone s okomitom linijom između: lijevo unos (Član, Datum od/do, Napomena), desno audit (RO). */
+.clanovi-privremeni-otpust-crud__edit-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 0;
+  align-items: stretch;
+  /* Fiksna širina labele (ista u obje kolone) → poravnat lijevi rub svih kontrola. */
+  --cpo-label-w: 9rem;
+}
+
+.clanovi-privremeni-otpust-crud__edit-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.clanovi-privremeni-otpust-crud__edit-col--left {
+  padding-right: 1.25rem;
+}
+.clanovi-privremeni-otpust-crud__edit-col--right {
+  padding-left: 1.25rem;
+  border-left: 1px solid var(--edit_border);
+}
+
+/* Jedno polje: labela LIJEVO (fiksna širina) + kontrola desno (ispuni ostatak). */
+.clanovi-privremeni-otpust-crud__field {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.clanovi-privremeni-otpust-crud__field > .kontrola-labela {
+  flex: 0 0 var(--cpo-label-w);
+  max-width: var(--cpo-label-w);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.clanovi-privremeni-otpust-crud__field > .kontrola-select,
+.clanovi-privremeni-otpust-crud__field > .kontrola-edit {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* Napomena: višeredna – labela poravnata uz prvi red teksta. */
+.clanovi-privremeni-otpust-crud__field--napomena {
+  align-items: flex-start;
+}
+.clanovi-privremeni-otpust-crud__field--napomena > .kontrola-labela {
+  padding-top: 0.4rem;
+}
+.clanovi-privremeni-otpust-crud__field--napomena textarea.kontrola-edit {
+  resize: vertical;
+  min-height: 3.25rem;
+}
+
+/* Podnožje: lijevo (Upiši, Izbriši), desno (Povratak). */
+.clanovi-privremeni-otpust-crud__edit-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.clanovi-privremeni-otpust-crud__footer-left {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.clanovi-privremeni-otpust-crud__footer-right {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Edit panel bez selekcije (novi unos moguć, ali polja za izmjenu prigušena kad nema retka):
+   koristi istu logiku kao drugih formi — klasa se dodaje iz JS-a po potrebi. */
+.kontrola-panel--edit-disabled .clanovi-privremeni-otpust-crud__edit-body {
+  opacity: 0.6;
+}
+
+/* Uski ekran: kolone jedna ispod druge; linija postaje gornji rub desne (audit) sekcije. */
+@media (max-width: 768px) {
+  .clanovi-privremeni-otpust-crud__edit-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .clanovi-privremeni-otpust-crud__edit-col--left {
+    padding-right: 0;
+  }
+  .clanovi-privremeni-otpust-crud__edit-col--right {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--edit_border);
+    padding-top: 0.75rem;
+    margin-top: 0.25rem;
+  }
+}
