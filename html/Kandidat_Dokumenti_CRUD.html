@@ -86,6 +86,7 @@
             <div class="kontrola-tab kandidat-dokumenti-crud__tab" id="kandidatKontrolaTab" role="tablist" aria-label="Kartice dokumentacije kandidata">
                 <div class="kontrola-tab__traka" role="presentation">
                     <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="kandidatKontrolaTabKart0" aria-selected="true" aria-controls="kandidatKontrolaTabPanel0" data-tab-index="0" disabled>Životopis</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart1" aria-selected="false" aria-controls="kandidatKontrolaTabPanel1" data-tab-index="1" tabindex="-1" disabled>Razgovori</button>
                 </div>
                 <div class="kontrola-tab__tijelo" role="presentation">
                     <div class="kontrola-tab__panel kontrola-tab__panel--aktivna kandidat-dokumenti-crud__tab-panel--zivotopis" role="tabpanel" id="kandidatKontrolaTabPanel0" aria-labelledby="kandidatKontrolaTabKart0">
@@ -108,6 +109,32 @@
                                         </svg>
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Tab 1: Razgovori (1:N) — tablica zapisa + ikone Dodaj/Izmijeni (modal). -->
+                    <div class="kontrola-tab__panel kandidat-dokumenti-crud__tab-panel--razgovori" role="tabpanel" id="kandidatKontrolaTabPanel1" aria-labelledby="kandidatKontrolaTabKart1" hidden>
+                        <div class="kandidat-dokumenti-crud__razgovori">
+                            <div class="kandidat-dokumenti-crud__razgovori-glavni">
+                                <div class="kandidat-dokumenti-crud__razgovori-tablica">
+                                    <div id="razgovoriTablicaContainer" class="kontrola-tablica"></div>
+                                </div>
+                                <div class="kandidat-dokumenti-crud__razgovori-pdf">
+                                    <button type="button" id="razgovorPdf" class="kandidat-dokumenti-crud__pdf-btn" disabled aria-label="Generiraj PDF razgovora" title="Generiraj PDF">
+                                        <svg class="kandidat-dokumenti-crud__pdf-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="5" y="14" width="14" height="6" rx="1" fill="currentColor"/>
+                                            <text x="12" y="18.4" font-family="Arial, sans-serif" font-size="3.8" font-weight="bold" fill="white" text-anchor="middle">PDF</text>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="kandidat-dokumenti-crud__razgovori-akcije" role="group" aria-label="Radnje nad razgovorima">
+                                <button type="button" id="razgovorDodaj" class="kandidat-dokumenti-crud__razgovor-akcija" title="Dodaj razgovor" aria-label="Dodaj razgovor"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h18v2.5H3V4zm0 5.75h10v2.5H3v-2.5z"/><path d="M16 13h2.5v3.5H22V19h-3.5v3.5H16V19h-3.5v-2.5H16V13z"/></svg></button>
+                                <button type="button" id="razgovorUredi" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Izmijeni razgovor" aria-label="Izmijeni razgovor"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18v2H3V5zm0 4h12v2H3V9zm0 4h8v2H3v-2zm0 4h8v2H3v-2z"/><path d="M21.41 11.59l-2-2a1.5 1.5 0 0 0-2.12 0l-5.79 5.79V19h3.62l5.79-5.79a1.5 1.5 0 0 0 0-2.12l.5.5zm-7.29 5.41h-1v-1l4.79-4.79 1 1L14.12 17z"/></svg></button>
+                                <button type="button" id="razgovorObrisi" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Obriši razgovor" aria-label="Obriši razgovor"><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
+                                <button type="button" id="razgovorDeselekt" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Makni selekciju" aria-label="Makni selekciju"><span class="kontrola-icon--asterisk" aria-hidden="true"></span></button>
                             </div>
                         </div>
                     </div>
@@ -162,6 +189,96 @@
         </div>
         <div class="kandidat-dokumenti-crud__modal-pdf-footer">
             <button type="button" id="kandidat_pdf_povratak" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+        </div>
+    </div>
+</div>
+<!-- Modal: PDF pregled razgovora (render dokumenta „Razgovor sa kandidatom" iz baze + prored) -->
+<div id="razgovorModalPdf" class="kandidat-dokumenti-crud__modal-pdf" role="dialog" aria-label="PDF razgovora" aria-modal="true" aria-hidden="true">
+    <div class="kandidat-dokumenti-crud__modal-pdf-overlay"></div>
+    <div class="kandidat-dokumenti-crud__modal-pdf-dialog">
+        <div class="kandidat-dokumenti-crud__modal-pdf-header">
+            <div class="kandidat-dokumenti-crud__modal-pdf-naslov">PDF razgovora</div>
+            <div class="kandidat-dokumenti-crud__modal-pdf-alati" role="group" aria-label="Alati PDF-a">
+                <label class="kontrola-labela mb-0" for="razgovor_pdf_prored">Prored</label>
+                <div class="kandidat-dokumenti-crud__stepper">
+                    <input id="razgovor_pdf_prored" type="text" class="kontrola-edit kandidat-dokumenti-crud__stepper-input" inputmode="decimal" value="1,00" aria-label="Množitelj proreda (0,80–2,00)">
+                    <span class="kandidat-dokumenti-crud__stepper-strelice">
+                        <button type="button" id="razgovor_pdf_prored_gore" class="kandidat-dokumenti-crud__stepper-btn" aria-label="Povećaj prored za 0,1" tabindex="-1">&#9650;</button>
+                        <button type="button" id="razgovor_pdf_prored_dolje" class="kandidat-dokumenti-crud__stepper-btn" aria-label="Smanji prored za 0,1" tabindex="-1">&#9660;</button>
+                    </span>
+                </div>
+                <button type="button" id="razgovor_pdf_save" class="kandidat-dokumenti-crud__modal-pdf-ikona-btn" aria-label="Spremi prored" title="Spremi prored">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/>
+                        <path d="M17 21v-8H7v8M7 3v5h8"/>
+                    </svg>
+                </button>
+                <span class="kandidat-dokumenti-crud__modal-pdf-slot" aria-hidden="true"></span>
+                <span class="kandidat-dokumenti-crud__modal-pdf-slot" aria-hidden="true"></span>
+                <button type="button" id="razgovor_pdf_refresh" class="kandidat-dokumenti-crud__modal-pdf-ikona-btn" aria-label="Osvježi PDF" title="Osvježi PDF">
+                    <span class="kontrola-icon--arrow-path" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-body">
+            <iframe id="razgovor_pdf_okvir" class="kandidat-dokumenti-crud__modal-pdf-iframe" title="PDF pregled razgovora"></iframe>
+            <div id="razgovor_pdf_spiner" class="kontrola-spiner-overlay" aria-hidden="true">
+                <span class="kontrola-spiner kontrola-spiner--segment" role="status" aria-label="Učitavanje"></span>
+            </div>
+            <div class="kandidat-dokumenti-crud__modal-pdf-info" id="razgovor_pdf_info" aria-live="polite"></div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-footer">
+            <button type="button" id="razgovor_pdf_povratak" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+        </div>
+    </div>
+</div>
+<!-- Modal: Razgovor s kandidatom (dodavanje / izmjena / brisanje jednog razgovora; vlastite CRUD tipke) -->
+<div id="razgovorModal" class="kandidat-dokumenti-crud__modal-razgovor" role="dialog" aria-label="Razgovor s kandidatom" aria-modal="true" aria-hidden="true">
+    <div class="kandidat-dokumenti-crud__modal-razgovor-overlay"></div>
+    <div class="kandidat-dokumenti-crud__modal-razgovor-dialog">
+        <div class="kandidat-dokumenti-crud__modal-razgovor-header" id="razgovorModalNaslov">Razgovor s kandidatom</div>
+        <div class="kandidat-dokumenti-crud__modal-razgovor-body">
+            <div class="kandidat-dokumenti-crud__razgovor-red">
+                <label class="kontrola-labela mb-0" for="razgovor_naslov">Naslov</label>
+                <input id="razgovor_naslov" type="text" class="kontrola-edit" placeholder="npr. 1. razgovor" maxlength="255" autocomplete="off">
+            </div>
+            <div class="kandidat-dokumenti-crud__razgovor-red kandidat-dokumenti-crud__razgovor-red--datum-ispitivac">
+                <div class="kandidat-dokumenti-crud__razgovor-cell kandidat-dokumenti-crud__razgovor-cell--datum">
+                    <label class="kontrola-labela mb-0" for="razgovor_datum">Datum razgovora</label>
+                    <input id="razgovor_datum" type="date" class="kontrola-edit">
+                </div>
+                <div class="kandidat-dokumenti-crud__razgovor-cell kandidat-dokumenti-crud__razgovor-cell--ispitivac">
+                    <label class="kontrola-labela mb-0" for="razgovor_ispitivac">Razgovor vodio</label>
+                    <div class="kandidat-dokumenti-crud__razgovor-ispitivac-red">
+                        <div class="kontrola-edit-delete clanovi-loza-crud__trazi-edit-delete kandidat-dokumenti-crud__ispitivac-trazi">
+                            <span class="clanovi-loza-crud__trazi-lupe" aria-hidden="true"><span class="kontrola-icon--magnifying-glass"></span></span>
+                            <input id="razgovor_ispitivac_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" aria-label="Pretraži članove" placeholder="Pretraži...">
+                            <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti pretragu" title="Očisti"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                        </div>
+                        <div class="kontrola-select kandidat-dokumenti-crud__ispitivac-select">
+                            <select id="razgovor_ispitivac" aria-label="Razgovor vodio">
+                                <option value="">— Odaberi —</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="kandidat-dokumenti-crud__razgovor-red kandidat-dokumenti-crud__razgovor-red--tekst">
+                <label class="kontrola-labela mb-0" for="razgovor_tekst">Tekst</label>
+                <div id="razgovor_tekst" class="kontrola-napomena kandidat-dokumenti-crud__razgovor-tekst" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Tekst razgovora" spellcheck="true"></div>
+            </div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-razgovor-footer">
+            <div class="clanovi-crud__footer-left">
+                <button type="button" id="razgovorUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upiši</span></span></span></button>
+                <button type="button" id="razgovorIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Izbriši</span></span></span></button>
+            </div>
+            <div class="clanovi-crud__footer-right">
+                <button type="button" id="razgovorPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+            </div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-razgovor-resize" id="razgovorResizeKut" title="Povuci za promjenu veličine" aria-hidden="true">
+            <svg class="kandidat-dokumenti-crud__modal-razgovor-resize-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 14 14 22M22 19 19 22"/></svg>
         </div>
     </div>
 </div>

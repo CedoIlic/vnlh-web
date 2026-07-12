@@ -109,6 +109,8 @@ var MODAL_MESSAGES = {
   '126': '126|Zapisnik|OK,(Cancel)|warning||Brisanje zapisnika brisati će i sve pripadajuće podatke o ložama učesnicama, prisustvu i dužnosnicima. Jesi li siguran da želiš brisati zapisnik?',   /* Zapisnik_CRUD Izbriši: kaskadno brisanje svih vezanih slogova; OK / Odustani, default Odustani */
   '127': '127|Zapisnik|(OK)|information||Odabrani esej je već dodan u ovaj zapisnik.',   /* Zapisnik_CRUD: pokušaj duplikata eseja u tablici Eseji */
   '128': '128|Promjena lože|OK,(Cancel)|warning||Jesi li siguran da želiš poništiti ovu stavku?',   /* Clanovi_Promjena_Loze_Izlazak_CRUD: potvrda brisanja (poništavanja) zapisa; OK / Odustani, default Odustani */
+  '129': '129|Dokumenti kandidata|OK,(Cancel)|warning||Jesi li siguran da želiš obrisati ovaj razgovor?',   /* Kandidat_Dokumenti Razgovori: potvrda brisanja razgovora; OK / Odustani, default Odustani */
+  '130': '130|Dokumenti kandidata|(OK)|error||Za spremanje razgovora potrebno je upisati naslov, datum razgovora i ispitivača.',   /* Kandidat_Dokumenti Razgovori: obavezna polja pri upisu/izmjeni */
   '154': '154|Baza podataka|(OK)|error||Shema tablica za ovu formu nije ažurna (nedostaje stupac, npr. redosljed). Pokreni u bazi sql/sustav_odgovori_razvoja_dodaj_redosljed_obje_tablice.sql (ili pojedinačno *_boje_* i *_poruke_*), zatim osvježi stranicu.',
   '155': '155|Odgovori razvoja|(OK)|error||Tekst predloška ne smije sadržavati znak „#“ (korišten je u formatu odgovora).',
   '156': '156|Odgovori razvoja||ok||Svi odgovori su uklonjeni; poruka je snimljena bez sufiksnih odgovora.',   /* Gumb „Ukloni sve odgovore“: očisti #kod*tekst# i UPDATE polja poruka */

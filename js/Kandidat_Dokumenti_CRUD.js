@@ -55,6 +55,28 @@
     onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
   });
 
+  /* --- Pod-tablica: Razgovori kandidata (1:N) — Naslov, Datum, Ispitivač --- */
+  var razgovoriApi = null;
+  var razgovoriData = [];                 /* svi razgovori odabranog kandidata (puni zapisi) */
+  var _ispitivaciData = [];               /* rezultat pretrage članova (aktivni, kandidat=0; max 50) */
+  var _ispitivacForced = null;            /* {id, ime} — trenutno odabrani (edit), da ostane u selektu i van prvih 50 */
+  var _razgovorEditId = 0;                /* id razgovora u modalu (0 = novi) */
+  var RAZGOVORI_TABLICA = {
+    Broj_Kolona: 3,
+    Reload_Ikona: 0,
+    CrudCssPrefix: 'clanovi-crud',
+    Tablica_Zaglavlje: [
+      { key: 'naslov', title: 'Naslov', SQL_Naziv: 'naslov', sortable: 0, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
+      { key: 'datum', title: 'Datum', SQL_Naziv: 'datum', sortable: 0, sortable_icon: 0, type: 't', width: 110, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
+      { key: 'ispitivac', title: 'Razgovor vodio', SQL_Naziv: 'ispitivac', sortable: 0, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 0 }
+    ]
+  };
+  CommonCRUD.initTablica('razgovoriTablicaContainer', RAZGOVORI_TABLICA, {
+    getRowId: function (row) { return (row && row.id != null) ? row.id : null; },
+    onReady: function (api) { razgovoriApi = api; },
+    onSelectionChange: function () { azurirajRazgovorIkone(); }
+  });
+
   var selectDrzava = document.getElementById('select_drzava');
   var selectRegija = document.getElementById('select_regija');
   var selectLoza = document.getElementById('select_loza');
@@ -66,6 +88,7 @@
   var zivotopisEl = document.getElementById('kandidat_zivotopis');
   var btnPdf = document.getElementById('kandidat_btn_pdf');
   var zivotopisKartica = document.getElementById('kandidatKontrolaTabKart0');
+  var razgovoriKartica = document.getElementById('kandidatKontrolaTabKart1');
   if (btnIzbrisi) { btnIzbrisi.style.display = 'none'; btnIzbrisi.disabled = true; }
 
   function getSelectedRowId() { return CommonCRUD.getSelectedRowId(tablicaApi); }
@@ -124,6 +147,7 @@
       zivotopisEl.setAttribute('aria-readonly', on ? 'false' : 'true');
     }
     if (zivotopisKartica) zivotopisKartica.disabled = !on;
+    if (razgovoriKartica) razgovoriKartica.disabled = !on;
   }
 
   /* ===== Slika člana — SAMO PRIKAZ (Clanovi_CRUD_slika.php) ===== */
@@ -256,6 +280,7 @@
     updateSlikaPreview();
     var id = getSelectedRowId();
     ucitajZivotopis(id, function () { updateCrudState(); });
+    ucitajRazgovori(id);
     updateEnabledState();
   };
 
@@ -605,8 +630,354 @@
   }
 
   /* ===== Init ===== */
+  /* ============================================================
+   * ▒▒ RAZGOVORI KANDIDATA (tab „Razgovori", 1:N) — pod-tablica + modal CRUD ▒▒
+   * ============================================================ */
+  var razgovorModal        = document.getElementById('razgovorModal');
+  var razgovorModalNaslov  = document.getElementById('razgovorModalNaslov');
+  var razgovorNaslovInp    = document.getElementById('razgovor_naslov');
+  var razgovorDatumInp     = document.getElementById('razgovor_datum');
+  var razgovorIspitivacSel = document.getElementById('razgovor_ispitivac');
+  var razgovorIspitivacTraziInp = document.getElementById('razgovor_ispitivac_trazi');
+  var razgovorTekstEl      = document.getElementById('razgovor_tekst');
+  var btnRazgovorUpisi     = document.getElementById('razgovorUpisi');
+  var btnRazgovorUpisiLabel = btnRazgovorUpisi ? btnRazgovorUpisi.querySelector('.kontrola-btn__label') : null;
+  var btnRazgovorIzbrisi   = document.getElementById('razgovorIzbrisi');
+  var btnRazgovorPovratak  = document.getElementById('razgovorPovratak');
+  var btnRazgovorDodaj     = document.getElementById('razgovorDodaj');
+  var btnRazgovorUredi     = document.getElementById('razgovorUredi');
+  var btnRazgovorObrisi    = document.getElementById('razgovorObrisi');   /* smeće — briše red bez modala */
+  var btnRazgovorDeselekt  = document.getElementById('razgovorDeselekt'); /* zvijezdica — makni selekciju */
+  var btnRazgovorPdf       = document.getElementById('razgovorPdf');      /* PDF desno od tablice (dokument kasnije) */
+  var razgovorDialog       = razgovorModal ? razgovorModal.querySelector('.kandidat-dokumenti-crud__modal-razgovor-dialog') : null;
+  var RAZG_MODAL_KEY = 'kandidat-razgovor-modal';   /* localStorage: pozicija + veličina modala */
+
+  function getRazgModalStanje() {
+    try { var s = localStorage.getItem(RAZG_MODAL_KEY); if (s) { var o = JSON.parse(s); if (o && typeof o.width === 'number' && typeof o.height === 'number') return o; } } catch (e) {}
+    return null;
+  }
+  function saveRazgModalStanje(left, top, width, height) {
+    try { localStorage.setItem(RAZG_MODAL_KEY, JSON.stringify({ left: left, top: top, width: width, height: height })); } catch (e) {}
+  }
+  /* Na otvaranju: primijeni zapamćeno stanje ili centriraj (CSS default veličina). */
+  function primijeniRazgModalStanje() {
+    if (!razgovorDialog) return;
+    var st = getRazgModalStanje();
+    if (st) {
+      razgovorDialog.style.left = st.left + 'px';
+      razgovorDialog.style.top = st.top + 'px';
+      razgovorDialog.style.transform = 'none';
+      razgovorDialog.style.width = st.width + 'px';
+      razgovorDialog.style.height = st.height + 'px';
+    } else {
+      razgovorDialog.style.left = '50%';
+      razgovorDialog.style.top = '50%';
+      razgovorDialog.style.transform = 'translate(-50%, -50%)';
+      razgovorDialog.style.width = '';
+      razgovorDialog.style.height = '';
+    }
+  }
+  /* Na zatvaranju: zapamti stvarnu poziciju (px) i veličinu. */
+  function spremiRazgModalGeom() {
+    if (!razgovorDialog) return;
+    var r = razgovorDialog.getBoundingClientRect();
+    saveRazgModalStanje(Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height));
+  }
+
+  function formatDatumHr(iso) {
+    if (!iso) return '';
+    var p = String(iso).split(/[-/T ]/);
+    if (p.length < 3) return String(iso);
+    return p[2].slice(0, 2) + '.' + p[1] + '.' + p[0];
+  }
+  function isoDatum(iso) { if (!iso) return ''; var p = String(iso).split(/[T ]/); return p[0] || ''; }
+  /* Labela za „Razgovor vodio": ista loža kao odabrana u geo grupi → samo Prezime Ime;
+     druga loža → dopiši „ (Naziv lože, Grad)". c = {prezime, ime, id_loza, loza_naziv, loza_grad}. */
+  function ispitivacLabel(c) {
+    var ime = ((c && c.prezime != null ? c.prezime : '') + ' ' + (c && c.ime != null ? c.ime : '')).trim();
+    var selLoza = selectLoza ? trim(selectLoza.value) : '';
+    if (c && c.id_loza != null && c.id_loza !== '' && selLoza !== '' && String(c.id_loza) === String(selLoza)) return ime;
+    var dodatak = [c && c.loza_naziv, c && c.loza_grad].filter(Boolean).join(', ');
+    return dodatak ? (ime + ' (' + dodatak + ')') : ime;
+  }
+  function getRazgovorSelId() { return CommonCRUD.getSelectedRowId(razgovoriApi); }
+  function razgovorPoId(id) {
+    for (var i = 0; i < razgovoriData.length; i++) { if (String(razgovoriData[i].id) === String(id)) return razgovoriData[i]; }
+    return null;
+  }
+
+  function azurirajRazgovorIkone() {
+    var imaKandidat = getSelectedRowId() != null;
+    var imaRazgovor = getRazgovorSelId() != null;
+    if (btnRazgovorDodaj) btnRazgovorDodaj.disabled = !imaKandidat || (_pravaCrudUpis !== 1);
+    if (btnRazgovorUredi) btnRazgovorUredi.disabled = !imaRazgovor;
+    if (btnRazgovorObrisi) btnRazgovorObrisi.disabled = !imaRazgovor || (_pravaCrudBrisanje !== 1);
+    if (btnRazgovorDeselekt) btnRazgovorDeselekt.disabled = !imaRazgovor;
+    if (btnRazgovorPdf) btnRazgovorPdf.disabled = !imaRazgovor;
+  }
+
+  /* contenteditable get/set za tekst razgovora — isti obrazac kao životopis (br→razmak, blok→odlomak). */
+  function razgovorTekstGet() {
+    var el = razgovorTekstEl; if (!el) return null;
+    var clone = el.cloneNode(true);
+    var brs = clone.querySelectorAll('br');
+    for (var bi = 0; bi < brs.length; bi++) { var br = brs[bi]; br.parentNode.insertBefore(document.createTextNode(' '), br); br.parentNode.removeChild(br); }
+    var paras = [];
+    function dodaj(txt) { var s = String(txt == null ? '' : txt).replace(/\s+/g, ' ').trim(); if (s) paras.push(s); }
+    var buf = '', kids = clone.childNodes;
+    for (var i = 0; i < kids.length; i++) { var n = kids[i]; if (n.nodeType === 1 && (n.tagName === 'DIV' || n.tagName === 'P')) { dodaj(buf); buf = ''; dodaj(n.textContent); } else { buf += (n.textContent || ''); } }
+    dodaj(buf);
+    return paras.join('\n') || null;
+  }
+  function razgovorTekstSet(tekst) {
+    var el = razgovorTekstEl; if (!el) return;
+    el.innerHTML = '';
+    if (!tekst) return;
+    var ps = String(tekst).split(/\n+/);
+    for (var pi = 0; pi < ps.length; pi++) { var t = ps[pi].trim(); if (!t) continue; var p = document.createElement('p'); p.textContent = t; el.appendChild(p); }
+  }
+
+  /* Učitavanje razgovora odabranog kandidata (1:N). */
+  function ucitajRazgovori(idClan) {
+    razgovoriData = [];
+    if (idClan == null || idClan === '' || typeof fetch !== 'function') { renderRazgovoriTablica(); return; }
+    fetch(API_BASE + 'Kandidat_Dokumenti_Razgovori_CRUD_sve.php?id_clan=' + encodeURIComponent(idClan))
+      .then(function (r) { return r.text(); })
+      .then(function (text) {
+        text = (text || '').trim();
+        if (String(getSelectedRowId()) !== String(idClan)) return;   /* selekcija se promijenila */
+        if (text !== '' && text.charAt(0) === '[') { try { razgovoriData = JSON.parse(text); } catch (e) { razgovoriData = []; } }
+        renderRazgovoriTablica();
+      }).catch(function () { renderRazgovoriTablica(); });
+  }
+  function renderRazgovoriTablica() {
+    var rows = [];
+    for (var i = 0; i < razgovoriData.length; i++) {
+      var r = razgovoriData[i];
+      rows.push({ id: r.id, 0: r.naslov || '', 1: formatDatumHr(r.datum_razgovora), 2: ispitivacLabel({
+        prezime: r.ispitivac_prezime, ime: r.ispitivac_ime,
+        id_loza: r.ispitivac_loza_id, loza_naziv: r.ispitivac_loza_naziv, loza_grad: r.ispitivac_loza_grad
+      }) });
+    }
+    if (razgovoriApi) CommonCRUD.setDataTablica(razgovoriApi, 'razgovoriTablicaContainer', rows, RAZGOVORI_TABLICA.Tablica_Zaglavlje);
+    azurirajRazgovorIkone();
+  }
+
+  /* „Razgovor vodio": svi članovi aktivnost=1 & kandidat=0, prvih 50; q = server-side pretraga. */
+  function fetchIspitivaci(q, cb) {
+    if (typeof fetch !== 'function') { if (cb) cb(); return; }
+    var url = API_BASE + 'Kandidat_Dokumenti_Razgovori_CRUD_ispitivaci.php' + (q ? ('?q=' + encodeURIComponent(q)) : '');
+    fetch(url).then(function (r) { return r.text(); }).then(function (text) {
+      text = (text || '').trim();
+      var arr = [];
+      if (text !== '' && text.charAt(0) === '[') { try { arr = JSON.parse(text); } catch (e) { arr = []; } }
+      _ispitivaciData = arr;
+      popuniIspitivacSelect();
+      if (cb) cb();
+    }).catch(function () { if (cb) cb(); });
+  }
+  function popuniIspitivacSelect() {
+    var sel = razgovorIspitivacSel; if (!sel) return;
+    var prev = sel.value;
+    while (sel.firstChild) sel.removeChild(sel.firstChild);
+    var o0 = document.createElement('option'); o0.value = ''; o0.textContent = '— Odaberi —'; sel.appendChild(o0);
+    var forcedPresent = false;
+    for (var i = 0; i < _ispitivaciData.length; i++) {
+      var c = _ispitivaciData[i];
+      var o = document.createElement('option');
+      o.value = c.id != null ? String(c.id) : '';
+      o.textContent = ispitivacLabel(c);
+      sel.appendChild(o);
+      if (_ispitivacForced && String(_ispitivacForced.id) === o.value) forcedPresent = true;
+    }
+    /* Trenutno odabrani (edit) mora ostati u listi i kad nije među prvih 50 / rezultatima pretrage. */
+    if (_ispitivacForced && _ispitivacForced.id && !forcedPresent) {
+      var of = document.createElement('option');
+      of.value = String(_ispitivacForced.id);
+      of.textContent = ispitivacLabel(_ispitivacForced) || ('#' + _ispitivacForced.id);
+      sel.insertBefore(of, o0.nextSibling);
+    }
+    sel.value = prev;
+    if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('razgovor_ispitivac');
+  }
+
+  /* Modal: open (editRow ili null=novi) / close. */
+  function otvoriRazgovorModal(editRow) {
+    if (getSelectedRowId() == null) return;
+    if (razgovorIspitivacTraziInp) razgovorIspitivacTraziInp.value = '';
+    var ispitivacVal = '';
+    if (editRow) {
+      _razgovorEditId = parseInt(editRow.id, 10) || 0;
+      _ispitivacForced = (editRow.id_ispitivac != null && editRow.id_ispitivac !== '') ? {
+        id: String(editRow.id_ispitivac),
+        prezime: editRow.ispitivac_prezime,
+        ime: editRow.ispitivac_ime,
+        id_loza: editRow.ispitivac_loza_id,
+        loza_naziv: editRow.ispitivac_loza_naziv,
+        loza_grad: editRow.ispitivac_loza_grad
+      } : null;
+      ispitivacVal = _ispitivacForced ? _ispitivacForced.id : '';
+      if (razgovorNaslovInp) razgovorNaslovInp.value = editRow.naslov != null ? editRow.naslov : '';
+      if (razgovorDatumInp) razgovorDatumInp.value = isoDatum(editRow.datum_razgovora);
+      razgovorTekstSet(editRow.tekst != null ? editRow.tekst : '');
+    } else {
+      _razgovorEditId = 0;
+      _ispitivacForced = null;
+      if (razgovorNaslovInp) razgovorNaslovInp.value = '';
+      if (razgovorDatumInp) razgovorDatumInp.value = '';
+      razgovorTekstSet('');
+    }
+    /* Puni „Razgovor vodio" (prvih 50) pa postavi odabranog (edit) preko callbacka. */
+    fetchIspitivaci('', function () {
+      if (razgovorIspitivacSel) {
+        razgovorIspitivacSel.value = ispitivacVal;
+        if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('razgovor_ispitivac');
+      }
+    });
+    var izmjena = _razgovorEditId > 0;
+    if (btnRazgovorUpisiLabel) btnRazgovorUpisiLabel.textContent = izmjena ? 'Izmijeni' : 'Upiši';
+    if (btnRazgovorUpisi) btnRazgovorUpisi.classList.toggle('kontrola-btn--crud-izmjeni', izmjena);
+    if (btnRazgovorIzbrisi) btnRazgovorIzbrisi.style.display = (izmjena && _pravaCrudBrisanje === 1) ? '' : 'none';
+    if (razgovorModalNaslov) razgovorModalNaslov.textContent = izmjena ? 'Izmjena razgovora' : 'Novi razgovor';
+    primijeniRazgModalStanje();
+    if (razgovorModal) { razgovorModal.classList.add('kandidat-dokumenti-crud__modal-razgovor--open'); razgovorModal.setAttribute('aria-hidden', 'false'); }
+    if (razgovorNaslovInp) razgovorNaslovInp.focus();
+  }
+  function zatvoriRazgovorModal() {
+    if (!razgovorModal) return;
+    if (razgovorModal.classList.contains('kandidat-dokumenti-crud__modal-razgovor--open')) spremiRazgModalGeom();
+    razgovorModal.classList.remove('kandidat-dokumenti-crud__modal-razgovor--open');
+    razgovorModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function spremiRazgovor() {
+    var idClan = getSelectedRowId();
+    if (idClan == null) return;
+    var naslov = razgovorNaslovInp ? trim(razgovorNaslovInp.value) : '';
+    var datum = razgovorDatumInp ? trim(razgovorDatumInp.value) : '';
+    var idIsp = razgovorIspitivacSel ? trim(razgovorIspitivacSel.value) : '';
+    if (naslov === '' || datum === '' || idIsp === '') { poruka('130', []); return; }
+    var jeIzmjena = _razgovorEditId > 0;
+    var payload = { id: _razgovorEditId, id_clan: String(idClan), id_ispitivac: idIsp, datum_razgovora: datum, naslov: naslov, tekst: razgovorTekstGet() };
+    fetch(API_BASE + 'Kandidat_Dokumenti_Razgovori_CRUD_spremi.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    }).then(function (r) { return r.text(); }).then(function (res) {
+      res = (res || '').trim();
+      if (res.indexOf('OK') === 0) {
+        zatvoriRazgovorModal();
+        ucitajRazgovori(idClan);
+        poruka(jeIzmjena ? '004' : '001', []);
+      } else {
+        var p = parseResponseCode(res); poruka(p ? p.code : '200', p ? p.replacements : []);
+      }
+    }).catch(function () { poruka('200', []); });
+  }
+
+  /* Zajednički fetch brisanja razgovora; zatvara modal (ako je otvoren) i osvježava listu. */
+  function _obrisiRazgovorFetch(brisiId, idClan) {
+    fetch(API_BASE + 'Kandidat_Dokumenti_Razgovori_CRUD_brisanje.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: brisiId, id_clan: String(idClan) })
+    }).then(function (r) { return r.text(); }).then(function (res) {
+      res = (res || '').trim();
+      if (res.indexOf('OK') === 0) { zatvoriRazgovorModal(); ucitajRazgovori(idClan); poruka('003', []); }
+      else { var p = parseResponseCode(res); poruka(p ? p.code : '200', p ? p.replacements : []); }
+    }).catch(function () { poruka('200', []); });
+  }
+  function _potvrdiPaObrisi(brisiId, idClan) {
+    if (idClan == null || !brisiId) return;
+    if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['129'] && typeof window.showPorukaModal === 'function') {
+      window.showPorukaModal('129', [], function (buttonKey) { if (buttonKey === 'OK') _obrisiRazgovorFetch(brisiId, idClan); });
+    } else { _obrisiRazgovorFetch(brisiId, idClan); }
+  }
+  /* Izbriši iz modala (uređivani zapis). */
+  function obrisiRazgovor() { _potvrdiPaObrisi(_razgovorEditId, getSelectedRowId()); }
+  /* Smeće u traci: briše odabrani red tablice BEZ otvaranja modala. */
+  function obrisiRazgovorTablica() { _potvrdiPaObrisi(parseInt(getRazgovorSelId(), 10) || 0, getSelectedRowId()); }
+  /* Zvijezdica: makni selekciju s pod-tablice. */
+  function deselektRazgovor() {
+    if (razgovoriApi && typeof razgovoriApi.clearSelection === 'function') razgovoriApi.clearSelection();
+    azurirajRazgovorIkone();
+  }
+
+  if (btnRazgovorDodaj) btnRazgovorDodaj.addEventListener('click', function () { otvoriRazgovorModal(null); });
+  if (btnRazgovorUredi) btnRazgovorUredi.addEventListener('click', function () { var rec = razgovorPoId(getRazgovorSelId()); if (rec) otvoriRazgovorModal(rec); });
+  if (btnRazgovorObrisi) btnRazgovorObrisi.addEventListener('click', obrisiRazgovorTablica);
+  if (btnRazgovorDeselekt) btnRazgovorDeselekt.addEventListener('click', deselektRazgovor);
+  (function () {
+    var cont = document.getElementById('razgovoriTablicaContainer');
+    if (cont) cont.addEventListener('dblclick', function () { var rec = razgovorPoId(getRazgovorSelId()); if (rec) otvoriRazgovorModal(rec); });
+  }());
+  if (btnRazgovorUpisi) btnRazgovorUpisi.addEventListener('click', spremiRazgovor);
+  if (btnRazgovorIzbrisi) btnRazgovorIzbrisi.addEventListener('click', obrisiRazgovor);
+  if (btnRazgovorPovratak) btnRazgovorPovratak.addEventListener('click', zatvoriRazgovorModal);
+  /* Pretraga „Razgovor vodio": server-side filter (debounce), prvih 50 rezultata. */
+  if (razgovorIspitivacTraziInp) {
+    var _ispTraziT = null;
+    razgovorIspitivacTraziInp.addEventListener('input', function () {
+      var q = trim(this.value);
+      if (_ispTraziT) clearTimeout(_ispTraziT);
+      _ispTraziT = setTimeout(function () { fetchIspitivaci(q); }, 250);
+    });
+    var ispTraziClear = razgovorIspitivacTraziInp.parentNode ? razgovorIspitivacTraziInp.parentNode.querySelector('.kontrola-edit-delete__clear') : null;
+    if (ispTraziClear) ispTraziClear.addEventListener('click', function () {
+      razgovorIspitivacTraziInp.value = '';
+      fetchIspitivaci('');
+      razgovorIspitivacTraziInp.focus();
+    });
+  }
+  if (razgovorModal) {
+    /* Izlaz iz modala SAMO preko CRUD tipki (Upiši/Izmijeni, Izbriši, Povratak) — bez overlay-klika i Esc. */
+    /* Fiksiraj dialog na trenutne px koordinate (iz centriranog stanja) prije drag/resize-a. */
+    function razgFiksirajPoziciju() {
+      if (!razgovorDialog) return;
+      var r = razgovorDialog.getBoundingClientRect();
+      razgovorDialog.style.left = Math.round(r.left) + 'px';
+      razgovorDialog.style.top = Math.round(r.top) + 'px';
+      razgovorDialog.style.transform = 'none';
+      return r;
+    }
+    /* Premještanje: klik-i-povuci po zaglavlju modala. */
+    var razgovorHeader = razgovorModal.querySelector('.kandidat-dokumenti-crud__modal-razgovor-header');
+    if (razgovorHeader && razgovorDialog) {
+      razgovorHeader.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var r = razgFiksirajPoziciju();
+        var l0 = r.left, t0 = r.top, x0 = e.clientX, y0 = e.clientY;
+        function move(ev) {
+          razgovorDialog.style.left = Math.max(0, l0 + ev.clientX - x0) + 'px';
+          razgovorDialog.style.top = Math.max(0, t0 + ev.clientY - y0) + 'px';
+        }
+        function stop() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); }
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', stop);
+        e.preventDefault();
+      });
+    }
+    /* Promjena veličine povlačenjem ručke u donjem desnom kutu (raste od gornjeg lijevog kuta). */
+    var razgovorResizeKut = document.getElementById('razgovorResizeKut');
+    if (razgovorResizeKut && razgovorDialog) {
+      razgovorResizeKut.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var r = razgFiksirajPoziciju();
+        var w0 = r.width, h0 = r.height, x0 = e.clientX, y0 = e.clientY;
+        function move(ev) {
+          razgovorDialog.style.width = Math.max(360, w0 + ev.clientX - x0) + 'px';
+          razgovorDialog.style.height = Math.max(300, h0 + ev.clientY - y0) + 'px';
+        }
+        function stop() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); }
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', stop);
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    }
+  }
+
   function initForma() {
     updateNaslovLozu();
+    if (typeof KontroleTabInit === 'function') KontroleTabInit(document.getElementById('kandidatKontrolaTab'));
+    razgovoriData = [];
+    renderRazgovoriTablica();
     ucitajPravaGeo(function () {
       updateNaslovLozu();
       updateEnabledState();
@@ -860,6 +1231,208 @@
       });
     }
 
+    if (btnRefresh)  btnRefresh.addEventListener('click', function () { setProred(getProred()); ucitajDokumentIRenderiraj(false); });
+    if (btnPovratak) btnPovratak.addEventListener('click', zatvoriModal);
+    if (overlay)     overlay.addEventListener('click', zatvoriModal);
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && modal.classList.contains('kandidat-dokumenti-crud__modal-pdf--open')) zatvoriModal();
+    });
+  }());
+
+  /* ============================================================
+   * PDF modal RAZGOVORA: render dokumenta „Razgovor sa kandidatom"
+   * (kontekst ID_Razgovor = id reda kandidat_dokumenti_razgovori) + prored po razgovoru.
+   * Klon životopisnog initPdfModal; zaseban modal razgovorModalPdf (životopis netaknut).
+   * ============================================================ */
+  (function initRazgovorPdfModal() {
+    var RAZG_DOK_NAZIV = 'Razgovor sa kandidatom';
+    var PRORED_MIN = 0.80, PRORED_MAX = 2.00, PRORED_KORAK = 0.1, PRORED_DEF = 1.00;
+    var MSG_SPREMLJEN = 'Prored spremljen.';
+
+    var modal       = document.getElementById('razgovorModalPdf');
+    if (!btnRazgovorPdf || !modal) return;
+    var overlay     = modal.querySelector('.kandidat-dokumenti-crud__modal-pdf-overlay');
+    var okvir       = document.getElementById('razgovor_pdf_okvir');
+    var info        = document.getElementById('razgovor_pdf_info');
+    var inpProred   = document.getElementById('razgovor_pdf_prored');
+    var btnGore     = document.getElementById('razgovor_pdf_prored_gore');
+    var btnDolje    = document.getElementById('razgovor_pdf_prored_dolje');
+    var btnSave     = document.getElementById('razgovor_pdf_save');
+    var btnRefresh  = document.getElementById('razgovor_pdf_refresh');
+    var btnPovratak = document.getElementById('razgovor_pdf_povratak');
+    var spiner      = document.getElementById('razgovor_pdf_spiner');
+
+    var _dokument = null;
+    var _proredStilId = null;
+    var _razgIdAktivni = null;   /* id reda razgovora (kontekst ID_Razgovor) */
+    var _zauzet = false;
+
+    function postJson(url, data, cb) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+      xhr.onreadystatechange = function () { if (xhr.readyState === 4 && cb) cb(xhr.responseText, xhr.status); };
+      xhr.send(JSON.stringify(data));
+    }
+    function fmtProred(n) { return n.toFixed(2).replace('.', ','); }
+    function parseProred(v) {
+      var n = parseFloat(String(v == null ? '' : v).replace(',', '.'));
+      if (isNaN(n)) n = PRORED_DEF;
+      if (n < PRORED_MIN) n = PRORED_MIN;
+      if (n > PRORED_MAX) n = PRORED_MAX;
+      return Math.round(n * 100) / 100;
+    }
+    function getProred() { return parseProred(inpProred ? inpProred.value : PRORED_DEF); }
+    function setProred(n) { if (inpProred) inpProred.value = fmtProred(parseProred(n)); }
+    function postaviInfo(t) { if (info) info.textContent = t || ''; }
+    function porukaSpremljenOcisti() { if (info && info.textContent === MSG_SPREMLJEN) postaviInfo(''); }
+    function spinerShow() { if (typeof KontroleSpinerShow === 'function') KontroleSpinerShow(spiner); }
+    function spinerHide() { if (typeof KontroleSpinerHide === 'function') KontroleSpinerHide(spiner); }
+    function krajRendera(p) { _zauzet = false; spinerHide(); postaviInfo(p || ''); }
+
+    /* Početni prored: razgovor.dokument_prored → default-stil dokumenta → PRORED_DEF. */
+    function postaviPocetniProred() {
+      var v, rec = razgovorPoId(_razgIdAktivni);
+      if (rec && rec.dokument_prored != null && trim(String(rec.dokument_prored)) !== '') v = rec.dokument_prored;
+      else if (_dokument && _dokument.default_stil_prored != null && trim(String(_dokument.default_stil_prored)) !== '') v = _dokument.default_stil_prored;
+      else v = PRORED_DEF;
+      setProred(v);
+    }
+
+    function ocistiIframe() {
+      if (okvir) {
+        if (okvir._url) { try { URL.revokeObjectURL(okvir._url); } catch (e) {} okvir._url = null; }
+        okvir.removeAttribute('src');
+      }
+    }
+    function otvoriModal() { modal.classList.add('kandidat-dokumenti-crud__modal-pdf--open'); modal.setAttribute('aria-hidden', 'false'); }
+    function zatvoriModal() {
+      modal.classList.remove('kandidat-dokumenti-crud__modal-pdf--open');
+      modal.setAttribute('aria-hidden', 'true');
+      ocistiIframe(); spinerHide(); postaviInfo('');
+      try { btnRazgovorPdf.focus(); } catch (e) {}
+    }
+    function ucitajFontove(lista, cb, err) {
+      lista = lista || [];
+      if (!lista.length) { cb(); return; }
+      var preostalo = lista.length, greska = false;
+      lista.forEach(function (f) {
+        window.PdfRender.Fontovi.osiguraj(f.kljuc, f.porodica,
+          function () { if (--preostalo === 0) { greska ? err() : cb(); } },
+          function () { greska = true; if (--preostalo === 0) { err(); } });
+      });
+    }
+
+    function renderiraj() {
+      if (_zauzet) return;
+      spinerShow();
+      if (!window.PdfRender) { krajRendera('PDF biblioteka nije učitana.'); return; }
+      if (!_dokument || !_dokument.dokument) { krajRendera('Dokument „' + RAZG_DOK_NAZIV + '" nije pronađen.'); return; }
+      if (!_razgIdAktivni) { krajRendera('Razgovor nije učitan.'); return; }
+      var dok = _dokument.dokument;
+      var stavke = _dokument.stavke || [];
+      var kontekst = {};
+      stavke.forEach(function (s) {
+        var k = s.kontekst_kljuc != null ? trim(String(s.kontekst_kljuc)) : '';
+        if (k !== '') kontekst[k] = parseInt(_razgIdAktivni, 10);
+      });
+      var payload = {
+        template_id: dok.template_id ? parseInt(dok.template_id, 10) : 0,
+        kontekst: kontekst,
+        broj_stranice_paragraf_id: dok.broj_stranice_paragraf_id ? parseInt(dok.broj_stranice_paragraf_id, 10) : null,
+        stavke: stavke.map(function (s) {
+          return {
+            redoslijed: s.redoslijed, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta,
+            izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id,
+            kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id,
+            trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost,
+            literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id,
+            bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke,
+            preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
+            format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, sakrij_ako_prazno: s.sakrij_ako_prazno,
+            relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
+            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold
+          };
+        })
+      };
+      var proredVrijednost = getProred();
+      _zauzet = true;
+      postaviInfo('Dohvaćam…');
+      postJson(API_BASE + 'PDF_Generator_resolve.php', payload, function (res) {
+        var model;
+        try { model = JSON.parse(res); } catch (e) { krajRendera('Greška dohvata modela.'); return; }
+        if (!model || model.greska) { krajRendera('Greška: ' + ((model && model.greska) || 'nepoznata')); return; }
+        postaviInfo('Pripremam slike…');
+        window.PdfRender.pripremiSlike(model, function (model) {
+          postaviInfo('Gradim PDF…');
+          var dd = window.PdfRender.sastaviDocDefinition(model, { proredStilId: _proredStilId, proredVrijednost: proredVrijednost });
+          window.PdfRender.Pdf.ucitaj(function () {
+            ucitajFontove(model.fontovi, function () {
+              try {
+                pdfMake.createPdf(dd).getDataUrl(function (dataUrl) { ocistiIframe(); okvir.src = dataUrl; krajRendera(''); });
+              } catch (e) { krajRendera('Greška pri renderu: ' + e); }
+            }, function () { krajRendera('Greška pri učitavanju fontova.'); });
+          }, function () { krajRendera('Greška pri učitavanju pdfmake biblioteke.'); });
+        });
+      });
+    }
+
+    function ucitajDokumentIRenderiraj(resetProred) {
+      spinerShow();
+      postaviInfo('Učitavam dokument…');
+      var url = API_BASE + 'PDF_Dokument_po_nazivu.php?naziv=' + encodeURIComponent(RAZG_DOK_NAZIV);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        var data = null;
+        try { data = JSON.parse((xhr.responseText || '').replace(/^﻿/, '').trim()); } catch (e) {}
+        if (!data || data.greska || !data.dokument) { krajRendera('Dokument „' + RAZG_DOK_NAZIV + '" nije pronađen.'); return; }
+        _dokument = data;
+        _proredStilId = data.dokument.dokument_prored_default_stil ? parseInt(data.dokument.dokument_prored_default_stil, 10) : null;
+        if (resetProred) postaviPocetniProred();
+        renderiraj();
+      };
+      xhr.send();
+    }
+
+    btnRazgovorPdf.addEventListener('click', function () {
+      if (btnRazgovorPdf.disabled) return;
+      var id = getRazgovorSelId();
+      if (id == null) return;
+      _razgIdAktivni = parseInt(id, 10);
+      otvoriModal();
+      ucitajDokumentIRenderiraj(true);
+    });
+
+    function korak(d) { setProred(getProred() + d); porukaSpremljenOcisti(); }
+    if (btnGore)  btnGore.addEventListener('click', function () { korak(PRORED_KORAK); });
+    if (btnDolje) btnDolje.addEventListener('click', function () { korak(-PRORED_KORAK); });
+    if (inpProred) {
+      inpProred.addEventListener('input', function () {
+        var c = inpProred.value.replace(/[^0-9.,]/g, '');
+        if (inpProred.value !== c) inpProred.value = c;
+        porukaSpremljenOcisti();
+      });
+      inpProred.addEventListener('blur', function () { setProred(getProred()); });
+      inpProred.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); setProred(getProred()); renderiraj(); } });
+    }
+    if (btnSave) {
+      btnSave.addEventListener('click', function () {
+        if (_razgIdAktivni == null) return;
+        var p = getProred();
+        setProred(p);
+        btnSave.disabled = true;
+        postJson(API_BASE + 'Kandidat_Dokumenti_Razgovori_CRUD_prored.php', { id: _razgIdAktivni, prored: fmtProred(p) }, function (res, status) {
+          btnSave.disabled = false;
+          res = (res || '').trim();
+          if (status >= 200 && status < 300 && res === 'OK') {
+            var rec = razgovorPoId(_razgIdAktivni); if (rec) rec.dokument_prored = p;   /* zapamti za sljedeće otvaranje */
+            postaviInfo(MSG_SPREMLJEN);
+          } else { var pk = parseResponseCode(res); poruka(pk ? pk.code : '200', pk ? pk.replacements : []); }
+        });
+      });
+    }
     if (btnRefresh)  btnRefresh.addEventListener('click', function () { setProred(getProred()); ucitajDokumentIRenderiraj(false); });
     if (btnPovratak) btnPovratak.addEventListener('click', zatvoriModal);
     if (overlay)     overlay.addEventListener('click', zatvoriModal);

@@ -1,0 +1,25 @@
+-- Razgovori s kandidatom; VIŠE zapisa po kandidatu (1:N). Tekst kao životopis; PDF-ready (id_loza, dokument_prored).
+CREATE TABLE `kandidat_dokumenti_razgovori` (
+  `id`              int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `id_clan`         int(11) unsigned NOT NULL COMMENT 'ID kandidata (veza na clanovi.id); može biti više razgovora po kandidatu',
+  `id_ispitivac`    int(11) unsigned DEFAULT NULL COMMENT 'ID ispitivača (član koji je vodio razgovor; veza na clanovi.id)',
+  `id_loza`         int(11) unsigned DEFAULT NULL COMMENT 'ID lože kandidata (denormalizirano iz clanovi.loza) — most za PDF (logo/ime lože) u jednom skoku',
+  `id_loza_ispitivac` int(11) unsigned DEFAULT NULL COMMENT 'ID lože ispitivača (denormalizirano iz clanovi.loza ispitivača) — most za PDF (loža/grad onoga ko je vodio razgovor)',
+  `datum_razgovora` date NOT NULL COMMENT 'Datum razgovora s kandidatom',
+  `naslov`          varchar(255) NOT NULL DEFAULT '' COMMENT 'Naslov razgovora (npr. „1. razgovor")',
+  `tekst`           text DEFAULT NULL COMMENT 'Tekst / bilješke razgovora',
+  `dokument_prored` decimal(3,2) DEFAULT NULL COMMENT 'Extra prored u tijelu teksta za PDF (kao životopis)',
+  `upisao`          int(11) unsigned DEFAULT NULL COMMENT 'ID onoga tko je inicijalno upisao razgovor',
+  `vrijeme_upisa`   datetime DEFAULT NULL COMMENT 'Vrijeme sa servera kada je razgovor upisan',
+  PRIMARY KEY (`id`),
+  KEY `fk_kdr_clan` (`id_clan`),
+  KEY `fk_kdr_ispitivac` (`id_ispitivac`),
+  KEY `fk_kdr_loza` (`id_loza`),
+  KEY `fk_kdr_loza_ispitivac` (`id_loza_ispitivac`),
+  KEY `fk_kdr_upisao` (`upisao`),
+  CONSTRAINT `fk_kdr_clan` FOREIGN KEY (`id_clan`) REFERENCES `clanovi` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_kdr_ispitivac` FOREIGN KEY (`id_ispitivac`) REFERENCES `clanovi` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_kdr_loza` FOREIGN KEY (`id_loza`) REFERENCES `loze` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_kdr_loza_ispitivac` FOREIGN KEY (`id_loza_ispitivac`) REFERENCES `loze` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_kdr_upisao` FOREIGN KEY (`upisao`) REFERENCES `clanovi` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

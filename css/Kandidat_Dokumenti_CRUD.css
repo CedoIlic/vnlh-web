@@ -383,3 +383,194 @@
   border-top: 1px solid var(--edit_border, #ced4da);
   background: var(--modal_tablica_body_bg, #fff);
 }
+
+/* ===== Tab „Razgovori" (1:N): tablica zapisa + ikone Dodaj/Izmijeni ===== */
+.kandidat-dokumenti-crud__tab-panel--razgovori { padding: 0.5rem; }
+.kandidat-dokumenti-crud__razgovori {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+/* Tablica + PDF ikona desno. */
+.kandidat-dokumenti-crud__razgovori-glavni {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.kandidat-dokumenti-crud__razgovori-glavni .kandidat-dokumenti-crud__razgovori-tablica {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.kandidat-dokumenti-crud__razgovori-pdf { flex: 0 0 auto; }
+.kandidat-dokumenti-crud__razgovori-akcije {
+  display: flex;
+  gap: 0.4rem;
+}
+.kandidat-dokumenti-crud__razgovor-akcija {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--edit_height);
+  height: var(--edit_height);
+  padding: 0;
+  border: 1px solid var(--edit_border);
+  border-radius: var(--edit_radius);
+  background: var(--edit_bg);
+  box-shadow: var(--tablica_sjena);
+  color: var(--edit_text);
+  cursor: pointer;
+}
+.kandidat-dokumenti-crud__razgovor-akcija svg { width: 1.15rem; height: 1.15rem; display: block; }
+.kandidat-dokumenti-crud__razgovor-akcija .kontrola-icon--trash,
+.kandidat-dokumenti-crud__razgovor-akcija .kontrola-icon--asterisk {
+  width: 1.15rem; height: 1.15rem;
+  mask-size: 1.15rem 1.15rem; -webkit-mask-size: 1.15rem 1.15rem;
+}
+.kandidat-dokumenti-crud__razgovor-akcija:disabled {
+  background: var(--edit_bg_disabled);
+  color: var(--edit_text_disabled);
+  border-color: var(--edit_border_disabled);
+  box-shadow: var(--edit_focus_shadow_disabled);
+  cursor: var(--edit_cursor_disabled);
+}
+@media (hover: hover) {
+  .kandidat-dokumenti-crud__razgovor-akcija:hover:not(:disabled) { background: var(--c-gray-100, #eee); }
+}
+.kandidat-dokumenti-crud__razgovor-akcija:active:not(:disabled) { transform: translateY(1px); }
+
+/* ===== Modal „Razgovor" (dodavanje / izmjena / brisanje) ===== */
+.kandidat-dokumenti-crud__modal-razgovor {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  display: none;
+  box-sizing: border-box;
+}
+.kandidat-dokumenti-crud__modal-razgovor.kandidat-dokumenti-crud__modal-razgovor--open { display: block; }
+.kandidat-dokumenti-crud__modal-razgovor-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--modal_tablica_overlay_bg);
+}
+.kandidat-dokumenti-crud__modal-razgovor-dialog {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(640px, 95vw);
+  height: min(70vh, 620px);
+  min-width: 360px;
+  min-height: 300px;
+  max-width: 96vw;
+  max-height: 95vh;
+  border: var(--modal_tablica_border_w) solid var(--modal_tablica_border);
+  border-radius: var(--modal_tablica_border_radius);
+  box-shadow: var(--modal_tablica_sjena);
+  background: var(--modal_tablica_body_bg);
+  overflow: hidden;
+}
+.kandidat-dokumenti-crud__modal-razgovor-header {
+  flex: 0 0 auto;
+  padding: var(--modal_tablica_header_padding_y) var(--modal_tablica_header_padding_x);
+  background: var(--modal_tablica_header_bg);
+  color: var(--modal_tablica_header_text);
+  border-bottom: var(--modal_tablica_header_border_bottom);
+  font-family: var(--modal_tablica_header_font_family);
+  font-size: var(--modal_tablica_header_font_size);
+  font-weight: var(--modal_tablica_header_font_weight);
+  cursor: move;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.kandidat-dokumenti-crud__modal-razgovor-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.kandidat-dokumenti-crud__razgovor-red { display: flex; flex-direction: column; gap: 4px; }
+/* Datum + Razgovor vodio u istom redu. */
+.kandidat-dokumenti-crud__razgovor-red--datum-ispitivac {
+  flex-direction: row;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.kandidat-dokumenti-crud__razgovor-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* Datum: fiksna širina (kao datumska polja u Clanovi_CRUD; .kontrola-edit je width:100% ćelije). */
+.kandidat-dokumenti-crud__razgovor-cell--datum { flex: 0 0 auto; width: 170px; }
+.kandidat-dokumenti-crud__razgovor-cell--ispitivac { flex: 1 1 auto; min-width: 220px; }
+/* „Razgovor vodio": pretraga lijevo + select desno; kod suženja se slažu jedno ispod drugog. */
+.kandidat-dokumenti-crud__razgovor-ispitivac-red {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.kandidat-dokumenti-crud__ispitivac-trazi {
+  flex: 1 1 140px;
+  min-width: 120px;
+}
+.kandidat-dokumenti-crud__ispitivac-select {
+  flex: 1 1 200px;
+  min-width: 160px;
+}
+/* Tekst (napomena) raste s modalom: red i kontrola popunjavaju preostalu visinu tijela. */
+.kandidat-dokumenti-crud__razgovor-red--tekst { flex: 1 1 auto; min-height: 0; }
+.kandidat-dokumenti-crud__razgovor-tekst.kontrola-napomena {
+  flex: 1 1 auto;
+  min-height: 100px;
+  overflow-y: auto;
+}
+/* Tekst razgovora kao životopis: obostrano poravnat, uvlaka prvog reda 10 mm, razmak između odlomaka. */
+.kandidat-dokumenti-crud__razgovor-tekst[contenteditable] {
+  text-align: justify;
+  text-indent: 10mm;
+}
+.kandidat-dokumenti-crud__razgovor-tekst[contenteditable] > div,
+.kandidat-dokumenti-crud__razgovor-tekst[contenteditable] > p {
+  text-align: justify;
+  text-indent: 10mm;
+  margin: 0 0 0.6em 0;
+}
+.kandidat-dokumenti-crud__razgovor-tekst[contenteditable] > div:last-child,
+.kandidat-dokumenti-crud__razgovor-tekst[contenteditable] > p:last-child {
+  margin-bottom: 0;
+}
+.kandidat-dokumenti-crud__modal-razgovor-footer {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: var(--modal_tablica_footer_padding_y, 0.6rem) var(--modal_tablica_footer_padding_x, 0.75rem);
+  border-top: 1px solid var(--edit_border, #ced4da);
+  background: var(--modal_tablica_body_bg, #fff);
+}
+/* Ručka za promjenu veličine modala (donji desni kut). */
+.kandidat-dokumenti-crud__modal-razgovor-resize {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: var(--modal_tablica_resize_corner_size, 20px);
+  height: var(--modal_tablica_resize_corner_size, 20px);
+  padding: 2px;
+  box-sizing: border-box;
+  color: var(--c-gray-500, #9ca3af);
+  cursor: var(--modal_tablica_resize_corner_cursor, nwse-resize);
+  -webkit-user-select: none;
+  user-select: none;
+}
+.kandidat-dokumenti-crud__modal-razgovor-resize-icon { display: block; width: 14px; height: 14px; }
