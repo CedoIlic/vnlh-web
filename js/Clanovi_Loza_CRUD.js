@@ -122,6 +122,52 @@
   var API_BASE = '../php/';
   var data = [];
   var lozeData = [];
+
+  /* Boje redaka (isti izvor kao Lista/Članovi): zapisnik_boje_u_listi id 20 = kandidat, id 21 = privremeni otpust. */
+  var _clanoviKandidatBojaFg = '';
+  var _clanoviKandidatBojaBg = '';
+  var _clanoviOtpustBojaFg = '';
+  var _clanoviOtpustBojaBg = '';
+
+  /** #RRGGBBAA → rgba(...); #RRGGBB → #RRGGBB; inače ''. */
+  function clanoviBojaToStyle(c) {
+    var s = String(c || '').trim().replace(/^#/, '');
+    if (s.length === 8) {
+      var r = parseInt(s.slice(0, 2), 16), g = parseInt(s.slice(2, 4), 16),
+          b = parseInt(s.slice(4, 6), 16), a = parseInt(s.slice(6, 8), 16) / 255;
+      if (!isNaN(r + g + b + a)) return 'rgba(' + r + ',' + g + ',' + b + ',' + a.toFixed(3) + ')';
+    }
+    if (s.length === 6) return '#' + s;
+    return '';
+  }
+
+  /** Jednokratni dohvat boja redaka (var 20 kandidat / 21 otpust); po dolasku ponovno oboji tablicu ako već ima podataka. */
+  function ucitajClanoviBojeUListi() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', API_BASE + 'Zapisnik_Boje_U_Listi_CRUD_sve.php', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4 || xhr.status !== 200) return;
+      try {
+        var arr = JSON.parse(xhr.responseText || '');
+        if (Array.isArray(arr)) {
+          for (var i = 0; i < arr.length; i++) {
+            var bid = parseInt(arr[i].id, 10);
+            if (bid === 20) {
+              _clanoviKandidatBojaFg = clanoviBojaToStyle(arr[i].boja    || '') || '';
+              _clanoviKandidatBojaBg = clanoviBojaToStyle(arr[i].boja_bg || '') || '';
+            } else if (bid === 21) {
+              _clanoviOtpustBojaFg = clanoviBojaToStyle(arr[i].boja    || '') || '';
+              _clanoviOtpustBojaBg = clanoviBojaToStyle(arr[i].boja_bg || '') || '';
+            }
+          }
+        }
+      } catch (e) {}
+      if (tablicaApi && typeof tablicaApi.getData === 'function') {
+        clanoviLozaPrimijenKandidatStil(tablicaApi.getData());
+      }
+    };
+    xhr.send();
+  }
   var _scrollRedId = null;
 
   /* Geo keš: window.vnlhGeoOgranicenja* u 0-Filteri_Po_Ogranicenjima.js (jedan GET, zajednički filtri). */
@@ -293,6 +339,42 @@
     if (typeof KontroleRefreshCustomSelect === 'function') KontroleRefreshCustomSelect('select_na_prijedlog');
   }
 
+  /** ISO datum (yyyy-mm-dd[...]) → "dd.mm.yyyy"; prazno ako neispravno. */
+  function clanoviFormatDatumKratko(iso) {
+    if (!iso) return '';
+    var parts = String(iso).split(/[-/T]/);
+    if (parts.length < 3) return String(iso);
+    return parts[2].slice(0, 2) + '.' + parts[1] + '.' + parts[0];
+  }
+
+  /**
+   * Zaglavlje edit panela za člana na privremenom otpustu.
+   * found = red iz `data` (ima otpust_od/otpust_do) ili null → ukloni zaglavlje.
+   * Tekst: "Prezime Ime je na privremenom otpustu od DD.MM.YYYY do DD.MM.YYYY", boja = var 21 (kao u tablici).
+   */
+  function azurirajOtpustZaglavlje(found) {
+    var panel = document.getElementById('edit_panel');
+    if (!panel) return;
+    var zaglavlje = document.getElementById('clanovi_otpust_zaglavlje');
+    if (!found || !found.otpust_od) {
+      if (zaglavlje && zaglavlje.parentNode) zaglavlje.parentNode.removeChild(zaglavlje);
+      return;
+    }
+    if (!zaglavlje) {
+      zaglavlje = document.createElement('div');
+      zaglavlje.id = 'clanovi_otpust_zaglavlje';
+      zaglavlje.className = 'clanovi-loza-crud__otpust-zaglavlje';
+      /* Ispod postojećeg panel-headera (C∴L∴ + podnaslov), iznad tijela forme. */
+      var body = panel.querySelector('.kontrola-panel__body');
+      if (body) panel.insertBefore(zaglavlje, body);
+      else panel.insertBefore(zaglavlje, panel.firstChild);
+    }
+    var ime = ((found.prezime != null ? found.prezime : '') + ' ' + (found.ime != null ? found.ime : '')).trim();
+    zaglavlje.textContent = ime + ' je na privremenom otpustu od ' +
+      clanoviFormatDatumKratko(found.otpust_od) + ' do ' + clanoviFormatDatumKratko(found.otpust_do);
+    zaglavlje.style.color = _clanoviOtpustBojaFg || '';
+  }
+
   onCrudSelectionChange = function () {
     var img = document.getElementById('clanovi_image_preview');
     if (img) {
@@ -306,8 +388,10 @@
     if (id == null) {
       clearControlsFromSelection();
       populateNaPrijedlog(null);
+      azurirajOtpustZaglavlje(null);
     } else {
       var found = data.find(function (r) { return String(r.id) === String(id); });
+      azurirajOtpustZaglavlje(found || null);
       if (found) {
         var editPrezime = document.getElementById('edit_prezime');
         if (editPrezime) { editPrezime.value = found.prezime != null ? found.prezime : ''; editPrezime.dispatchEvent(new Event('input', { bubbles: true })); }
@@ -890,6 +974,7 @@
     for (var i = 0; i < arr.length; i++) {
       var r = arr[i];
       var jeKandidat = parseInt(r.kandidat, 10) === 1;
+      var jeOtpust = !!r.otpust_od;
       var stupanjShow = jeKandidat ? 'K' : (r.stupanj_show != null ? String(r.stupanj_show) + '°' : '');
       var spolDisplay = (r.spol === 1 || r.spol === '1') ? 'Ženski' : 'Muški';
       rows.push({
@@ -898,22 +983,38 @@
         1: r.ime != null ? r.ime : '',
         2: stupanjShow,
         3: spolDisplay,
-        _kandidat: jeKandidat
+        _kandidat: jeKandidat,
+        _otpust: jeOtpust
       });
     }
     return rows;
   }
 
-  /** Primijeni boje na retke kandidata (kandidat=1): sivi tekst retka, zeleni bg na koloni St. */
+  /**
+   * Oboji retke isto kao u Listi članova: kandidat (var 20) i privremeni otpust (var 21)
+   * dobiju boju teksta + pozadine na CIJELOM retku. Kandidat ima prednost (praktički isključivi).
+   */
   function clanoviLozaPrimijenKandidatStil(rows) {
     var container = document.getElementById('tablicaContainer');
     if (!container) return;
     var trs = container.querySelectorAll('.kontrola-tablica__scroll tbody tr');
     for (var i = 0; i < trs.length; i++) {
-      if (!rows[i] || !rows[i]._kandidat) continue;
+      if (!rows[i]) continue;
+      var fg = '', bg = '';
+      if (rows[i]._kandidat) {
+        fg = _clanoviKandidatBojaFg || 'var(--c-gray-300)';
+        bg = _clanoviKandidatBojaBg || 'var(--c-green-500)';
+      } else if (rows[i]._otpust) {
+        fg = _clanoviOtpustBojaFg;
+        bg = _clanoviOtpustBojaBg;
+      } else {
+        continue;
+      }
       var tds = trs[i].querySelectorAll('td');
-      for (var j = 0; j < tds.length; j++) tds[j].style.color = 'var(--c-gray-300)';
-      if (tds[2]) tds[2].style.backgroundColor = 'var(--c-green-500)';
+      for (var j = 0; j < tds.length; j++) {
+        if (fg) tds[j].style.color = fg;
+        if (bg) tds[j].style.backgroundColor = bg;
+      }
     }
   }
 
@@ -3474,6 +3575,7 @@
   }
 
   function initForma() {
+    ucitajClanoviBojeUListi();
     /* Odmah iscrtaj C ∴ L ∴ (ne čekaj ucitajPravaGeo – inače je prvi red prazan dok keš ne stigne). */
     clanoviLozaUpdateNaslovLozu();
     ucitajPravaGeo(function () {

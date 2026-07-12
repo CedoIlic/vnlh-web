@@ -140,6 +140,19 @@ body.vnlh-page-clanovi-crud {
 }
 
 /* Edit panel: iste sjene kao edit kontrole – normalno = tablica_sjena (kao .kontrola-edit bez fokusa), fokus = edit_focus_shadow, disabled = bez sjene */
+/* Zaglavlje edit panela: prikazuje se samo kad je odabran član na privremenom otpustu.
+   Boja teksta postavlja se inline u JS-u (var 21 iz zapisnik_boje_u_listi, isto kao redak u tablici). */
+.clanovi-crud #edit_panel > .clanovi-crud__otpust-zaglavlje {
+  padding: 0.75rem 1rem;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: 600;
+  line-height: 1.3;
+  border-bottom: 1px solid var(--edit_border);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .clanovi-crud #edit_panel.kontrola-panel {
   box-shadow: var(--tablica_sjena) !important;
   -webkit-user-select: none;
