@@ -70,6 +70,8 @@
   var _listaNavLockUntil = 0;
   var _listaKandidatBojaFg = '';
   var _listaKandidatBojaBg = '';
+  var _listaOtpustBojaFg = '';
+  var _listaOtpustBojaBg = '';
 
   function listaBojaToStyle(c) {
     var s = String(c || '').trim().replace(/^#/, '');
@@ -869,6 +871,12 @@
         { naslov: 'Adrese', redci: [{ label: '', value: 'Učitavanje...', cls: '' }], isAdrese: true },
         { naslov: 'Prisustvo na radovima', redci: [{ label: '', value: 'Podaci još ne postoje', cls: '' }] }
       ];
+      if (row.otpustAktivan) {
+        grupe.splice(1, 0, { naslov: 'Privremeni otpust', redci: [
+          { label: 'Početak otpusta', value: formatDatumSDanom(row.otpustOd) || (row.otpustOd || '—') },
+          { label: 'Završetak otpusta', value: formatDatumSDanom(row.otpustDo) || (row.otpustDo || '—') }
+        ]});
+      }
       var grupeState = getDetaljiGrupeState() || {};
       var telefonTijelo = null;
       var emailTijelo = null;
@@ -1012,6 +1020,9 @@
         if (row.kandidat) {
           td.style.color           = _listaKandidatBojaFg || 'var(--c-gray-300)';
           td.style.backgroundColor = _listaKandidatBojaBg || 'var(--c-green-500)';
+        } else if (row.otpustAktivan) {
+          if (_listaOtpustBojaFg) td.style.color           = _listaOtpustBojaFg;
+          if (_listaOtpustBojaBg) td.style.backgroundColor = _listaOtpustBojaBg;
         }
         if (col.type === 'img' || col.type === 'logo') {
           td.className = 'lista-tablica__cell--img';
@@ -1801,7 +1812,10 @@
               sifra: r.sifra || '',
               datum_inicijacije: datumInicStr,
               datum_stupnja: datumStupanjStr,
-              na_prijedlog: [r.na_prijedlog_prezime, r.na_prijedlog_ime].filter(Boolean).join(' ') || ''
+              na_prijedlog: [r.na_prijedlog_prezime, r.na_prijedlog_ime].filter(Boolean).join(' ') || '',
+              otpustAktivan: !!r.otpust_od,
+              otpustOd: r.otpust_od || '',
+              otpustDo: r.otpust_do || ''
             });
           }
           function nakonOgrStupnjeva() {
@@ -1981,10 +1995,13 @@
           var arr = JSON.parse(xhrBoje.responseText || '');
           if (Array.isArray(arr)) {
             for (var i = 0; i < arr.length; i++) {
-              if (parseInt(arr[i].id, 10) === 20) {
+              var bid = parseInt(arr[i].id, 10);
+              if (bid === 20) {
                 _listaKandidatBojaFg = listaBojaToStyle(arr[i].boja   || '') || '';
                 _listaKandidatBojaBg = listaBojaToStyle(arr[i].boja_bg || '') || '';
-                break;
+              } else if (bid === 21) {
+                _listaOtpustBojaFg = listaBojaToStyle(arr[i].boja   || '') || '';
+                _listaOtpustBojaBg = listaBojaToStyle(arr[i].boja_bg || '') || '';
               }
             }
           }

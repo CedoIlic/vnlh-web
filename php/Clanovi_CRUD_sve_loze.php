@@ -65,6 +65,8 @@ $sql = "SELECT
             (SELECT a2.grad FROM adrese a2 INNER JOIN adrese_tip at2 ON at2.id = a2.id_adrese_tip AND at2.`Tip` = 1 WHERE a2.id_clanovi = c.id ORDER BY a2.id ASC LIMIT 1) AS adresa_grad,
             (SELECT a2.posta FROM adrese a2 INNER JOIN adrese_tip at2 ON at2.id = a2.id_adrese_tip AND at2.`Tip` = 1 WHERE a2.id_clanovi = c.id ORDER BY a2.id ASC LIMIT 1) AS adresa_posta,
             (SELECT a2.id_drzave_adrese FROM adrese a2 INNER JOIN adrese_tip at2 ON at2.id = a2.id_adrese_tip AND at2.`Tip` = 1 WHERE a2.id_clanovi = c.id ORDER BY a2.id ASC LIMIT 1) AS id_drzava_adrese,
+            (SELECT po.datum_od FROM clanovi_privremeni_otpust po WHERE po.id_clan = c.id AND po.datum_od <= CURDATE() AND po.datum_do >= CURDATE() ORDER BY po.datum_od DESC LIMIT 1) AS otpust_od,
+            (SELECT po.datum_do FROM clanovi_privremeni_otpust po WHERE po.id_clan = c.id AND po.datum_od <= CURDATE() AND po.datum_do >= CURDATE() ORDER BY po.datum_od DESC LIMIT 1) AS otpust_do,
             l.grad AS loza_grad,
             l.naziv AS loza_naziv,
             l.id_obred AS id_obred,
