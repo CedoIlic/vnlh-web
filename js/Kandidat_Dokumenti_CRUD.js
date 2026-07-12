@@ -207,6 +207,14 @@
     updateTablicaHeaderLogo();
   }
 
+  /* Vrati tab kontrolu na prvi tab (Životopis) — na promjenu geo grupe ili selekcije u tablici. */
+  function resetTabNaPrvi() {
+    if (typeof kontrolaTabPostaviAktivni === 'function') {
+      var root = document.getElementById('kandidatKontrolaTab');
+      if (root) kontrolaTabPostaviAktivni(root, 0);
+    }
+  }
+
   /* ===== Enable / CRUD stanje ===== */
   function updateEnabledState() {
     var imaLozu = selectLoza && trim(selectLoza.value) !== '';
@@ -217,6 +225,9 @@
 
     zivotopisSetEnabled(imaSelekciju);
     if (editPanel) editPanel.classList.toggle('kontrola-panel--edit-disabled', !imaSelekciju);
+    /* Pod-tablica razgovora disabled kad je tab razgovori disabled (nema izabranog kandidata). */
+    var razgTablica = document.getElementById('razgovoriTablicaContainer');
+    if (razgTablica) razgTablica.classList.toggle('kontrola-tablica--disabled', !imaSelekciju);
 
     var traziWrap = document.getElementById('kandidat_dok_trazi');
     traziWrap = traziWrap && traziWrap.closest ? traziWrap.closest('.kontrola-edit-delete') : null;
@@ -277,6 +288,7 @@
   }
 
   onCrudSelectionChange = function () {
+    resetTabNaPrvi();
     updateSlikaPreview();
     var id = getSelectedRowId();
     ucitajZivotopis(id, function () { updateCrudState(); });
@@ -430,16 +442,19 @@
   if (zivotopisEl) zivotopisEl.addEventListener('input', updatePdfState);
 
   if (selectDrzava) selectDrzava.addEventListener('change', function () {
+    resetTabNaPrvi();
     if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection();
     clearSlika();
     popuniRegijeIzKeša(trim(this.value), function () { updateEnabledState(); });
   });
   if (selectRegija) selectRegija.addEventListener('change', function () {
+    resetTabNaPrvi();
     if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection();
     clearSlika();
     popuniLozeIzKeša(trim(this.value), function () { updateEnabledState(); });
   });
   if (selectLoza) selectLoza.addEventListener('change', function () {
+    resetTabNaPrvi();
     var tz = document.getElementById('kandidat_dok_trazi'); if (tz) tz.value = '';
     if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection();
     clearSlika();
