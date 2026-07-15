@@ -3585,7 +3585,7 @@
               literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id,
               bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke,
               preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
-              format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, sakrij_ako_prazno: s.sakrij_ako_prazno,
+              format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno,
               /* relacijska polja (lože učesnice / dužnosnici / prisutni / eseji) — bez njih resolve ne nađe relaciju → prazno */
               relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
               redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold

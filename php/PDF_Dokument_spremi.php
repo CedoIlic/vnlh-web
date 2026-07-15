@@ -75,10 +75,10 @@ try {
         $okvirId = null;   // vezani tekst blok (pdf_template_okvir); NULL = obična zona
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold, okvir_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold, okvir_id, fiksna_pozicija_y)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $ins->bind_param('iissisisisssiiisissdiisssii', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold, $okvirId);
+        $ins->bind_param('iissisisisssiiisissdiisssiid', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold, $okvirId, $fiksy);
         $dok = $id;
         $i = 0;
         foreach ($stavke as $s) {
@@ -153,7 +153,9 @@ try {
             $fv = ($vrsta === 'tekst') ? trim((string) ($s['format_datuma'] ?? '')) : '';   // format datuma (samo tekst)
             $fmt = ($fv === '') ? null : $fv;
             $fp = ($vrsta === 'tekst' && isset($s['fiksna_pozicija']) && (float) $s['fiksna_pozicija'] > 0) ? (float) $s['fiksna_pozicija'] : null;
-            $fiks = $fp;   // fiksna pozicija (mm); NULL = bez
+            $fiks = $fp;   // fiksna pozicija X (mm); NULL = bez
+            // Apsolutna Y: -1/prazno = tok (NULL); druga vrijednost = apsolutno (može biti i negativna). Samo tekst.
+            $fiksy = ($vrsta === 'tekst' && isset($s['fiksna_pozicija_y']) && $s['fiksna_pozicija_y'] !== '' && $s['fiksna_pozicija_y'] !== null) ? (float) $s['fiksna_pozicija_y'] : null;
             $sakrij = !empty($s['sakrij_ako_prazno']) ? 1 : 0;   // sakrij cijeli red ako je vrijednost prazna
             $okvirId = ((int) ($s['okvir_id'] ?? 0) > 0) ? (int) $s['okvir_id'] : null;   // vezani tekst blok
             $zadnjiRed = $red;

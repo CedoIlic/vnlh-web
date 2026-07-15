@@ -172,7 +172,8 @@
       /* Auto-širina (pozadina samo iza teksta): pdfmake tablica nema alignment pa bi ostala lijevo.
          Za center/right omotamo „traku" u columns sa spacerima da bude centrirana/desno poravnata. */
       var por = str(stil.poravnanje) || 'left';
-      if (por === 'center' || por === 'right') {
+      /* Apsolutni mod: X pozicionira kutiju → koristi bare auto-širinu (align-columns bi zauzeo punu širinu). */
+      if (!opts.apsolutna && (por === 'center' || por === 'right')) {
         var trakaCol = { width: 'auto', table: { widths: ['auto'], body: [[par]] }, layout: layoutTraka };
         var cols = (por === 'center')
           ? [{ width: '*', text: '' }, trakaCol, { width: '*', text: '' }]
@@ -466,13 +467,23 @@
         /* Extra prored dokumenta: APSOLUTNI override lineHeight-a SAMO na stilu dokument_prored_default_stil. */
         var elOpts = {};
         if (opts.proredVrijednost != null && opts.proredStilId && ps && +ps.id === +opts.proredStilId) elOpts.proredVrijednost = opts.proredVrijednost;
+        /* Apsolutno pozicioniranje: fiksna_pozicija_y != -1/null → absolutePosition {x,y} (mm→pt, ishodište = gornji-lijevi
+           kut stranice). U apsolutnom modu stavka izlazi iz toka (kao slika); X = fiksna_pozicija (apsolutni), Y = fiksna_pozicija_y. */
+        var apsPos = null;
+        if (s.fiksna_pozicija_y != null && s.fiksna_pozicija_y !== '' && +s.fiksna_pozicija_y !== -1) {
+          var apsX = (s.fiksna_pozicija != null && s.fiksna_pozicija !== '') ? +s.fiksna_pozicija : 0;
+          apsPos = { x: apsX * MM_PT, y: +s.fiksna_pozicija_y * MM_PT };
+          elOpts.apsolutna = true;   /* sastaviOdlomak: negativ-kutija u auto-širini (bez align-columns) */
+        }
         /* Spojeni odlomci (relacija-liste): retci su JEDAN blok → razmak prije samo na prvom, poslije samo na zadnjem. */
         var spojeni = !!s.spojeni_odlomci, nOd = odlomci.length;
         return odlomci.map(function (runovi, i) {
           var o = {}; for (var k in elOpts) o[k] = elOpts[k];
           if (spojeni && i > 0) o.noGapAbove = true;
           if (spojeni && i < nOd - 1) o.noGapBelow = true;
-          return sastaviOdlomak(ps, kljuc, runovi, o);
+          var node = sastaviOdlomak(ps, kljuc, runovi, o);
+          if (apsPos) node.absolutePosition = apsPos;
+          return node;
         });
       }
       return [];

@@ -16,7 +16,7 @@ CREATE TABLE `kandidat_dokumenti_001` (
   `dijete_masona`      tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Je li dijete masona: 0=Ne, 1=Da',
   `veza_masoni`        tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Ima li druge poveznice s masonima (obiteljske/rođačke/partnerske/bračne): 0=Ne, 1=Da',
   `zahtjev_druga_loza` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Je li predao zahtjev drugoj Loži ili Masonskoj Obedijenciji: 0=Ne, 1=Da',
-  `primljen_iniciran`  enum('Primljen','Iniciran') DEFAULT NULL COMMENT 'Status: Primljen ili Iniciran',
+  `status_pristupa`  enum('Iniciran','Reguliran','Pridružen') DEFAULT NULL COMMENT 'Status pristupa: Iniciran, Reguliran ili Pridružen',
   `dokument_prored`    decimal(3,2) DEFAULT NULL COMMENT 'Korisnički (ekstra) prored u tijelu teksta za PDF',
   `upisao`             int(11) unsigned DEFAULT NULL COMMENT 'ID onoga tko je upisao obrazac',
   `datum_upisa`        datetime DEFAULT NULL COMMENT 'Vrijeme sa servera kada je obrazac upisan',

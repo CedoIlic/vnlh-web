@@ -30,7 +30,7 @@ try {
                 (SELECT t.telefon FROM telefoni t INNER JOIN telefoni_tip tt ON tt.id = t.id_telefoni_tip AND tt.`Tip` = 1 WHERE t.id_clanovi = c.id LIMIT 1) AS telefon,
                 k.id AS k_id, k.mjesto_rodjenja, k.drzava_rodjenja, k.drzavljanstvo, k.zvanje, k.zanimanje,
                 k.gradjanski_status, k.broj_djece, k.poznavanje_jezika, k.pocasni_naslovi,
-                k.dijete_masona, k.veza_masoni, k.zahtjev_druga_loza, k.primljen_iniciran,
+                k.dijete_masona, k.veza_masoni, k.zahtjev_druga_loza, k.status_pristupa,
                 k.datum_dokumenta, k.dokument_prored
             FROM clanovi c
             LEFT JOIN kandidat_dokumenti_001 k ON k.id_clan = c.id
@@ -66,7 +66,7 @@ try {
         'dijete_masona'      => ($row['dijete_masona'] !== null) ? (int) $row['dijete_masona'] : 0,
         'veza_masoni'        => ($row['veza_masoni'] !== null) ? (int) $row['veza_masoni'] : 0,
         'zahtjev_druga_loza' => ($row['zahtjev_druga_loza'] !== null) ? (int) $row['zahtjev_druga_loza'] : 0,
-        'primljen_iniciran'  => $row['primljen_iniciran'],
+        'status_pristupa'  => $row['status_pristupa'],
         'datum_dokumenta'    => $row['datum_dokumenta'],
         'dokument_prored'    => $row['dokument_prored'],
         // Samo prikaz (RO) — iz kandidata.

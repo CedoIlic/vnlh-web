@@ -338,6 +338,13 @@
 .pdf-dokument-crud__unos-mjera { display: flex; align-items: center; gap: 0.35rem; }
 .pdf-dokument-crud__num { width: 6rem; text-align: right; }
 .pdf-dokument-crud__mjera { flex: 0 0 auto; white-space: nowrap; font-size: 0.9em; opacity: 0.75; }
+/* Red X + apsolutni Y — ista struktura kao obično polje (labela 11rem + fleksibilna sredina + `?`),
+   pa `?` sjeda na isti desni rub kao `?` uz Format datuma. Sredina se lomi (wrap) ako je pretijesno. */
+.pdf-dokument-crud__polje-red { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.pdf-dokument-crud__polje-red[hidden] { display: none; }
+.pdf-dokument-crud__polje-red-labela { flex: 0 0 11rem; margin: 0; white-space: nowrap; text-align: left; }
+.pdf-dokument-crud__polje-red-sredina { flex: 1 1 0; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 1rem; }
+.pdf-dokument-crud__polje-red-sredina > .kontrola-labela { flex: 0 0 auto; margin: 0; white-space: nowrap; }
 
 /* Clone modal — povratna informacija (npr. „Dodano na kraj: …"). */
 .pdf-dokument-crud__clone-modal { min-width: 26rem; }

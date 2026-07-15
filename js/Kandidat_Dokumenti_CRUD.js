@@ -15,6 +15,7 @@
   var _zivotopisRowId = null;    /* id reda u kandidat_dokumenti_zivotopis (kontekst ID_Zivotopis); null kad nema zapisa */
   var _zivotopisProred = null;   /* kandidat_dokumenti_zivotopis.dokument_prored odabranog; null = nije postavljen */
   var _obrazac001Postoji = false; /* ima li odabrani kandidat zapis u kandidat_dokumenti_001 (Obrazac 001a) */
+  var _obrazac001PdfSpreman = false; /* PDF ikona aktivna: zapis postoji + status_pristupa i datum_dokumenta upisani U BAZI */
   var _geoAutoLockedDrzava = false, _geoAutoLockedRegija = false, _geoAutoLockedLoza = false;
   var _pravaCrudUpis = 1, _pravaCrudBrisanje = 1;
 
@@ -91,6 +92,7 @@
   var zivotopisKartica = document.getElementById('kandidatKontrolaTabKart0');
   var razgovoriKartica = document.getElementById('kandidatKontrolaTabKart1');
   var obrazacKartica = document.getElementById('kandidatKontrolaTabKart2');
+  var obrPdfBtn = document.getElementById('obr_pdf');
   var kandidatTabRoot = document.getElementById('kandidatKontrolaTab');
   if (btnIzbrisi) { btnIzbrisi.style.display = 'none'; btnIzbrisi.disabled = true; }
 
@@ -111,7 +113,7 @@
     { id: 'obr_dijete_masona',     key: 'dijete_masona',     t: 'c' },
     { id: 'obr_veza_masoni',       key: 'veza_masoni',       t: 'c' },
     { id: 'obr_zahtjev_druga_loza',key: 'zahtjev_druga_loza',t: 'c' },
-    { id: 'obr_primljen_iniciran', key: 'primljen_iniciran', t: 's' },
+    { id: 'obr_status_pristupa', key: 'status_pristupa', t: 's' },
     { id: 'obr_datum_dokumenta',   key: 'datum_dokumenta',   t: 'd' }
   ];
 
@@ -234,6 +236,7 @@
     for (var i = 0; i < OBR_RO_IDS.length; i++) { var r = document.getElementById(OBR_RO_IDS[i]); if (r) r.value = ''; }
     obrazacFillEdit({});
     _obrazac001Postoji = false;
+    _obrazac001PdfSpreman = false;
   }
   /* Učitaj Obrazac 001a odabranog kandidata (RO + edit; postoji flag). */
   function ucitajObrazac(idClan, cb) {
@@ -250,6 +253,8 @@
             var o = JSON.parse(text);
             obrazacFillRo(o.ro);
             _obrazac001Postoji = !!o.postoji;
+            /* PDF aktivan samo ako su status_pristupa I datum_dokumenta upisani u bazi. */
+            _obrazac001PdfSpreman = !!o.postoji && trim(o.status_pristupa) !== '' && trim(o.datum_dokumenta) !== '';
             if (o.postoji) obrazacFillEdit(o);
           } catch (e) {}
         }
@@ -396,6 +401,7 @@
     var smijeBrisati = !naObrazac && imaSelekciju && _zivotopisPostoji && _pravaCrudBrisanje === 1;
     if (btnIzbrisi) { btnIzbrisi.style.display = smijeBrisati ? '' : 'none'; btnIzbrisi.disabled = !smijeBrisati; }
     updatePdfState();
+    obrazacUpdatePdfState();
   }
 
   /* PDF ikona: omogućena kad je životopis učitan (kontrola ima sadržaj), inače onemogućena. */
@@ -403,6 +409,13 @@
     if (!btnPdf) return;
     var imaSelekciju = getSelectedRowId() != null;
     btnPdf.disabled = !(imaSelekciju && zivotopisGetTekst() != null);
+  }
+
+  /* PDF ikona Obrasca 001a: aktivna kad zapis POSTOJI u bazi i ima upisan status_pristupa I datum_dokumenta. */
+  function obrazacUpdatePdfState() {
+    if (!obrPdfBtn) return;
+    var imaSelekciju = getSelectedRowId() != null;
+    obrPdfBtn.disabled = !(imaSelekciju && _obrazac001PdfSpreman);
   }
 
   /* ===== Učitavanje životopisa odabranog kandidata ===== */
@@ -1146,6 +1159,10 @@
         });
       } catch (e) {}
     }
+    /* Broj djece: samo znamenke (postojeći filter iz 0-Common); PHP dodatno klampa 0–255. */
+    if (typeof window.initSamoNumerika === 'function') {
+      window.initSamoNumerika(document.getElementById('obr_broj_djece'), 3);
+    }
     razgovoriData = [];
     renderRazgovoriTablica();
     ucitajPravaGeo(function () {
@@ -1302,7 +1319,7 @@
             literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id,
             bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke,
             preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
-            format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, sakrij_ako_prazno: s.sakrij_ako_prazno,
+            format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno,
             relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
             redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold
           };
@@ -1519,7 +1536,7 @@
             literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id,
             bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke,
             preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
-            format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, sakrij_ako_prazno: s.sakrij_ako_prazno,
+            format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno,
             relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
             redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold
           };

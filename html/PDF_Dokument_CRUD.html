@@ -341,12 +341,20 @@
                         <button type="button" id="btnFormatPomoc" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--pomoc" title="Upute / formati" aria-label="Upute za format datuma">?</button>
                     </div>
                 </div>
-                <div class="pdf-dokument-crud__polje" id="polje_fiksna_pozicija">
-                    <label class="kontrola-labela mb-0" for="st_fiksna_pozicija">Fiksna pozicija stavke</label>
-                    <div class="pdf-dokument-crud__unos-mjera">
-                        <input id="st_fiksna_pozicija" type="text" class="kontrola-edit pdf-dokument-crud__num" inputmode="decimal" placeholder="0,0" maxlength="9" autocomplete="off" aria-label="Fiksna pozicija stavke u mm">
-                        <span class="pdf-dokument-crud__mjera" aria-hidden="true">mm</span>
+                <div class="pdf-dokument-crud__polje-red" id="polje_fiks_red">
+                    <label class="kontrola-labela mb-0 pdf-dokument-crud__polje-red-labela" for="st_fiksna_pozicija">Fiksna pozicija (X)</label>
+                    <div class="pdf-dokument-crud__polje-red-sredina">
+                        <div class="pdf-dokument-crud__unos-mjera">
+                            <input id="st_fiksna_pozicija" type="text" class="kontrola-edit pdf-dokument-crud__num" inputmode="decimal" placeholder="0,0" maxlength="9" autocomplete="off" aria-label="Fiksna pozicija stavke u mm">
+                            <span class="pdf-dokument-crud__mjera" aria-hidden="true">mm</span>
+                        </div>
+                        <label class="kontrola-labela mb-0" for="st_fiksna_pozicija_y">Apsolutni (Y)</label>
+                        <div class="pdf-dokument-crud__unos-mjera">
+                            <input id="st_fiksna_pozicija_y" type="text" class="kontrola-edit pdf-dokument-crud__num" inputmode="decimal" placeholder="-1" maxlength="9" autocomplete="off" aria-label="Apsolutna Y pozicija stavke u mm (−1 = u nastavku reda; X postaje apsolutni)">
+                            <span class="pdf-dokument-crud__mjera" aria-hidden="true">mm</span>
+                        </div>
                     </div>
+                    <button type="button" id="btnFiksPomoc" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--pomoc" title="Upute / fiksna pozicija" aria-label="Upute za fiksnu poziciju stavke">?</button>
                 </div>
                 <div class="pdf-dokument-crud__polje" id="polje_paragraf">
                     <label class="kontrola-labela mb-0" for="st_paragraf_id">Stil teksta</label>
@@ -478,6 +486,36 @@ dddd, D. mmmm YYYY.  → ponedjeljak, 1. lipanj 2026.</pre>
         </div>
         <div class="kontrola-modal__footer">
             <button type="button" id="btnFormatPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+        </div>
+    </div>
+</div>
+
+<div class="kontrola-modal kontrola-modal--dim" id="fiksPomocModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="fiksPomocModal_overlay"></div>
+    <div class="kontrola-modal__dialog pdf-dokument-crud__pomoc-modal">
+        <div class="kontrola-modal__header" id="fiksPomocModal_header">Fiksna pozicija stavke — upute</div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content pdf-dokument-crud__pomoc">
+                <p>Dva polja zajedno određuju položaj tekst-stavke: <strong>Fiksna pozicija stavke (X)</strong> i <strong>Apsolutni Y</strong>. Vrijednosti su u milimetrima.</p>
+                <p><strong>Dva načina rada, prema polju „Apsolutni Y":</strong></p>
+                <ul>
+                    <li><strong>Y = −1 ili prazno → „u nastavku reda" (tok).</strong> Stavka teče normalno u svojoj zoni (odlomak ispod prethodnog). Tada <code>X</code> djeluje kao <em>tabulator</em>: sadržaj počinje na <code>X</code> mm od lijevog ruba <u>teksta</u> (poravnavanje segmenata unutar reda). Prazno/0 = bez tab-pomaka.</li>
+                    <li><strong>Y = bilo koja druga vrijednost → apsolutno pozicioniranje.</strong> Stavka <u>izlazi iz toka</u> (ne gura ostali sadržaj, kao logo) i crta se na točnoj poziciji <code>(X, Y)</code> u milimetrima od <strong>gornjeg-lijevog kuta stranice</strong>. Tada je <code>X</code> apsolutni vodoravni položaj (od lijevog ruba stranice), a <code>Y</code> okomiti (od vrha stranice).</li>
+                </ul>
+                <p><strong>Napomene:</strong></p>
+                <ul>
+                    <li>Apsolutna stavka zadržava svoj stil u cijelosti (npr. negativ-kutija s ispunom i paddingom) jer ostaje vlastiti blok.</li>
+                    <li>Više stavki s <u>istim Y</u> i <u>različitim X</u> složi se u isti vizualni red (npr. „Obrazac:" + „001").</li>
+                    <li>Apsolutni položaj ne rezervira prostor — pobrini se da ne prekrije drugi sadržaj.</li>
+                    <li>Vrijedi za tekst-stavke. Slike se apsolutno pozicioniraju kroz vlastiti stil slike.</li>
+                </ul>
+                <p>Primjer („Obrazac: 001" u gornjem-desnom kutu):</p>
+                <pre>„Obrazac:"  → X ≈ 150   Y ≈ 15
+„001"       → X ≈ 172   Y ≈ 15   (isti Y → isti red)</pre>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="btnFiksPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
         </div>
     </div>
 </div>

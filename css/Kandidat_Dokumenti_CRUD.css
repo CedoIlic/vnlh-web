@@ -599,6 +599,22 @@
   align-items: flex-end;
   justify-content: flex-end;
 }
+/* Polje s labelom LIJEVO od kontrole (inline), umjesto iznad.
+   Lančane obje klase da nadvlada .polje { flex-direction: column } (definiran kasnije). */
+.kandidat-dokumenti-crud__polje.kandidat-dokumenti-crud__polje--redak {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+.kandidat-dokumenti-crud__polje--redak > .kontrola-labela {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.kandidat-dokumenti-crud__polje--redak > .kontrola-select,
+.kandidat-dokumenti-crud__polje--redak > .kontrola-edit {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 @media (max-width: 900px) {
   .kandidat-dokumenti-crud__obrazac-zaglavlje { grid-template-columns: 1fr; }
   .kandidat-dokumenti-crud__obrazac-zaglavlje-pdf { justify-content: flex-start; }

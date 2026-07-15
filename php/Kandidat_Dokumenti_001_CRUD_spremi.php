@@ -3,7 +3,7 @@ require_once __DIR__ . '/require_login_api.php';
 // Kandidat_Dokumenti_001_CRUD_spremi.php – upsert Obrasca 001a kandidata (1:1 po id_clan).
 // POST JSON { id_clan, mjesto_rodjenja, drzava_rodjenja, drzavljanstvo, zvanje, zanimanje,
 //   gradjanski_status, broj_djece, poznavanje_jezika, pocasni_naslovi,
-//   dijete_masona, veza_masoni, zahtjev_druga_loza, primljen_iniciran, datum_dokumenta }.
+//   dijete_masona, veza_masoni, zahtjev_druga_loza, status_pristupa, datum_dokumenta }.
 // Vraća 'OK' ili kod greške (105 ulaz, 200,<errno> SQL).
 
 $db_ret = require_once __DIR__ . '/00_db.php';
@@ -44,10 +44,10 @@ $veza_masoni        = !empty($d['veza_masoni'])        ? 1 : 0;
 $zahtjev_druga_loza = !empty($d['zahtjev_druga_loza']) ? 1 : 0;
 
 // Status: samo dozvoljene vrijednosti enuma; inače NULL.
-$primljen_iniciran = null;
-if (isset($d['primljen_iniciran'])) {
-    $pi = trim((string) $d['primljen_iniciran']);
-    if ($pi === 'Primljen' || $pi === 'Iniciran') $primljen_iniciran = $pi;
+$status_pristupa = null;
+if (isset($d['status_pristupa'])) {
+    $pi = trim((string) $d['status_pristupa']);
+    if ($pi === 'Iniciran' || $pi === 'Reguliran' || $pi === 'Pridružen') $status_pristupa = $pi;
 }
 
 // Datum dokumenta: prihvati YYYY-MM-DD; inače NULL.
@@ -66,7 +66,7 @@ try {
     $sql = 'INSERT INTO kandidat_dokumenti_001
                 (id_clan, id_loza, mjesto_rodjenja, drzava_rodjenja, drzavljanstvo, zvanje, zanimanje,
                  gradjanski_status, broj_djece, poznavanje_jezika, pocasni_naslovi,
-                 dijete_masona, veza_masoni, zahtjev_druga_loza, primljen_iniciran, datum_dokumenta,
+                 dijete_masona, veza_masoni, zahtjev_druga_loza, status_pristupa, datum_dokumenta,
                  upisao, datum_upisa)
             VALUES (?, (SELECT loza FROM clanovi WHERE id = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ON DUPLICATE KEY UPDATE
@@ -83,7 +83,7 @@ try {
                 dijete_masona = VALUES(dijete_masona),
                 veza_masoni = VALUES(veza_masoni),
                 zahtjev_druga_loza = VALUES(zahtjev_druga_loza),
-                primljen_iniciran = VALUES(primljen_iniciran),
+                status_pristupa = VALUES(status_pristupa),
                 datum_dokumenta = VALUES(datum_dokumenta)';
     $stmt = $mysqli->prepare($sql);
     $stmt->bind_param(
@@ -91,7 +91,7 @@ try {
         $id_clan, $id_clan,
         $mjesto_rodjenja, $drzava_rodjenja, $drzavljanstvo, $zvanje, $zanimanje,
         $gradjanski_status, $broj_djece, $poznavanje_jezika, $pocasni_naslovi,
-        $dijete_masona, $veza_masoni, $zahtjev_druga_loza, $primljen_iniciran, $datum_dokumenta,
+        $dijete_masona, $veza_masoni, $zahtjev_druga_loza, $status_pristupa, $datum_dokumenta,
         $upisao
     );
     $stmt->execute();

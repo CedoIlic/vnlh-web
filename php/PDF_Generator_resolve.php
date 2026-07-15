@@ -872,6 +872,10 @@ while ($i < $n) {
         }
         // Stil/font cijele linije = PRVE stavke u lancu.
         $first = $stavke[$chain[0]];
+        // Apsolutno pozicioniranje: Y != -1 → cijela linija se crta na (fiksna_pozicija, fiksna_pozicija_y).
+        // Y = -1 / NULL → tok (X ostaje tab). Y prve stavke vrijedi za cijeli inline-lanac.
+        $fy = (isset($first['fiksna_pozicija_y']) && $first['fiksna_pozicija_y'] !== '' && $first['fiksna_pozicija_y'] !== null) ? (float) $first['fiksna_pozicija_y'] : -1.0;
+        $jeAps = ($fy != -1.0);
         $parId = !empty($first['paragraf_id']) ? (int) $first['paragraf_id'] : 0;
         $fk = null; $fontGlavni = null;
         if ($parId && isset($parStilovi[$parId]) && !empty($parStilovi[$parId]['font_id'])) {
@@ -910,8 +914,9 @@ while ($i < $n) {
                 // Korisnički upisan ~(N) više nije podržan (zamijenila ga „Fiksna pozicija stavke") → ukloni ga.
                 $segTekst = preg_replace('/~\(\d+(?:\.\d+)?\)/', '', $segTekst);
                 // Fiksna pozicija stavke → INTERNI ~(N) marker ispred sadržaja (renderer ga pretvara u columns).
+                // U apsolutnom modu ($jeAps) X je apsolutni page-X (ide preko absolutePosition u renderu) → BEZ tab-markera.
                 $fiks = isset($seg['fiksna_pozicija']) ? (float) $seg['fiksna_pozicija'] : 0;
-                if ($fiks > 0) {
+                if ($fiks > 0 && !$jeAps) {
                     $segTekst = '~(' . rtrim(rtrim(sprintf('%.2f', $fiks), '0'), '.') . ')' . $segTekst;
                 }
             }
@@ -932,6 +937,9 @@ while ($i < $n) {
             'greska' => null,
             'paragraf_id' => $parId ?: null,
             'font_kljuc' => $fk,
+            // Apsolutno pozicioniranje (null kad je tok): render postavlja absolutePosition {x,y}.
+            'fiksna_pozicija' => $jeAps ? ((isset($first['fiksna_pozicija']) && $first['fiksna_pozicija'] !== '') ? (float) $first['fiksna_pozicija'] : 0.0) : null,
+            'fiksna_pozicija_y' => $jeAps ? $fy : null,
             // relacija-liste su JEDAN blok (više odlomaka = retci) → razmak prije/poslije samo na rubovima bloka
             'spojeni_odlomci' => in_array(($first['izvor_tip'] ?? ''), ['relacija_redak', 'relacija_lista', 'relacija_grupe'], true)
         ];
