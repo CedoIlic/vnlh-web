@@ -172,13 +172,9 @@ body.vnlh-page-clanovi-crud {
   box-shadow: var(--edit_focus_shadow_disabled) !important;
 }
 
-/* Checkbox kontrole unutar edit panela: bez sjene (sjena je na panelu) */
-#edit_panel input.kontrola-checkbox[type="checkbox"],
-#edit_panel input.kontrola-checkbox[type="checkbox"]:focus,
-#edit_panel input.kontrola-checkbox[type="checkbox"]:checked,
-#edit_panel input.kontrola-checkbox[type="checkbox"]:disabled {
-  box-shadow: none;
-}
+/* Checkbox kontrole u edit panelu: sjenu nose po GLOBALNIM tokenima (0-Kontrole):
+   normalno = var(--tablica_sjena), checked/fokus = var(--checkbox_focus_shadow), disabled = none.
+   (Ranije je ovdje sjena bila ugašena „jer je na panelu" — vraćeno na globalno na zahtjev.) */
 
 .clanovi-crud__edit-footer {
   display: flex;

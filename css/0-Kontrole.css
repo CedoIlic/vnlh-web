@@ -1873,15 +1873,16 @@ input.kontrola-checkbox[type="checkbox"] {
   box-shadow: var(--tablica_sjena); /* normalno stanje – jača sjena kao kod ostalih kontrole */
 }
 
-input.kontrola-checkbox[type="checkbox"]:focus {
-  box-shadow: var(--checkbox_focus_shadow);
-}
-
-/* --- Blok: Checkbox – checked / disabled --- */
+/* --- Blok: Checkbox – checked (ista JAKA sjena kao neoznačen enabled) --- */
 input.kontrola-checkbox[type="checkbox"]:checked {
   background-color: var(--checkbox_checked_bg);
   border-color: var(--checkbox_checked_border);
-  box-shadow: var(--checkbox_focus_shadow); /* selektirano (checked) – minimalna sjena */
+  box-shadow: var(--tablica_sjena); /* označen (enabled) – ista jaka sjena kao neoznačen */
+}
+
+/* Fokus = slabija sjena. Dolazi POSLIJE :checked (ista specifičnost) da pobijedi i na označenom. */
+input.kontrola-checkbox[type="checkbox"]:focus {
+  box-shadow: var(--checkbox_focus_shadow);
 }
 
 input.kontrola-checkbox[type="checkbox"]:checked::after {

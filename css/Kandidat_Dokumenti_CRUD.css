@@ -574,3 +574,135 @@
   user-select: none;
 }
 .kandidat-dokumenti-crud__modal-razgovor-resize-icon { display: block; width: 14px; height: 14px; }
+
+/* =====================================================
+   Tab „Obrazac 001a" — grupirana polja u tri kolone (grubi raspored).
+   Grupe ①② su RO prikaz (kontrola-edit--readonly), ostalo unos.
+   ===================================================== */
+.kandidat-dokumenti-crud__obrazac {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.25rem;
+}
+/* Zaglavlje obrasca: Status | Datum dokumenta | PDF (desno) + linija preko sve tri kolone. */
+.kandidat-dokumenti-crud__obrazac-zaglavlje {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem 1.5rem;
+  align-items: end;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--edit_border, #ced4da);
+}
+.kandidat-dokumenti-crud__obrazac-zaglavlje-pdf {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+@media (max-width: 900px) {
+  .kandidat-dokumenti-crud__obrazac-zaglavlje { grid-template-columns: 1fr; }
+  .kandidat-dokumenti-crud__obrazac-zaglavlje-pdf { justify-content: flex-start; }
+}
+.kandidat-dokumenti-crud__obrazac-grupa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.kandidat-dokumenti-crud__obrazac-naslov {
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: 600;
+  color: var(--label_text, #1d1d1f);
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--edit_border, #ced4da);
+}
+.kandidat-dokumenti-crud__obrazac-mreza {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+}
+/* Stupčani raspored: 3 kolone, svaka niz redova; red sadrži 1–2 polja (lijevo/desno). */
+.kandidat-dokumenti-crud__obrazac-stupci {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem 1.5rem;
+}
+.kandidat-dokumenti-crud__obrazac-stupac {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+}
+/* Vertikalne linije između kolona (centrirane u razmaku od 1,5rem, pune visine). */
+.kandidat-dokumenti-crud__obrazac-stupac:nth-child(1)::after,
+.kandidat-dokumenti-crud__obrazac-stupac:nth-child(2)::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -0.75rem;
+  width: 1px;
+  background: var(--edit_border, #ced4da);
+  pointer-events: none;
+}
+.kandidat-dokumenti-crud__obrazac-red {
+  display: flex;
+  gap: 1rem;
+}
+.kandidat-dokumenti-crud__obrazac-red > .kandidat-dokumenti-crud__polje {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* Masonske poveznice u 1. koloni (ispod Država rođenja), ali široke koliko PRVA DVA stupca:
+   grupa je dijete stupca (širina = colW), pa je širimo na 2×colW + razmak (1,5rem) → prelijeva
+   udesno preko (praznog) prostora 2. stupca. Naslov s linijom prati tu širinu; checkboxi u redu. */
+.kandidat-dokumenti-crud__obrazac-grupa--u-stupcu {
+  align-self: flex-start;
+  width: calc(200% + 1.5rem);
+  max-width: none;
+  /* Prelijeva se preko 2 kolone → maskira vertikalnu liniju col1|col2 u svom pojasu
+     (pozadina = boja tijela taba, iznad linije). */
+  position: relative;
+  z-index: 1;
+  background: var(--tab_kontrola_body_bg);
+}
+.kandidat-dokumenti-crud__obrazac-grupa--u-stupcu .kandidat-dokumenti-crud__obrazac-mreza {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+.kandidat-dokumenti-crud__obrazac-grupa--u-stupcu .kandidat-dokumenti-crud__polje--check {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+@media (max-width: 900px) {
+  .kandidat-dokumenti-crud__obrazac-grupa--u-stupcu { width: 100%; }
+}
+.kandidat-dokumenti-crud__polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+/* Checkbox polje: labela desno od kvadratića, poravnato uz dno reda. */
+.kandidat-dokumenti-crud__polje--check {
+  justify-content: flex-end;
+}
+.kandidat-dokumenti-crud__polje--check .clanovi-crud__checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: calc(var(--font_size, 1rem) + 0.9rem);
+}
+/* Suženje: ispod ~720px dvije kolone, ispod ~480px jedna. */
+@media (max-width: 900px) {
+  .kandidat-dokumenti-crud__obrazac-stupci { grid-template-columns: 1fr; }
+  .kandidat-dokumenti-crud__obrazac-stupac::after { content: none; }
+}
+@media (max-width: 720px) {
+  .kandidat-dokumenti-crud__obrazac-mreza { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .kandidat-dokumenti-crud__obrazac-mreza { grid-template-columns: 1fr; }
+}

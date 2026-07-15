@@ -87,6 +87,7 @@
                 <div class="kontrola-tab__traka" role="presentation">
                     <button type="button" class="kontrola-tab__kartica kontrola-tab__kartica--aktivna" role="tab" id="kandidatKontrolaTabKart0" aria-selected="true" aria-controls="kandidatKontrolaTabPanel0" data-tab-index="0" disabled>Životopis</button>
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart1" aria-selected="false" aria-controls="kandidatKontrolaTabPanel1" data-tab-index="1" tabindex="-1" disabled>Razgovori</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart2" aria-selected="false" aria-controls="kandidatKontrolaTabPanel2" data-tab-index="2" tabindex="-1" disabled>Obrazac 001a</button>
                 </div>
                 <div class="kontrola-tab__tijelo" role="presentation">
                     <div class="kontrola-tab__panel kontrola-tab__panel--aktivna kandidat-dokumenti-crud__tab-panel--zivotopis" role="tabpanel" id="kandidatKontrolaTabPanel0" aria-labelledby="kandidatKontrolaTabKart0">
@@ -135,6 +136,176 @@
                                 <button type="button" id="razgovorUredi" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Izmijeni razgovor" aria-label="Izmijeni razgovor"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18v2H3V5zm0 4h12v2H3V9zm0 4h8v2H3v-2zm0 4h8v2H3v-2z"/><path d="M21.41 11.59l-2-2a1.5 1.5 0 0 0-2.12 0l-5.79 5.79V19h3.62l5.79-5.79a1.5 1.5 0 0 0 0-2.12l.5.5zm-7.29 5.41h-1v-1l4.79-4.79 1 1L14.12 17z"/></svg></button>
                                 <button type="button" id="razgovorObrisi" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Obriši razgovor" aria-label="Obriši razgovor"><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
                                 <button type="button" id="razgovorDeselekt" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Makni selekciju" aria-label="Makni selekciju"><span class="kontrola-icon--asterisk" aria-hidden="true"></span></button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Tab 2: Obrazac 001a (1:1) — grupirana polja u tri kolone; ①② samo prikaz (RO iz kandidata). -->
+                    <div class="kontrola-tab__panel kandidat-dokumenti-crud__tab-panel--obrazac" role="tabpanel" id="kandidatKontrolaTabPanel2" aria-labelledby="kandidatKontrolaTabKart2" hidden>
+                        <div class="kandidat-dokumenti-crud__obrazac">
+                            <!-- Zaglavlje obrasca: Status | Datum dokumenta | PDF (desno) + linija preko sve tri kolone -->
+                            <div class="kandidat-dokumenti-crud__obrazac-zaglavlje">
+                                <div class="kandidat-dokumenti-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="obr_primljen_iniciran">Status</label>
+                                    <div class="kontrola-select">
+                                        <select id="obr_primljen_iniciran" aria-label="Status: Primljen ili Iniciran">
+                                            <option value="">— Odaberi —</option>
+                                            <option value="Primljen">Primljen</option>
+                                            <option value="Iniciran">Iniciran</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="kandidat-dokumenti-crud__polje">
+                                    <label class="kontrola-labela mb-0" for="obr_datum_dokumenta">Datum dokumenta</label>
+                                    <input id="obr_datum_dokumenta" type="date" class="kontrola-edit">
+                                </div>
+                                <div class="kandidat-dokumenti-crud__obrazac-zaglavlje-pdf">
+                                    <button type="button" id="obr_pdf" class="kandidat-dokumenti-crud__pdf-btn" disabled aria-label="Generiraj PDF Obrasca 001a" title="Generiraj PDF">
+                                        <svg class="kandidat-dokumenti-crud__pdf-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="5" y="14" width="14" height="6" rx="1" fill="currentColor"/>
+                                            <text x="12" y="18.4" font-family="Arial, sans-serif" font-size="3.8" font-weight="bold" fill="white" text-anchor="middle">PDF</text>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Stupčani raspored (bez naslova): 3 kolone, svaki red 1–2 polja. ①② RO iz kandidata. -->
+                            <div class="kandidat-dokumenti-crud__obrazac-stupci">
+                                <!-- 1. kolona -->
+                                <div class="kandidat-dokumenti-crud__obrazac-stupac">
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_ro_ime_prezime">Prezime i ime</label>
+                                            <input id="obr_ro_ime_prezime" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_ro_spol">Spol</label>
+                                            <input id="obr_ro_spol" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                        </div>
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_ro_oib">OIB</label>
+                                            <input id="obr_ro_oib" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_ro_datum_rodjenja">Datum rođenja</label>
+                                            <input id="obr_ro_datum_rodjenja" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                        </div>
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_mjesto_rodjenja">Mjesto rođenja</label>
+                                            <input id="obr_mjesto_rodjenja" type="text" class="kontrola-edit" maxlength="100" autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_drzava_rodjenja">Država rođenja</label>
+                                            <input id="obr_drzava_rodjenja" type="text" class="kontrola-edit" maxlength="100" autocomplete="off">
+                                        </div>
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_drzavljanstvo">Državljanstvo</label>
+                                            <input id="obr_drzavljanstvo" type="text" class="kontrola-edit" maxlength="100" autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <!-- Masonske poveznice (checkbox = Da) — u 1. koloni, ispod Država rođenja -->
+                                    <div class="kandidat-dokumenti-crud__obrazac-grupa kandidat-dokumenti-crud__obrazac-grupa--u-stupcu">
+                                        <div class="kandidat-dokumenti-crud__obrazac-naslov">Masonske poveznice</div>
+                                        <div class="kandidat-dokumenti-crud__obrazac-mreza">
+                                            <div class="kandidat-dokumenti-crud__polje kandidat-dokumenti-crud__polje--check">
+                                                <span class="clanovi-crud__checkbox-row">
+                                                    <input type="checkbox" id="obr_dijete_masona" class="kontrola-checkbox" value="1" aria-label="Dijete masona">
+                                                    <label class="kontrola-labela mb-0" for="obr_dijete_masona">Dijete masona</label>
+                                                </span>
+                                            </div>
+                                            <div class="kandidat-dokumenti-crud__polje kandidat-dokumenti-crud__polje--check">
+                                                <span class="clanovi-crud__checkbox-row">
+                                                    <input type="checkbox" id="obr_veza_masoni" class="kontrola-checkbox" value="1" aria-label="Druge poveznice s masonima">
+                                                    <label class="kontrola-labela mb-0" for="obr_veza_masoni">Druge poveznice s masonima</label>
+                                                </span>
+                                            </div>
+                                            <div class="kandidat-dokumenti-crud__polje kandidat-dokumenti-crud__polje--check">
+                                                <span class="clanovi-crud__checkbox-row">
+                                                    <input type="checkbox" id="obr_zahtjev_druga_loza" class="kontrola-checkbox" value="1" aria-label="Zahtjev drugoj loži ili obedijenciji">
+                                                    <label class="kontrola-labela mb-0" for="obr_zahtjev_druga_loza">Zahtjev drugoj Loži / Obedijenciji</label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 2. kolona (RO Boravište; Ulica dvoredna: adresa_1 + adresa_2) -->
+                                <div class="kandidat-dokumenti-crud__obrazac-stupac">
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_ro_ulica">Ulica</label>
+                                            <input id="obr_ro_ulica" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_ro_ulica2">Ulica</label>
+                                            <input id="obr_ro_ulica2" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_ro_grad">Grad</label>
+                                            <input id="obr_ro_grad" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                        </div>
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_ro_posta">Poštanski broj</label>
+                                            <input id="obr_ro_posta" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_ro_drzava">Država</label>
+                                            <input id="obr_ro_drzava" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                        </div>
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_ro_telefon">Telefon</label>
+                                            <input id="obr_ro_telefon" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 3. kolona -->
+                                <div class="kandidat-dokumenti-crud__obrazac-stupac">
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_zvanje">Zvanje</label>
+                                            <input id="obr_zvanje" type="text" class="kontrola-edit" maxlength="100" autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_zanimanje">Zanimanje</label>
+                                            <input id="obr_zanimanje" type="text" class="kontrola-edit" maxlength="100" autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_gradjanski_status">Građanski status</label>
+                                            <input id="obr_gradjanski_status" type="text" class="kontrola-edit" maxlength="100" autocomplete="off">
+                                        </div>
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_broj_djece">Broj djece</label>
+                                            <input id="obr_broj_djece" type="text" inputmode="numeric" class="kontrola-edit" maxlength="3" autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_poznavanje_jezika">Poznavanje jezika</label>
+                                            <input id="obr_poznavanje_jezika" type="text" class="kontrola-edit" maxlength="255" autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
+                                        <div class="kandidat-dokumenti-crud__polje">
+                                            <label class="kontrola-labela mb-0" for="obr_pocasni_naslovi">Počasni naslovi</label>
+                                            <input id="obr_pocasni_naslovi" type="text" class="kontrola-edit" maxlength="255" autocomplete="off">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
