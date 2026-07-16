@@ -16,6 +16,7 @@
   var _zivotopisProred = null;   /* kandidat_dokumenti_zivotopis.dokument_prored odabranog; null = nije postavljen */
   var _obrazac001Postoji = false; /* ima li odabrani kandidat zapis u kandidat_dokumenti_001 (Obrazac 001a) */
   var _obrazac001PdfSpreman = false; /* PDF ikona aktivna: zapis postoji + status_pristupa i datum_dokumenta upisani U BAZI */
+  var _obrazac001RowId = null;    /* kandidat_dokumenti_001.id (PK) — kontekst ID_Obrazac001 za PDF; null kad nema zapisa */
   var _geoAutoLockedDrzava = false, _geoAutoLockedRegija = false, _geoAutoLockedLoza = false;
   var _pravaCrudUpis = 1, _pravaCrudBrisanje = 1;
 
@@ -237,6 +238,7 @@
     obrazacFillEdit({});
     _obrazac001Postoji = false;
     _obrazac001PdfSpreman = false;
+    _obrazac001RowId = null;
   }
   /* Učitaj Obrazac 001a odabranog kandidata (RO + edit; postoji flag). */
   function ucitajObrazac(idClan, cb) {
@@ -253,6 +255,7 @@
             var o = JSON.parse(text);
             obrazacFillRo(o.ro);
             _obrazac001Postoji = !!o.postoji;
+            _obrazac001RowId = (o.id != null && o.id !== '') ? o.id : null;   /* PK za kontekst PDF-a */
             /* PDF aktivan samo ako su status_pristupa I datum_dokumenta upisani u bazi. */
             _obrazac001PdfSpreman = !!o.postoji && trim(o.status_pristupa) !== '' && trim(o.datum_dokumenta) !== '';
             if (o.postoji) obrazacFillEdit(o);
@@ -1321,7 +1324,9 @@
             preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
             format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno,
             relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
-            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold
+            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold,
+            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije,
+            prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks
           };
         })
       };
@@ -1538,7 +1543,9 @@
             preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
             format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno,
             relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
-            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold
+            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold,
+            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije,
+            prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks
           };
         })
       };
@@ -1621,6 +1628,146 @@
       });
     }
     if (btnRefresh)  btnRefresh.addEventListener('click', function () { setProred(getProred()); ucitajDokumentIRenderiraj(false); });
+    if (btnPovratak) btnPovratak.addEventListener('click', zatvoriModal);
+    if (overlay)     overlay.addEventListener('click', zatvoriModal);
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && modal.classList.contains('kandidat-dokumenti-crud__modal-pdf--open')) zatvoriModal();
+    });
+  }());
+
+  /* ============================================================
+   * PDF Obrasca 001a: klik ikone → render dokumenta „Obrazac 001 a".
+   * Kontekst ID_Obrazac001 = kandidat_dokumenti_001.id (_obrazac001RowId). Jednostavni modal (bez proreda).
+   * ============================================================ */
+  (function initObrazacPdfModal() {
+    var OBR_DOK_NAZIV = 'Obrazac 001 a';
+    var modal       = document.getElementById('obrazacModalPdf');
+    if (!obrPdfBtn || !modal) return;
+    var overlay     = modal.querySelector('.kandidat-dokumenti-crud__modal-pdf-overlay');
+    var okvir       = document.getElementById('obrazac_pdf_okvir');
+    var info        = document.getElementById('obrazac_pdf_info');
+    var btnRefresh  = document.getElementById('obrazac_pdf_refresh');
+    var btnPovratak = document.getElementById('obrazac_pdf_povratak');
+    var spiner      = document.getElementById('obrazac_pdf_spiner');
+
+    var _dokument = null;
+    var _proredStilId = null;
+    var _idAktivni = null;   /* kandidat_dokumenti_001.id (kontekst ID_Obrazac001) */
+    var _zauzet = false;
+
+    function postJson(url, data, cb) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+      xhr.onreadystatechange = function () { if (xhr.readyState === 4 && cb) cb(xhr.responseText, xhr.status); };
+      xhr.send(JSON.stringify(data));
+    }
+    function postaviInfo(t) { if (info) info.textContent = t || ''; }
+    function spinerShow() { if (typeof KontroleSpinerShow === 'function') KontroleSpinerShow(spiner); }
+    function spinerHide() { if (typeof KontroleSpinerHide === 'function') KontroleSpinerHide(spiner); }
+    function krajRendera(p) { _zauzet = false; spinerHide(); postaviInfo(p || ''); }
+    function ocistiIframe() {
+      if (okvir) { if (okvir._url) { try { URL.revokeObjectURL(okvir._url); } catch (e) {} okvir._url = null; } okvir.removeAttribute('src'); }
+    }
+    function otvoriModal() { modal.classList.add('kandidat-dokumenti-crud__modal-pdf--open'); modal.setAttribute('aria-hidden', 'false'); }
+    function zatvoriModal() {
+      modal.classList.remove('kandidat-dokumenti-crud__modal-pdf--open');
+      modal.setAttribute('aria-hidden', 'true');
+      ocistiIframe(); spinerHide(); postaviInfo('');
+      try { obrPdfBtn.focus(); } catch (e) {}
+    }
+    function ucitajFontove(lista, cb, err) {
+      lista = lista || [];
+      if (!lista.length) { cb(); return; }
+      var preostalo = lista.length, greska = false;
+      lista.forEach(function (f) {
+        window.PdfRender.Fontovi.osiguraj(f.kljuc, f.porodica,
+          function () { if (--preostalo === 0) { greska ? err() : cb(); } },
+          function () { greska = true; if (--preostalo === 0) { err(); } });
+      });
+    }
+
+    function renderiraj() {
+      if (_zauzet) return;
+      spinerShow();
+      if (!window.PdfRender) { krajRendera('PDF biblioteka nije učitana.'); return; }
+      if (!_dokument || !_dokument.dokument) { krajRendera('Dokument „' + OBR_DOK_NAZIV + '" nije pronađen.'); return; }
+      if (_idAktivni == null) { krajRendera('Obrazac nije učitan.'); return; }
+      var dok = _dokument.dokument;
+      var stavke = _dokument.stavke || [];
+      var kontekst = {};
+      stavke.forEach(function (s) {
+        var k = s.kontekst_kljuc != null ? trim(String(s.kontekst_kljuc)) : '';
+        if (k !== '') kontekst[k] = parseInt(_idAktivni, 10);
+      });
+      var payload = {
+        template_id: dok.template_id ? parseInt(dok.template_id, 10) : 0,
+        kontekst: kontekst,
+        broj_stranice_paragraf_id: dok.broj_stranice_paragraf_id ? parseInt(dok.broj_stranice_paragraf_id, 10) : null,
+        stavke: stavke.map(function (s) {
+          return {
+            redoslijed: s.redoslijed, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta,
+            izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id,
+            kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id,
+            trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost,
+            literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id,
+            bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke,
+            preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
+            format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno,
+            relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
+            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold,
+            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije,
+            prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks
+          };
+        })
+      };
+      _zauzet = true;
+      postaviInfo('Dohvaćam…');
+      postJson(API_BASE + 'PDF_Generator_resolve.php', payload, function (res) {
+        var model;
+        try { model = JSON.parse(res); } catch (e) { krajRendera('Greška dohvata modela.'); return; }
+        if (!model || model.greska) { krajRendera('Greška: ' + ((model && model.greska) || 'nepoznata')); return; }
+        postaviInfo('Pripremam slike…');
+        window.PdfRender.pripremiSlike(model, function (model) {
+          postaviInfo('Gradim PDF…');
+          var dd = window.PdfRender.sastaviDocDefinition(model, { proredStilId: _proredStilId });
+          window.PdfRender.Pdf.ucitaj(function () {
+            ucitajFontove(model.fontovi, function () {
+              try {
+                pdfMake.createPdf(dd).getDataUrl(function (dataUrl) { ocistiIframe(); okvir.src = dataUrl; krajRendera(''); });
+              } catch (e) { krajRendera('Greška pri renderu: ' + e); }
+            }, function () { krajRendera('Greška pri učitavanju fontova.'); });
+          }, function () { krajRendera('Greška pri učitavanju pdfmake biblioteke.'); });
+        });
+      });
+    }
+
+    function ucitajDokumentIRenderiraj() {
+      spinerShow();
+      postaviInfo('Učitavam dokument…');
+      var url = API_BASE + 'PDF_Dokument_po_nazivu.php?naziv=' + encodeURIComponent(OBR_DOK_NAZIV);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        var data = null;
+        try { data = JSON.parse((xhr.responseText || '').replace(/^﻿/, '').trim()); } catch (e) {}
+        if (!data || data.greska || !data.dokument) { krajRendera('Dokument „' + OBR_DOK_NAZIV + '" nije pronađen.'); return; }
+        _dokument = data;
+        _proredStilId = data.dokument.dokument_prored_default_stil ? parseInt(data.dokument.dokument_prored_default_stil, 10) : null;
+        renderiraj();
+      };
+      xhr.send();
+    }
+
+    obrPdfBtn.addEventListener('click', function () {
+      if (obrPdfBtn.disabled) return;
+      if (_obrazac001RowId == null) return;
+      _idAktivni = parseInt(_obrazac001RowId, 10);
+      otvoriModal();
+      ucitajDokumentIRenderiraj();
+    });
+    if (btnRefresh)  btnRefresh.addEventListener('click', function () { ucitajDokumentIRenderiraj(); });
     if (btnPovratak) btnPovratak.addEventListener('click', zatvoriModal);
     if (overlay)     overlay.addEventListener('click', zatvoriModal);
     document.addEventListener('keydown', function (ev) {

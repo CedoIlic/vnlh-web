@@ -308,45 +308,69 @@ function pdf_tekst_u_odlomke($tekst, $fontGlavni, $fontFallback, $kljucFallback)
     return $out;
 }
 
-/** Kao pdf_tekst_u_odlomke, ali iz niza dijelova [{tekst, color}] — run se lomi i po promjeni boje.
- *  Koristi se kod inline-spajanja kad neki segment treba posebnu boju (npr. sivi placeholder XXXXXXXX). */
+/** Kao pdf_tekst_u_odlomke, ali iz niza dijelova [{tekst, color, stil?}] — run se lomi po promjeni boje/fonta
+ *  i po promjeni vlastitog znakovnog stila segmenta (zadrzi_svoj_stil). Kad dio ima 'stil', runovi tog dijela
+ *  dobiju vlastiti font/veličinu/bold/italic/podcrtano/boju (pdfmake per-run override); pokrivenost fonta se
+ *  računa prema vlastitom fontu dijela (stil['glavni']), inače prema glavnom fontu retka.
+ *  Koristi se i kad neki segment treba posebnu boju (npr. sivi placeholder XXXXXXXX). */
 function pdf_odlomci_iz_dijelova($dijelovi, $fontGlavni, $fontFallback, $kljucFallback)
 {
     $out = [];
     $runovi = [];
-    $buf = ''; $bufFont = null; $bufColor = null;
+    $buf = ''; $bufFont = null; $bufColor = null; $bufMeta = null;
+    $emit = function () use (&$runovi, &$buf, &$bufFont, &$bufColor, &$bufMeta) {
+        if ($buf === '') return;
+        $r = ['text' => $buf];
+        if ($bufFont !== null) $r['font'] = $bufFont;
+        if ($bufColor !== null) $r['color'] = $bufColor;
+        if ($bufMeta !== null) {                                 // vlastiti znakovni stil segmenta (override prve stavke)
+            if (isset($bufMeta['fontSize'])) $r['fontSize'] = $bufMeta['fontSize'];
+            $r['bold'] = !empty($bufMeta['bold']);
+            $r['italics'] = !empty($bufMeta['italics']);
+            if (!empty($bufMeta['decoration'])) $r['decoration'] = $bufMeta['decoration'];
+        }
+        $runovi[] = $r; $buf = '';
+    };
     foreach ($dijelovi as $dio) {
         $tekst = str_replace("\r\n", "\n", (string) ($dio['tekst'] ?? ''));
         $tekst = str_replace([':.', '.·.'], '∴', $tekst);   // masonska oznaka: ":." i ".·." → "∴" (U+2234)
+        $stil = (isset($dio['stil']) && is_array($dio['stil'])) ? $dio['stil'] : null;
+        $glavni = $stil ? ($stil['glavni'] ?? null) : $fontGlavni;   // pokrivenost prema vlastitom fontu dijela
+        $vlastitiKljuc = $stil ? ($stil['font'] ?? null) : null;     // pokriveni znak → vlastiti font (null = naslijedi prvu)
         $color = isset($dio['color']) ? $dio['color'] : null;
+        if ($color === null && $stil && isset($stil['color'])) $color = $stil['color'];   // boja iz vlastitog stila (placeholder ima prednost)
+        $meta = null;
+        if ($stil) {
+            $meta = ['bold' => !empty($stil['bold']), 'italics' => !empty($stil['italics'])];
+            if (isset($stil['fontSize'])) $meta['fontSize'] = $stil['fontSize'];
+            if (!empty($stil['decoration'])) $meta['decoration'] = $stil['decoration'];
+        }
         $len = mb_strlen($tekst, 'UTF-8');
         for ($i = 0; $i < $len; $i++) {
             $ch = mb_substr($tekst, $i, 1, 'UTF-8');
             if ($ch === "\n") {
-                if ($buf !== '') { $r = ['text' => $buf]; if ($bufFont !== null) $r['font'] = $bufFont; if ($bufColor !== null) $r['color'] = $bufColor; $runovi[] = $r; $buf = ''; }
+                $emit();
                 if (empty($runovi)) $runovi = [['text' => '']];
-                $out[] = $runovi; $runovi = []; $bufFont = null; $bufColor = null;
+                $out[] = $runovi; $runovi = []; $bufFont = null; $bufColor = null; $bufMeta = null;
                 continue;
             }
             if ($ch === PDF_MEKI_PRIJELOM) {                     // meki prijelom reda u istom odlomku
-                if ($buf !== '') { $r = ['text' => $buf]; if ($bufFont !== null) $r['font'] = $bufFont; if ($bufColor !== null) $r['color'] = $bufColor; $runovi[] = $r; $buf = ''; }
-                $runovi[] = ['text' => "\n"]; $bufFont = null; $bufColor = null;
+                $emit();
+                $runovi[] = ['text' => "\n"]; $bufFont = null; $bufColor = null; $bufMeta = null;
                 continue;
             }
             $cp = mb_ord($ch, 'UTF-8');
             if ($cp === false) continue;
             $koji = null;
-            if ($fontGlavni === null) { $koji = null; }
-            elseif (pdf_font_pokriva_cp($fontGlavni, $cp)) { $koji = null; }
+            if ($glavni === null) { $koji = $vlastitiKljuc; }
+            elseif (pdf_font_pokriva_cp($glavni, $cp)) { $koji = $vlastitiKljuc; }
             elseif ($fontFallback && pdf_font_pokriva_cp($fontFallback, $cp)) { $koji = $kljucFallback; }
             else { continue; }
-            if ($buf !== '' && ($koji !== $bufFont || $color !== $bufColor)) {
-                $r = ['text' => $buf]; if ($bufFont !== null) $r['font'] = $bufFont; if ($bufColor !== null) $r['color'] = $bufColor; $runovi[] = $r; $buf = '';
-            }
-            $bufFont = $koji; $bufColor = $color; $buf .= $ch;
+            if ($buf !== '' && ($koji !== $bufFont || $color !== $bufColor || $meta !== $bufMeta)) $emit();
+            $bufFont = $koji; $bufColor = $color; $bufMeta = $meta; $buf .= $ch;
         }
     }
-    if ($buf !== '') { $r = ['text' => $buf]; if ($bufFont !== null) $r['font'] = $bufFont; if ($bufColor !== null) $r['color'] = $bufColor; $runovi[] = $r; }
+    $emit();
     if (!empty($runovi)) $out[] = $runovi;
     if (empty($out)) $out[] = [['text' => '']];
     return $out;
@@ -890,23 +914,51 @@ while ($i < $n) {
         $dijelovi = [];
         $combined = '';
         $imaPlaceholder = false;
+        $imaVlastitiStil = false;   // neki segment (osim prvog) zadržava vlastiti znakovni stil
         $segErr = null;
         $imaPrije = false;     // je li već dodan segment s vrijednošću
         $zadnjiFlag = 0;       // bez_kraja_odlomka zadnjeg dodanog segmenta
         $sakrijRed = false;    // bilo koji segment s "sakrij_ako_prazno" i prazan → sakrij cijeli red (bez placeholdera)
+        // Pred-prolaz: razriješi sve vrijednosti + izračunaj PRAZNE SKUPINE (povezane stavke).
+        // Skupina se sakriva ako ima bar jedan PODATAK (ne-korisnički) i SVI su podaci prazni.
+        $chainR = []; $skPrazna = []; $skImaData = [];
+        foreach ($chain as $ci) {
+            $chainR[$ci] = pdf_segment_vrijednost($mysqli, $stavke[$ci], $izvori, $relacije, $kontekst);
+            $sk = isset($stavke[$ci]['skupina']) ? (int) $stavke[$ci]['skupina'] : 0;
+            if ($sk > 0 && ($stavke[$ci]['izvor_tip'] ?? '') !== 'korisnicki') {
+                $skImaData[$sk] = true;
+                $v = $chainR[$ci]['vrijednost'];
+                if ($v !== null && $v !== '') $skPrazna[$sk] = false;
+                elseif (!isset($skPrazna[$sk])) $skPrazna[$sk] = true;
+            }
+        }
         foreach ($chain as $ci) {
             $seg = $stavke[$ci];
-            $r = pdf_segment_vrijednost($mysqli, $seg, $izvori, $relacije, $kontekst);
+            $sk = isset($seg['skupina']) ? (int) $seg['skupina'] : 0;
+            if ($sk > 0 && !empty($skImaData[$sk]) && !empty($skPrazna[$sk])) continue;   // prazna skupina → cijela nestaje
+            $r = $chainR[$ci];
             if ($r['greska'] !== null && $segErr === null) $segErr = $r['greska'];
             $val = $r['vrijednost'];
             $segTekst = null; $segColor = null;
+            $pre = ''; $suf = '';   // razriješeni prefiks/sufiks (bazni stil; samo kad vrijednost postoji)
             $prazno = ($val === null || $val === '');
             if (!empty($seg['sakrij_ako_prazno']) && $prazno) { $sakrijRed = true; continue; }   // oznaka + prazno → sakrij red
-            if ((($seg['izvor_tip'] ?? '') === 'dinamicki') && $prazno) {
-                $segTekst = 'XXXXXXXX'; $segColor = '#cccccc';   // placeholder kao siva ploha
-                $imaPlaceholder = true;
-            } elseif (!$prazno) {
+            // Ponašanje na prazno (prazno_nacin): placeholder=sivi XXXXXXXX (default); crtica="—" u boji podatka
+            // (obavezni); izostavi=ništa (npr. neobavezni adresa_2 — nestaje i njegov sufiks).
+            $nacin = isset($seg['prazno_nacin']) ? (string) $seg['prazno_nacin'] : 'placeholder';
+            if ($prazno) {
+                if ($nacin === 'izostavi') continue;                          // prazan → ništa (i bez sufiksa)
+                if ($nacin === 'crtica') { $segTekst = '—'; $segColor = null; }   // "—" u stilu segmenta (boja podatka)
+                elseif (($seg['izvor_tip'] ?? '') === 'dinamicki') { $segTekst = 'XXXXXXXX'; $segColor = '#cccccc'; $imaPlaceholder = true; }
+                else continue;                                                 // ostali prazni bez placeholdera → preskoči
+            } else {
                 $segTekst = (string) $val; $segColor = null;
+                // Prefiks/sufiks — SAMO kad vrijednost postoji; ^ = razmak. Idu u ZASEBNE dijelove u BAZNOM stilu
+                // (tijelo), ne u stilu podatka — jer su spojne riječi/labele (npr. „Zvanje: "). Push je niže.
+                $preRaw = isset($seg['prefiks']) ? (string) $seg['prefiks'] : '';
+                $sufRaw = isset($seg['sufiks']) ? (string) $seg['sufiks'] : '';
+                if ($preRaw !== '') $pre = str_replace('^', ' ', $preRaw);
+                if ($sufRaw !== '') $suf = str_replace('^', ' ', $sufRaw);
             }
             if ($segTekst === null) continue;                    // prazan segment — preskoči (flag se ne mijenja)
             // relacija_redak sam ubacuje pozicionirane ~(N) (jedan po retku iz {tab}) → NE dirati ga.
@@ -924,8 +976,32 @@ while ($i < $n) {
                 $combined .= PDF_MEKI_PRIJELOM;
                 $dijelovi[] = ['tekst' => PDF_MEKI_PRIJELOM, 'color' => null];
             }
+            // Vlastiti znakovni stil segmenta (zadrzi_svoj_stil) — samo za NE-prvi segment lanca (prvi definira bazu).
+            $segStil = null;
+            $segParId = !empty($seg['paragraf_id']) ? (int) $seg['paragraf_id'] : 0;
+            if (!empty($seg['zadrzi_svoj_stil']) && $ci !== $chain[0] && $segParId && isset($parStilovi[$segParId])) {
+                $sp = $parStilovi[$segParId];
+                $segFk = null; $segGlavni = null;
+                if (!empty($sp['font_id']) && isset($fontPoId[(int) $sp['font_id']])) {
+                    $segFk = $fontPoId[(int) $sp['font_id']]['pdfmake_kljuc'];
+                    $segGlavni = pdf_font_subtables_cache($fontDir, $fontPoId[(int) $sp['font_id']]['porodica']);
+                }
+                $segStil = [
+                    'font'       => $segFk,
+                    'glavni'     => $segGlavni,
+                    'fontSize'   => (float) ($sp['velicina_pt'] ?? 12),
+                    'bold'       => !empty($sp['bold']),
+                    'italics'    => !empty($sp['italic']),
+                    'decoration' => !empty($sp['podcrtano']) ? 'underline' : null,
+                    'color'      => (isset($sp['boja']) && (string) $sp['boja'] !== '') ? (string) $sp['boja'] : null,
+                ];
+                $imaVlastitiStil = true;
+            }
+            // Prefiks (bazni stil tijela), pa vrijednost (vlastiti stil ako ima), pa sufiks (bazni stil).
+            if ($pre !== '') { $combined .= $pre; $dijelovi[] = ['tekst' => $pre, 'color' => null, 'stil' => null]; }
             $combined .= $segTekst;
-            $dijelovi[] = ['tekst' => $segTekst, 'color' => $segColor];
+            $dijelovi[] = ['tekst' => $segTekst, 'color' => $segColor, 'stil' => $segStil];
+            if ($suf !== '') { $combined .= $suf; $dijelovi[] = ['tekst' => $suf, 'color' => null, 'stil' => null]; }
             $imaPrije = true;
             $zadnjiFlag = (int) ($seg['bez_kraja_odlomka'] ?? 0);
         }
@@ -941,7 +1017,11 @@ while ($i < $n) {
             'fiksna_pozicija' => $jeAps ? ((isset($first['fiksna_pozicija']) && $first['fiksna_pozicija'] !== '') ? (float) $first['fiksna_pozicija'] : 0.0) : null,
             'fiksna_pozicija_y' => $jeAps ? $fy : null,
             // relacija-liste su JEDAN blok (više odlomaka = retci) → razmak prije/poslije samo na rubovima bloka
-            'spojeni_odlomci' => in_array(($first['izvor_tip'] ?? ''), ['relacija_redak', 'relacija_lista', 'relacija_grupe'], true)
+            'spojeni_odlomci' => in_array(($first['izvor_tip'] ?? ''), ['relacija_redak', 'relacija_lista', 'relacija_grupe'], true),
+            // Prijelom stranice prije: samo tok u zoni tijelo (ne apsolutno/okvir); zastavica prve stavke vrijedi za cijeli red.
+            'prijelom_prije' => (!$jeAps && $zona === 'tijelo' && empty($first['okvir_id']) && !empty($first['prijelom_prije'])) ? 1 : 0,
+            // Neki segment nosi vlastiti znakovni stil (render u okviru bira stilizirani put).
+            'ima_vlastiti_stil' => $imaVlastitiStil ? 1 : 0
         ];
         if ($sakrijRed) {
             $rec['sakrij'] = true;     // označena stavka prazna → cijeli red se ne prikazuje
@@ -950,7 +1030,7 @@ while ($i < $n) {
             $rec['greska'] = (count($chain) === 1 && $segErr !== null) ? $segErr : 'Izvor prazan.';
             $rec['odlomci'] = [];
         } else {
-            $rec['odlomci'] = $imaPlaceholder
+            $rec['odlomci'] = ($imaPlaceholder || $imaVlastitiStil)
                 ? pdf_odlomci_iz_dijelova($dijelovi, $fontGlavni, $fontFallback, $kljucFallback)
                 : pdf_tekst_u_odlomke($combined, $fontGlavni, $fontFallback, $kljucFallback);
             $trebaFallback = true;
@@ -966,7 +1046,9 @@ while ($i < $n) {
         'zona' => $zona,
         'okvir_id' => !empty($s['okvir_id']) ? (int) $s['okvir_id'] : null,
         'vrsta' => $vrsta,
-        'greska' => null
+        'greska' => null,
+        // Prijelom stranice prije: samo tok u zoni tijelo (ne okvir).
+        'prijelom_prije' => ($zona === 'tijelo' && empty($s['okvir_id']) && !empty($s['prijelom_prije'])) ? 1 : 0
     ];
     if ($vrsta === 'slika') {
         $r = pdf_segment_vrijednost($mysqli, $s, $izvori, $relacije, $kontekst);

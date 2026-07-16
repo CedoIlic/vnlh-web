@@ -115,8 +115,12 @@
 .pdf-dokument-crud__stavka-upis { margin-top: auto; padding-top: 0.6rem; align-items: flex-start; }
 .pdf-dokument-crud__stupac:first-child { padding-right: 1rem; border-right: 1px solid var(--edit_border, #ced4da); }
 .pdf-dokument-crud__polje { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
-/* Dva checkboxa u istom redu (Spoji u isti red | Sakrij red ako je prazno). */
-.pdf-dokument-crud__cb-red { display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: center; }
+/* Dva checkboxa + help „?" u ISTOM redu (Spoji u isti red | Sakrij red ako je prazno | ?).
+   flex-end: checkboxovi sjede uz DONJI rub ikone → razmak među svim checkboxovima grupe jednak. */
+.pdf-dokument-crud__cb-red { display: flex; gap: 0.75rem; flex-wrap: nowrap; align-items: flex-end; }
+.pdf-dokument-crud__cb-red .kontrola-checkbox-labela { white-space: nowrap; }
+/* Help „?" gura se skroz desno (desni rub kontrola, kao ostale help ikone). */
+.pdf-dokument-crud__cb-red .pdf-dokument-crud__ellipsis-btn--pomoc { margin-left: auto; }
 .pdf-dokument-crud__stupac .kontrola-select,
 .pdf-dokument-crud__stupac .kontrola-edit,
 .pdf-dokument-crud__stupac .kontrola-napomena { width: 100%; box-sizing: border-box; }
@@ -287,6 +291,14 @@
 /* Checkbox-polje (spajanje): poravnato s KONTROLNIM stupcem (ne ispod labela) */
 .pdf-dokument-crud__stavka-modal #polje_bez_kraja,
 .pdf-dokument-crud__stavka-modal #polje_labela_bold { flex-direction: column; align-items: flex-start; gap: 0.3rem; padding-left: calc(11rem + 0.75rem); }
+/* cb-red mora do desnog ruba kontrolnog stupca (align-items:flex-start ga inače skuplja na sadržaj) → „?" na desni rub. */
+.pdf-dokument-crud__stavka-modal #polje_bez_kraja .pdf-dokument-crud__cb-red { width: 100%; }
+/* Prefiks/sufiks: sve u JEDNOM redu — label lijevo (11rem, kao ostala polja), pa „Prefix [edit] Sufix [edit]", „?" desno. */
+.pdf-dokument-crud__stavka-modal #polje_prefiks_sufiks > .pdf-dokument-crud__prefsuf-red { flex: 1 1 auto; min-width: 0; }
+.pdf-dokument-crud__prefsuf-red { display: flex; align-items: center; gap: 0.5rem; }
+.pdf-dokument-crud__prefsuf-red > .kontrola-labela { flex: 0 0 auto; margin: 0; white-space: nowrap; }
+.pdf-dokument-crud__prefsuf-red > .kontrola-edit { flex: 0 1 7rem; min-width: 0; box-sizing: border-box; }
+.pdf-dokument-crud__prefsuf-red > .pdf-dokument-crud__ellipsis-btn--pomoc { margin-left: auto; }
 /* Zaglavlje modala: redovi jedan ispod drugoga („Na temelju stavke" iznad; naslov + „Vrsta stavke" ispod) */
 .pdf-dokument-crud__stavka-modal-header { display: flex; flex-direction: column; align-items: stretch; gap: .5rem; padding-left: var(--modal_body_padding_x); }
 /* Red: naslov + vrsta stavke (select se rasteže kao kontrole u tijelu) */

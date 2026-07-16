@@ -73,12 +73,18 @@ try {
         $parId = null; $sslik = null; $bezkraj = 0; $nap = null; $prekoId = null; $mapa = null; $fmt = null; $fiks = null; $sakrij = 0;
         $relId = null; $listaNacin = null; $listaSep = null; $redakPred = null; $labelaBold = 0;   // relacija_*
         $okvirId = null;   // vezani tekst blok (pdf_template_okvir); NULL = obična zona
+        $zss = 0;          // zadrzi_svoj_stil (u spojenom redu segment nosi vlastiti znakovni stil)
+        $prelom = 0;       // prijelom_prije (prijelom stranice prije stavke; tok, zona tijelo)
+        $praznoNacin = 'placeholder';   // ponašanje na prazno (placeholder/crtica/izostavi)
+        $skupina = null;   // povezane stavke (nestaju zajedno ako su svi podaci u skupini prazni)
+        $prefiks = null;   // literal ispred vrijednosti samo kad postoji
+        $sufiks = null;    // literal iza vrijednosti samo kad postoji
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold, okvir_id, fiksna_pozicija_y)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold, okvir_id, fiksna_pozicija_y, zadrzi_svoj_stil, prijelom_prije, prazno_nacin, skupina, prefiks, sufiks)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $ins->bind_param('iissisisisssiiisissdiisssiid', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold, $okvirId, $fiksy);
+        $ins->bind_param('iissisisisssiiisissdiisssiidiisiss', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold, $okvirId, $fiksy, $zss, $prelom, $praznoNacin, $skupina, $prefiks, $sufiks);
         $dok = $id;
         $i = 0;
         foreach ($stavke as $s) {
@@ -158,6 +164,19 @@ try {
             $fiksy = ($vrsta === 'tekst' && isset($s['fiksna_pozicija_y']) && $s['fiksna_pozicija_y'] !== '' && $s['fiksna_pozicija_y'] !== null) ? (float) $s['fiksna_pozicija_y'] : null;
             $sakrij = !empty($s['sakrij_ako_prazno']) ? 1 : 0;   // sakrij cijeli red ako je vrijednost prazna
             $okvirId = ((int) ($s['okvir_id'] ?? 0) > 0) ? (int) $s['okvir_id'] : null;   // vezani tekst blok
+            // Vlastiti znakovni stil u spojenom redu — samo tekst (za sliku nema smisla).
+            $zss = ($vrsta === 'tekst' && !empty($s['zadrzi_svoj_stil'])) ? 1 : 0;
+            // Prijelom stranice prije — samo tok u zoni tijelo (apsolutne/okvir/zaglavlje/podnožje ignoriraju).
+            $prelom = ($zona === 'tijelo' && $okvirId === null && !empty($s['prijelom_prije'])) ? 1 : 0;
+            // Ponašanje na prazno + sufiks — samo tekst.
+            $pn = (string) ($s['prazno_nacin'] ?? 'placeholder');
+            $praznoNacin = ($vrsta === 'tekst' && in_array($pn, ['placeholder', 'crtica', 'izostavi'], true)) ? $pn : 'placeholder';
+            $sk = (int) ($s['skupina'] ?? 0);
+            $skupina = ($vrsta === 'tekst' && $sk > 0) ? $sk : null;
+            $preRaw = ($vrsta === 'tekst') ? trim((string) ($s['prefiks'] ?? '')) : '';
+            $prefiks = ($preRaw === '') ? null : $preRaw;
+            $sufRaw = ($vrsta === 'tekst') ? trim((string) ($s['sufiks'] ?? '')) : '';
+            $sufiks = ($sufRaw === '') ? null : $sufRaw;
             $zadnjiRed = $red;
             $ins->execute();
         }

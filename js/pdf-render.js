@@ -53,6 +53,18 @@
      sljedeći segment počinje na N mm od lijevog ruba teksta. NIJE korisnička sintaksa — admin koristi polje
      „Fiksna pozicija stavke". Skenira runove i reže na segmente {pos, runovi} (prvi pos=0); pozicije moraju
      rasti (nerastući se ignorira). Vraća null ako markera nema (ponašanje se ne dira). */
+  /* Prenesi sva pdfmake run-svojstva (za rezanje runova na tab-segmente / stilove). bold/italics mogu biti
+     eksplicitno false (override stila prve stavke), zato != null (ne truthy) da se false ne izgubi. */
+  function _prenesiRunStil(src, dst) {
+    if (src.font != null) dst.font = src.font;
+    if (src.color != null) dst.color = src.color;
+    if (src.fontSize != null) dst.fontSize = src.fontSize;
+    if (src.bold != null) dst.bold = src.bold;
+    if (src.italics != null) dst.italics = src.italics;
+    if (src.decoration != null) dst.decoration = src.decoration;
+    return dst;
+  }
+
   var TAB_RE = /~\((\d+(?:\.\d+)?)\)/;
   function tabSegmenti(tekst) {
     var runovi = (typeof tekst === 'string') ? [{ text: tekst }] : (tekst || []);
@@ -68,12 +80,12 @@
       var rest = r.text, m;
       while ((m = rest.match(TAB_RE))) {
         var before = rest.slice(0, m.index);
-        if (before !== '') { var rb = { text: before }; if (r.font) rb.font = r.font; if (r.color) rb.color = r.color; segs[segs.length - 1].runovi.push(rb); }
+        if (before !== '') { segs[segs.length - 1].runovi.push(_prenesiRunStil(r, { text: before })); }
         var pos = parseFloat(m[1]);
         rest = rest.slice(m.index + m[0].length);
         if (pos > maxPos) { segs.push({ pos: pos, runovi: [] }); maxPos = pos; }   // nerastući → ignoriraj marker
       }
-      if (rest !== '') { var ra = { text: rest }; if (r.font) ra.font = r.font; if (r.color) ra.color = r.color; segs[segs.length - 1].runovi.push(ra); }
+      if (rest !== '') { segs[segs.length - 1].runovi.push(_prenesiRunStil(r, { text: rest })); }
     });
     return segs;
   }
@@ -315,6 +327,24 @@
     return lines;
   }
 
+  /* Kao _lomiOdlomak, ali nad stiliziranim riječima [{t, r}] — vraća linije (svaka = niz stiliziranih riječi).
+     Mjeri po TEKSTU s istim fontStr (veličina početnog dijela) → identičan lom kao plain varijanta istog teksta. */
+  function _lomiOdlomakStyled(words, maxW, indentPt, fontStr) {
+    var ctx = _mjerCtx();
+    if (!words.length) return [[]];
+    if (!ctx) return [words.slice()];
+    ctx.font = fontStr;
+    var lines = [], cur = [], curTxt = '', prvi = true;
+    for (var i = 0; i < words.length; i++) {
+      var probe = curTxt ? (curTxt + ' ' + words[i].t) : words[i].t;
+      var w = prvi ? (maxW - (indentPt || 0)) : maxW;
+      if (cur.length && ctx.measureText(probe).width > w) { lines.push(cur); cur = [words[i]]; curTxt = words[i].t; prvi = false; }
+      else { cur.push(words[i]); curTxt = probe; }
+    }
+    lines.push(cur);
+    return lines;
+  }
+
   /* Javno: broj prelomljenih redaka + visina reda (pt) za tekst na zadanoj širini/fontu.
      Koristi isti FontFace-mjerni mehanizam kao render (točno kao pdfmake lom). Za V poravnanje ćelija tablice. */
   function mjeriRedove(text, maxWpt, porodica, fsPt, bold) {
@@ -517,7 +547,12 @@
       var el = elementi(s);
       if (!el.length) return;
       if (s.zona === 'podnozje') footer = footer.concat(el);
-      else content = content.concat(el);        /* tijelo + (zasad) naslovna */
+      else {
+        /* Prijelom stranice prije stavke (resolve ga gata na tok u zoni tijelo). Ne na prvu stavku
+           (izbjegni prazni prvi list) ni na apsolutno pozicioniran element (van toka). */
+        if (s.prijelom_prije && content.length && !el[0].absolutePosition) el[0].pageBreak = 'before';
+        content = content.concat(el);        /* tijelo + (zasad) naslovna */
+      }
     });
 
     /* Okviri (vezani tekst blokovi) → tekst se lomi: M redova u bloku (širina bloka), ostatak
@@ -534,6 +569,8 @@
       });
       var tekstStavke = lista.filter(function (s) { return s.vrsta === 'tekst' && s.odlomci && s.odlomci.length; });
       if (!tekstStavke.length) return;
+      /* Vlastiti stil segmenta u okviru: stilizirane riječi, ali veličina ostaje početnog dijela (mreža/prored). */
+      var imaStilRun = tekstStavke.some(function (s) { return s.ima_vlastiti_stil; });
       var first = tekstStavke[0];
       var ps = (first.paragraf_id && parStilovi[first.paragraf_id]) ? parStilovi[first.paragraf_id] : {};
       var fsPt = broj(ps.velicina_pt) || 12;
@@ -571,16 +608,37 @@
         }
       }
       var lhPt = fsPt * prored * lhFaktor * OBTJ_LH_FINO;
-      /* Spoji sav tekst okvira (odlomak po odlomak iz svih tekst-stavki). */
-      var paragrafi = [];
-      tekstStavke.forEach(function (s) {
-        (s.odlomci || []).forEach(function (od) {
-          var t2 = ''; for (var r = 0; r < od.length; r++) t2 += (od[r] && od[r].text != null ? od[r].text : '');
-          paragrafi.push(t2);
+      /* Spoji sav tekst okvira (odlomak po odlomak iz svih tekst-stavki). Kad ima vlastitih stilova
+         gradimo stilizirane riječi [{t, r}] (r = font/boja/bold/italic/podcrtano; BEZ veličine — ostaje
+         početnog dijela), pa paras (plain) izvedemo iz njih da lom/mreža budu identični. */
+      var paras, parasStyled = null;
+      if (imaStilRun) {
+        parasStyled = [];
+        tekstStavke.forEach(function (s) {
+          (s.odlomci || []).forEach(function (od) {
+            var cur = [];
+            for (var r = 0; r < od.length; r++) {
+              var run = od[r]; if (!run) continue;
+              var txt = (run.text != null) ? String(run.text) : '';
+              if (txt === '\n') { parasStyled.push(cur); cur = []; continue; }   // meki prijelom → nova para (kao plain)
+              var rstyle = _prenesiRunStil(run, {}); delete rstyle.fontSize;      // veličina ostaje početnog dijela
+              var rijeci = txt.split(/\s+/);
+              for (var wi = 0; wi < rijeci.length; wi++) { if (rijeci[wi] !== '') cur.push({ t: rijeci[wi], r: rstyle }); }
+            }
+            parasStyled.push(cur);
+          });
         });
-      });
-      var puniTekst = paragrafi.join('\n');
-      var paras = puniTekst.split('\n');
+        paras = parasStyled.map(function (p) { return p.map(function (w) { return w.t; }).join(' '); });
+      } else {
+        var paragrafi = [];
+        tekstStavke.forEach(function (s) {
+          (s.odlomci || []).forEach(function (od) {
+            var t2 = ''; for (var r = 0; r < od.length; r++) t2 += (od[r] && od[r].text != null ? od[r].text : '');
+            paragrafi.push(t2);
+          });
+        });
+        paras = paragrafi.join('\n').split('\n');
+      }
       var uvlPt = mm(ps, 'uvlaka_prvi_red_mm');      /* uvlaka prvog reda odlomka */
       var razPosPt = mm(ps, 'razmak_poslije_mm');    /* razmak iza odlomka */
       var meka = (o.y_meka === 1 || o.y_meka === '1' || o.y_meka === true);
@@ -599,10 +657,31 @@
         if (gotovo) break;
         if (wpi < paras.length - 1) usedH += razPosPt;   /* razmak iza odlomka (ne iza zadnjeg) */
       }
+      /* Nakon hoda (mreža izmjerena plain tekstom) prebaci na stilizirane riječi za render. Lom je identičan
+         (isti tekst/font/veličina), pa splitPara/splitLine i dalje vrijede. */
+      if (imaStilRun) {
+        var paraLinesS = [];
+        for (var pls = 0; pls < parasStyled.length; pls++) paraLinesS.push(_lomiOdlomakStyled(parasStyled[pls], bw, uvlPt, fontStr));
+        paras = parasStyled; paraLines = paraLinesS;
+      }
+      /* Izvor teksta odlomka: string (plain) ili niz stiliziranih riječi [{t, r}] → pdfmake run-niz
+         (razmak iza svake osim zadnje; veličina se ne stavlja pa ostaje početnog dijela). */
+      function tekstIzvor(src) {
+        if (typeof src === 'string') return src;
+        var arr = [];
+        for (var i = 0; i < src.length; i++) { var run = { text: src[i].t + (i < src.length - 1 ? ' ' : '') }; _prenesiRunStil(src[i].r, run); arr.push(run); }
+        return arr.length ? arr : '';
+      }
+      function lineToWords(lineUnit) { return (typeof lineUnit === 'string') ? lineUnit.split(' ').filter(Boolean) : lineUnit; }
+      function joinLines(lines) {
+        if (!lines.length) return '';
+        if (typeof lines[0] === 'string') return lines.join(' ');
+        var out = []; for (var i = 0; i < lines.length; i++) out = out.concat(lines[i]); return out;
+      }
       /* Jedan odlomak → pdfmake element (uvlaka prvog reda + razmak iza). Zadnji red odlomka pdfmake
          ostavlja lijevo poravnat (kraj odlomka) — što je ispravno za PUNE odlomke. */
-      function odlomakEl(tekst, indent, marginDolje) {
-        var el = { text: tekst, fontSize: fsPt, lineHeight: prored, alignment: por, color: boja, margin: [0, 0, 0, marginDolje || 0] };
+      function odlomakEl(src, indent, marginDolje) {
+        var el = { text: tekstIzvor(src), fontSize: fsPt, lineHeight: prored, alignment: por, color: boja, margin: [0, 0, 0, marginDolje || 0] };
         if (kljuc) el.font = kljuc;
         if (indent && uvlPt) el.leadingIndent = uvlPt;
         return el;
@@ -611,16 +690,18 @@
          (jednolika raspodjela viška, bez praznine na kraju). Koristi se za blokove redove odlomka koji
          se NASTAVLJA (svi se justifiraju, pa i zadnji u bloku) — bez pdfmake filler-trika i završnog razmaka. */
       function justifyRed(rijeci, indentPt) {
+        var styled = rijeci.length && typeof rijeci[0] === 'object';
         if (por !== 'justify' || rijeci.length < 2) {
-          var el = { text: rijeci.join(' '), fontSize: fsPt, lineHeight: prored, alignment: por, color: boja, margin: [indentPt || 0, 0, 0, 0] };
+          var el = { text: styled ? tekstIzvor(rijeci) : rijeci.join(' '), fontSize: fsPt, lineHeight: prored, alignment: por, color: boja, margin: [indentPt || 0, 0, 0, 0] };
           if (kljuc) el.font = kljuc;
           return el;
         }
         var cols = [];
         if (indentPt) cols.push({ text: '', width: indentPt });
         for (var ji = 0; ji < rijeci.length; ji++) {
-          var w = { text: rijeci[ji], width: 'auto', fontSize: fsPt, lineHeight: prored, color: boja };
+          var w = { text: styled ? rijeci[ji].t : rijeci[ji], width: 'auto', fontSize: fsPt, lineHeight: prored, color: boja };
           if (kljuc) w.font = kljuc;
+          if (styled) _prenesiRunStil(rijeci[ji].r, w);   /* per-riječ font/boja/bold/italic/podcrtano (bez veličine) */
           cols.push(w);
           if (ji < rijeci.length - 1) cols.push({ text: '', width: '*' });
         }
@@ -633,7 +714,7 @@
         } else if (splitLine > 0) {
           /* Dio odlomka koji se NASTAVLJA → svi blokovi redovi ručno justifirani (i zadnji). */
           var spRows = [], spLines = paraLines[bpi].slice(0, splitLine);
-          for (var sl = 0; sl < spLines.length; sl++) spRows.push(justifyRed(spLines[sl].split(' ').filter(Boolean), sl === 0 ? uvlPt : 0));
+          for (var sl = 0; sl < spLines.length; sl++) spRows.push(justifyRed(lineToWords(spLines[sl]), sl === 0 ? uvlPt : 0));
           blockStack.push({ stack: spRows });
         }
       }
@@ -641,8 +722,8 @@
         if (splitLine === 0) {
           contStack.push(odlomakEl(paras[splitPara], true, razPosPt));          /* cijeli odlomak ide u nastavak */
         } else {
-          var contTxt = paraLines[splitPara].slice(splitLine).join(' ');         /* ostatak odlomka (bez uvlake) */
-          if (contTxt) contStack.push(odlomakEl(contTxt, false, razPosPt));
+          var contSrc = joinLines(paraLines[splitPara].slice(splitLine));         /* ostatak odlomka (bez uvlake); string ili stilizirane riječi */
+          if (contSrc.length) contStack.push(odlomakEl(contSrc, false, razPosPt));
         }
         for (var cpi = splitPara + 1; cpi < paras.length; cpi++) contStack.push(odlomakEl(paras[cpi], true, razPosPt));
       }

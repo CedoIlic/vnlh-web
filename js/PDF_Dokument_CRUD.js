@@ -326,6 +326,12 @@
     content.appendChild(popupRed('Korisnički tekst', s.literal_tekst));
     content.appendChild(popupRed(s.vrsta === 'slika' ? 'Stil slike' : 'Stil teksta', stil));
     content.appendChild(popupRed('Spajanje', SPOJ[parseInt(s.bez_kraja_odlomka, 10) || 0]));
+    if (parseInt(s.zadrzi_svoj_stil, 10)) content.appendChild(popupRed('Vlastiti stil u redu', 'da'));
+    if (parseInt(s.prijelom_prije, 10)) content.appendChild(popupRed('Prijelom stranice prije', 'da'));
+    if (s.prazno_nacin && s.prazno_nacin !== 'placeholder') content.appendChild(popupRed('Kad je prazno', s.prazno_nacin));
+    if (s.skupina) content.appendChild(popupRed('Skupina', s.skupina));
+    if (s.prefiks) content.appendChild(popupRed('Prefiks', s.prefiks));
+    if (s.sufiks) content.appendChild(popupRed('Sufiks', s.sufiks));
     body.appendChild(content);
     dialog.appendChild(header); dialog.appendChild(body);
     modal.appendChild(overlay); modal.appendChild(dialog);
@@ -345,7 +351,7 @@
   })();
 
   /* ---- Edit stavke (Tab Podaci) ---- */
-  var STAVKA_POLJA = ['st_naziv_stavke', 'st_zona', 'st_vrsta', 'st_izvor', 'st_izvor_tip', 'st_izvor_red_id', 'st_kontekst_kljuc', 'st_test_id', 'st_preko_izvor', 'st_relacija', 'st_lista_nacin', 'st_lista_separator', 'st_redak_predlozak', 'st_labela_bold', 'st_mapa_vrijednosti', 'st_format_datuma', 'st_fiksna_pozicija', 'st_fiksna_pozicija_y', 'st_trazi_kolona', 'st_trazi_vrijednost', 'st_literal_tekst', 'st_paragraf_id', 'st_slika_stil_id', 'st_bez_kraja_odlomka', 'st_novi_red_odlomka', 'st_sakrij_ako_prazno'];
+  var STAVKA_POLJA = ['st_naziv_stavke', 'st_zona', 'st_vrsta', 'st_izvor', 'st_izvor_tip', 'st_izvor_red_id', 'st_kontekst_kljuc', 'st_test_id', 'st_preko_izvor', 'st_relacija', 'st_lista_nacin', 'st_lista_separator', 'st_redak_predlozak', 'st_labela_bold', 'st_mapa_vrijednosti', 'st_format_datuma', 'st_fiksna_pozicija', 'st_fiksna_pozicija_y', 'st_trazi_kolona', 'st_trazi_vrijednost', 'st_literal_tekst', 'st_paragraf_id', 'st_slika_stil_id', 'st_bez_kraja_odlomka', 'st_novi_red_odlomka', 'st_sakrij_ako_prazno', 'st_zadrzi_svoj_stil', 'st_prijelom_prije', 'st_prazno_nacin', 'st_skupina', 'st_prefiks', 'st_sufiks'];
 
   function azurirajVidljivostStavke() {
     var vrsta = val('st_vrsta');
@@ -372,7 +378,10 @@
     byId('polje_literal_tekst').hidden = !korisnicki;
     byId('polje_paragraf').hidden = (vrsta !== 'tekst');
     byId('polje_slika_stil').hidden = (vrsta !== 'slika');
-    byId('polje_bez_kraja').hidden = (vrsta !== 'tekst');
+    byId('polje_bez_kraja').hidden = (vrsta !== 'tekst');   /* grupa spajanja/prijeloma — samo tekst-stavke */
+    byId('polje_prazno').hidden = (vrsta !== 'tekst');            /* ponašanje na prazno — samo tekst */
+    byId('polje_skupina').hidden = (vrsta !== 'tekst');          /* skupina (povezane stavke) — samo tekst */
+    byId('polje_prefiks_sufiks').hidden = (vrsta !== 'tekst');   /* prefiks/sufiks — samo tekst */
     byId('polje_preko_izvor').hidden = (tip !== 'dinamicki');   /* indirektni ključ samo za dinamički */
     byId('polje_relacija').hidden = !relacija;                   /* whitelist relacije (1-na-više) */
     byId('polje_lista_nacin').hidden = !relacijaLista;           /* način spajanja samo za relacija-lista */
@@ -433,6 +442,12 @@
     var bz = byId('st_bez_kraja_odlomka'); if (bz) bz.checked = (bkv === 1);
     var nr = byId('st_novi_red_odlomka'); if (nr) nr.checked = (bkv === 2);
     var sp = byId('st_sakrij_ako_prazno'); if (sp) sp.checked = !!(parseInt(s.sakrij_ako_prazno, 10));
+    var zss = byId('st_zadrzi_svoj_stil'); if (zss) zss.checked = !!(parseInt(s.zadrzi_svoj_stil, 10));
+    var pp = byId('st_prijelom_prije'); if (pp) pp.checked = !!(parseInt(s.prijelom_prije, 10));
+    setVal('st_prazno_nacin', s.prazno_nacin || 'placeholder'); refreshSelect('st_prazno_nacin');
+    setVal('st_skupina', s.skupina != null ? s.skupina : '');
+    setVal('st_prefiks', s.prefiks != null ? s.prefiks : '');
+    setVal('st_sufiks', s.sufiks != null ? s.sufiks : '');
     azurirajVidljivostStavke();
   }
   /* Pročitaj sva polja forme (oba stupca) u zadanu stavku. Bez osvježavanja tablice/selekcije. */
@@ -473,6 +488,13 @@
     var bz = byId('st_bez_kraja_odlomka'); var nr = byId('st_novi_red_odlomka');
     s.bez_kraja_odlomka = (s.vrsta !== 'tekst') ? 0 : ((bz && bz.checked) ? 1 : ((nr && nr.checked) ? 2 : 0));
     var sp = byId('st_sakrij_ako_prazno'); s.sakrij_ako_prazno = (sp && sp.checked) ? 1 : 0;
+    var zss = byId('st_zadrzi_svoj_stil'); s.zadrzi_svoj_stil = (s.vrsta === 'tekst' && zss && zss.checked) ? 1 : 0;
+    var pp = byId('st_prijelom_prije'); s.prijelom_prije = (s.zona === 'tijelo' && !s.okvir_id && pp && pp.checked) ? 1 : 0;
+    s.prazno_nacin = (s.vrsta === 'tekst') ? (val('st_prazno_nacin') || 'placeholder') : 'placeholder';
+    var skRaw = parseInt(trim(val('st_skupina')), 10);
+    s.skupina = (s.vrsta === 'tekst' && !isNaN(skRaw) && skRaw > 0) ? skRaw : null;
+    s.prefiks = (s.vrsta === 'tekst') ? (trim(val('st_prefiks')) || null) : null;
+    s.sufiks = (s.vrsta === 'tekst') ? (trim(val('st_sufiks')) || null) : null;
   }
   /* Edit stavke + tipka Dodaj/Izmijeni: aktivni dok postoji dokument (naziv). Hint vidljiv kad su disabled. */
   function postaviStavkaEnabled(en) {
@@ -813,6 +835,32 @@
     if (dlg && hdr && typeof KontroleModalDrag === 'function') KontroleModalDrag(dlg, hdr);
   })();
 
+  /* ---- Popup uputa za grupu checkboxova reda (spajanje / vlastiti stil / sakrij / prijelom) ---- */
+  (function () {
+    var m = byId('cbPomocModal'); if (!m) return;
+    function otvori() { m.setAttribute('aria-hidden', 'false'); m.classList.add('kontrola-modal--open'); }
+    function zatvori() { m.setAttribute('aria-hidden', 'true'); m.classList.remove('kontrola-modal--open'); }
+    var bp = byId('btnCbPomoc'); if (bp) bp.addEventListener('click', otvori);
+    var ok = byId('btnCbPomocOk'); if (ok) ok.addEventListener('click', zatvori);
+    var ov = byId('cbPomocModal_overlay'); if (ov) ov.addEventListener('click', zatvori);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && m.getAttribute('aria-hidden') === 'false') zatvori(); });
+    var dlg = m.querySelector('.kontrola-modal__dialog'), hdr = byId('cbPomocModal_header');
+    if (dlg && hdr && typeof KontroleModalDrag === 'function') KontroleModalDrag(dlg, hdr);
+  })();
+
+  /* ---- Popup uputa za prefiks/sufiks (samo ako ima) ---- */
+  (function () {
+    var m = byId('prefSufPomocModal'); if (!m) return;
+    function otvori() { m.setAttribute('aria-hidden', 'false'); m.classList.add('kontrola-modal--open'); }
+    function zatvori() { m.setAttribute('aria-hidden', 'true'); m.classList.remove('kontrola-modal--open'); }
+    var bp = byId('btnPrefSufPomoc'); if (bp) bp.addEventListener('click', otvori);
+    var ok = byId('btnPrefSufPomocOk'); if (ok) ok.addEventListener('click', zatvori);
+    var ov = byId('prefSufPomocModal_overlay'); if (ov) ov.addEventListener('click', zatvori);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && m.getAttribute('aria-hidden') === 'false') zatvori(); });
+    var dlg = m.querySelector('.kontrola-modal__dialog'), hdr = byId('prefSufPomocModal_header');
+    if (dlg && hdr && typeof KontroleModalDrag === 'function') KontroleModalDrag(dlg, hdr);
+  })();
+
   /* Reset razvojne (testni kontekst) sekcije — poziva se pri učitavanju/novom dokumentu.
      U Fazi 2 razvojni podaci nisu perzistirani, pa se uvijek vraćaju na prazno + „dostupan u app". */
   function resetRazvojSekciju() {
@@ -844,6 +892,12 @@
       fiksna_pozicija: (r.fiksna_pozicija != null && r.fiksna_pozicija !== '') ? parseFloat(r.fiksna_pozicija) : null,
       fiksna_pozicija_y: (r.fiksna_pozicija_y != null && r.fiksna_pozicija_y !== '') ? parseFloat(r.fiksna_pozicija_y) : null,
       sakrij_ako_prazno: (parseInt(r.sakrij_ako_prazno, 10) === 1) ? 1 : 0,
+      zadrzi_svoj_stil: (parseInt(r.zadrzi_svoj_stil, 10) === 1) ? 1 : 0,
+      prijelom_prije: (parseInt(r.prijelom_prije, 10) === 1) ? 1 : 0,
+      prazno_nacin: (['placeholder', 'crtica', 'izostavi'].indexOf(r.prazno_nacin) >= 0) ? r.prazno_nacin : 'placeholder',
+      skupina: (r.skupina != null && r.skupina !== '' && parseInt(r.skupina, 10) > 0) ? parseInt(r.skupina, 10) : null,
+      prefiks: (r.prefiks != null && r.prefiks !== '') ? r.prefiks : null,
+      sufiks: (r.sufiks != null && r.sufiks !== '') ? r.sufiks : null,
       relacija_id: r.relacija_id ? parseInt(r.relacija_id, 10) : null,
       lista_nacin: r.lista_nacin || null,
       lista_separator: (r.lista_separator != null && r.lista_separator !== '') ? r.lista_separator : null,
@@ -1209,7 +1263,7 @@
       razvoj_kolona: trim(val('razvoj_kolona')) || null,
       razvoj_izabrani_id: trim(val('razvoj_izabrani_id')) ? parseInt(val('razvoj_izabrani_id'), 10) : null,
       stavke: stavke.map(function (s, i) {
-        return { redoslijed: i + 1, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti, format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno, relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator, redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold };
+        return { redoslijed: i + 1, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti, format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno, relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator, redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold, zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije, prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks };
       })
     };
     postJson(URL_SPREMI, payload, function (res) {
@@ -1278,7 +1332,7 @@
       template_id: parseInt(val('edit_template_id'), 10),
       kontekst: kontekst,
       broj_stranice_paragraf_id: trim(val('edit_broj_stranice_paragraf_id')) ? parseInt(val('edit_broj_stranice_paragraf_id'), 10) : null,
-      stavke: stavke.map(function (s) { return { redoslijed: 0, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti, format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno, relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator, redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold }; })
+      stavke: stavke.map(function (s) { return { redoslijed: 0, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti, format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno, relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator, redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold, zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije, prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks }; })
     };
     postJson(URL_RESOLVE, payload, function (res) {
       var model;

@@ -372,8 +372,33 @@
                     <div class="pdf-dokument-crud__cb-red">
                         <label class="kontrola-checkbox-labela"><input id="st_bez_kraja_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u isti red</label>
                         <label class="kontrola-checkbox-labela"><input id="st_sakrij_ako_prazno" type="checkbox" class="kontrola-checkbox"> Sakrij red ako je prazno</label>
+                        <button type="button" id="btnCbPomoc" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--pomoc" title="Upute / opcije reda" aria-label="Upute za opcije reda (checkboxovi)">?</button>
                     </div>
                     <label class="kontrola-checkbox-labela"><input id="st_novi_red_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u novi red (isti odlomak)</label>
+                    <label class="kontrola-checkbox-labela"><input id="st_zadrzi_svoj_stil" type="checkbox" class="kontrola-checkbox"> Zadrži vlastiti stil (u spojenom redu)</label>
+                    <label class="kontrola-checkbox-labela"><input id="st_prijelom_prije" type="checkbox" class="kontrola-checkbox"> Prijelom stranice prije stavke</label>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_prazno">
+                    <label class="kontrola-labela mb-0" for="st_prazno_nacin">Kad je prazno</label>
+                    <div class="kontrola-select"><select id="st_prazno_nacin" aria-label="Ponašanje kad je vrijednost prazna">
+                        <option value="placeholder">Placeholder (XXXX, dev)</option>
+                        <option value="crtica">Crtica „—" (obavezan podatak)</option>
+                        <option value="izostavi">Izostavi (neobavezan)</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_skupina">
+                    <label class="kontrola-labela mb-0" for="st_skupina">Skupina (poveži)</label>
+                    <input id="st_skupina" type="text" class="kontrola-edit pdf-dokument-crud__num" inputmode="numeric" placeholder="—" maxlength="5" autocomplete="off" aria-label="Broj skupine povezanih stavki — nestaju zajedno ako su svi podaci prazni">
+                </div>
+                <div class="pdf-dokument-crud__polje" id="polje_prefiks_sufiks">
+                    <label class="kontrola-labela mb-0">Prefiks / sufiks</label>
+                    <div class="pdf-dokument-crud__prefsuf-red">
+                        <label class="kontrola-labela mb-0" for="st_prefiks">Prefix</label>
+                        <input id="st_prefiks" type="text" class="kontrola-edit" placeholder="(^" maxlength="16" autocomplete="off">
+                        <label class="kontrola-labela mb-0" for="st_sufiks">Sufix</label>
+                        <input id="st_sufiks" type="text" class="kontrola-edit" placeholder=",^" maxlength="16" autocomplete="off">
+                        <button type="button" id="btnPrefSufPomoc" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--pomoc" title="Upute / prefiks-sufiks" aria-label="Upute za prefiks i sufiks">?</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -516,6 +541,45 @@ dddd, D. mmmm YYYY.  → ponedjeljak, 1. lipanj 2026.</pre>
         </div>
         <div class="kontrola-modal__footer">
             <button type="button" id="btnFiksPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+        </div>
+    </div>
+</div>
+
+<div class="kontrola-modal kontrola-modal--dim" id="cbPomocModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="cbPomocModal_overlay"></div>
+    <div class="kontrola-modal__dialog pdf-dokument-crud__pomoc-modal">
+        <div class="kontrola-modal__header" id="cbPomocModal_header">Opcije reda — upute</div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content pdf-dokument-crud__pomoc">
+                <p>Ove kvačice upravljaju spajanjem stavki u zajednički red/odlomak i prijelomom stranice. Vrijede za tekst-stavke.</p>
+                <ul>
+                    <li><strong>Spoji sljedeću u isti red</strong> — sljedeća stavka nastavlja se u <u>istom retku</u> (inline), bez prijeloma. Cijeli spojeni red preuzima stil <em>prve</em> stavke (osim kad je uključena kvačica „Zadrži vlastiti stil"). Isključivo sa „Spoji u novi red".</li>
+                    <li><strong>Spoji sljedeću u novi red (isti odlomak)</strong> — sljedeća stavka ide u <u>novi red istog odlomka</u> (meki prijelom, bez razmaka odlomka). Isključivo sa „Spoji u isti red".</li>
+                    <li><strong>Zadrži vlastiti stil (u spojenom redu)</strong> — kad je stavka <u>nastavak</u> spojenog reda, zadržava <em>vlastite</em> znakovne atribute (font, veličina, boja, podebljano, kurziv, podcrtano) iz svog stila teksta umjesto da preuzme stil prve stavke. Odlomački atributi (poravnanje, prored, razmaci, uvlake, pozadina) i dalje dolaze od prve stavke. Unutar vezanog tekst-bloka (okvira) veličina ostaje kao kod početnog dijela (zbog mreže reda).</li>
+                    <li><strong>Sakrij red ako je prazno</strong> — ako je vrijednost stavke prazna, <u>sakrij cijeli red</u> (vrijedi i za spojene redove), bez ispisa praznog mjesta/placeholdera.</li>
+                    <li><strong>Prijelom stranice prije stavke</strong> — stavka <u>počinje na novoj stranici</u> (prijelom prije nje). Vrijedi samo za tok u zoni „tijelo" (ne za apsolutno pozicionirane stavke, vezane tekst-blokove, zaglavlje/podnožje). Zanemaruje se na prvoj stavci dokumenta (nema praznog prvog lista); u spojenom redu zastavicu nosi prva stavka.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="btnCbPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+        </div>
+    </div>
+</div>
+
+<div class="kontrola-modal kontrola-modal--dim" id="prefSufPomocModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="prefSufPomocModal_overlay"></div>
+    <div class="kontrola-modal__dialog pdf-dokument-crud__pomoc-modal">
+        <div class="kontrola-modal__header" id="prefSufPomocModal_header">Prefiks / sufiks — upute</div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content pdf-dokument-crud__pomoc">
+                <p><strong>Prefiks</strong> je tekst koji se doda <u>ispred</u> vrijednosti, a <strong>sufiks</strong> <u>iza</u> vrijednosti — ali <strong>samo ako vrijednost postoji</strong>. Kad je vrijednost prazna, ne ispiše se ni prefiks ni sufiks.</p>
+                <p>Time neobavezni podatak (npr. drugi red adrese) uz „Kad je prazno = izostavi" nestaje zajedno sa svojim zarezom/razmakom, bez praznih znakova.</p>
+                <p><code>^</code> = razmak (jer se rubni razmaci inače obrežu). Primjeri: sufiks <code>,^</code> daje „, "; prefiks <code>(^</code> daje „( ".</p>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="btnPrefSufPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
         </div>
     </div>
 </div>

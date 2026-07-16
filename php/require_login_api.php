@@ -5,6 +5,11 @@
 require_once __DIR__ . '/auth_start.php';
 require_once __DIR__ . '/vnlh_paths.php';
 
+// API odgovori se NE keširaju — inače preglednik u drugom tabu posluži stari GET (staro stanje) dok se ne
+// forsira Ctrl+F5. Vrijedi za sve API endpointe (svi uvlače ovaj file); statika (JS/CSS/slike) ide zasebno.
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+
 if (!isset($_SESSION['id_korisnik']) || !is_numeric($_SESSION['id_korisnik']) || (int) $_SESSION['id_korisnik'] <= 0) {
     http_response_code(401);
     header('Content-Type: text/plain; charset=utf-8');

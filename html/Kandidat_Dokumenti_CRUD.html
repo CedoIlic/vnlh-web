@@ -404,6 +404,30 @@
         </div>
     </div>
 </div>
+
+<div id="obrazacModalPdf" class="kandidat-dokumenti-crud__modal-pdf" role="dialog" aria-label="PDF Obrasca 001a" aria-modal="true" aria-hidden="true">
+    <div class="kandidat-dokumenti-crud__modal-pdf-overlay"></div>
+    <div class="kandidat-dokumenti-crud__modal-pdf-dialog">
+        <div class="kandidat-dokumenti-crud__modal-pdf-header">
+            <div class="kandidat-dokumenti-crud__modal-pdf-naslov">PDF Obrasca 001a</div>
+            <div class="kandidat-dokumenti-crud__modal-pdf-alati" role="group" aria-label="Alati PDF-a">
+                <button type="button" id="obrazac_pdf_refresh" class="kandidat-dokumenti-crud__modal-pdf-ikona-btn" aria-label="Osvježi PDF" title="Osvježi PDF">
+                    <span class="kontrola-icon--arrow-path" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-body">
+            <iframe id="obrazac_pdf_okvir" class="kandidat-dokumenti-crud__modal-pdf-iframe" title="PDF pregled Obrasca 001a"></iframe>
+            <div id="obrazac_pdf_spiner" class="kontrola-spiner-overlay" aria-hidden="true">
+                <span class="kontrola-spiner kontrola-spiner--segment" role="status" aria-label="Učitavanje"></span>
+            </div>
+            <div class="kandidat-dokumenti-crud__modal-pdf-info" id="obrazac_pdf_info" aria-live="polite"></div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-footer">
+            <button type="button" id="obrazac_pdf_povratak" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+        </div>
+    </div>
+</div>
 <!-- Modal: Razgovor s kandidatom (dodavanje / izmjena / brisanje jednog razgovora; vlastite CRUD tipke) -->
 <div id="razgovorModal" class="kandidat-dokumenti-crud__modal-razgovor" role="dialog" aria-label="Razgovor s kandidatom" aria-modal="true" aria-hidden="true">
     <div class="kandidat-dokumenti-crud__modal-razgovor-overlay"></div>
