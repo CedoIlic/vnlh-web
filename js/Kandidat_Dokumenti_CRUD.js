@@ -93,7 +93,9 @@
   var zivotopisKartica = document.getElementById('kandidatKontrolaTabKart0');
   var razgovoriKartica = document.getElementById('kandidatKontrolaTabKart1');
   var obrazacKartica = document.getElementById('kandidatKontrolaTabKart2');
+  var obrazac1bKartica = document.getElementById('kandidatKontrolaTabKart3');
   var obrPdfBtn = document.getElementById('obr_pdf');
+  var obr1bPdfBtn = document.getElementById('obr1b_pdf');   /* PDF ikona na tabu 001b — enable/disable u paru s 001a */
   var kandidatTabRoot = document.getElementById('kandidatKontrolaTab');
   if (btnIzbrisi) { btnIzbrisi.style.display = 'none'; btnIzbrisi.disabled = true; }
 
@@ -176,6 +178,7 @@
     if (zivotopisKartica) zivotopisKartica.disabled = !on;
     if (razgovoriKartica) razgovoriKartica.disabled = !on;
     if (obrazacKartica) obrazacKartica.disabled = !on;
+    if (obrazac1bKartica) obrazac1bKartica.disabled = !on;
   }
 
   /* ===== Obrazac 001a: aktivni tab, enable, RO/edit popuna, load, save ===== */
@@ -275,26 +278,6 @@
     }
     return p;
   }
-  /* Spremi Obrazac 001a (upsert po id_clan). */
-  function spremiObrazac() {
-    var id = getSelectedRowId();
-    if (id == null) return;
-    var jeIzmjena = _obrazac001Postoji;
-    fetch(API_BASE + 'Kandidat_Dokumenti_001_CRUD_spremi.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(obrazacGetPayload(id))
-    }).then(function (r) { return r.text(); }).then(function (res) {
-      res = (res || '').trim();
-      if (res === 'OK') {
-        ocistiNakonCrud();
-        poruka(jeIzmjena ? '004' : '001', []);
-      } else {
-        var pk = parseResponseCode(res);
-        poruka(pk ? pk.code : '200', pk ? pk.replacements : []);
-      }
-    }).catch(function () { poruka('200', []); });
-  }
 
   /* ===== Slika člana — SAMO PRIKAZ (Clanovi_CRUD_slika.php) ===== */
   function clearSlika() {
@@ -371,6 +354,7 @@
 
     zivotopisSetEnabled(imaSelekciju);
     obrazacSetEnabled(imaSelekciju);
+    obrazac1bSetEnabled(imaSelekciju);
     if (editPanel) editPanel.classList.toggle('kontrola-panel--edit-disabled', !imaSelekciju);
     /* Pod-tablica razgovora disabled kad je tab razgovori disabled (nema izabranog kandidata). */
     var razgTablica = document.getElementById('razgovoriTablicaContainer');
@@ -390,9 +374,11 @@
 
   function updateCrudState() {
     var imaSelekciju = getSelectedRowId() != null;
-    /* Footer Upiši/Izmjeni prati AKTIVNI tab: Obrazac 001a → kandidat_dokumenti_001; inače životopis. */
+    /* Upiši/Izmjeni je akcija za CIJELU formu → „Izmjeni" ako postoji ijedan zapis (životopis ili redak 001),
+       „Upis" samo kad ničeg nema. NE ovisi o aktivnom tabu. */
     var naObrazac = jeObrazacTab();
-    var postoji = naObrazac ? _obrazac001Postoji : _zivotopisPostoji;
+    var naObrazac1b = getAktivniTabIndex() === 3;
+    var postoji = _zivotopisPostoji || _obrazac001Postoji || _obrazac001bPostoji;
     if (btnUpisi && btnUpisiLabel) {
       var izmjena = imaSelekciju && postoji;
       btnUpisi.classList.toggle('kontrola-btn--crud-izmjeni', izmjena);
@@ -400,8 +386,8 @@
       btnUpisi.setAttribute('aria-label', izmjena ? 'Izmjeni' : 'Upis');
       btnUpisi.disabled = !imaSelekciju || (_pravaCrudUpis !== 1);
     }
-    /* Brisanje: samo na tabu Životopis (Obrazac 001a nema brisanje). */
-    var smijeBrisati = !naObrazac && imaSelekciju && _zivotopisPostoji && _pravaCrudBrisanje === 1;
+    /* Brisanje: samo na tabu Životopis (Obrazac 001a/001b nemaju brisanje). */
+    var smijeBrisati = !naObrazac && !naObrazac1b && imaSelekciju && _zivotopisPostoji && _pravaCrudBrisanje === 1;
     if (btnIzbrisi) { btnIzbrisi.style.display = smijeBrisati ? '' : 'none'; btnIzbrisi.disabled = !smijeBrisati; }
     updatePdfState();
     obrazacUpdatePdfState();
@@ -414,11 +400,13 @@
     btnPdf.disabled = !(imaSelekciju && zivotopisGetTekst() != null);
   }
 
-  /* PDF ikona Obrasca 001a: aktivna kad zapis POSTOJI u bazi i ima upisan status_pristupa I datum_dokumenta. */
+  /* PDF ikona Obrasca 001a: aktivna kad zapis POSTOJI u bazi i ima upisan status_pristupa I datum_dokumenta.
+     PDF ikona 001b prati isti uvjet (enable/disable u paru s 001a). */
   function obrazacUpdatePdfState() {
-    if (!obrPdfBtn) return;
     var imaSelekciju = getSelectedRowId() != null;
-    obrPdfBtn.disabled = !(imaSelekciju && _obrazac001PdfSpreman);
+    var spreman = imaSelekciju && _obrazac001PdfSpreman;
+    if (obrPdfBtn) obrPdfBtn.disabled = !spreman;
+    if (obr1bPdfBtn) obr1bPdfBtn.disabled = !spreman;
   }
 
   /* ===== Učitavanje životopisa odabranog kandidata ===== */
@@ -453,6 +441,7 @@
     ucitajZivotopis(id, function () { updateCrudState(); });
     ucitajRazgovori(id);
     ucitajObrazac(id, function () { updateCrudState(); });
+    ucitajObr1b(id);   /* učitaj 001b (predlagači/glasanja/datumi/časni/VIP); interno očisti + preload mape */
     updateEnabledState();
   };
 
@@ -651,33 +640,37 @@
     zivotopisSetTekst('');
     zivotopisSetEnabled(false);
     obrazacClear();
+    obr1bClear();
     updateEnabledState();
   }
 
-  /* Upis / Izmjeni (upsert po id_clan) */
-  if (btnUpisi) btnUpisi.addEventListener('click', function () {
-    var id = getSelectedRowId();
-    if (id == null) return;
-    /* Footer dijeljen s tabovima: na Obrascu 001a spremi obrazac, inače životopis. */
-    if (jeObrazacTab()) { spremiObrazac(); return; }
-    var tekst = zivotopisGetTekst();
-    var payload = { id_clan: String(id), zivotopis: tekst };
-    var jeIzmjena = this.classList.contains('kontrola-btn--crud-izmjeni');
-    fetch(API_BASE + 'Kandidat_Dokumenti_CRUD_spremi.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+  /* Upis / Izmjeni — jedna akcija za CIJELU formu (sve 1:1 tablice): životopis + 001a + 001b.
+     Razgovori (1:N) imaju vlastito spremanje (modal), pa nisu dio ovoga. Sekvencijalno da 001a/001b
+     (dijele redak) ne ulete u utrku; na potpuni uspjeh: očisti + jedna poruka (Upis/Izmjeni). */
+  function _postForma(url, payload) {
+    return fetch(API_BASE + url, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
     }).then(function (r) { return r.text(); }).then(function (res) {
       res = (res || '').trim();
-      if (res === 'OK') {
-        ocistiNakonCrud();
-        poruka(jeIzmjena ? '004' : '001', []);
-      } else {
-        var p = parseResponseCode(res);
+      if (res === 'OK') return true;
+      throw (res || '200');   /* odbij s kodom greške */
+    });
+  }
+  function spremiSve() {
+    var id = getSelectedRowId();
+    if (id == null) return;
+    /* „Izmjeni" ako postoji ijedan zapis forme (životopis ili redak 001); inače „Upis". */
+    var jeIzmjena = _zivotopisPostoji || _obrazac001Postoji || _obrazac001bPostoji;
+    _postForma('Kandidat_Dokumenti_CRUD_spremi.php', { id_clan: String(id), zivotopis: zivotopisGetTekst() })
+      .then(function () { return _postForma('Kandidat_Dokumenti_001_CRUD_spremi.php', obrazacGetPayload(id)); })
+      .then(function () { return _postForma('Kandidat_Dokumenti_001b_CRUD_spremi.php', obr1bGetPayload(id)); })
+      .then(function () { ocistiNakonCrud(); poruka(jeIzmjena ? '004' : '001', []); })
+      .catch(function (err) {
+        var p = parseResponseCode(typeof err === 'string' ? err : '200');
         poruka(p ? p.code : '200', p ? p.replacements : []);
-      }
-    }).catch(function () { poruka('200', []); });
-  });
+      });
+  }
+  if (btnUpisi) btnUpisi.addEventListener('click', spremiSve);
 
   /* Izbriši (briše zapis životopisa, ne člana) — uz potvrdu (124). */
   if (btnIzbrisi) btnIzbrisi.addEventListener('click', function () {
@@ -1151,6 +1144,386 @@
     }
   }
 
+  /* ============================================================
+   * ▒▒ OBRAZAC 001b (tab „Obrazac 001b") — predlagači + datumi ▒▒
+   * Podaci su zasad SAMO klijentski (tablica u bazi + spremanje: kasnije).
+   * Pamti se samo id člana (skriven u retku); prikaz (prezime/ime, loža, grad,
+   * naziv stupnja) je živi — dolazi iz endpointa pri pretrazi/dodavanju.
+   * ============================================================ */
+  var btnObr1bDodaj         = document.getElementById('obr1bDodaj');   /* ＋ → modal „Odaberi" (dodaje člana u tablicu) */
+  var btnObr1bObrisi        = document.getElementById('obr1bObrisi');  /* smeće → briše selektirani red */
+  var obr1bDatumRazmatranja = document.getElementById('obr1b_datum_razmatranja');
+  var obr1bDatumOdbijanja   = document.getElementById('obr1b_datum_odbijanja');
+  /* Matrica glasanja: 3 stupca (1./2./3. glasanje) × 5 polja (datum, glasača, za, protiv, suzdržani). */
+  var OBR1B_GLAS_IDS = (function () {
+    var out = [], polja = ['datum', 'glasaca', 'za', 'protiv', 'suzdrzani'];
+    for (var g = 1; g <= 3; g++) { for (var p = 0; p < polja.length; p++) out.push('obr1b_g' + g + '_' + polja[p]); }
+    return out;
+  })();
+  /* Časni majstor / VIP: RO editi + elipsis → modal „Odaberi" (izbor člana). Pamti se samo id (dataset). */
+  var obr1bCasniEdit = document.getElementById('obr1b_casni_majstor');
+  var obr1bCasniBtn  = document.getElementById('obr1b_casni_majstor_btn');
+  var obr1bVipEdit   = document.getElementById('obr1b_vip');
+  var obr1bVipBtn    = document.getElementById('obr1b_vip_btn');
+  /* Modal „Odaberi": tablica Članovi (1 kolona, 5 vidljivih redova). */
+  var odaberiApi = null;
+  var ODABERI_TABLICA = {
+    Broj_Kolona: 1,
+    Reload_Ikona: 0,
+    CrudCssPrefix: 'clanovi-crud',
+    Tablica_Zaglavlje: [
+      { key: 'clan', title: 'Članovi', SQL_Naziv: 'clan', sortable: 0, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
+    ]
+  };
+  CommonCRUD.initTablica('odaberiTablicaContainer', ODABERI_TABLICA, {
+    getRowId: function (row) { return (row && row.id != null) ? row.id : null; },
+    onReady: function (api) { odaberiApi = api; },
+    onSelectionChange: function () { azurirajOdaberiOk(); }
+  });
+  var predlagaciApi = null;
+  var obr1bPredlagaci = [];    /* [{id, prezime, ime, loza_naziv, loza_grad, id_obred, stupanj, stupanj_broj, stupanj_naziv}] — redovi tablice */
+  var _obrazac001bPostoji = false;   /* postoji li redak u parentu kandidat_dokumenti_001 (dijeljen s 001a) → Izmjeni; inače Upis */
+  /* Mapa ograničenja stupnjeva po obredu (tip 6) — isti filter kao Lista/Članovi lože:
+     stupnjevi viši od dozvoljenog za obred prikazuju se kao najviši dozvoljeni. Lijeni jednokratni dohvat. */
+  var _obr1bOgrMap = {};
+  var _obr1bOgrLoaded = false;
+  var _obr1bOgrReq = null;
+  var _obr1bOgrWait = [];
+  var PREDLAGACI_TABLICA = {
+    Broj_Kolona: 1,
+    Reload_Ikona: 0,
+    CrudCssPrefix: 'clanovi-crud',
+    Tablica_Zaglavlje: [
+      { key: 'predlagac', title: 'Braća ili Sestre predlagači', SQL_Naziv: 'predlagac', sortable: 0, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
+    ]
+  };
+  CommonCRUD.initTablica('predlagaciTablicaContainer', PREDLAGACI_TABLICA, {
+    getRowId: function (row) { return (row && row.id != null) ? row.id : null; },
+    onReady: function (api) { predlagaciApi = api; },
+    onSelectionChange: function () { azurirajObr1bIkone(); }
+  });
+
+  /* Jednokratni dohvat mape ograničenja stupnjeva po obredu (kao Lista: ucitajStupnjeviOgranicenjaLista). */
+  function ucitajObr1bStupnjeviOgr(done) {
+    if (_obr1bOgrLoaded) { if (typeof done === 'function') done(); return; }
+    if (typeof done === 'function') _obr1bOgrWait.push(done);
+    if (_obr1bOgrReq) return;
+    var url = API_BASE + 'duznosnici_ogranicenja_stupnjevi_po_obredu.php';
+    if (typeof window.vnlhGeoUrlDodajDuznosnikTest === 'function') url = window.vnlhGeoUrlDodajDuznosnikTest(url);
+    var xhr = new XMLHttpRequest();
+    _obr1bOgrReq = xhr;
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      _obr1bOgrReq = null; _obr1bOgrLoaded = true;
+      var t = (xhr.responseText || '').trim();
+      _obr1bOgrMap = {};
+      if (t !== '' && t.charAt(0) === '{') { try { _obr1bOgrMap = JSON.parse(t); } catch (e) { _obr1bOgrMap = {}; } }
+      var cek = _obr1bOgrWait; _obr1bOgrWait = [];
+      for (var i = 0; i < cek.length; i++) { try { if (cek[i]) cek[i](); } catch (e) {} }
+    };
+    xhr.send();
+  }
+  /* Prikaz stupnja s primjenom ograničenja (viši od dozvoljenog → najviši dozvoljeni). Vraća {broj, naziv}. */
+  function obr1bCapStupanj(c) {
+    var brojStr = (c && c.stupanj_broj != null) ? String(c.stupanj_broj) : '';
+    var nazivStr = (c && c.stupanj_naziv != null) ? String(c.stupanj_naziv) : '';
+    if (typeof window.vnlhFilteriPrimijeniStupnjevaPoOgranicenjima === 'function') {
+      var row = {
+        id_obred: (c && c.id_obred != null && c.id_obred !== '') ? (parseInt(c.id_obred, 10) || 0) : 0,
+        id_stupnj_clan: (c && c.stupanj != null && c.stupanj !== '') ? (parseInt(c.stupanj, 10) || 0) : 0,
+        Stupanj: brojStr, StupanjBroj: brojStr, StupanjNaziv: nazivStr
+      };
+      window.vnlhFilteriPrimijeniStupnjevaPoOgranicenjima(1, [row], _obr1bOgrMap);
+      brojStr = row.StupanjBroj != null ? String(row.StupanjBroj) : '';
+      nazivStr = row.StupanjNaziv != null ? String(row.StupanjNaziv) : '';
+    }
+    return { broj: brojStr, naziv: nazivStr };
+  }
+  /* Redak/opcija: „Prezime Ime, Loža, Grad, Stupanj" (prazni dijelovi se preskaču).
+     Stupanj je filtriran po ograničenjima (viši od dozvoljenog → najviši dozvoljeni). */
+  function predlagacLabel(c) {
+    var ime = (((c && c.prezime) || '') + ' ' + ((c && c.ime) || '')).trim();
+    return [ime, c && c.loza_naziv, c && c.loza_grad, obr1bCapStupanj(c).naziv].filter(Boolean).join(', ');
+  }
+  function getObr1bSelId() { return CommonCRUD.getSelectedRowId(predlagaciApi); }
+  function renderPredlagaciTablica() {
+    var rows = [];
+    for (var i = 0; i < obr1bPredlagaci.length; i++) {
+      var r = obr1bPredlagaci[i];
+      rows.push({ id: r.id, 0: predlagacLabel(r) });
+    }
+    if (predlagaciApi) CommonCRUD.setDataTablica(predlagaciApi, 'predlagaciTablicaContainer', rows, PREDLAGACI_TABLICA.Tablica_Zaglavlje);
+    azurirajObr1bIkone();
+  }
+  function azurirajObr1bIkone() {
+    var imaKandidat = getSelectedRowId() != null;
+    var imaRed = getObr1bSelId() != null;
+    if (btnObr1bDodaj) btnObr1bDodaj.disabled = !imaKandidat || (_pravaCrudUpis !== 1);
+    if (btnObr1bObrisi) btnObr1bObrisi.disabled = !imaRed || (_pravaCrudUpis !== 1);
+  }
+  /* Dodaj predlagača iz zapisa člana (rec iz modala „Odaberi"); dupli član se NE dodaje (tiho). */
+  function obr1bDodajPredlagacaRec(rec) {
+    if (!rec || rec.id == null) return;
+    for (var i = 0; i < obr1bPredlagaci.length; i++) { if (String(obr1bPredlagaci[i].id) === String(rec.id)) return; }
+    obr1bPredlagaci.push({
+      id: rec.id, prezime: rec.prezime, ime: rec.ime, loza_naziv: rec.loza_naziv, loza_grad: rec.loza_grad,
+      id_obred: rec.id_obred, stupanj: rec.stupanj, stupanj_broj: rec.stupanj_broj, stupanj_naziv: rec.stupanj_naziv
+    });
+    /* Osiguraj mapu ograničenja pa re-renderaj (da stupanj bude filtriran i ako map još nije stigao). */
+    ucitajObr1bStupnjeviOgr(function () { renderPredlagaciTablica(); });
+    renderPredlagaciTablica();
+  }
+  /* Smeće: briše selektirani red DIREKTNO (bez potvrde). */
+  function obr1bObrisiPredlagaca() {
+    var id = getObr1bSelId(); if (id == null) return;
+    for (var i = 0; i < obr1bPredlagaci.length; i++) {
+      if (String(obr1bPredlagaci[i].id) === String(id)) { obr1bPredlagaci.splice(i, 1); break; }
+    }
+    renderPredlagaciTablica();
+  }
+  /* Očisti tab 001b (promjena selekcije kandidata / nakon CRUD-a). */
+  function obr1bClear() {
+    obr1bPredlagaci = [];
+    if (obr1bDatumRazmatranja) obr1bDatumRazmatranja.value = '';
+    if (obr1bDatumOdbijanja) obr1bDatumOdbijanja.value = '';
+    for (var gi = 0; gi < OBR1B_GLAS_IDS.length; gi++) { var ge = document.getElementById(OBR1B_GLAS_IDS[gi]); if (ge) ge.value = ''; }
+    if (obr1bCasniEdit) { obr1bCasniEdit.value = ''; if (obr1bCasniEdit.dataset) delete obr1bCasniEdit.dataset.clanId; }
+    if (obr1bVipEdit) { obr1bVipEdit.value = ''; if (obr1bVipEdit.dataset) delete obr1bVipEdit.dataset.clanId; }
+    _obrazac001bPostoji = false;
+    renderPredlagaciTablica();
+  }
+  /* Postavi RO edit (Časni majstor/VIP) iz objekta člana (ili očisti ako null). */
+  function obr1bPostaviClanEdit(edit, clan) {
+    if (!edit) return;
+    if (clan && clan.id != null) { edit.value = clanRedLabel(clan); edit.dataset.clanId = String(clan.id); }
+    else { edit.value = ''; if (edit.dataset) delete edit.dataset.clanId; }
+  }
+  /* Popuni jedan stupac matrice glasanja iz objekta {datum,glasaca,za,protiv,suzdrzani}. */
+  function obr1bPopuniGlasanje(n, g) {
+    g = g || {};
+    var polja = ['datum', 'glasaca', 'za', 'protiv', 'suzdrzani'];
+    for (var i = 0; i < polja.length; i++) {
+      var el = document.getElementById('obr1b_g' + n + '_' + polja[i]);
+      if (el) el.value = (g[polja[i]] != null ? String(g[polja[i]]) : '');
+    }
+  }
+  /* Učitaj 001b odabranog kandidata (predlagači + glasanja + datumi + časni/VIP). */
+  function ucitajObr1b(idClan) {
+    obr1bClear();
+    if (idClan == null || idClan === '' || typeof fetch !== 'function') return;
+    ucitajObr1bStupnjeviOgr(function () {
+      fetch(API_BASE + 'Kandidat_Dokumenti_001b_CRUD_jedan.php?id_clan=' + encodeURIComponent(idClan))
+        .then(function (r) { return r.text(); })
+        .then(function (text) {
+          text = (text || '').trim();
+          if (String(getSelectedRowId()) !== String(idClan)) return;   /* selekcija se promijenila */
+          if (text !== '' && text.charAt(0) === '{') {
+            try {
+              var o = JSON.parse(text);
+              _obrazac001bPostoji = !!o.postoji;
+              obr1bPredlagaci = Array.isArray(o.predlagaci) ? o.predlagaci.slice() : [];
+              renderPredlagaciTablica();
+              obr1bPopuniGlasanje(1, o.glasanje_1);
+              obr1bPopuniGlasanje(2, o.glasanje_2);
+              obr1bPopuniGlasanje(3, o.glasanje_3);
+              if (obr1bDatumRazmatranja) obr1bDatumRazmatranja.value = o.datum_razmatranja || '';
+              if (obr1bDatumOdbijanja) obr1bDatumOdbijanja.value = o.datum_odbijanja || '';
+              obr1bPostaviClanEdit(obr1bCasniEdit, o.casni);
+              obr1bPostaviClanEdit(obr1bVipEdit, o.vip);
+            } catch (e) {}
+          }
+          updateCrudState();
+        }).catch(function () { updateCrudState(); });
+    });
+  }
+  /* Sastavi payload za spremanje 001b iz kontrola. */
+  function obr1bGetPayload(idClan) {
+    function valOf(idr) { var e = document.getElementById(idr); return e ? trim(e.value) : ''; }
+    function glas(n) {
+      return {
+        datum: valOf('obr1b_g' + n + '_datum'), glasaca: valOf('obr1b_g' + n + '_glasaca'),
+        za: valOf('obr1b_g' + n + '_za'), protiv: valOf('obr1b_g' + n + '_protiv'), suzdrzani: valOf('obr1b_g' + n + '_suzdrzani')
+      };
+    }
+    var predIds = [];
+    for (var i = 0; i < obr1bPredlagaci.length; i++) { if (obr1bPredlagaci[i].id != null) predIds.push(obr1bPredlagaci[i].id); }
+    return {
+      id_clan: String(idClan),
+      predlagaci: predIds,
+      glasanje_1: glas(1), glasanje_2: glas(2), glasanje_3: glas(3),
+      datum_razmatranja: obr1bDatumRazmatranja ? trim(obr1bDatumRazmatranja.value) : '',
+      datum_odbijanja: obr1bDatumOdbijanja ? trim(obr1bDatumOdbijanja.value) : '',
+      casni_id: (obr1bCasniEdit && obr1bCasniEdit.dataset.clanId) ? obr1bCasniEdit.dataset.clanId : '',
+      vip_id: (obr1bVipEdit && obr1bVipEdit.dataset.clanId) ? obr1bVipEdit.dataset.clanId : ''
+    };
+  }
+  /* Omogući/onemogući kontrole taba 001b. */
+  function obrazac1bSetEnabled(on) {
+    if (obr1bDatumRazmatranja) obr1bDatumRazmatranja.disabled = !on;
+    if (obr1bDatumOdbijanja) obr1bDatumOdbijanja.disabled = !on;
+    for (var gi = 0; gi < OBR1B_GLAS_IDS.length; gi++) { var ge = document.getElementById(OBR1B_GLAS_IDS[gi]); if (ge) ge.disabled = !on; }
+    if (obr1bCasniBtn) obr1bCasniBtn.disabled = !on;
+    if (obr1bVipBtn) obr1bVipBtn.disabled = !on;
+    var cont = document.getElementById('predlagaciTablicaContainer');
+    if (cont) cont.classList.toggle('kontrola-tablica--disabled', !on);
+    azurirajObr1bIkone();
+  }
+  if (btnObr1bDodaj) btnObr1bDodaj.addEventListener('click', function () { otvoriOdaberiModal('predlagac'); });
+  if (btnObr1bObrisi) btnObr1bObrisi.addEventListener('click', obr1bObrisiPredlagaca);
+
+  /* ============================================================
+   * ▒▒ MODAL „Odaberi" — izbor člana za Časni majstor / VIP ▒▒
+   * Pretraga (server-side, debounce) + tablica Članovi (aktivnost=1, kandidat=0, max 50).
+   * OK → prenese „Prezime Ime, Loža, Grad" u ciljni edit (+ id u dataset). Odustani → gasi bez akcije.
+   * Resizabilan; pozicija+veličina se pamte pri izlasku (localStorage). Podaci klijentski (spremanje kasnije).
+   * ============================================================ */
+  var odaberiModal    = document.getElementById('odaberiModal');
+  var odaberiDialog   = odaberiModal ? odaberiModal.querySelector('.kandidat-dokumenti-crud__modal-razgovor-dialog') : null;
+  var odaberiTraziInp = document.getElementById('odaberi_trazi');
+  var btnOdaberiOk    = document.getElementById('odaberiOk');
+  var btnOdaberiOdustani = document.getElementById('odaberiOdustani');
+  var _odaberiTarget  = null;   /* 'casni' | 'vip' — koji edit je otvorio modal */
+  var _odaberiData    = [];     /* članovi (rezultat pretrage) */
+  var ODABERI_MODAL_KEY = 'kandidat-odaberi-modal';
+
+  function clanRedLabel(c) {
+    var ime = (((c && c.prezime) || '') + ' ' + ((c && c.ime) || '')).trim();
+    return [ime, c && c.loza_naziv, c && c.loza_grad].filter(Boolean).join(', ');
+  }
+  function getOdaberiSelId() { return CommonCRUD.getSelectedRowId(odaberiApi); }
+  function azurirajOdaberiOk() { if (btnOdaberiOk) btnOdaberiOk.disabled = getOdaberiSelId() == null; }
+  function renderOdaberiTablica() {
+    var rows = [];
+    for (var i = 0; i < _odaberiData.length; i++) { rows.push({ id: _odaberiData[i].id, 0: clanRedLabel(_odaberiData[i]) }); }
+    if (odaberiApi) CommonCRUD.setDataTablica(odaberiApi, 'odaberiTablicaContainer', rows, ODABERI_TABLICA.Tablica_Zaglavlje);
+    azurirajOdaberiOk();
+  }
+  function fetchOdaberiClanovi(q) {
+    if (typeof fetch !== 'function') return;
+    var url = API_BASE + 'Kandidat_Dokumenti_001b_CRUD_clanovi.php' + (q ? ('?q=' + encodeURIComponent(q)) : '');
+    fetch(url).then(function (r) { return r.text(); }).then(function (text) {
+      text = (text || '').trim();
+      var arr = [];
+      if (text !== '' && text.charAt(0) === '[') { try { arr = JSON.parse(text); } catch (e) { arr = []; } }
+      _odaberiData = arr;
+      renderOdaberiTablica();
+    }).catch(function () {});
+  }
+  /* Pozicija + veličina: pamćenje (localStorage), primjena / centriranje (klon razgovor modala). */
+  function getOdaberiStanje() {
+    try { var s = localStorage.getItem(ODABERI_MODAL_KEY); if (s) { var o = JSON.parse(s); if (o && typeof o.width === 'number' && typeof o.height === 'number') return o; } } catch (e) {}
+    return null;
+  }
+  function saveOdaberiStanje(l, t, w, h) {
+    try { localStorage.setItem(ODABERI_MODAL_KEY, JSON.stringify({ left: l, top: t, width: w, height: h })); } catch (e) {}
+  }
+  function primijeniOdaberiStanje() {
+    if (!odaberiDialog) return;
+    var st = getOdaberiStanje();
+    if (st) {
+      odaberiDialog.style.left = st.left + 'px'; odaberiDialog.style.top = st.top + 'px';
+      odaberiDialog.style.transform = 'none';
+      odaberiDialog.style.width = st.width + 'px'; odaberiDialog.style.height = st.height + 'px';
+    } else {
+      odaberiDialog.style.left = '50%'; odaberiDialog.style.top = '50%';
+      odaberiDialog.style.transform = 'translate(-50%, -50%)';
+      odaberiDialog.style.width = ''; odaberiDialog.style.height = '';
+    }
+  }
+  function spremiOdaberiGeom() {
+    if (!odaberiDialog) return;
+    var r = odaberiDialog.getBoundingClientRect();
+    saveOdaberiStanje(Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height));
+  }
+  function otvoriOdaberiModal(target) {
+    if (getSelectedRowId() == null) return;
+    _odaberiTarget = target;
+    if (odaberiTraziInp) odaberiTraziInp.value = '';
+    if (odaberiApi && odaberiApi.clearSelection) odaberiApi.clearSelection();
+    _odaberiData = []; renderOdaberiTablica();
+    fetchOdaberiClanovi('');
+    primijeniOdaberiStanje();
+    if (odaberiModal) { odaberiModal.classList.add('kandidat-dokumenti-crud__modal-razgovor--open'); odaberiModal.setAttribute('aria-hidden', 'false'); }
+    if (odaberiTraziInp) odaberiTraziInp.focus();
+    azurirajOdaberiOk();
+  }
+  function zatvoriOdaberiModal() {
+    if (!odaberiModal) return;
+    if (odaberiModal.classList.contains('kandidat-dokumenti-crud__modal-razgovor--open')) spremiOdaberiGeom();
+    odaberiModal.classList.remove('kandidat-dokumenti-crud__modal-razgovor--open');
+    odaberiModal.setAttribute('aria-hidden', 'true');
+  }
+  function odaberiPotvrdi() {
+    var id = getOdaberiSelId(); if (id == null) return;
+    var rec = null;
+    for (var i = 0; i < _odaberiData.length; i++) { if (String(_odaberiData[i].id) === String(id)) { rec = _odaberiData[i]; break; } }
+    if (rec) {
+      if (_odaberiTarget === 'predlagac') {
+        obr1bDodajPredlagacaRec(rec);   /* dodaje u tablicu predlagača (dupli se tiho ignorira) */
+      } else {
+        var edit = _odaberiTarget === 'vip' ? obr1bVipEdit : obr1bCasniEdit;
+        if (edit) { edit.value = clanRedLabel(rec); edit.dataset.clanId = String(rec.id); }
+      }
+    }
+    zatvoriOdaberiModal();
+  }
+  if (obr1bCasniBtn) obr1bCasniBtn.addEventListener('click', function () { otvoriOdaberiModal('casni'); });
+  if (obr1bVipBtn) obr1bVipBtn.addEventListener('click', function () { otvoriOdaberiModal('vip'); });
+  if (btnOdaberiOk) btnOdaberiOk.addEventListener('click', odaberiPotvrdi);
+  if (btnOdaberiOdustani) btnOdaberiOdustani.addEventListener('click', zatvoriOdaberiModal);
+  (function () { var c = document.getElementById('odaberiTablicaContainer'); if (c) c.addEventListener('dblclick', odaberiPotvrdi); }());
+  if (odaberiTraziInp) {
+    var _odabTraziT = null;
+    odaberiTraziInp.addEventListener('input', function () {
+      var q = trim(this.value);
+      if (_odabTraziT) clearTimeout(_odabTraziT);
+      _odabTraziT = setTimeout(function () { fetchOdaberiClanovi(q); }, 250);
+    });
+    var odabClear = odaberiTraziInp.parentNode ? odaberiTraziInp.parentNode.querySelector('.kontrola-edit-delete__clear') : null;
+    if (odabClear) odabClear.addEventListener('click', function () { odaberiTraziInp.value = ''; fetchOdaberiClanovi(''); odaberiTraziInp.focus(); });
+  }
+  /* Premještanje (drag zaglavlja) + resize (kut) — klon razgovor modala; izlaz SAMO preko OK/Odustani. */
+  if (odaberiModal && odaberiDialog) {
+    function odaberiFiksirajPoziciju() {
+      var r = odaberiDialog.getBoundingClientRect();
+      odaberiDialog.style.left = Math.round(r.left) + 'px';
+      odaberiDialog.style.top = Math.round(r.top) + 'px';
+      odaberiDialog.style.transform = 'none';
+      return r;
+    }
+    var odaberiHeader = odaberiModal.querySelector('.kandidat-dokumenti-crud__modal-razgovor-header');
+    if (odaberiHeader) {
+      odaberiHeader.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var r = odaberiFiksirajPoziciju();
+        var l0 = r.left, t0 = r.top, x0 = e.clientX, y0 = e.clientY;
+        function move(ev) {
+          odaberiDialog.style.left = Math.max(0, l0 + ev.clientX - x0) + 'px';
+          odaberiDialog.style.top = Math.max(0, t0 + ev.clientY - y0) + 'px';
+        }
+        function stop() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); }
+        document.addEventListener('mousemove', move); document.addEventListener('mouseup', stop);
+        e.preventDefault();
+      });
+    }
+    var odaberiResizeKut = document.getElementById('odaberiResizeKut');
+    if (odaberiResizeKut) {
+      odaberiResizeKut.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var r = odaberiFiksirajPoziciju();
+        var w0 = r.width, h0 = r.height, x0 = e.clientX, y0 = e.clientY;
+        function move(ev) {
+          odaberiDialog.style.width = Math.max(360, w0 + ev.clientX - x0) + 'px';
+          odaberiDialog.style.height = Math.max(300, h0 + ev.clientY - y0) + 'px';
+        }
+        function stop() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); }
+        document.addEventListener('mousemove', move); document.addEventListener('mouseup', stop);
+        e.preventDefault(); e.stopPropagation();
+      });
+    }
+  }
+
   function initForma() {
     updateNaslovLozu();
     if (typeof KontroleTabInit === 'function') KontroleTabInit(document.getElementById('kandidatKontrolaTab'));
@@ -1165,9 +1538,16 @@
     /* Broj djece: samo znamenke (postojeći filter iz 0-Common); PHP dodatno klampa 0–255. */
     if (typeof window.initSamoNumerika === 'function') {
       window.initSamoNumerika(document.getElementById('obr_broj_djece'), 3);
+      /* Matrica glasanja: brojčana polja (glasača/za/protiv/suzdržani) samo znamenke; datum je date-picker. */
+      for (var gi = 0; gi < OBR1B_GLAS_IDS.length; gi++) {
+        var gid = OBR1B_GLAS_IDS[gi];
+        if (gid.indexOf('_datum') === -1) window.initSamoNumerika(document.getElementById(gid), 4);
+      }
     }
     razgovoriData = [];
     renderRazgovoriTablica();
+    obr1bPredlagaci = [];
+    renderPredlagaciTablica();
     ucitajPravaGeo(function () {
       updateNaslovLozu();
       updateEnabledState();

@@ -575,6 +575,27 @@
 }
 .kandidat-dokumenti-crud__modal-razgovor-resize-icon { display: block; width: 14px; height: 14px; }
 
+/* ===== Modal „Odaberi" (izbor člana) — koristi razgovor-modal shell; tijelo = pretraga + tablica ===== */
+.kandidat-dokumenti-crud__modal-odaberi-body {
+  gap: 0.75rem;
+  overflow: hidden;   /* tablica skrola iznutra, tijelo ne */
+}
+.kandidat-dokumenti-crud__odaberi-trazi { width: auto; flex: 0 0 auto; }
+/* Tablica „Članovi": min 5 vidljivih redova; raste s modalom (resize). */
+.kandidat-dokumenti-crud__modal-odaberi-body .kontrola-tablica {
+  --tablica_vidljivih_redova: 5;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  height: auto;
+}
+.kandidat-dokumenti-crud__modal-odaberi-body .kontrola-tablica__inner,
+.kandidat-dokumenti-crud__modal-odaberi-body .kontrola-tablica__scroll-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.kandidat-dokumenti-crud__modal-odaberi-body .kontrola-tablica__scroll-wrap { height: auto; }
+
 /* =====================================================
    Tab „Obrazac 001a" — grupirana polja u tri kolone (grubi raspored).
    Grupe ①② su RO prikaz (kontrola-edit--readonly), ostalo unos.
@@ -721,4 +742,141 @@
 }
 @media (max-width: 480px) {
   .kandidat-dokumenti-crud__obrazac-mreza { grid-template-columns: 1fr; }
+}
+
+/* =====================================================
+   Tab „Obrazac 001b" — 3 kolone: tablica predlagača | pretraga + selekt + ikone | datumi.
+   Kolone su iste visine (grid stretch) → ikone (margin-top:auto) sjedaju uz dno,
+   poravnate s donjim rubom tablice.
+   ===================================================== */
+.kandidat-dokumenti-crud__tab-panel--obrazac1b { padding: 0.5rem; }
+.kandidat-dokumenti-crud__obr1b {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);   /* lijeva kolona 10% uža */
+  column-gap: 0;
+  row-gap: 1rem;
+  align-items: stretch;   /* oba stupca pune visinu reda → pregradna linija ide punom visinom */
+}
+/* Vertikalna pregradna linija između kolona (centrirana u razmaku; puna visina reda). */
+.kandidat-dokumenti-crud__obr1b-glavni { padding-right: 1.5rem; }
+.kandidat-dokumenti-crud__obr1b-glasanja {
+  display: flex;
+  flex-direction: column;
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--edit_border, #ced4da);
+}
+/* Matrica gurnuta na dno desnog stupca (razmak nakon zaglavlja raste) → dno matrice poravnato
+   s dnom lijevog stupca (VIP). Zaglavlje ostaje na vrhu. */
+.kandidat-dokumenti-crud__obr1b-glasanja-mreza { margin-top: auto; }
+/* 1. stupac: pretraga (iznad); selekt + ikone u istom redu; tablica ispod. */
+.kandidat-dokumenti-crud__obr1b-glavni {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+/* Ikone ispod tablice (＋ skroz lijevo, pa smeće). */
+.kandidat-dokumenti-crud__obr1b-akcije {
+  display: flex;
+  gap: 0.4rem;
+}
+/* Tablica predlagača: 3 vidljiva reda (visina iz tokena kontrola-tablice). */
+.kandidat-dokumenti-crud__obr1b-tablica .kontrola-tablica {
+  --tablica_vidljivih_redova: 3;
+}
+/* Datumi ISPOD tablice (u 1. stupcu), oba edita u istom redu. */
+.kandidat-dokumenti-crud__obr1b-datumi {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+.kandidat-dokumenti-crud__obr1b-datumi > .kandidat-dokumenti-crud__polje {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* Zaglavlje desnog stupca: naslov „Rezultati glasanja" + PDF ikona desno + linija ispod. */
+.kandidat-dokumenti-crud__obr1b-glasanja-zaglavlje {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--edit_border, #ced4da);
+}
+.kandidat-dokumenti-crud__obr1b-glasanja-title {
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: 600;
+  color: var(--label_text, #1d1d1f);
+}
+.kandidat-dokumenti-crud__obr1b-glasanja-zaglavlje .kandidat-dokumenti-crud__pdf-btn {
+  margin-left: auto;   /* PDF ikona uz desni rub */
+}
+/* Matrica glasanja — labela retka + 3 stupca (1./2./3. glasanje). */
+.kandidat-dokumenti-crud__obr1b-glasanja-mreza {
+  display: grid;
+  grid-template-columns: auto repeat(3, minmax(0, 1fr));
+  /* row-gap 0,7rem: matrica (pinana uz dno) naraste toliko da vrh 1. reda edita (Datum)
+     dođe u ravninu s vrhom tablice u lijevoj koloni (≈88px od vrha). col-gap 0,5rem. */
+  gap: 0.7rem 0.5rem;
+  align-items: center;
+}
+/* Naslovi stupaca (zajednička labela za stupac). */
+.kandidat-dokumenti-crud__obr1b-glasanja-naslov {
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: 600;
+  color: var(--label_text, #1d1d1f);
+  text-align: center;
+}
+/* Labele redova (lijevo od prvog edita u redu) ne lome se. */
+.kandidat-dokumenti-crud__obr1b-glasanja-mreza > .kontrola-labela { white-space: nowrap; }
+/* Editi u matrici popune širinu ćelije (mogu se stisnuti). */
+.kandidat-dokumenti-crud__obr1b-glasanja-mreza > .kontrola-edit {
+  width: 100%;
+  min-width: 0;
+}
+/* Brojčana polja (glasača/za/protiv/suzdržani) — desno poravnanje; datum ostaje kako jest. */
+.kandidat-dokumenti-crud__obr1b-glasanja-mreza > .kontrola-edit[inputmode="numeric"] {
+  text-align: right;
+}
+/* Polja „Časni majstor" / „VIP" (dno lijevog stupca, jedno ispod drugog): labela LIJEVO + [RO edit + elipsis]. */
+.kandidat-dokumenti-crud__obr1b-clan-red {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+.kandidat-dokumenti-crud__obr1b-clan-red > .kontrola-labela {
+  flex: 0 0 auto;
+  width: 6.5rem;          /* fiksna širina → oba edita poravnata */
+  white-space: nowrap;
+}
+.kandidat-dokumenti-crud__obr1b-clan-izbor {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.kandidat-dokumenti-crud__obr1b-clan-izbor > .kontrola-edit {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.kandidat-dokumenti-crud__obr1b-clan-izbor > .kandidat-dokumenti-crud__razgovor-akcija {
+  flex: 0 0 auto;
+}
+/* Suženje: kolone jedna ispod druge; pregrada postaje gornja linija. */
+@media (max-width: 900px) {
+  .kandidat-dokumenti-crud__obr1b {
+    grid-template-columns: 1fr;
+    row-gap: 1rem;
+  }
+  .kandidat-dokumenti-crud__obr1b-glavni { padding-right: 0; }
+  .kandidat-dokumenti-crud__obr1b-glasanja {
+    padding-left: 0;
+    border-left: none;
+    padding-top: 1rem;
+    border-top: 1px solid var(--edit_border, #ced4da);
+  }
 }
