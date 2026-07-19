@@ -6,7 +6,7 @@ CREATE TABLE `pdf_dokument_stavke` (
   `okvir_id`         int(11) unsigned DEFAULT NULL COMMENT 'FK na pdf_template_okvir — kad je postavljen, stavka se renderira u tom vezanom tekst-bloku (prelijevanje punom širinom ispod bloka); NULL = obična zona',
   `vrsta`            enum('tekst','slika') NOT NULL COMMENT 'Vrsta stavke: tekst ili slika',
   `izvor_id`         int(11) unsigned DEFAULT NULL COMMENT 'FK na pdf_dozvoljeni_izvori (NULL kad izvor_tip=korisnicki)',
-  `izvor_tip`        enum('staticki','dinamicki','po_vrijednosti','korisnicki','relacija_broj','relacija_lista','relacija_redak','relacija_grupe') NOT NULL COMMENT 'staticki=fiksni red; dinamicki=id iz konteksta; po_vrijednosti=red po vrijednosti kolone; korisnicki=upisani tekst (literal_tekst); relacija_broj=broj redova 1-na-više veze (relacija_id) → mapa; relacija_lista=spojeni nazivi redova 1-na-više veze; relacija_redak=jedan redak po vezi iz predloška (redak_predlozak); relacija_grupe=grupirani popis po tipu (grupa: labela: imena)',
+  `izvor_tip`        enum('staticki','dinamicki','po_vrijednosti','korisnicki','relacija_broj','relacija_lista','relacija_redak','relacija_grupe','relacija_csv') NOT NULL COMMENT 'staticki=fiksni red; dinamicki=id iz konteksta; po_vrijednosti=red po vrijednosti kolone; korisnicki=upisani tekst (literal_tekst); relacija_broj=broj redova 1-na-više veze (relacija_id) → mapa; relacija_lista=spojeni nazivi redova 1-na-više veze; relacija_redak=jedan redak po vezi iz predloška (redak_predlozak); relacija_grupe=grupirani popis po tipu (grupa: labela: imena); relacija_csv=jedan odlomak po id-u iz zarez-liste u koloni (link_kolona) bazne tablice (junction_tablica), predložak kao relacija_redak (+ %STUPANJ_BROJ%/%STUPANJ_NAZIV% cap tokeni, \\n=meki prijelom)',
   `izvor_red_id`     int(11) unsigned DEFAULT NULL COMMENT 'Fiksni id retka u izvoru (staticki)',
   `kontekst_kljuc`   varchar(64) DEFAULT NULL COMMENT 'Ključ konteksta za id pri generiranju (dinamicki)',
   `test_id`          int(11) unsigned DEFAULT NULL COMMENT 'Testni id retka za pregled dinamičkog izvora (preview; kontekst ima prednost)',
@@ -29,11 +29,13 @@ CREATE TABLE `pdf_dokument_stavke` (
   `prefiks`           varchar(16) DEFAULT NULL COMMENT 'Literal koji se doda ISPRED vrijednosti SAMO kad vrijednost postoji; ^ = razmak; NULL/prazno = bez',
   `sufiks`            varchar(16) DEFAULT NULL COMMENT 'Literal koji se doda IZA vrijednosti SAMO kad vrijednost postoji (npr. ", " iza drugog reda adrese); ^ = razmak; NULL/prazno = bez',
   `prijelom_prije`    tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Prijelom stranice PRIJE ove stavke (pdfmake pageBreak:before); vrijedi samo za tok u zoni tijelo (ne za apsolutne/okvir/zaglavlje/podnožje); prva stavka u lancu inline-spajanja nosi zastavicu za cijeli red',
+  `prijelom_poslije`  tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Prijelom stranice POSLIJE ove stavke (pdfmake pageBreak:after); vrijedi samo za tok u zoni tijelo (ne za apsolutne/okvir/zaglavlje/podnožje); zadnja stavka u lancu inline-spajanja nosi zastavicu za cijeli red; zanemaruje se na zadnjoj stavci dokumenta (nema praznog zadnjeg lista)',
   `relacija_id`      int(11) unsigned DEFAULT NULL COMMENT 'FK na pdf_dozvoljeni_relacije (kad izvor_tip=relacija_broj/relacija_lista); bazni id dolazi iz konteksta (kontekst_kljuc)',
   `lista_nacin`      enum('zarez','novi_red','novi_odlomak') DEFAULT NULL COMMENT 'Spajanje liste (relacija_lista): zarez=lista_separator; novi_red=meki prijelom istog odlomka; novi_odlomak=svaki u svom odlomku',
   `lista_separator`  varchar(16) DEFAULT NULL COMMENT 'Separator za lista_nacin=zarez; NULL = ", " (^ = razmak)',
   `redak_predlozak`  varchar(512) DEFAULT NULL COMMENT 'Predložak retka (relacija_redak) / predložak imena (relacija_grupe): {j.kol} spojna, {c.kol[|mapa]} cilj, {tab} fiksna pozicija; ^ = razmak',
   `labela_bold`      tinyint(1) NOT NULL DEFAULT 0 COMMENT 'relacija_grupe: labela grupe (naziv tipa) podebljana',
+  `podatak_paragraf_id` int(11) unsigned DEFAULT NULL COMMENT 'FK na pdf_paragraf — stil PODATKA (vrijednosti iz predloška) kod relacija_csv; literali ostaju u osnovnom (paragraf_id). NULL = cijeli redak u osnovnom stilu',
   PRIMARY KEY (`id`),
   KEY `idx_dokument_redoslijed` (`dokument_id`, `redoslijed`),
   KEY `fk_stavka_izvor` (`izvor_id`),
@@ -42,6 +44,7 @@ CREATE TABLE `pdf_dokument_stavke` (
   KEY `fk_stavka_slika_stil` (`slika_stil_id`),
   KEY `fk_stavka_relacija` (`relacija_id`),
   KEY `fk_stavka_okvir` (`okvir_id`),
+  KEY `fk_stavka_podatak_paragraf` (`podatak_paragraf_id`),
   CONSTRAINT `fk_stavka_dokument`
     FOREIGN KEY (`dokument_id`) REFERENCES `pdf_dokument` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_okvir`
@@ -56,6 +59,8 @@ CREATE TABLE `pdf_dokument_stavke` (
     FOREIGN KEY (`slika_stil_id`) REFERENCES `pdf_slika_stil` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_relacija`
     FOREIGN KEY (`relacija_id`) REFERENCES `pdf_dozvoljeni_relacije` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_stavka_podatak_paragraf`
+    FOREIGN KEY (`podatak_paragraf_id`) REFERENCES `pdf_paragraf` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `chk_prikaz_po_vrsti` CHECK (
     (`vrsta` = 'tekst' AND `paragraf_id` IS NOT NULL AND `slika_stil_id` IS NULL) OR
     (`vrsta` = 'slika' AND `slika_stil_id` IS NOT NULL AND `paragraf_id` IS NULL)
@@ -68,6 +73,7 @@ CREATE TABLE `pdf_dokument_stavke` (
     (`izvor_tip` = 'relacija_broj'  AND `izvor_id` IS NULL     AND `relacija_id` IS NOT NULL AND `literal_tekst` IS NULL AND `izvor_red_id` IS NULL AND `kontekst_kljuc` IS NOT NULL AND `trazi_kolona` IS NULL AND `trazi_vrijednost` IS NULL) OR
     (`izvor_tip` = 'relacija_lista' AND `izvor_id` IS NULL     AND `relacija_id` IS NOT NULL AND `literal_tekst` IS NULL AND `izvor_red_id` IS NULL AND `kontekst_kljuc` IS NOT NULL AND `trazi_kolona` IS NULL AND `trazi_vrijednost` IS NULL) OR
     (`izvor_tip` = 'relacija_redak' AND `izvor_id` IS NULL     AND `relacija_id` IS NOT NULL AND `literal_tekst` IS NULL AND `izvor_red_id` IS NULL AND `kontekst_kljuc` IS NOT NULL AND `trazi_kolona` IS NULL AND `trazi_vrijednost` IS NULL AND `redak_predlozak` IS NOT NULL) OR
-    (`izvor_tip` = 'relacija_grupe' AND `izvor_id` IS NULL     AND `relacija_id` IS NOT NULL AND `literal_tekst` IS NULL AND `izvor_red_id` IS NULL AND `kontekst_kljuc` IS NOT NULL AND `trazi_kolona` IS NULL AND `trazi_vrijednost` IS NULL AND `redak_predlozak` IS NOT NULL)
+    (`izvor_tip` = 'relacija_grupe' AND `izvor_id` IS NULL     AND `relacija_id` IS NOT NULL AND `literal_tekst` IS NULL AND `izvor_red_id` IS NULL AND `kontekst_kljuc` IS NOT NULL AND `trazi_kolona` IS NULL AND `trazi_vrijednost` IS NULL AND `redak_predlozak` IS NOT NULL) OR
+    (`izvor_tip` = 'relacija_csv'   AND `izvor_id` IS NULL     AND `relacija_id` IS NOT NULL AND `literal_tekst` IS NULL AND `izvor_red_id` IS NULL AND `kontekst_kljuc` IS NOT NULL AND `trazi_kolona` IS NULL AND `trazi_vrijednost` IS NULL AND `redak_predlozak` IS NOT NULL)
   )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

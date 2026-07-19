@@ -2342,7 +2342,7 @@
             bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke,
             preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
             format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno,
-            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije,
+            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije, prijelom_poslije: s.prijelom_poslije,
             prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks
           };
         })

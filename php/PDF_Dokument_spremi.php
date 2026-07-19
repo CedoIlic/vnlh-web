@@ -75,16 +75,17 @@ try {
         $okvirId = null;   // vezani tekst blok (pdf_template_okvir); NULL = obična zona
         $zss = 0;          // zadrzi_svoj_stil (u spojenom redu segment nosi vlastiti znakovni stil)
         $prelom = 0;       // prijelom_prije (prijelom stranice prije stavke; tok, zona tijelo)
+        $prelomPosl = 0;   // prijelom_poslije (prijelom stranice poslije stavke; tok, zona tijelo)
         $praznoNacin = 'placeholder';   // ponašanje na prazno (placeholder/crtica/izostavi)
         $skupina = null;   // povezane stavke (nestaju zajedno ako su svi podaci u skupini prazni)
         $prefiks = null;   // literal ispred vrijednosti samo kad postoji
         $sufiks = null;    // literal iza vrijednosti samo kad postoji
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold, okvir_id, fiksna_pozicija_y, zadrzi_svoj_stil, prijelom_prije, prazno_nacin, skupina, prefiks, sufiks)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold, okvir_id, fiksna_pozicija_y, zadrzi_svoj_stil, prijelom_prije, prijelom_poslije, prazno_nacin, skupina, prefiks, sufiks, podatak_paragraf_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $ins->bind_param('iissisisisssiiisissdiisssiidiisiss', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold, $okvirId, $fiksy, $zss, $prelom, $praznoNacin, $skupina, $prefiks, $sufiks);
+        $ins->bind_param('iissisisisssiiisissdiisssiidiiisissi', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold, $okvirId, $fiksy, $zss, $prelom, $prelomPosl, $praznoNacin, $skupina, $prefiks, $sufiks, $podParId);
         $dok = $id;
         $i = 0;
         foreach ($stavke as $s) {
@@ -92,7 +93,7 @@ try {
             $red = isset($s['redoslijed']) ? (int) $s['redoslijed'] : $i;
             $zona = in_array(($s['zona'] ?? ''), ['tijelo', 'zaglavlje', 'podnozje', 'naslovna'], true) ? $s['zona'] : 'tijelo';
             $vrsta = in_array(($s['vrsta'] ?? ''), ['tekst', 'slika'], true) ? $s['vrsta'] : '';
-            $izTip = in_array(($s['izvor_tip'] ?? ''), ['staticki', 'dinamicki', 'po_vrijednosti', 'korisnicki', 'relacija_broj', 'relacija_lista', 'relacija_redak', 'relacija_grupe'], true) ? $s['izvor_tip'] : '';
+            $izTip = in_array(($s['izvor_tip'] ?? ''), ['staticki', 'dinamicki', 'po_vrijednosti', 'korisnicki', 'relacija_broj', 'relacija_lista', 'relacija_redak', 'relacija_grupe', 'relacija_csv'], true) ? $s['izvor_tip'] : '';
             if ($vrsta === '' || $izTip === '') {
                 throw new RuntimeException('stavka_nevaljana');
             }
@@ -105,7 +106,7 @@ try {
                 $izParam = null;
                 $lit = trim((string) ($s['literal_tekst'] ?? ''));   // trima se; rubni razmaci preko '^'
                 $izRed = null; $kkljuc = null; $tkol = null; $tvrij = null;
-            } elseif ($izTip === 'relacija_broj' || $izTip === 'relacija_lista' || $izTip === 'relacija_redak' || $izTip === 'relacija_grupe') {
+            } elseif ($izTip === 'relacija_broj' || $izTip === 'relacija_lista' || $izTip === 'relacija_redak' || $izTip === 'relacija_grupe' || $izTip === 'relacija_csv') {
                 // 1-na-više veza: bez whitelist izvora (izvor_id NULL), relacija_id obavezan, bazni id iz konteksta.
                 if ($vrsta !== 'tekst') {
                     throw new RuntimeException('stavka_nevaljana');
@@ -122,7 +123,7 @@ try {
                     $listaNacin = in_array($ln, ['zarez', 'novi_red', 'novi_odlomak'], true) ? $ln : 'zarez';
                     $lsRaw = trim((string) ($s['lista_separator'] ?? ''));
                     $listaSep = ($lsRaw === '') ? null : $lsRaw;
-                } elseif ($izTip === 'relacija_redak' || $izTip === 'relacija_grupe') {
+                } elseif ($izTip === 'relacija_redak' || $izTip === 'relacija_grupe' || $izTip === 'relacija_csv') {
                     $rp = trim((string) ($s['redak_predlozak'] ?? ''));
                     if ($rp === '') {
                         throw new RuntimeException('stavka_nevaljana');
@@ -144,7 +145,7 @@ try {
                 $tvrij = ($izTip === 'po_vrijednosti') ? (string) ($s['trazi_vrijednost'] ?? '') : null;
             }
             // Testni id retka — za dinamicki i relacija_* (pregled bez konteksta); inace NULL.
-            $tid = (in_array($izTip, ['dinamicki', 'relacija_broj', 'relacija_lista', 'relacija_redak', 'relacija_grupe'], true) && (int) ($s['test_id'] ?? 0) > 0) ? (int) $s['test_id'] : null;
+            $tid = (in_array($izTip, ['dinamicki', 'relacija_broj', 'relacija_lista', 'relacija_redak', 'relacija_grupe', 'relacija_csv'], true) && (int) ($s['test_id'] ?? 0) > 0) ? (int) $s['test_id'] : null;
             // Stil po vrsti (drugi NULL → zadovolji chk_prikaz_po_vrsti)
             $parId = ($vrsta === 'tekst' && (int) ($s['paragraf_id'] ?? 0) > 0) ? (int) $s['paragraf_id'] : null;
             $sslik = ($vrsta === 'slika' && (int) ($s['slika_stil_id'] ?? 0) > 0) ? (int) $s['slika_stil_id'] : null;
@@ -168,6 +169,8 @@ try {
             $zss = ($vrsta === 'tekst' && !empty($s['zadrzi_svoj_stil'])) ? 1 : 0;
             // Prijelom stranice prije — samo tok u zoni tijelo (apsolutne/okvir/zaglavlje/podnožje ignoriraju).
             $prelom = ($zona === 'tijelo' && $okvirId === null && !empty($s['prijelom_prije'])) ? 1 : 0;
+            // Prijelom stranice poslije — isto ograničenje kao prije (samo tok u zoni tijelo).
+            $prelomPosl = ($zona === 'tijelo' && $okvirId === null && !empty($s['prijelom_poslije'])) ? 1 : 0;
             // Ponašanje na prazno + sufiks — samo tekst.
             $pn = (string) ($s['prazno_nacin'] ?? 'placeholder');
             $praznoNacin = ($vrsta === 'tekst' && in_array($pn, ['placeholder', 'crtica', 'izostavi'], true)) ? $pn : 'placeholder';
@@ -177,6 +180,8 @@ try {
             $prefiks = ($preRaw === '') ? null : $preRaw;
             $sufRaw = ($vrsta === 'tekst') ? trim((string) ($s['sufiks'] ?? '')) : '';
             $sufiks = ($sufRaw === '') ? null : $sufRaw;
+            // Stil PODATKA (relacija_csv): vrijednosti iz predloška u tom stilu; samo tekst.
+            $podParId = ($vrsta === 'tekst' && (int) ($s['podatak_paragraf_id'] ?? 0) > 0) ? (int) $s['podatak_paragraf_id'] : null;
             $zadnjiRed = $red;
             $ins->execute();
         }

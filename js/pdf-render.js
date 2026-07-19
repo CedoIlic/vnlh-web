@@ -551,9 +551,15 @@
         /* Prijelom stranice prije stavke (resolve ga gata na tok u zoni tijelo). Ne na prvu stavku
            (izbjegni prazni prvi list) ni na apsolutno pozicioniran element (van toka). */
         if (s.prijelom_prije && content.length && !el[0].absolutePosition) el[0].pageBreak = 'before';
+        /* Prijelom stranice poslije stavke → na ZADNJI element stavke (van toka element preskoči).
+           Prijelom na zadnjoj stavci toka (prazni zadnji list) čisti se nakon petlje. */
+        if (s.prijelom_poslije && !el[el.length - 1].absolutePosition) el[el.length - 1].pageBreak = 'after';
         content = content.concat(el);        /* tijelo + (zasad) naslovna */
       }
     });
+    /* Zadnji element toka NE smije nositi pageBreak:'after' (stvara prazni zadnji list) —
+       u ovom trenutku content zadnji je zadnja tok-stavka (okviri niže dodaju samo apsolutne stackove). */
+    if (content.length && content[content.length - 1].pageBreak === 'after') delete content[content.length - 1].pageBreak;
 
     /* Okviri (vezani tekst blokovi) → tekst se lomi: M redova u bloku (širina bloka), ostatak
        PUNOM ŠIRINOM (margina–margina) ispod bloka. M = visina bloka / prored; meki rub = ceil

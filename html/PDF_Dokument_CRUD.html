@@ -214,6 +214,7 @@
                     <option value="tekst|relacija_lista">Tekst — relacija (lista naziva)</option>
                     <option value="tekst|relacija_redak">Tekst — relacija (redak iz predloška)</option>
                     <option value="tekst|relacija_grupe">Tekst — relacija (grupe po tipu)</option>
+                    <option value="tekst|relacija_csv">Tekst — relacija (CSV kolona)</option>
                     <option value="slika|staticki">Slika — statička</option>
                     <option value="slika|dinamicki">Slika — dinamička</option>
                     <option value="slika|po_vrijednosti">Slika — po vrijednosti</option>
@@ -237,6 +238,7 @@
                         <option value="relacija_lista">Relacija — lista</option>
                         <option value="relacija_redak">Relacija — redak</option>
                         <option value="relacija_grupe">Relacija — grupe</option>
+                        <option value="relacija_csv">Relacija — CSV</option>
                     </select>
                 </div>
                 <div class="pdf-dokument-crud__polje">
@@ -362,6 +364,12 @@
                         <option value="">— odaberi —</option>
                     </select></div>
                 </div>
+                <div class="pdf-dokument-crud__polje" id="polje_podatak_paragraf" hidden>
+                    <label class="kontrola-labela mb-0" for="st_podatak_paragraf">Stil podatka (predloška)</label>
+                    <div class="kontrola-select"><select id="st_podatak_paragraf" aria-label="Stil podatka">
+                        <option value="">— osnovni stil —</option>
+                    </select></div>
+                </div>
                 <div class="pdf-dokument-crud__polje" id="polje_slika_stil" hidden>
                     <label class="kontrola-labela mb-0" for="st_slika_stil_id">Stil slike</label>
                     <div class="kontrola-select"><select id="st_slika_stil_id" aria-label="Stil slike">
@@ -376,7 +384,13 @@
                     </div>
                     <label class="kontrola-checkbox-labela"><input id="st_novi_red_odlomka" type="checkbox" class="kontrola-checkbox"> Spoji sljedeću u novi red (isti odlomak)</label>
                     <label class="kontrola-checkbox-labela"><input id="st_zadrzi_svoj_stil" type="checkbox" class="kontrola-checkbox"> Zadrži vlastiti stil (u spojenom redu)</label>
-                    <label class="kontrola-checkbox-labela"><input id="st_prijelom_prije" type="checkbox" class="kontrola-checkbox"> Prijelom stranice prije stavke</label>
+                    <div class="pdf-dokument-crud__cb-red pdf-dokument-crud__cb-red--prijelom">
+                        <span class="kontrola-checkbox-labela">Prijelom stranice:</span>
+                        <label class="kontrola-checkbox-labela">Prije <input id="st_prijelom_prije" type="checkbox" class="kontrola-checkbox"></label>
+                        <span class="kontrola-checkbox-labela">ili</span>
+                        <label class="kontrola-checkbox-labela">Poslje <input id="st_prijelom_poslije" type="checkbox" class="kontrola-checkbox"></label>
+                        <span class="kontrola-checkbox-labela">ove stavke.</span>
+                    </div>
                 </div>
                 <div class="pdf-dokument-crud__polje" id="polje_prazno">
                     <label class="kontrola-labela mb-0" for="st_prazno_nacin">Kad je prazno</label>
@@ -473,7 +487,13 @@
                 <pre>{j.naziv_duznosti}:{tab}{c.spol|0:Brat;1:Sestra} {c.ime}</pre>
                 <p>Daje (uz fiksnu poziciju 100 mm): <code>Časni majstor:&nbsp;&nbsp;&nbsp;Sestra Morana</code> (ime poravnato).</p>
                 <p>Redoslijed redaka i ciljnu tablicu definira relacija; prazna relacija → cijela stavka skrivena (uz „Sakrij red ako je prazno").</p>
-            </div>
+                <p><strong>Relacija — CSV kolona</strong> (isti predložak): izvor redaka je <strong>zarez-lista id-eva</strong> u koloni bazne tablice (npr. <code>predlagaci</code>), a NE spojna tablica — pa <code>{j.*}</code> nije dostupan (samo <code>{c.*}</code> + FK-skok). Svaki id = <strong>zaseban odlomak</strong>. Dodatni tokeni:</p>
+                <ul>
+                    <li><code>%STUPANJ_BROJ%</code> / <code>%STUPANJ_NAZIV%</code> — stupanj člana <strong>ograničen po obredu</strong> (cap, kao u tablici); samo kad je cilj <code>clanovi</code>.</li>
+                    <li><code>%BR%</code> — <strong>meki prijelom reda</strong> u istom odlomku (npr. „Potpis:" u novi red).</li>
+                    <li><code>{=tekst=}</code> — <strong>literal u stilu podatka</strong>: sve unutar oznake ide u „Stil podatka" (npr. <code>{=°=}</code> da stupanjski „°" bude u boji podatka).</li>
+                </ul>
+                <p>Placeholderi i navedeni tokeni renderiraju se u <strong>Stilu podatka</strong>; ostatak (literali) u <strong>Stilu teksta</strong>.</p>
         </div>
         <div class="kontrola-modal__footer">
             <button type="button" id="btnRedakPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
@@ -557,7 +577,7 @@ dddd, D. mmmm YYYY.  → ponedjeljak, 1. lipanj 2026.</pre>
                     <li><strong>Spoji sljedeću u novi red (isti odlomak)</strong> — sljedeća stavka ide u <u>novi red istog odlomka</u> (meki prijelom, bez razmaka odlomka). Isključivo sa „Spoji u isti red".</li>
                     <li><strong>Zadrži vlastiti stil (u spojenom redu)</strong> — kad je stavka <u>nastavak</u> spojenog reda, zadržava <em>vlastite</em> znakovne atribute (font, veličina, boja, podebljano, kurziv, podcrtano) iz svog stila teksta umjesto da preuzme stil prve stavke. Odlomački atributi (poravnanje, prored, razmaci, uvlake, pozadina) i dalje dolaze od prve stavke. Unutar vezanog tekst-bloka (okvira) veličina ostaje kao kod početnog dijela (zbog mreže reda).</li>
                     <li><strong>Sakrij red ako je prazno</strong> — ako je vrijednost stavke prazna, <u>sakrij cijeli red</u> (vrijedi i za spojene redove), bez ispisa praznog mjesta/placeholdera.</li>
-                    <li><strong>Prijelom stranice prije stavke</strong> — stavka <u>počinje na novoj stranici</u> (prijelom prije nje). Vrijedi samo za tok u zoni „tijelo" (ne za apsolutno pozicionirane stavke, vezane tekst-blokove, zaglavlje/podnožje). Zanemaruje se na prvoj stavci dokumenta (nema praznog prvog lista); u spojenom redu zastavicu nosi prva stavka.</li>
+                    <li><strong>Prijelom stranice: Prije / Poslje ove stavke</strong> — <u>Prije</u> = stavka počinje na novoj stranici (prijelom prije nje); <u>Poslje</u> = nakon stavke počinje nova stranica (prijelom iza nje). Moguć je <em>samo jedan</em> od dva (čekiranje jednog odčekira drugi). Vrijedi samo za tok u zoni „tijelo" (ne za apsolutno pozicionirane stavke, vezane tekst-blokove, zaglavlje/podnožje). „Prije" se zanemaruje na prvoj stavci dokumenta, „Poslje" na zadnjoj (nema praznog lista); u spojenom redu zastavicu „Prije" nosi prva, a „Poslje" zadnja stavka reda.</li>
                 </ul>
             </div>
         </div>

@@ -119,6 +119,8 @@
    flex-end: checkboxovi sjede uz DONJI rub ikone → razmak među svim checkboxovima grupe jednak. */
 .pdf-dokument-crud__cb-red { display: flex; gap: 0.75rem; flex-wrap: nowrap; align-items: flex-end; }
 .pdf-dokument-crud__cb-red .kontrola-checkbox-labela { white-space: nowrap; }
+/* „Prijelom stranice: Prije □ ili Poslje □ ove stavke." — jedan redak, čita se kao rečenica. */
+.pdf-dokument-crud__cb-red--prijelom { gap: 0.5rem; align-items: center; }
 /* Help „?" gura se skroz desno (desni rub kontrola, kao ostale help ikone). */
 .pdf-dokument-crud__cb-red .pdf-dokument-crud__ellipsis-btn--pomoc { margin-left: auto; }
 .pdf-dokument-crud__stupac .kontrola-select,

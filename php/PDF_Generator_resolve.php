@@ -455,6 +455,7 @@ $parIds = [];
 $slikaIds = [];
 foreach ($stavke as $s) {
     if (($s['vrsta'] ?? '') === 'tekst' && !empty($s['paragraf_id'])) $parIds[(int) $s['paragraf_id']] = true;
+    if (($s['vrsta'] ?? '') === 'tekst' && !empty($s['podatak_paragraf_id'])) $parIds[(int) $s['podatak_paragraf_id']] = true;   // stil PODATKA (relacija_csv)
     if (($s['vrsta'] ?? '') === 'slika' && !empty($s['slika_stil_id'])) $slikaIds[(int) $s['slika_stil_id']] = true;
 }
 if ($brojParId > 0) $parIds[$brojParId] = true;   // stil brojača (možda nije referenciran nijednom stavkom)
@@ -610,6 +611,72 @@ function pdf_follows_build($follows, $dozvoljene, $jt, $tt, &$idx)
         $alias["$src.$col.$tbl.$col2"] = "__$a";
     }
     return [null, $sel, $joins, $alias];
+}
+
+/** Cap-mapa stupnjeva po obredu za ULOGIRANOG dužnosnika (duznosnici_ogranicenja, tip 6).
+ *  Vraća [ obred_id => [ ['id'=>int,'broj'=>int,'naziv'=>str], … ] ]; prazno kad nema dužnosnika/ograničenja.
+ *  Ista logika kao 0-Filteri_Po_Ogranicenjima.js (prikaz stupnja ograničen po obredu). Kesirano po zahtjevu. */
+function pdf_stupanj_ogranicenja_mapa($mysqli)
+{
+    static $cache = null;
+    if ($cache !== null) return $cache;
+    $cache = [];
+    $idDuz = isset($_SESSION['id_duznosnik']) ? (int) $_SESSION['id_duznosnik'] : 0;
+    if ($idDuz <= 0) return $cache;
+    $sql = 'SELECT o.id_tip_obred_funkcionalnost AS obred_id, s.id AS sid, s.stupanj AS broj, s.naziv AS naziv
+            FROM duznosnici_ogranicenja o
+            INNER JOIN stupnjevi s ON s.id = CAST(NULLIF(TRIM(o.vrijednost), \'\') AS UNSIGNED)
+            WHERE o.id_duznosnik = ? AND o.id_tip_ogranicenja = 6
+              AND o.id_tip_obred_funkcionalnost IS NOT NULL AND o.id_tip_obred_funkcionalnost > 0
+            ORDER BY o.id_tip_obred_funkcionalnost ASC, s.stupanj ASC';
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) return $cache;
+    $stmt->bind_param('i', $idDuz);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res) while ($r = $res->fetch_assoc()) {
+        $oid = (int) $r['obred_id'];
+        if ($oid <= 0) continue;
+        $cache[$oid][] = ['id' => (int) $r['sid'], 'broj' => (int) $r['broj'], 'naziv' => (string) $r['naziv']];
+    }
+    $stmt->close();
+    return $cache;
+}
+
+/** Za člana (stupanj id + obred njegove lože) vrati [broj, naziv] stupnja OGRANIČENOG po obredu (cap).
+ *  Obred bez ograničenja → sirovi (broj/naziv). Stupanj člana u dozvoljenom skupu → taj. Inače → najviši dozvoljeni.
+ *  Stupanj prazan (id<=0) → sirovi (bez cap-a). Ista logika kao klijentski primijeniStupnjevaPoOgranicenjima. */
+function pdf_stupanj_cap($ogrMapa, $obredId, $stupId, $sirovBroj, $sirovNaziv)
+{
+    $obredId = (int) $obredId; $stupId = (int) $stupId;
+    if ($stupId <= 0) return [$sirovBroj, $sirovNaziv];
+    $allowed = ($obredId > 0 && isset($ogrMapa[$obredId])) ? $ogrMapa[$obredId] : [];
+    if (empty($allowed)) return [$sirovBroj, $sirovNaziv];
+    foreach ($allowed as $a) { if ((int) $a['id'] === $stupId) return [(string) $a['broj'], (string) $a['naziv']]; }
+    $max = null;
+    foreach ($allowed as $a) { if ($max === null || (int) $a['broj'] > (int) $max['broj']) $max = $a; }
+    return $max ? [(string) $max['broj'], (string) $max['naziv']] : [$sirovBroj, $sirovNaziv];
+}
+
+/** Iz paragraf-stila ($sp = red pdf_paragraf) izgradi znakovni „stil" blok za pdf_odlomci_iz_dijelova
+ *  (font/glavni/fontSize/bold/italics/decoration/color). Vraća null ako nema stila. */
+function pdf_gradi_stil_bloka($sp, $fontPoId, $fontDir)
+{
+    if (!is_array($sp)) return null;
+    $segFk = null; $segGlavni = null;
+    if (!empty($sp['font_id']) && isset($fontPoId[(int) $sp['font_id']])) {
+        $segFk = $fontPoId[(int) $sp['font_id']]['pdfmake_kljuc'];
+        $segGlavni = pdf_font_subtables_cache($fontDir, $fontPoId[(int) $sp['font_id']]['porodica']);
+    }
+    return [
+        'font'       => $segFk,
+        'glavni'     => $segGlavni,
+        'fontSize'   => (float) ($sp['velicina_pt'] ?? 12),
+        'bold'       => !empty($sp['bold']),
+        'italics'    => !empty($sp['italic']),
+        'decoration' => !empty($sp['podcrtano']) ? 'underline' : null,
+        'color'      => (isset($sp['boja']) && (string) $sp['boja'] !== '') ? (string) $sp['boja'] : null,
+    ];
 }
 
 /** Vrijednost jednog segmenta: korisnicki -> literal_tekst (^=razmak); relacija_* -> 1-na-više veza; inače iz whitelist izvora. */
@@ -844,6 +911,101 @@ function pdf_segment_vrijednost($mysqli, $s, $izvori, $relacije, $kontekst)
         }
         return ['greska' => null, 'vrijednost' => implode(PDF_MEKI_PRIJELOM, $lines)];
     }
+    if ($izvorTip === 'relacija_csv') {
+        // Izvor redaka = ZAREZ-LISTA id-eva u koloni (link_kolona) bazne tablice (junction_tablica), NE junction.
+        // Za svaki id → jedan ODLOMAK iz predloška (kao relacija_redak). Podržava %STUPANJ_BROJ%/%STUPANJ_NAZIV%
+        // (cap stupnja po obredu, samo cilj=clanovi) i %BR% = meki prijelom reda (npr. „Potpis:" u nov red).
+        $relId = isset($s['relacija_id']) ? (int) $s['relacija_id'] : 0;
+        $rel = isset($relacije[$relId]) ? $relacije[$relId] : null;
+        if (!$rel || !pdf_ident_ok($rel['junction_tablica']) || !pdf_ident_ok($rel['fk_baza_kolona']) || !pdf_ident_ok($rel['link_kolona'])) {
+            return ['greska' => 'Relacija nije u whitelistu.', 'vrijednost' => null];
+        }
+        $cil = isset($izvori[(int) $rel['ciljni_izvor_id']]) ? $izvori[(int) $rel['ciljni_izvor_id']] : null;
+        if (!$cil || !pdf_ident_ok($cil['tablica'])) {
+            return ['greska' => 'Ciljna tablica relacije nije u whitelistu.', 'vrijednost' => null];
+        }
+        $bt = $rel['junction_tablica'];   // bazna tablica s CSV kolonom (npr. kandidat_dokumenti_001)
+        $bk = $rel['fk_baza_kolona'];     // kolona baznog id-a (npr. id) — usporedba s baseId iz konteksta
+        $csvKol = $rel['link_kolona'];    // CSV kolona s id-evima (npr. predlagaci)
+        $tt = $cil['tablica'];            // ciljna tablica (npr. clanovi)
+        $tpl = (string) ($s['redak_predlozak'] ?? '');
+        if (trim($tpl) === '') return ['greska' => 'Redak-predložak je prazan.', 'vrijednost' => null];
+        $baseId = pdf_dinamicki_id($s, $kontekst);
+        if ($baseId <= 0) return ['greska' => null, 'vrijednost' => null];   // nema konteksta (pregled) → prazno
+        if (!pdf_kolona_postoji($mysqli, $bt, $csvKol) || !pdf_kolona_postoji($mysqli, $bt, $bk)) {
+            return ['greska' => 'CSV kolona relacije nije ispravna.', 'vrijednost' => null];
+        }
+        // Pročitaj CSV iz bazne tablice po baznom id-u
+        $qcsv = $mysqli->prepare("SELECT `$csvKol` AS v FROM `$bt` WHERE `$bk` = ? LIMIT 1");
+        if (!$qcsv) return ['greska' => 'CSV upit neuspješan.', 'vrijednost' => null];
+        $qcsv->bind_param('i', $baseId);
+        $qcsv->execute();
+        $rcsv = $qcsv->get_result();
+        $csvRaw = ($rcsv && ($rr = $rcsv->fetch_assoc())) ? (string) ($rr['v'] ?? '') : '';
+        $qcsv->close();
+        // Parsiraj id-eve (pozitivni int, jedinstveni, zadrži redoslijed iz forme)
+        $ids = [];
+        foreach (explode(',', $csvRaw) as $tok) { $tok = (int) trim($tok); if ($tok > 0 && !in_array($tok, $ids, true)) $ids[] = $tok; }
+        if (empty($ids)) return ['greska' => null, 'vrijednost' => '—', 'csv_dijelovi' => [['t' => '—', 'p' => 1]]];   // niti jedan → crtica u stilu podatka
+        // Whitelist kolone za predložak; relacija_csv NEMA spojnu tablicu → {j.*} nije dozvoljen
+        $dozvoljene = [];
+        foreach ($izvori as $iz) { if (isset($iz['tablica'], $iz['kolona'])) $dozvoljene[$iz['tablica'] . '.' . $iz['kolona']] = true; }
+        $info = pdf_predlozak_parse($tpl);
+        if (!empty($info['jCols'])) return ['greska' => 'relacija_csv ne podržava {j.*} (nema spojne tablice).', 'vrijednost' => null];
+        foreach ($info['follows'] as $f) { if ($f['src'] === 'j') return ['greska' => 'relacija_csv ne podržava {j.*} skok.', 'vrijednost' => null]; }
+        $verr = pdf_predlozak_validiraj_kolone($info, $dozvoljene, $tt, $tt);
+        if ($verr !== null) return ['greska' => $verr, 'vrijednost' => null];
+        $fidx = 0;
+        list($ferr, $fSel, $fJoins, $fAlias) = pdf_follows_build($info['follows'], $dozvoljene, $tt, $tt, $fidx);
+        if ($ferr !== null) return ['greska' => $ferr, 'vrijednost' => null];
+        // Cap stupnja (samo cilj=clanovi i kad predložak koristi tokene)
+        $capStupanj = ($tt === 'clanovi' && (strpos($tpl, '%STUPANJ_BROJ%') !== false || strpos($tpl, '%STUPANJ_NAZIV%') !== false));
+        $sel = ['t.id AS __id'];
+        foreach (array_keys($info['cCols']) as $c) $sel[] = "t.`$c` AS `c_$c`";
+        foreach ($fSel as $fs) $sel[] = $fs;
+        if ($capStupanj) { $sel[] = "t.`stupanj` AS `__stup_id`"; $sel[] = "lz.`id_obred` AS `__obred`"; $sel[] = "st.`stupanj` AS `__stup_broj`"; $sel[] = "st.`naziv` AS `__stup_naziv`"; }
+        $capJoins = $capStupanj ? " LEFT JOIN `loze` lz ON lz.id = t.`loza` LEFT JOIN `stupnjevi` st ON st.id = t.`stupanj`" : '';
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $order = 'FIELD(t.id,' . implode(',', $ids) . ')';   // $ids su int-ovi (sigurno za inline)
+        $sql = "SELECT " . implode(', ', $sel) . " FROM `$tt` t" . $fJoins . $capJoins . " WHERE t.id IN ($in) ORDER BY $order";
+        $stmt = $mysqli->prepare($sql); if (!$stmt) return ['greska' => 'Upit relacije neuspješan.', 'vrijednost' => null];
+        $stmt->bind_param(str_repeat('i', count($ids)), ...$ids);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $ogrMapa = $capStupanj ? pdf_stupanj_ogranicenja_mapa($mysqli) : [];
+        // Gradimo STILIZIRANE dijelove: vrijednosti iz predloška (placeholderi + %STUPANJ_*%) = PODATAK (p=1),
+        // literali = osnovni stil (p=0). Markeri \x1E..\x1F omeđuju podatak; %BR% = meki prijelom; svaki red = odlomak (\n).
+        $DS = "\x1E"; $DE = "\x1F";
+        $parts = []; $plain = ''; $prvi = true;
+        if ($res) while ($row = $res->fetch_assoc()) {
+            // Placeholderi → vrijednost omotana markerima (podatak). {tab} nije u upotrebi (bez fiksne pozicije).
+            $line = preg_replace_callback(PDF_PREDLOZAK_RE, function ($m) use ($row, $fAlias, $DS, $DE) {
+                return $DS . pdf_predlozak_segment($m, $row, $fAlias, ' ') . $DE;
+            }, $tpl);
+            if ($capStupanj) {
+                list($cb, $cn) = pdf_stupanj_cap($ogrMapa, $row['__obred'] ?? 0, $row['__stup_id'] ?? 0, (string) ($row['__stup_broj'] ?? ''), (string) ($row['__stup_naziv'] ?? ''));
+                $line = str_replace(['%STUPANJ_BROJ%', '%STUPANJ_NAZIV%'], [$DS . $cb . $DE, $DS . $cn . $DE], $line);
+            } else {
+                $line = str_replace(['%STUPANJ_BROJ%', '%STUPANJ_NAZIV%'], ['', ''], $line);
+            }
+            // Inline „data-span": {=tekst=} → tekst u stilu PODATKA (za literale, npr. „°" uz stupanj).
+            $line = preg_replace('/\{=(.*?)=\}/us', $DS . '$1' . $DE, $line);
+            $line = str_replace('%BR%', PDF_MEKI_PRIJELOM, $line);   // meki prijelom reda (Potpis u nov red)
+            $line = str_replace('^', ' ', $line);
+            if (!$prvi) { $parts[] = ['t' => "\n", 'p' => 0]; $plain .= "\n"; }   // novi predlagač = novi odlomak
+            $prvi = false;
+            // Razdvoji na literal/podatak: DELIM_CAPTURE → parni indeks literal (p=0), neparni podatak (p=1)
+            $chunks = preg_split('/\x1E(.*?)\x1F/us', $line, -1, PREG_SPLIT_DELIM_CAPTURE);
+            foreach ($chunks as $ix => $ch) {
+                if ($ch === '') continue;
+                $parts[] = ['t' => $ch, 'p' => ($ix % 2 === 1) ? 1 : 0];
+                $plain .= $ch;
+            }
+        }
+        $stmt->close();
+        if (empty($parts)) return ['greska' => null, 'vrijednost' => '—', 'csv_dijelovi' => [['t' => '—', 'p' => 1]]];
+        return ['greska' => null, 'vrijednost' => $plain, 'csv_dijelovi' => $parts];
+    }
     $izvorId = isset($s['izvor_id']) ? (int) $s['izvor_id'] : 0;
     $izvor = isset($izvori[$izvorId]) ? $izvori[$izvorId] : null;
     if (!$izvor || !pdf_ident_ok($izvor['tablica']) || !pdf_ident_ok($izvor['kolona'])) {
@@ -896,6 +1058,8 @@ while ($i < $n) {
         }
         // Stil/font cijele linije = PRVE stavke u lancu.
         $first = $stavke[$chain[0]];
+        // ZADNJA stavka lanca — nosi zastavicu prijelom_poslije za cijeli spojeni red.
+        $last = $stavke[$chain[count($chain) - 1]];
         // Apsolutno pozicioniranje: Y != -1 → cijela linija se crta na (fiksna_pozicija, fiksna_pozicija_y).
         // Y = -1 / NULL → tok (X ostaje tab). Y prve stavke vrijedi za cijeli inline-lanac.
         $fy = (isset($first['fiksna_pozicija_y']) && $first['fiksna_pozicija_y'] !== '' && $first['fiksna_pozicija_y'] !== null) ? (float) $first['fiksna_pozicija_y'] : -1.0;
@@ -938,6 +1102,22 @@ while ($i < $n) {
             if ($sk > 0 && !empty($skImaData[$sk]) && !empty($skPrazna[$sk])) continue;   // prazna skupina → cijela nestaje
             $r = $chainR[$ci];
             if ($r['greska'] !== null && $segErr === null) $segErr = $r['greska'];
+            // relacija_csv: stilizirani dijelovi (vrijednosti = stil PODATKA iz podatak_paragraf_id; literali = osnovni).
+            // Ubaci ih izravno u $dijelovi i preskoči standardnu string-obradu (prefiks/sufiks/mapa/placeholder ne vrijede).
+            if (($seg['izvor_tip'] ?? '') === 'relacija_csv' && !empty($r['csv_dijelovi'])) {
+                $dataStil = null;
+                $ppid = (int) ($seg['podatak_paragraf_id'] ?? 0);
+                if ($ppid > 0 && isset($parStilovi[$ppid])) $dataStil = pdf_gradi_stil_bloka($parStilovi[$ppid], $fontPoId, $fontDir);
+                foreach ($r['csv_dijelovi'] as $d) {
+                    $t = (string) ($d['t'] ?? '');
+                    if ($t === '') continue;
+                    $dijelovi[] = ['tekst' => $t, 'color' => null, 'stil' => (!empty($d['p']) && $dataStil) ? $dataStil : null];
+                    $combined .= $t;
+                }
+                if ($dataStil) $imaVlastitiStil = true;   // → render kroz pdf_odlomci_iz_dijelova (per-dio stil)
+                $imaPrije = true; $zadnjiFlag = 0;
+                continue;
+            }
             $val = $r['vrijednost'];
             $segTekst = null; $segColor = null;
             $pre = ''; $suf = '';   // razriješeni prefiks/sufiks (bazni stil; samo kad vrijednost postoji)
@@ -1020,6 +1200,8 @@ while ($i < $n) {
             'spojeni_odlomci' => in_array(($first['izvor_tip'] ?? ''), ['relacija_redak', 'relacija_lista', 'relacija_grupe'], true),
             // Prijelom stranice prije: samo tok u zoni tijelo (ne apsolutno/okvir); zastavica prve stavke vrijedi za cijeli red.
             'prijelom_prije' => (!$jeAps && $zona === 'tijelo' && empty($first['okvir_id']) && !empty($first['prijelom_prije'])) ? 1 : 0,
+            // Prijelom stranice poslije: isto ograničenje; u spojenom redu zastavicu nosi ZADNJA stavka lanca.
+            'prijelom_poslije' => (!$jeAps && $zona === 'tijelo' && empty($first['okvir_id']) && !empty($last['prijelom_poslije'])) ? 1 : 0,
             // Neki segment nosi vlastiti znakovni stil (render u okviru bira stilizirani put).
             'ima_vlastiti_stil' => $imaVlastitiStil ? 1 : 0
         ];
@@ -1047,8 +1229,9 @@ while ($i < $n) {
         'okvir_id' => !empty($s['okvir_id']) ? (int) $s['okvir_id'] : null,
         'vrsta' => $vrsta,
         'greska' => null,
-        // Prijelom stranice prije: samo tok u zoni tijelo (ne okvir).
-        'prijelom_prije' => ($zona === 'tijelo' && empty($s['okvir_id']) && !empty($s['prijelom_prije'])) ? 1 : 0
+        // Prijelom stranice prije/poslije: samo tok u zoni tijelo (ne okvir).
+        'prijelom_prije' => ($zona === 'tijelo' && empty($s['okvir_id']) && !empty($s['prijelom_prije'])) ? 1 : 0,
+        'prijelom_poslije' => ($zona === 'tijelo' && empty($s['okvir_id']) && !empty($s['prijelom_poslije'])) ? 1 : 0
     ];
     if ($vrsta === 'slika') {
         $r = pdf_segment_vrijednost($mysqli, $s, $izvori, $relacije, $kontekst);

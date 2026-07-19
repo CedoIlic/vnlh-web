@@ -1704,8 +1704,8 @@
             preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
             format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno,
             relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
-            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold,
-            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije,
+            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold, podatak_paragraf_id: s.podatak_paragraf_id,
+            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije, prijelom_poslije: s.prijelom_poslije,
             prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks
           };
         })
@@ -1923,8 +1923,8 @@
             preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
             format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno,
             relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
-            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold,
-            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije,
+            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold, podatak_paragraf_id: s.podatak_paragraf_id,
+            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije, prijelom_poslije: s.prijelom_poslije,
             prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks
           };
         })
@@ -2095,8 +2095,8 @@
             preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti,
             format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno,
             relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator,
-            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold,
-            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije,
+            redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold, podatak_paragraf_id: s.podatak_paragraf_id,
+            zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije, prijelom_poslije: s.prijelom_poslije,
             prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks
           };
         })
