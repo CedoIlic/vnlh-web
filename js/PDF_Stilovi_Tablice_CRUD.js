@@ -48,6 +48,7 @@
     { col: 'linija_red_debljina_mm', type: 'num', def: '' },
     { col: 'linija_red_boja', type: 'color', nullable: true, def: '#000000' },
     { col: 'zaglavlje_pozadina', type: 'check' },
+    { col: 'prva_kolona_kao_zaglavlje', type: 'check' },
     { col: 'zaglavlje_pozadina_boja', type: 'color', nullable: true, def: '' },
     { col: 'zebra', type: 'check' },
     { col: 'zebra_boja', type: 'color', nullable: true, def: '' },
@@ -453,6 +454,7 @@
     if (nazivEl) { nazivEl.addEventListener('input', function () { updateCrudUpisiState(); azurirajDisable(); }); }
     var b;
     if ((b = byId('edit_zaglavlje_pozadina'))) b.addEventListener('change', function () { azurirajGrafikaDinamiku(); renderPreview(); });
+    if ((b = byId('edit_prva_kolona_kao_zaglavlje'))) b.addEventListener('change', function () { renderPreview(); });
     if ((b = byId('edit_zebra'))) b.addEventListener('change', function () { azurirajGrafikaDinamiku(); renderPreview(); });
     if ((b = byId('edit_pozicioniranje'))) b.addEventListener('change', azurirajOstaloDinamiku);
     if ((b = byId('edit_prikazi_zaglavlje'))) b.addEventListener('change', function () { azurirajOstaloDinamiku(); renderPreview(); });
@@ -549,6 +551,7 @@
   function sastaviDocDefinition() {
     var stupci = uzorakStupci();
     var imaZag = cEdit('prikazi_zaglavlje');
+    var prvaKolZag = cEdit('prva_kolona_kao_zaglavlje');   /* prva kolona (labele) oblikovana kao zaglavlje */
     var zagStil = celStil('zaglavlje'), podStil = celStil('podaci');
     var meki = trim(vEdit('meki_prijelom'));
     var mekiLom = function (t) { return meki ? String(t).split(meki).join('\n') : t; };   /* znak → prijelom reda u ćeliji */
@@ -591,7 +594,7 @@
       });
       var pV = valignRed(pCel, famP, podStil.fontSize || 10, !!podStil.bold);
       body.push(pCel.map(function (c, ci) {
-        var cell = Object.assign({ text: c.text, alignment: poravnanjePdf(c.s.pod_orijentacija) }, podStil);
+        var cell = Object.assign({ text: c.text, alignment: poravnanjePdf(c.s.pod_orijentacija) }, (prvaKolZag && ci === 0) ? zagStil : podStil);
         if (pV[ci].marginaGore > 0) cell.margin = [0, pV[ci].marginaGore, 0, 0];
         return cell;
       }));
@@ -616,8 +619,9 @@
         vLineWidth: function (i, node) { return (i === 0 || i === node.table.widths.length) ? okvirD : vertD; },
         hLineColor: function (i, node) { if (i === 0 || i === node.table.body.length) return okvirB; if (imaZag && i === 1) return zagLinB; return redB; },
         vLineColor: function (i, node) { return (i === 0 || i === node.table.widths.length) ? okvirB : vertB; },
-        fillColor: function (rowIndex) {
+        fillColor: function (rowIndex, node, columnIndex) {
           if (imaZag && rowIndex === 0) return zagPoz;
+          if (prvaKolZag && columnIndex === 0) return zagPoz;
           var dataIdx = imaZag ? rowIndex - 1 : rowIndex;
           return (zebra && dataIdx >= 0 && dataIdx % 2 === 1) ? zebra : null;
         },

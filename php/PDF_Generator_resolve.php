@@ -453,10 +453,12 @@ $fontFallback = pdf_font_subtables_cache($fontDir, $porodicaFallback);
 // --- Korišteni stilovi/fontovi ------------------------------------------
 $parIds = [];
 $slikaIds = [];
+$tablicaStilIds = [];
 foreach ($stavke as $s) {
     if (($s['vrsta'] ?? '') === 'tekst' && !empty($s['paragraf_id'])) $parIds[(int) $s['paragraf_id']] = true;
     if (($s['vrsta'] ?? '') === 'tekst' && !empty($s['podatak_paragraf_id'])) $parIds[(int) $s['podatak_paragraf_id']] = true;   // stil PODATKA (relacija_csv)
     if (($s['vrsta'] ?? '') === 'slika' && !empty($s['slika_stil_id'])) $slikaIds[(int) $s['slika_stil_id']] = true;
+    if (($s['vrsta'] ?? '') === 'tablica' && !empty($s['tablica_stil_id'])) $tablicaStilIds[(int) $s['tablica_stil_id']] = true;
 }
 if ($brojParId > 0) $parIds[$brojParId] = true;   // stil brojača (možda nije referenciran nijednom stavkom)
 function pdf_ucitaj_stilove($mysqli, $tablica, $ids)
@@ -471,11 +473,24 @@ function pdf_ucitaj_stilove($mysqli, $tablica, $ids)
 }
 $parStilovi = pdf_ucitaj_stilove($mysqli, 'pdf_paragraf', $parIds);
 $slikaStilovi = pdf_ucitaj_stilove($mysqli, 'pdf_slika_stil', $slikaIds);
+// Tablica-stilovi: red pdf_tablica_stil + njegove kolone (pdf_tablica_stil_kolona) po redoslijedu.
+$tablicaStilovi = [];   // id => ['stil'=>row, 'stupci'=>[kolona,...]]
+if (!empty($tablicaStilIds)) {
+    $in = implode(',', array_map('intval', array_keys($tablicaStilIds)));
+    $r = $mysqli->query("SELECT * FROM `pdf_tablica_stil` WHERE id IN ($in)");
+    if ($r) while ($row = $r->fetch_assoc()) $tablicaStilovi[(int) $row['id']] = ['stil' => $row, 'stupci' => []];
+    $rk = $mysqli->query("SELECT * FROM `pdf_tablica_stil_kolona` WHERE tablica_stil_id IN ($in) ORDER BY tablica_stil_id ASC, redoslijed ASC, id ASC");
+    if ($rk) while ($kr = $rk->fetch_assoc()) { $tid = (int) $kr['tablica_stil_id']; if (isset($tablicaStilovi[$tid])) $tablicaStilovi[$tid]['stupci'][] = $kr; }
+}
 
 // font po paragrafu (font_id -> {kljuc, porodica}); skupi i listu potrebnih fontova
 $fontPoId = [];
 $fontIds = [];
 foreach ($parStilovi as $p) { if (!empty($p['font_id'])) $fontIds[(int) $p['font_id']] = true; }
+foreach ($tablicaStilovi as $ts) {
+    if (!empty($ts['stil']['zaglavlje_font_id'])) $fontIds[(int) $ts['stil']['zaglavlje_font_id']] = true;
+    if (!empty($ts['stil']['podaci_font_id'])) $fontIds[(int) $ts['stil']['podaci_font_id']] = true;
+}
 if (!empty($fontIds)) {
     $in = implode(',', array_map('intval', array_keys($fontIds)));
     $r = $mysqli->query("SELECT id, pdfmake_kljuc, porodica FROM pdf_fontovi WHERE id IN ($in)");
@@ -485,6 +500,13 @@ if (!empty($fontIds)) {
 foreach ($parStilovi as $pid => $prow) {
     $fid = !empty($prow['font_id']) ? (int) $prow['font_id'] : 0;
     if ($fid && isset($fontPoId[$fid])) $parStilovi[$pid]['pdfmake_kljuc'] = $fontPoId[$fid]['pdfmake_kljuc'];
+}
+// Pridruži pdfmake font-ključeve tablica-stilovima (zaglavlje/podaci) za render.
+foreach ($tablicaStilovi as $tid => $ts) {
+    $zf = !empty($ts['stil']['zaglavlje_font_id']) ? (int) $ts['stil']['zaglavlje_font_id'] : 0;
+    $pf = !empty($ts['stil']['podaci_font_id']) ? (int) $ts['stil']['podaci_font_id'] : 0;
+    $tablicaStilovi[$tid]['stil']['zaglavlje_font_kljuc'] = ($zf && isset($fontPoId[$zf])) ? $fontPoId[$zf]['pdfmake_kljuc'] : null;
+    $tablicaStilovi[$tid]['stil']['podaci_font_kljuc'] = ($pf && isset($fontPoId[$pf])) ? $fontPoId[$pf]['pdfmake_kljuc'] : null;
 }
 
 /** Spojeni nazivi 1-na-više veze ($rel) za bazni id: junction.fk_baza = baseId JOIN cilj.kolona po link.
@@ -1031,6 +1053,66 @@ function pdf_segment_vrijednost($mysqli, $s, $izvori, $relacije, $kontekst)
     return ['greska' => null, 'vrijednost' => pdf_formatiraj_datum(pdf_mapa_primijeni($val, $s['mapa_vrijednosti'] ?? null), $s['format_datuma'] ?? null)];
 }
 
+/** Dekodiraj glasanje "datum,glasača,za,protiv,suzdržani" u polje 5 vrijednosti; -1 → ''. */
+function pdf_glasanje_dekodiraj($s)
+{
+    $out = ['', '', '', '', ''];
+    if ($s === null || $s === '') return $out;
+    $p = explode(',', (string) $s);
+    for ($i = 0; $i < 5; $i++) {
+        $v = isset($p[$i]) ? trim($p[$i]) : '';
+        $out[$i] = ($v === '-1') ? '' : $v;
+    }
+    return $out;
+}
+
+/** Record za tablicu glasanja: transponira glasanje_1/2/3 (kandidat_dokumenti_001, baseId iz konteksta)
+ *  u 5 redova [labela, g1, g2, g3]. Uvijek vraća tablicu (sva 3 stupca; prazne ćelije prazne). */
+function pdf_tablica_rec($mysqli, $s, $tablicaStilovi, $kontekst, $zona)
+{
+    $rec = [
+        'redoslijed' => isset($s['redoslijed']) ? (int) $s['redoslijed'] : 0,
+        'zona' => $zona,
+        'vrsta' => 'tablica',
+        'greska' => null,
+        'prijelom_prije' => ($zona === 'tijelo' && !empty($s['prijelom_prije'])) ? 1 : 0,
+        'prijelom_poslije' => ($zona === 'tijelo' && !empty($s['prijelom_poslije'])) ? 1 : 0,
+    ];
+    $tsId = !empty($s['tablica_stil_id']) ? (int) $s['tablica_stil_id'] : 0;
+    $ts = ($tsId && isset($tablicaStilovi[$tsId])) ? $tablicaStilovi[$tsId] : null;
+    if (!$ts) { $rec['greska'] = 'Stil tablice nije pronađen.'; return $rec; }
+
+    $g = [['', '', '', '', ''], ['', '', '', '', ''], ['', '', '', '', '']];
+    if (($s['izvor_tip'] ?? '') === 'tablica_glasanja') {
+        $baseId = pdf_dinamicki_id($s, $kontekst);
+        if ($baseId > 0) {
+            $q = $mysqli->prepare('SELECT glasanje_1, glasanje_2, glasanje_3 FROM kandidat_dokumenti_001 WHERE id = ? LIMIT 1');
+            if ($q) {
+                $q->bind_param('i', $baseId);
+                $q->execute();
+                if ($row = $q->get_result()->fetch_assoc()) {
+                    $g[0] = pdf_glasanje_dekodiraj($row['glasanje_1']);
+                    $g[1] = pdf_glasanje_dekodiraj($row['glasanje_2']);
+                    $g[2] = pdf_glasanje_dekodiraj($row['glasanje_3']);
+                }
+                $q->close();
+            }
+        }
+    }
+    // 5 redova: [labela, g1[f], g2[f], g3[f]]; f=0 (datum) → DD.MM.YYYY.
+    $labele = ['Datum', 'Broj glasača', 'Za', 'Protiv', 'Suzdržani'];
+    $redovi = [];
+    for ($f = 0; $f < 5; $f++) {
+        $cel = [$labele[$f], $g[0][$f], $g[1][$f], $g[2][$f]];
+        if ($f === 0) {
+            for ($c = 1; $c <= 3; $c++) $cel[$c] = ($cel[$c] !== '') ? pdf_formatiraj_datum($cel[$c], 'DD.MM.YYYY.') : '';
+        }
+        $redovi[] = $cel;
+    }
+    $rec['tablica'] = ['stil' => $ts['stil'], 'stupci' => $ts['stupci'], 'redovi' => $redovi];
+    return $rec;
+}
+
 // --- Razrješavanje stavki -----------------------------------------------
 $out = [];
 $trebaFallback = false;
@@ -1041,6 +1123,12 @@ while ($i < $n) {
     $s = $stavke[$i];
     $vrsta = $s['vrsta'] ?? '';
     $zona = $s['zona'] ?? 'tijelo';
+
+    if ($vrsta === 'tablica') {
+        $out[] = pdf_tablica_rec($mysqli, $s, $tablicaStilovi, $kontekst, $zona);
+        $i++;
+        continue;
+    }
 
     if ($vrsta === 'tekst') {
         // Lanac inline-spajanja: i..k; svaka (osim zadnje) ima bez_kraja_odlomka=1, sve 'tekst', isti zona.

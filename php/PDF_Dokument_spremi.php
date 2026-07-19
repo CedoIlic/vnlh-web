@@ -82,18 +82,18 @@ try {
         $sufiks = null;    // literal iza vrijednosti samo kad postoji
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold, okvir_id, fiksna_pozicija_y, zadrzi_svoj_stil, prijelom_prije, prijelom_poslije, prazno_nacin, skupina, prefiks, sufiks, podatak_paragraf_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold, okvir_id, fiksna_pozicija_y, zadrzi_svoj_stil, prijelom_prije, prijelom_poslije, prazno_nacin, skupina, prefiks, sufiks, podatak_paragraf_id, tablica_stil_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $ins->bind_param('iissisisisssiiisissdiisssiidiiisissi', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold, $okvirId, $fiksy, $zss, $prelom, $prelomPosl, $praznoNacin, $skupina, $prefiks, $sufiks, $podParId);
+        $ins->bind_param('iissisisisssiiisissdiisssiidiiisissii', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold, $okvirId, $fiksy, $zss, $prelom, $prelomPosl, $praznoNacin, $skupina, $prefiks, $sufiks, $podParId, $tablicaStilId);
         $dok = $id;
         $i = 0;
         foreach ($stavke as $s) {
             $i++;
             $red = isset($s['redoslijed']) ? (int) $s['redoslijed'] : $i;
             $zona = in_array(($s['zona'] ?? ''), ['tijelo', 'zaglavlje', 'podnozje', 'naslovna'], true) ? $s['zona'] : 'tijelo';
-            $vrsta = in_array(($s['vrsta'] ?? ''), ['tekst', 'slika'], true) ? $s['vrsta'] : '';
-            $izTip = in_array(($s['izvor_tip'] ?? ''), ['staticki', 'dinamicki', 'po_vrijednosti', 'korisnicki', 'relacija_broj', 'relacija_lista', 'relacija_redak', 'relacija_grupe', 'relacija_csv'], true) ? $s['izvor_tip'] : '';
+            $vrsta = in_array(($s['vrsta'] ?? ''), ['tekst', 'slika', 'tablica'], true) ? $s['vrsta'] : '';
+            $izTip = in_array(($s['izvor_tip'] ?? ''), ['staticki', 'dinamicki', 'po_vrijednosti', 'korisnicki', 'relacija_broj', 'relacija_lista', 'relacija_redak', 'relacija_grupe', 'relacija_csv', 'tablica_glasanja'], true) ? $s['izvor_tip'] : '';
             if ($vrsta === '' || $izTip === '') {
                 throw new RuntimeException('stavka_nevaljana');
             }
@@ -131,6 +131,12 @@ try {
                     $redakPred = $rp;
                     if ($izTip === 'relacija_grupe') $labelaBold = !empty($s['labela_bold']) ? 1 : 0;
                 }
+            } elseif ($izTip === 'tablica_glasanja') {
+                // Tablica glasanja: bez whitelist izvora; bazni id iz konteksta; tablica_stil_id obavezan (niže).
+                if ($vrsta !== 'tablica') { throw new RuntimeException('stavka_nevaljana'); }
+                $kk = trim((string) ($s['kontekst_kljuc'] ?? ''));
+                if ($kk === '') { throw new RuntimeException('stavka_nevaljana'); }
+                $izParam = null; $lit = null; $izRed = null; $kkljuc = $kk; $tkol = null; $tvrij = null;
             } else {
                 $izvorId = (int) ($s['izvor_id'] ?? 0);
                 if ($izvorId <= 0) {
@@ -145,10 +151,11 @@ try {
                 $tvrij = ($izTip === 'po_vrijednosti') ? (string) ($s['trazi_vrijednost'] ?? '') : null;
             }
             // Testni id retka — za dinamicki i relacija_* (pregled bez konteksta); inace NULL.
-            $tid = (in_array($izTip, ['dinamicki', 'relacija_broj', 'relacija_lista', 'relacija_redak', 'relacija_grupe', 'relacija_csv'], true) && (int) ($s['test_id'] ?? 0) > 0) ? (int) $s['test_id'] : null;
+            $tid = (in_array($izTip, ['dinamicki', 'relacija_broj', 'relacija_lista', 'relacija_redak', 'relacija_grupe', 'relacija_csv', 'tablica_glasanja'], true) && (int) ($s['test_id'] ?? 0) > 0) ? (int) $s['test_id'] : null;
             // Stil po vrsti (drugi NULL → zadovolji chk_prikaz_po_vrsti)
             $parId = ($vrsta === 'tekst' && (int) ($s['paragraf_id'] ?? 0) > 0) ? (int) $s['paragraf_id'] : null;
             $sslik = ($vrsta === 'slika' && (int) ($s['slika_stil_id'] ?? 0) > 0) ? (int) $s['slika_stil_id'] : null;
+            $tablicaStilId = ($vrsta === 'tablica' && (int) ($s['tablica_stil_id'] ?? 0) > 0) ? (int) $s['tablica_stil_id'] : null;
             $bv = (int) ($s['bez_kraja_odlomka'] ?? 0);   // 1=isti red (inline); 2=novi red, isti odlomak
             $bezkraj = ($vrsta === 'tekst' && in_array($bv, [1, 2], true)) ? $bv : 0;
             $n = trim((string) ($s['naziv_stavke'] ?? ''));

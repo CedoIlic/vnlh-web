@@ -31,6 +31,7 @@ CREATE TABLE `pdf_tablica_stil` (
   `zaglavlje_pozadina_boja`       varchar(7) DEFAULT NULL COMMENT 'Boja pozadine zaglavlja',
   `zebra`                         tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Naizmjenična pozadina parnih redova',
   `zebra_boja`                    varchar(7) DEFAULT NULL COMMENT 'Boja zebra-pozadine',
+  `prva_kolona_kao_zaglavlje`     tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Prva kolona (labele redova) se oblikuje kao zaglavlje (ispuna + font/boja zaglavlja) — za transponirane tablice (npr. glasanja)',
   -- Grafika: vertikalni padding ćelije (per regija)
   `zaglavlje_padding_gore_mm`     decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Vert. padding ćelije zaglavlja — gore',
   `zaglavlje_padding_dolje_mm`    decimal(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Vert. padding ćelije zaglavlja — dolje',

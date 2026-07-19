@@ -474,8 +474,82 @@
     });
 
     /* Jedna stavka → niz pdfmake elemenata (tekst = više odlomaka; slika = jedan). */
+    /* Tablica (vrsta=tablica): pdfmake table iz razriješenog modela (stil + stupci + redovi).
+       Logika prati PDF_Stilovi_Tablice_CRUD preview (obrubi/ispune/padding/poravnanja), ali iz podataka. */
+    function sastaviTablica(tab) {
+      var st = (tab && tab.stil) || {}, stupci = (tab && tab.stupci) || [], redovi = (tab && tab.redovi) || [];
+      var nCol = stupci.length || (redovi[0] ? redovi[0].length : 0);
+      function num(v) { return parseFloat(String(v == null ? '' : v).replace(',', '.')) || 0; }
+      function mmpt(v) { return num(v) * MM_PT; }
+      function porav(o) { return o === 'centar' ? 'center' : (o === 'desno' ? 'right' : 'left'); }
+      var imaZag = (st.prikazi_zaglavlje == null) ? true : !!(+st.prikazi_zaglavlje);
+      var prvaKolZag = !!(+st.prva_kolona_kao_zaglavlje);
+      var zagStil = { fontSize: num(st.zaglavlje_velicina_pt) || 10, bold: !!(+st.zaglavlje_bold), italics: !!(+st.zaglavlje_italic) };
+      if (st.zaglavlje_font_kljuc) zagStil.font = st.zaglavlje_font_kljuc;
+      if (+st.zaglavlje_podcrtano) zagStil.decoration = 'underline';
+      if (st.zaglavlje_boja) zagStil.color = st.zaglavlje_boja;
+      var podStil = { fontSize: num(st.podaci_velicina_pt) || 10, bold: !!(+st.podaci_bold), italics: !!(+st.podaci_italic) };
+      if (st.podaci_font_kljuc) podStil.font = st.podaci_font_kljuc;
+      if (+st.podaci_podcrtano) podStil.decoration = 'underline';
+      if (st.podaci_boja) podStil.color = st.podaci_boja;
+      var meki = (st.meki_prijelom != null && String(st.meki_prijelom) !== '') ? String(st.meki_prijelom) : '';
+      function mekiLom(v) { v = (v == null ? '' : String(v)); return meki ? v.split(meki).join('\n') : v; }
+      function celija(txt, align, stil) { var c = { text: txt, alignment: align }; for (var k in stil) c[k] = stil[k]; return c; }
+      var widths = [];
+      for (var ci = 0; ci < nCol; ci++) { var k = stupci[ci] || {}; widths.push((k.sirina_tip === 'fiksna' && num(k.sirina_mm) > 0) ? mmpt(k.sirina_mm) : '*'); }
+      var body = [];
+      if (imaZag) {
+        var zrow = [];
+        for (var zi = 0; zi < nCol; zi++) { var kz = stupci[zi] || {}; zrow.push(celija(mekiLom((kz.zag_prefix || '') + (kz.zaglavlje || '') + (kz.zag_sufiks || '')) || ' ', porav(kz.zag_orijentacija), zagStil)); }
+        body.push(zrow);
+      }
+      for (var r = 0; r < redovi.length; r++) {
+        var drow = [];
+        for (var di = 0; di < nCol; di++) {
+          var kd = stupci[di] || {}, prvaZag = (prvaKolZag && di === 0), bs = prvaZag ? zagStil : podStil;
+          var raw = (redovi[r][di] != null) ? String(redovi[r][di]) : '';
+          drow.push(celija(mekiLom((kd.pod_prefix || '') + raw + (kd.pod_sufiks || '')), porav(prvaZag ? kd.zag_orijentacija : kd.pod_orijentacija), bs));
+        }
+        body.push(drow);
+      }
+      var okvirD = mmpt(st.okvir_debljina_mm), okvirB = st.okvir_boja || '#000000';
+      var zagLinD = mmpt(st.zaglavlje_linija_debljina_mm), zagLinB = st.zaglavlje_linija_boja || '#000000';
+      var vertD = mmpt(st.linija_vert_debljina_mm), vertB = st.linija_vert_boja || '#000000';
+      var redD = mmpt(st.linija_red_debljina_mm), redB = st.linija_red_boja || '#000000';
+      var zagPoz = (+st.zaglavlje_pozadina) ? (st.zaglavlje_pozadina_boja || null) : null;
+      var zebra = (+st.zebra) ? (st.zebra_boja || null) : null;
+      var zPadG = mmpt(st.zaglavlje_padding_gore_mm), zPadD = mmpt(st.zaglavlje_padding_dolje_mm);
+      var pPadG = mmpt(st.podaci_padding_gore_mm), pPadD = mmpt(st.podaci_padding_dolje_mm);
+      var node = {
+        table: { headerRows: (imaZag && st.zaglavlje_ponavljanje === 'svaka') ? 1 : 0, dontBreakRows: !!(+st.ne_lomi_red), widths: widths, body: body },
+        layout: {
+          hLineWidth: function (i, n) { if (i === 0 || i === n.table.body.length) return okvirD; if (imaZag && i === 1) return zagLinD; return redD; },
+          vLineWidth: function (i, n) { return (i === 0 || i === n.table.widths.length) ? okvirD : vertD; },
+          hLineColor: function (i, n) { if (i === 0 || i === n.table.body.length) return okvirB; if (imaZag && i === 1) return zagLinB; return redB; },
+          vLineColor: function (i, n) { return (i === 0 || i === n.table.widths.length) ? okvirB : vertB; },
+          fillColor: function (rowIndex, n, colIndex) {
+            if (imaZag && rowIndex === 0) return zagPoz;
+            if (prvaKolZag && colIndex === 0) return zagPoz;
+            var dataIdx = imaZag ? rowIndex - 1 : rowIndex;
+            return (zebra && dataIdx >= 0 && dataIdx % 2 === 1) ? zebra : null;
+          },
+          paddingLeft: function (ci) { var kk = stupci[ci] || {}; return mmpt(kk.pod_padding_lijevo_mm) || mmpt(kk.zag_padding_lijevo_mm) || 2; },
+          paddingRight: function (ci) { var kk = stupci[ci] || {}; return mmpt(kk.pod_padding_desno_mm) || mmpt(kk.zag_padding_desno_mm) || 2; },
+          paddingTop: function (rowIndex) { return (imaZag && rowIndex === 0) ? zPadG : pPadG; },
+          paddingBottom: function (rowIndex) { return (imaZag && rowIndex === 0) ? zPadD : pPadD; }
+        },
+        margin: [0, mmpt(st.razmak_prije_mm), 0, mmpt(st.razmak_poslije_mm)]
+      };
+      if (st.pozicioniranje === 'apsolutno') { node.absolutePosition = { x: mmpt(st.pozicija_x_mm), y: mmpt(st.pozicija_y_mm) }; return node; }
+      var por = st.poravnanje, sp = { width: '*', text: '' };
+      if (por === 'centar') { var nc = {}; for (var a in node) nc[a] = node[a]; nc.width = 'auto'; return { columns: [sp, nc, { width: '*', text: '' }] }; }
+      if (por === 'desno') { var nd = {}; for (var b in node) nd[b] = node[b]; nd.width = 'auto'; return { columns: [sp, nd] }; }
+      return node;
+    }
+
     function elementi(s) {
       if (!s || s.greska || s.sakrij) return [];
+      if (s.vrsta === 'tablica') return s.tablica ? [sastaviTablica(s.tablica)] : [];
       if (s.vrsta === 'slika') {
         var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
         /* Apsolutno — ishodište po zoni:

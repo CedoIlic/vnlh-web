@@ -125,6 +125,7 @@ function pdf_tablica_stil_citaj_polja(&$code)
         ['linija_red_boja', 's', $redB],
         // Grafika — ispune
         ['zaglavlje_pozadina', 'i', $zagPoz],
+        ['prva_kolona_kao_zaglavlje', 'i', pdf_tbl_bool('prva_kolona_kao_zaglavlje')],
         ['zaglavlje_pozadina_boja', 's', $zagPozB],
         ['zebra', 'i', $zebra],
         ['zebra_boja', 's', $zebraB],
