@@ -337,20 +337,10 @@
                                         <input id="obr1b_datum_odbijanja" type="date" class="kontrola-edit">
                                     </div>
                                 </div>
-                                <!-- Časni majstor / VIP: RO edit + elipsis → modal „Odaberi" (izbor člana); labela lijevo -->
-                                <div class="kandidat-dokumenti-crud__obr1b-clan-red">
-                                    <label class="kontrola-labela mb-0" for="obr1b_casni_majstor">Časni majstor</label>
-                                    <div class="kandidat-dokumenti-crud__obr1b-clan-izbor">
-                                        <input id="obr1b_casni_majstor" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
-                                        <button type="button" id="obr1b_casni_majstor_btn" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Odaberi člana" aria-label="Odaberi Časnog majstora"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
-                                    </div>
-                                </div>
-                                <div class="kandidat-dokumenti-crud__obr1b-clan-red">
-                                    <label class="kontrola-labela mb-0" for="obr1b_vip">VIP</label>
-                                    <div class="kandidat-dokumenti-crud__obr1b-clan-izbor">
-                                        <input id="obr1b_vip" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
-                                        <button type="button" id="obr1b_vip_btn" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Odaberi člana" aria-label="Odaberi VIP-a"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
-                                    </div>
+                                <!-- Razlog odbijanja: textarea (labela lijevo). Omogućeno/editabilno SAMO ako je „Datum odbijanja" valjan datum. -->
+                                <div class="kandidat-dokumenti-crud__obr1b-razlog-red">
+                                    <label class="kontrola-labela mb-0" for="obr1b_razlog_odbijanja">Razlog odbijanja</label>
+                                    <textarea id="obr1b_razlog_odbijanja" class="kontrola-napomena kandidat-dokumenti-crud__obr1b-razlog" rows="3" maxlength="1024" disabled aria-label="Razlog odbijanja"></textarea>
                                 </div>
                             </div>
                             <!-- 2. kolona: „Rezultati glasanja" (naslov + PDF) + matrica (3 stupca = 1./2./3. glasanje; 5 redova = Datum, Glasača, Za, Protiv, Suzdržani) -->
@@ -397,6 +387,23 @@
                                     <input id="obr1b_g1_suzdrzani" type="text" inputmode="numeric" class="kontrola-edit" maxlength="4" autocomplete="off" aria-label="1. glasanje — suzdržani">
                                     <input id="obr1b_g2_suzdrzani" type="text" inputmode="numeric" class="kontrola-edit" maxlength="4" autocomplete="off" aria-label="2. glasanje — suzdržani">
                                     <input id="obr1b_g3_suzdrzani" type="text" inputmode="numeric" class="kontrola-edit" maxlength="4" autocomplete="off" aria-label="3. glasanje — suzdržani">
+                                </div>
+                                <!-- Časni majstor / VIP: RO edit + elipsis → modal „Odaberi" (izbor člana); na DNU desnog stupca, labela lijevo -->
+                                <div class="kandidat-dokumenti-crud__obr1b-clanovi">
+                                    <div class="kandidat-dokumenti-crud__obr1b-clan-red">
+                                        <label class="kontrola-labela mb-0" for="obr1b_casni_majstor">Časni majstor</label>
+                                        <div class="kandidat-dokumenti-crud__obr1b-clan-izbor">
+                                            <input id="obr1b_casni_majstor" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                            <button type="button" id="obr1b_casni_majstor_btn" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Odaberi člana" aria-label="Odaberi Časnog majstora"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obr1b-clan-red">
+                                        <label class="kontrola-labela mb-0" for="obr1b_vip">VIP</label>
+                                        <div class="kandidat-dokumenti-crud__obr1b-clan-izbor">
+                                            <input id="obr1b_vip" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
+                                            <button type="button" id="obr1b_vip_btn" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Odaberi člana" aria-label="Odaberi VIP-a"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

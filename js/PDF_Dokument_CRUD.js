@@ -855,6 +855,19 @@
     if (dlg && hdr && typeof KontroleModalDrag === 'function') KontroleModalDrag(dlg, hdr);
   })();
 
+  /* ---- Popup opisa VRSTA STAVKI (help uz „Vrsta stavke") ---- */
+  (function () {
+    var m = byId('vrsteStavkiPomocModal'); if (!m) return;
+    function otvori() { m.setAttribute('aria-hidden', 'false'); m.classList.add('kontrola-modal--open'); }
+    function zatvori() { m.setAttribute('aria-hidden', 'true'); m.classList.remove('kontrola-modal--open'); }
+    var bp = byId('btnVrsteStavkiPomoc'); if (bp) bp.addEventListener('click', otvori);
+    var ok = byId('btnVrsteStavkiPomocOk'); if (ok) ok.addEventListener('click', zatvori);
+    var ov = byId('vrsteStavkiPomocModal_overlay'); if (ov) ov.addEventListener('click', zatvori);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && m.getAttribute('aria-hidden') === 'false') zatvori(); });
+    var dlg = m.querySelector('.kontrola-modal__dialog'), hdr = byId('vrsteStavkiPomocModal_header');
+    if (dlg && hdr && typeof KontroleModalDrag === 'function') KontroleModalDrag(dlg, hdr);
+  })();
+
   /* ---- Popup uputa za prefiks/sufiks (samo ako ima) ---- */
   (function () {
     var m = byId('prefSufPomocModal'); if (!m) return;

@@ -313,7 +313,10 @@
 .pdf-dokument-crud__na-temelju:not([hidden]) { display: flex; align-items: center; gap: .75rem; }
 .pdf-dokument-crud__na-temelju .kontrola-labela { flex: 0 0 11rem; white-space: nowrap; margin-bottom: 0; font-family: var(--modal_header_font_family); font-size: var(--modal_header_font_size); font-weight: var(--modal_header_font_weight); }
 .pdf-dokument-crud__na-temelju .kontrola-select { flex: 1 1 auto; min-width: 0; }
-/* Otvoreni select smije preko ruba modala (kao u panelu): privremeno overflow:visible */
+/* Tijelo skrola kad sadržaj (npr. rastegnut „Redak-predložak" ili puno polja) premaši visinu modala;
+   zaglavlje i podnožje ostaju fiksni. min-height:0 dopušta flex-djetetu da se smanji ispod sadržaja. */
+.pdf-dokument-crud__stavka-modal .kontrola-modal__body { overflow-y: auto; min-height: 0; }
+/* Otvoreni select smije preko ruba modala (kao u panelu): privremeno overflow:visible (jači selektor pregazi scroll) */
 .pdf-dokument-crud__stavka-modal:has(.kontrola-select--open),
 .pdf-dokument-crud__stavka-modal:has(.kontrola-select--open) .kontrola-modal__body,
 .pdf-dokument-crud__stavka-modal:has(.kontrola-select--open) .kontrola-modal__content { overflow: visible; }

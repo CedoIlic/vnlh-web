@@ -765,9 +765,30 @@
   padding-left: 1.5rem;
   border-left: 1px solid var(--edit_border, #ced4da);
 }
-/* Matrica gurnuta na dno desnog stupca (razmak nakon zaglavlja raste) → dno matrice poravnato
-   s dnom lijevog stupca (VIP). Zaglavlje ostaje na vrhu. */
-.kandidat-dokumenti-crud__obr1b-glasanja-mreza { margin-top: auto; }
+/* Matrica ide odmah ispod zaglavlja; Časni/VIP (obr1b-clanovi) gurnuti na DNO desnog stupca. */
+.kandidat-dokumenti-crud__obr1b-clanovi {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1rem;
+}
+/* Razlog odbijanja (lijevi stupac): labela IZNAD; textarea raste (flex) da se visina lijevog
+   stupca izjednači s desnim (obr1b ima align-items:stretch). */
+.kandidat-dokumenti-crud__obr1b-razlog-red {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 auto;         /* popuni preostalu visinu lijevog stupca */
+  min-height: 0;
+}
+.kandidat-dokumenti-crud__obr1b-razlog {
+  flex: 1 1 auto;         /* textarea raste s redom */
+  min-height: 4rem;
+  min-width: 0;
+  box-sizing: border-box;
+  resize: vertical;
+}
 /* 1. stupac: pretraga (iznad); selekt + ikone u istom redu; tablica ispod. */
 .kandidat-dokumenti-crud__obr1b-glavni {
   display: flex;

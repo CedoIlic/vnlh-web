@@ -24,7 +24,7 @@ function decode_glasanje($s) {
     return $out;
 }
 
-$sql = 'SELECT predlagaci, glasanje_1, glasanje_2, glasanje_3, datum_razmatranja, datum_odbijanja, casni_id, vip_id
+$sql = 'SELECT predlagaci, glasanje_1, glasanje_2, glasanje_3, datum_razmatranja, datum_odbijanja, razlog_odbijanja, casni_id, vip_id
         FROM kandidat_dokumenti_001 WHERE id_clan = ? LIMIT 1';
 $stmt = $mysqli->prepare($sql);
 if (!$stmt) { echo json_encode(['postoji' => false]); $mysqli->close(); exit; }
@@ -88,6 +88,7 @@ echo json_encode([
     'glasanje_3'        => decode_glasanje($row['glasanje_3']),
     'datum_razmatranja' => $row['datum_razmatranja'] !== null ? $row['datum_razmatranja'] : '',
     'datum_odbijanja'   => $row['datum_odbijanja'] !== null ? $row['datum_odbijanja'] : '',
+    'razlog_odbijanja'  => $row['razlog_odbijanja'] !== null ? $row['razlog_odbijanja'] : '',
     'casni'             => $casni,
     'vip'               => $vip,
 ], JSON_UNESCAPED_UNICODE);

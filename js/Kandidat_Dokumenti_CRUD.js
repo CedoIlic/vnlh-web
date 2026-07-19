@@ -1154,6 +1154,9 @@
   var btnObr1bObrisi        = document.getElementById('obr1bObrisi');  /* smeće → briše selektirani red */
   var obr1bDatumRazmatranja = document.getElementById('obr1b_datum_razmatranja');
   var obr1bDatumOdbijanja   = document.getElementById('obr1b_datum_odbijanja');
+  var obr1bRazlog           = document.getElementById('obr1b_razlog_odbijanja');   /* Razlog odbijanja (textarea) — enable samo uz valjan datum odbijanja */
+  var obr1bRazlogLabel      = document.querySelector('label[for="obr1b_razlog_odbijanja"]');   /* labela prati disabled stanje textarea */
+  var _obr1bEnabled         = false;   /* je li tab 001b trenutno omogućen (za uvjet razloga) */
   /* Matrica glasanja: 3 stupca (1./2./3. glasanje) × 5 polja (datum, glasača, za, protiv, suzdržani). */
   var OBR1B_GLAS_IDS = (function () {
     var out = [], polja = ['datum', 'glasaca', 'za', 'protiv', 'suzdrzani'];
@@ -1290,6 +1293,8 @@
     for (var gi = 0; gi < OBR1B_GLAS_IDS.length; gi++) { var ge = document.getElementById(OBR1B_GLAS_IDS[gi]); if (ge) ge.value = ''; }
     if (obr1bCasniEdit) { obr1bCasniEdit.value = ''; if (obr1bCasniEdit.dataset) delete obr1bCasniEdit.dataset.clanId; }
     if (obr1bVipEdit) { obr1bVipEdit.value = ''; if (obr1bVipEdit.dataset) delete obr1bVipEdit.dataset.clanId; }
+    if (obr1bRazlog) obr1bRazlog.value = '';
+    obr1bAzurirajRazlog();
     _obrazac001bPostoji = false;
     renderPredlagaciTablica();
   }
@@ -1331,6 +1336,8 @@
               if (obr1bDatumOdbijanja) obr1bDatumOdbijanja.value = o.datum_odbijanja || '';
               obr1bPostaviClanEdit(obr1bCasniEdit, o.casni);
               obr1bPostaviClanEdit(obr1bVipEdit, o.vip);
+              if (obr1bRazlog) obr1bRazlog.value = o.razlog_odbijanja || '';
+              obr1bAzurirajRazlog();
             } catch (e) {}
           }
           updateCrudState();
@@ -1354,23 +1361,45 @@
       glasanje_1: glas(1), glasanje_2: glas(2), glasanje_3: glas(3),
       datum_razmatranja: obr1bDatumRazmatranja ? trim(obr1bDatumRazmatranja.value) : '',
       datum_odbijanja: obr1bDatumOdbijanja ? trim(obr1bDatumOdbijanja.value) : '',
+      razlog_odbijanja: obr1bRazlog ? trim(obr1bRazlog.value) : '',
       casni_id: (obr1bCasniEdit && obr1bCasniEdit.dataset.clanId) ? obr1bCasniEdit.dataset.clanId : '',
       vip_id: (obr1bVipEdit && obr1bVipEdit.dataset.clanId) ? obr1bVipEdit.dataset.clanId : ''
     };
   }
+  /* Datum odbijanja valjan (YYYY-MM-DD)? Native date input je prazan ili valjan; regex je dodatna zaštita. */
+  function obr1bDatumOdbijanjaValjan() {
+    var v = obr1bDatumOdbijanja ? trim(obr1bDatumOdbijanja.value) : '';
+    return /^\d{4}-\d{2}-\d{2}$/.test(v);
+  }
+  /* „Razlog odbijanja" omogućen/editabilan SAMO kad je tab aktivan I „Datum odbijanja" valjan.
+     Samo prebacuje disabled (NE briše — da učitani razlog ne nestane prije nego stigne enable stanje). */
+  function obr1bAzurirajRazlog() {
+    if (!obr1bRazlog) return;
+    var ok = _obr1bEnabled && obr1bDatumOdbijanjaValjan();
+    obr1bRazlog.disabled = !ok;
+    if (obr1bRazlogLabel) obr1bRazlogLabel.classList.toggle('kontrola-labela--disabled', !ok);   /* labela sivi zajedno s kontrolom */
+  }
+  /* Korisnička promjena „Datum odbijanja": ako datum više nije valjan, razlog otpada (očisti); pa osvježi enable. */
+  function obr1bDatumOdbijanjaPromjena() {
+    if (obr1bRazlog && !obr1bDatumOdbijanjaValjan()) obr1bRazlog.value = '';
+    obr1bAzurirajRazlog();
+  }
   /* Omogući/onemogući kontrole taba 001b. */
   function obrazac1bSetEnabled(on) {
+    _obr1bEnabled = !!on;
     if (obr1bDatumRazmatranja) obr1bDatumRazmatranja.disabled = !on;
     if (obr1bDatumOdbijanja) obr1bDatumOdbijanja.disabled = !on;
     for (var gi = 0; gi < OBR1B_GLAS_IDS.length; gi++) { var ge = document.getElementById(OBR1B_GLAS_IDS[gi]); if (ge) ge.disabled = !on; }
     if (obr1bCasniBtn) obr1bCasniBtn.disabled = !on;
     if (obr1bVipBtn) obr1bVipBtn.disabled = !on;
+    obr1bAzurirajRazlog();   /* razlog ovisi i o valjanosti datuma odbijanja */
     var cont = document.getElementById('predlagaciTablicaContainer');
     if (cont) cont.classList.toggle('kontrola-tablica--disabled', !on);
     azurirajObr1bIkone();
   }
   if (btnObr1bDodaj) btnObr1bDodaj.addEventListener('click', function () { otvoriOdaberiModal('predlagac'); });
   if (btnObr1bObrisi) btnObr1bObrisi.addEventListener('click', obr1bObrisiPredlagaca);
+  if (obr1bDatumOdbijanja) { obr1bDatumOdbijanja.addEventListener('input', obr1bDatumOdbijanjaPromjena); obr1bDatumOdbijanja.addEventListener('change', obr1bDatumOdbijanjaPromjena); }
 
   /* ============================================================
    * ▒▒ MODAL „Odaberi" — izbor člana za Časni majstor / VIP ▒▒

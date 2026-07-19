@@ -58,6 +58,10 @@ function datum_ili_null($v) {
 $datum_razmatranja = datum_ili_null($d['datum_razmatranja'] ?? '');
 $datum_odbijanja   = datum_ili_null($d['datum_odbijanja'] ?? '');
 
+// Razlog odbijanja: SAMO ako je datum_odbijanja valjan i tekst nije prazan; inače NULL. Max 1024.
+$razlog_raw = isset($d['razlog_odbijanja']) ? trim((string) $d['razlog_odbijanja']) : '';
+$razlog_odbijanja = ($datum_odbijanja !== null && $razlog_raw !== '') ? mb_substr($razlog_raw, 0, 1024) : null;
+
 // Časni majstor / VIP: id člana ili NULL (FK na clanovi provjerava postojanje).
 $casni_id = isset($d['casni_id']) && $d['casni_id'] !== '' ? (int) $d['casni_id'] : 0;
 $casni_id = $casni_id > 0 ? $casni_id : null;
@@ -72,9 +76,9 @@ try {
     // Na prvom upisu (npr. prije 001a) 001a kolone dobiju DEFAULT; izmjena dira samo 001b kolone.
     $sql = 'INSERT INTO kandidat_dokumenti_001
                 (id_clan, id_loza, predlagaci, glasanje_1, glasanje_2, glasanje_3,
-                 datum_razmatranja, datum_odbijanja, casni_id, vip_id, upisao, datum_upisa)
+                 datum_razmatranja, datum_odbijanja, razlog_odbijanja, casni_id, vip_id, upisao, datum_upisa)
             VALUES (?, (SELECT loza FROM clanovi WHERE id = ?),
-                 ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ON DUPLICATE KEY UPDATE
                 id_loza = VALUES(id_loza),
                 predlagaci = VALUES(predlagaci),
@@ -83,15 +87,16 @@ try {
                 glasanje_3 = VALUES(glasanje_3),
                 datum_razmatranja = VALUES(datum_razmatranja),
                 datum_odbijanja = VALUES(datum_odbijanja),
+                razlog_odbijanja = VALUES(razlog_odbijanja),
                 casni_id = VALUES(casni_id),
                 vip_id = VALUES(vip_id)';
     $stmt = $mysqli->prepare($sql);
-    // i id_clan, i id_clan(subupit loza), s predlagaci, s g1, s g2, s g3, s dat_razm, s dat_odb, i casni, i vip, i upisao
+    // i id_clan, i id_clan(subupit loza), s predlagaci, s g1, s g2, s g3, s dat_razm, s dat_odb, s razlog, i casni, i vip, i upisao
     $stmt->bind_param(
-        'iissssssiii',
+        'iisssssssiii',
         $id_clan, $id_clan,
         $predlagaci, $glasanje_1, $glasanje_2, $glasanje_3,
-        $datum_razmatranja, $datum_odbijanja, $casni_id, $vip_id,
+        $datum_razmatranja, $datum_odbijanja, $razlog_odbijanja, $casni_id, $vip_id,
         $upisao
     );
     $stmt->execute();

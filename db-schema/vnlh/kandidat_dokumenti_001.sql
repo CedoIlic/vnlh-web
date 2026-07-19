@@ -26,6 +26,7 @@ CREATE TABLE `kandidat_dokumenti_001` (
   `glasanje_3`         varchar(64) DEFAULT NULL COMMENT 'Obrazac 001b: 3. glasanje — isti format kao glasanje_1',
   `datum_razmatranja`  date DEFAULT NULL COMMENT 'Obrazac 001b: datum radova razmatranja',
   `datum_odbijanja`    date DEFAULT NULL COMMENT 'Obrazac 001b: datum odbijanja',
+  `razlog_odbijanja`   varchar(1024) DEFAULT NULL COMMENT 'Obrazac 001b: razlog odbijanja (slobodan tekst); popunjava se samo ako je datum_odbijanja valjan, inače NULL',
   `casni_id`           int(11) unsigned DEFAULT NULL COMMENT 'Obrazac 001b: ID časnog majstora (clanovi.id)',
   `vip_id`             int(11) unsigned DEFAULT NULL COMMENT 'Obrazac 001b: ID inspektora / VIP (clanovi.id)',
   `dokument_prored`    decimal(3,2) DEFAULT NULL COMMENT 'Korisnički (ekstra) prored u tijelu teksta za PDF',

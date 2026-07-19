@@ -219,6 +219,7 @@
                     <option value="slika|dinamicki">Slika — dinamička</option>
                     <option value="slika|po_vrijednosti">Slika — po vrijednosti</option>
                 </select></div>
+                <button type="button" id="btnVrsteStavkiPomoc" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--pomoc" title="Opis vrsta stavki" aria-label="Opis svih vrsta stavki i kada se koriste">?</button>
             </div>
         </div>
         <div class="kontrola-modal__body kontrola-modal__body--text-only">
@@ -494,9 +495,39 @@
                     <li><code>{=tekst=}</code> — <strong>literal u stilu podatka</strong>: sve unutar oznake ide u „Stil podatka" (npr. <code>{=°=}</code> da stupanjski „°" bude u boji podatka).</li>
                 </ul>
                 <p>Placeholderi i navedeni tokeni renderiraju se u <strong>Stilu podatka</strong>; ostatak (literali) u <strong>Stilu teksta</strong>.</p>
+            </div>
         </div>
         <div class="kontrola-modal__footer">
             <button type="button" id="btnRedakPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Popup: opis vrsta stavki (help uz „Vrsta stavke") ===== -->
+<div class="kontrola-modal kontrola-modal--dim" id="vrsteStavkiPomocModal" aria-hidden="true" role="dialog" aria-modal="true" style="z-index:10002;">
+    <div class="kontrola-modal__overlay" id="vrsteStavkiPomocModal_overlay"></div>
+    <div class="kontrola-modal__dialog pdf-dokument-crud__pomoc-modal">
+        <div class="kontrola-modal__header" id="vrsteStavkiPomocModal_header">Vrste stavki — kada se koje koristi</div>
+        <div class="kontrola-modal__body kontrola-modal__body--text-only">
+            <div class="kontrola-modal__content pdf-dokument-crud__pomoc">
+                <p>Stavka je jedan element dokumenta (tekst ili slika). <strong>Način dohvata</strong> određuje odakle dolazi njezin sadržaj.</p>
+                <p><strong>Tekst</strong></p>
+                <ul>
+                    <li><strong>Statički (fiksni ID)</strong> — uvijek isti red iz izvora; biraš točan ID retka. Za konstante (npr. logo/naziv fiksne lože).</li>
+                    <li><strong>Dinamički (iz konteksta)</strong> — ID retka dolazi iz <em>konteksta</em> pri generiranju (npr. <code>ID_Esej</code>, <code>ID_Obrazac001</code>). Za podatke vezane uz upravo prikazani zapis. Može i preko FK-veze (indirektni ključ).</li>
+                    <li><strong>Po vrijednosti</strong> — red se nađe tako da <em>kolona = zadana vrijednost</em> (prvi po ID-u). Kad nemaš ID nego jedinstvenu vrijednost (npr. naziv).</li>
+                    <li><strong>Korisnički (upisani)</strong> — ručno upisan tekst (literal), bez baze. Za labele, naslove, fiksne rečenice, razmake (<code>^</code>).</li>
+                    <li><strong>Relacija — broj</strong> — broj redova 1-na-više veze → kroz mapu u tekst (npr. 0/1/&gt;1). Za „ima N…" / jednina-množina.</li>
+                    <li><strong>Relacija — lista naziva</strong> — spojeni nazivi svih redova veze (zarez / novi red / novi odlomak). Za nabrajanje (npr. lože učesnice).</li>
+                    <li><strong>Relacija — redak iz predloška</strong> — jedan <em>redak</em> po vezi iz predloška (<code>{j.}</code> spojna, <code>{c.}</code> cilj, <code>{tab}</code>, FK-skok). Za tablične popise (npr. dužnosnici).</li>
+                    <li><strong>Relacija — grupe po tipu</strong> — grupiran popis „labela tipa: imena" po tipu iz šifarnika. Za prisutne po ulozi/tipu.</li>
+                    <li><strong>Relacija — CSV kolona</strong> — jedan <em>odlomak</em> po ID-u iz <em>zarez-liste u koloni</em> (npr. <code>predlagaci</code>), predložak kao „redak"; podržava stil podatka + tokene <code>%STUPANJ_*%</code>/<code>%BR%</code>/<code>{=…=}</code>. Za predlagače.</li>
+                </ul>
+                <p><strong>Slika</strong> (statička / dinamička / po vrijednosti) — isto značenje dohvata kao kod teksta, ali sadržaj je slika (BLOB) prikazana kroz „Stil slike".</p>
+            </div>
+        </div>
+        <div class="kontrola-modal__footer">
+            <button type="button" id="btnVrsteStavkiPomocOk" class="kontrola-btn kontrola-btn--primary"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
         </div>
     </div>
 </div>
