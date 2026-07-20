@@ -172,7 +172,7 @@
     Reload_Ikona: 0,
     CrudCssPrefix: 'pdf-dokument-crud',
     Tablica_Zaglavlje: [
-      { key: 'red', title: '#', SQL_Naziv: 'red', sortable: 0, sortable_icon: 0, type: 't', width: 40, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
+      { key: 'red', title: '#', SQL_Naziv: 'red', sortable: 0, sortable_icon: 0, type: 't', width: 56, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
       { key: 'naziv', title: 'Naziv stavke', SQL_Naziv: 'naziv', sortable: 0, sortable_icon: 0, type: 't', width: 280, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'status', title: '', SQL_Naziv: 'status', sortable: 0, sortable_icon: 0, type: 't', width: 30, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 },
       { key: 'zona', title: 'Zona', SQL_Naziv: 'zona', sortable: 0, sortable_icon: 0, type: 't', width: 110, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },

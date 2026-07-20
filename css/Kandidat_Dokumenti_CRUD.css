@@ -152,7 +152,7 @@
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
-  height: 17.6rem;            /* 20% manje od početnih 22rem */
+  height: 26.5rem;           /* ≈424px — izjednačeno s masterom 001b (inicijalna visina; resize povlači) */
   min-height: 10rem;
   resize: vertical;
   border: 1px solid var(--napomena_border);
@@ -400,6 +400,14 @@
 .kandidat-dokumenti-crud__razgovori-glavni .kandidat-dokumenti-crud__razgovori-tablica {
   flex: 1 1 auto;
   min-width: 0;
+  /* Izjednačavanje visine taba na master 001b (≈424px): viša tablica (inicijalna visina). */
+  display: flex;
+  flex-direction: column;
+  min-height: 364px;
+}
+.kandidat-dokumenti-crud__razgovori-glavni .kandidat-dokumenti-crud__razgovori-tablica > .kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .kandidat-dokumenti-crud__razgovori-pdf { flex: 0 0 auto; }
 .kandidat-dokumenti-crud__razgovori-akcije {
@@ -612,7 +620,9 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem 1.5rem;
   align-items: end;
-  padding-bottom: 0.75rem;
+  /* Izjednačavanje visine tabova na master 001b (≈424px): padding iznad i ispod gornje linije. */
+  padding-top: 17px;
+  padding-bottom: 29px;   /* 0.75rem (12px) baza + 17px */
   border-bottom: 1px solid var(--edit_border, #ced4da);
 }
 .kandidat-dokumenti-crud__obrazac-zaglavlje-pdf {
@@ -880,7 +890,8 @@
   gap: 0.5rem;
   align-items: center;
 }
-.kandidat-dokumenti-crud__obr1b-clan-izbor > .kontrola-edit {
+.kandidat-dokumenti-crud__obr1b-clan-izbor > .kontrola-edit,
+.kandidat-dokumenti-crud__obr1b-clan-izbor > .kontrola-edit-delete {
   flex: 1 1 auto;
   min-width: 0;
 }

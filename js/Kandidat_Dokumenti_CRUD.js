@@ -1168,6 +1168,16 @@
   var obr1bCasniBtn  = document.getElementById('obr1b_casni_majstor_btn');
   var obr1bVipEdit   = document.getElementById('obr1b_vip');
   var obr1bVipBtn    = document.getElementById('obr1b_vip_btn');
+  /* Editi su edit-delete kontrole (RO, X aktivan u edit-modu): X čisti izbor (input + spremljeni id). */
+  var obr1bCasniWrap = obr1bCasniEdit ? obr1bCasniEdit.closest('.kontrola-edit-delete') : null;
+  var obr1bVipWrap   = obr1bVipEdit ? obr1bVipEdit.closest('.kontrola-edit-delete') : null;
+  if (typeof KontroleInitEditDelete === 'function') {
+    if (obr1bCasniWrap) KontroleInitEditDelete(obr1bCasniWrap);
+    if (obr1bVipWrap) KontroleInitEditDelete(obr1bVipWrap);
+  }
+  /* Framework (0-Kontrole) očisti sam input i emitira event; ovdje maknemo i spremljeni clanId. */
+  if (obr1bCasniWrap) obr1bCasniWrap.addEventListener('kontrole-edit-delete-clear', function () { if (obr1bCasniEdit && obr1bCasniEdit.dataset) delete obr1bCasniEdit.dataset.clanId; });
+  if (obr1bVipWrap) obr1bVipWrap.addEventListener('kontrole-edit-delete-clear', function () { if (obr1bVipEdit && obr1bVipEdit.dataset) delete obr1bVipEdit.dataset.clanId; });
   /* Modal „Odaberi": tablica Članovi (1 kolona, 5 vidljivih redova). */
   var odaberiApi = null;
   var ODABERI_TABLICA = {
@@ -1291,8 +1301,8 @@
     if (obr1bDatumRazmatranja) obr1bDatumRazmatranja.value = '';
     if (obr1bDatumOdbijanja) obr1bDatumOdbijanja.value = '';
     for (var gi = 0; gi < OBR1B_GLAS_IDS.length; gi++) { var ge = document.getElementById(OBR1B_GLAS_IDS[gi]); if (ge) ge.value = ''; }
-    if (obr1bCasniEdit) { obr1bCasniEdit.value = ''; if (obr1bCasniEdit.dataset) delete obr1bCasniEdit.dataset.clanId; }
-    if (obr1bVipEdit) { obr1bVipEdit.value = ''; if (obr1bVipEdit.dataset) delete obr1bVipEdit.dataset.clanId; }
+    obr1bPostaviClanEdit(obr1bCasniEdit, null);
+    obr1bPostaviClanEdit(obr1bVipEdit, null);
     if (obr1bRazlog) obr1bRazlog.value = '';
     obr1bAzurirajRazlog();
     _obrazac001bPostoji = false;
@@ -1303,6 +1313,7 @@
     if (!edit) return;
     if (clan && clan.id != null) { edit.value = clanRedLabel(clan); edit.dataset.clanId = String(clan.id); }
     else { edit.value = ''; if (edit.dataset) delete edit.dataset.clanId; }
+    edit.dispatchEvent(new Event('change', { bubbles: true }));   /* sync vidljivosti X (edit-delete) */
   }
   /* Popuni jedan stupac matrice glasanja iz objekta {datum,glasaca,za,protiv,suzdrzani}. */
   function obr1bPopuniGlasanje(n, g) {
@@ -1392,6 +1403,9 @@
     for (var gi = 0; gi < OBR1B_GLAS_IDS.length; gi++) { var ge = document.getElementById(OBR1B_GLAS_IDS[gi]); if (ge) ge.disabled = !on; }
     if (obr1bCasniBtn) obr1bCasniBtn.disabled = !on;
     if (obr1bVipBtn) obr1bVipBtn.disabled = !on;
+    /* X (edit-delete) aktivan samo u edit-modu; RO ostaje uvijek. */
+    if (obr1bCasniWrap) obr1bCasniWrap.classList.toggle('kontrola-edit-delete--x-neaktivan', !on);
+    if (obr1bVipWrap) obr1bVipWrap.classList.toggle('kontrola-edit-delete--x-neaktivan', !on);
     obr1bAzurirajRazlog();   /* razlog ovisi i o valjanosti datuma odbijanja */
     var cont = document.getElementById('predlagaciTablicaContainer');
     if (cont) cont.classList.toggle('kontrola-tablica--disabled', !on);
@@ -1492,7 +1506,7 @@
         obr1bDodajPredlagacaRec(rec);   /* dodaje u tablicu predlagača (dupli se tiho ignorira) */
       } else {
         var edit = _odaberiTarget === 'vip' ? obr1bVipEdit : obr1bCasniEdit;
-        if (edit) { edit.value = clanRedLabel(rec); edit.dataset.clanId = String(rec.id); }
+        obr1bPostaviClanEdit(edit, rec);   /* postavlja value + clanId i sinka vidljivost X */
       }
     }
     zatvoriOdaberiModal();
