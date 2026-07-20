@@ -83,6 +83,7 @@ var MODAL_MESSAGES = {
   '035': '035|Korisničko sučelje|(OK)|error||Nije dozvoljeno za istog člana imati dva zapisa privremenog otpusta koji se djelomično ili u potpunosti preklapaju.',   /* Privremeni otpust: preklapanje razdoblja za istog člana */
   '036': '036|Korisničko sučelje|(OK)|error||Nije dozvoljeno upisati otpust duži od #1 mjeseci.',   /* Privremeni otpust: dulje od maksimuma (sustav_varijable 126); #1 = broj mjeseci */
   '037': '037|Korisničko sučelje|(OK)|error||Nije dozvoljeno upisivati otpuste unatrag u kojima je datum završetka manji od današnjeg datuma.',   /* Privremeni otpust: datum_do u prošlosti */
+  '038': '038|Korisničko sučelje|(OK)|warning||Očekuje se PDF dokument, a odabrani dokument nije PDF.',   /* Kandidat skenovi: odabrana datoteka nije PDF */
   '100': '100|Poruka servera|(OK)|error||Nije moguće povezivanje sa bazom podataka.',   /* Greška konekcije (00_db.php) */
   '101': '101|Poruka servera|(OK)|error||Neočekivani odgovor poslužitelja. Pokušajte ponovno.',   /* Nepoznat kod odgovora (npr. PHP greška) */
   '105': '105|Poruka servera|(OK)|error||Podaci poslani na upis nisu ispravni.',         /* Nevaljani ulaz (npr. id <= 0) */

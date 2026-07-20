@@ -89,6 +89,7 @@
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart1" aria-selected="false" aria-controls="kandidatKontrolaTabPanel1" data-tab-index="1" tabindex="-1" disabled>Razgovori</button>
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart2" aria-selected="false" aria-controls="kandidatKontrolaTabPanel2" data-tab-index="2" tabindex="-1" disabled>Obrazac 001a</button>
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart3" aria-selected="false" aria-controls="kandidatKontrolaTabPanel3" data-tab-index="3" tabindex="-1" disabled>Obrazac 001b</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart4" aria-selected="false" aria-controls="kandidatKontrolaTabPanel4" data-tab-index="4" tabindex="-1" disabled>Skenovi</button>
                 </div>
                 <div class="kontrola-tab__tijelo" role="presentation">
                     <div class="kontrola-tab__panel kontrola-tab__panel--aktivna kandidat-dokumenti-crud__tab-panel--zivotopis" role="tabpanel" id="kandidatKontrolaTabPanel0" aria-labelledby="kandidatKontrolaTabKart0">
@@ -414,6 +415,34 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Tab 4: Skenovi (1:N) — postojeći skenovi (lijevo 2/3) + dodavanje (desno 1/3). -->
+                    <div class="kontrola-tab__panel kandidat-dokumenti-crud__tab-panel--skenovi" role="tabpanel" id="kandidatKontrolaTabPanel4" aria-labelledby="kandidatKontrolaTabKart4" hidden>
+                        <div class="kandidat-dokumenti-crud__skenovi">
+                            <div class="kandidat-dokumenti-crud__skenovi-tablica">
+                                <div id="skenoviTablicaContainer" class="kontrola-tablica"></div>
+                            </div>
+                            <div class="kandidat-dokumenti-crud__skenovi-desno">
+                                <label class="kontrola-labela mb-0" for="sken_tip">Tipovi dokumenata</label>
+                                <div class="kontrola-select"><select id="sken_tip" aria-label="Tipovi dokumenata"></select></div>
+                                <label class="kontrola-labela mb-0" for="sken_biljeska">Bilješka</label>
+                                <input id="sken_biljeska" type="text" class="kontrola-edit" maxlength="256" autocomplete="off" placeholder="Bilješka...">
+                                <div class="kandidat-dokumenti-crud__skenovi-akcije" role="group" aria-label="Radnje nad skenovima">
+                                    <button type="button" id="skenDodaj" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Dodaj sken (PDF)" aria-label="Dodaj sken (PDF)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h18v2.5H3V4zm0 5.75h10v2.5H3v-2.5z"/><path d="M16 13h2.5v3.5H22V19h-3.5v3.5H16V19h-3.5v-2.5H16V13z"/></svg></button>
+                                    <button type="button" id="skenObrisi" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Obriši sken" aria-label="Obriši sken"><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
+                                    <button type="button" id="skenDeselekt" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Makni selekciju" aria-label="Makni selekciju"><span class="kontrola-icon--asterisk" aria-hidden="true"></span></button>
+                                    <button type="button" id="skenPdf" class="kandidat-dokumenti-crud__pdf-btn" disabled aria-label="Pregled skena (PDF)" title="Pregled PDF-a">
+                                        <svg class="kandidat-dokumenti-crud__pdf-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="5" y="14" width="14" height="6" rx="1" fill="currentColor"/>
+                                            <text x="12" y="18.4" font-family="Arial, sans-serif" font-size="3.8" font-weight="bold" fill="white" text-anchor="middle">PDF</text>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="file" id="sken_file" accept="application/pdf,.pdf" hidden>
+                    </div>
                 </div>
             </div>
         </div>
@@ -529,6 +558,21 @@
         </div>
         <div class="kandidat-dokumenti-crud__modal-pdf-footer">
             <button type="button" id="obrazac_pdf_povratak" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+        </div>
+    </div>
+</div>
+<!-- Modal: PDF pregled skena kandidata (iframe iz spremljenog BLOB-a) -->
+<div id="skenModalPdf" class="kandidat-dokumenti-crud__modal-pdf" role="dialog" aria-label="Pregled skena" aria-modal="true" aria-hidden="true">
+    <div class="kandidat-dokumenti-crud__modal-pdf-overlay"></div>
+    <div class="kandidat-dokumenti-crud__modal-pdf-dialog">
+        <div class="kandidat-dokumenti-crud__modal-pdf-header">
+            <div class="kandidat-dokumenti-crud__modal-pdf-naslov">Pregled skena</div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-body">
+            <iframe id="sken_pdf_okvir" class="kandidat-dokumenti-crud__modal-pdf-iframe" title="Pregled skena kandidata"></iframe>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-footer">
+            <button type="button" id="sken_pdf_povratak" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
         </div>
     </div>
 </div>
