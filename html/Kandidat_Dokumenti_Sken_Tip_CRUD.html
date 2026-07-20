@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tip skeniranog dokumenta za kandidata</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=1.0.242" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=1.0.242">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=1.0.242">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=1.0.242">
+    <link rel="stylesheet" href="../css/Kandidat_Dokumenti_Sken_Tip_CRUD.css?v=1.0.242">
+</head>
+<body>
+<div class="naslov-forme"><h2 data-i18n="kandidat_dokumenti_sken_tip_crud.naslov">Tip skeniranog dokumenta za kandidata</h2></div>
+<div class="page-container">
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body kandidat-dokumenti-sken-tip-crud__edit-body">
+            <div class="kandidat-dokumenti-sken-tip-crud__edit-row">
+                <label class="kontrola-labela mb-0" for="edit_naziv" data-i18n="kandidat_dokumenti_sken_tip_crud.labela.naziv">Tip skeniranog dokumenta</label>
+                <div class="kontrola-edit-delete">
+                    <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Tip skeniranog dokumenta..." data-i18n-placeholder="kandidat_dokumenti_sken_tip_crud.placeholder.naziv">
+                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                </div>
+                <label class="kontrola-labela mb-0" for="edit_redosljed" data-i18n="kandidat_dokumenti_sken_tip_crud.labela.redosljed">Redosljed</label>
+                <input id="edit_redosljed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" aria-label="Redosljed 0 do 100" data-i18n-aria="kandidat_dokumenti_sken_tip_crud.redosljed.aria" style="width: 5rem; text-align: right; flex: 0 0 auto;">
+            </div>
+        </div>
+        <div class="kontrola-panel__footer kandidat-dokumenti-sken-tip-crud__edit-footer">
+            <div class="kandidat-dokumenti-sken-tip-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
+            </div>
+            <div class="kandidat-dokumenti-sken-tip-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=1.0.242"></script>
+<script src="../js/0-Kontrole.js?v=1.0.242"></script>
+<script src="../js/0-Common.js?v=1.0.242"></script>
+<script src="../js/0-Poruke.js?v=1.0.242"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=1.0.242"></script>
+<script src="../js/Kandidat_Dokumenti_Sken_Tip_CRUD.js?v=1.0.242"></script>
+</body>
+</html>

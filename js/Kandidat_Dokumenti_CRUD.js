@@ -937,7 +937,11 @@
   /* „Razgovor vodio": svi članovi aktivnost=1 & kandidat=0, prvih 50; q = server-side pretraga. */
   function fetchIspitivaci(q, cb) {
     if (typeof fetch !== 'function') { if (cb) cb(); return; }
-    var url = API_BASE + 'Kandidat_Dokumenti_Razgovori_CRUD_ispitivaci.php' + (q ? ('?q=' + encodeURIComponent(q)) : '');
+    var idDrz = (selectDrzava && trim(selectDrzava.value) !== '') ? selectDrzava.value : '-1';   /* država iz geogrupe (-1 = sve) */
+    var par = [];
+    if (q) par.push('q=' + encodeURIComponent(q));
+    par.push('id_drzava=' + encodeURIComponent(idDrz));
+    var url = API_BASE + 'Kandidat_Dokumenti_Razgovori_CRUD_ispitivaci.php?' + par.join('&');
     fetch(url).then(function (r) { return r.text(); }).then(function (text) {
       text = (text || '').trim();
       var arr = [];
@@ -1444,7 +1448,11 @@
   }
   function fetchOdaberiClanovi(q) {
     if (typeof fetch !== 'function') return;
-    var url = API_BASE + 'Kandidat_Dokumenti_001b_CRUD_clanovi.php' + (q ? ('?q=' + encodeURIComponent(q)) : '');
+    var idDrz = (selectDrzava && trim(selectDrzava.value) !== '') ? selectDrzava.value : '-1';   /* država iz geogrupe (-1 = sve) */
+    var par = [];
+    if (q) par.push('q=' + encodeURIComponent(q));
+    par.push('id_drzava=' + encodeURIComponent(idDrz));
+    var url = API_BASE + 'Kandidat_Dokumenti_001b_CRUD_clanovi.php?' + par.join('&');
     fetch(url).then(function (r) { return r.text(); }).then(function (text) {
       text = (text || '').trim();
       var arr = [];
@@ -2063,10 +2071,10 @@
    * Kontekst ID_Obrazac001 = kandidat_dokumenti_001.id (_obrazac001RowId). Jednostavni modal (bez proreda).
    * ============================================================ */
   (function initObrazacPdfModal() {
-    var OBR_DOK_NAZIV = 'Obrazac 001 a';
     var modal       = document.getElementById('obrazacModalPdf');
     if (!obrPdfBtn || !modal) return;
     var overlay     = modal.querySelector('.kandidat-dokumenti-crud__modal-pdf-overlay');
+    var naslovEl    = modal.querySelector('.kandidat-dokumenti-crud__modal-pdf-naslov');
     var okvir       = document.getElementById('obrazac_pdf_okvir');
     var info        = document.getElementById('obrazac_pdf_info');
     var btnRefresh  = document.getElementById('obrazac_pdf_refresh');
@@ -2077,6 +2085,8 @@
     var _proredStilId = null;
     var _idAktivni = null;   /* kandidat_dokumenti_001.id (kontekst ID_Obrazac001) */
     var _zauzet = false;
+    var _naziv = 'Obrazac 001 a';   /* dokument u modalu: 001a „Obrazac 001 a" / 001b „Obrazac 001" */
+    var _izvorBtn = obrPdfBtn;      /* gumb koji je otvorio modal (fokus na zatvaranju) */
 
     function postJson(url, data, cb) {
       var xhr = new XMLHttpRequest();
@@ -2097,7 +2107,7 @@
       modal.classList.remove('kandidat-dokumenti-crud__modal-pdf--open');
       modal.setAttribute('aria-hidden', 'true');
       ocistiIframe(); spinerHide(); postaviInfo('');
-      try { obrPdfBtn.focus(); } catch (e) {}
+      try { (_izvorBtn || obrPdfBtn).focus(); } catch (e) {}
     }
     function ucitajFontove(lista, cb, err) {
       lista = lista || [];
@@ -2114,7 +2124,7 @@
       if (_zauzet) return;
       spinerShow();
       if (!window.PdfRender) { krajRendera('PDF biblioteka nije učitana.'); return; }
-      if (!_dokument || !_dokument.dokument) { krajRendera('Dokument „' + OBR_DOK_NAZIV + '" nije pronađen.'); return; }
+      if (!_dokument || !_dokument.dokument) { krajRendera('Dokument „' + _naziv + '" nije pronađen.'); return; }
       if (_idAktivni == null) { krajRendera('Obrazac nije učitan.'); return; }
       var dok = _dokument.dokument;
       var stavke = _dokument.stavke || [];
@@ -2168,14 +2178,14 @@
     function ucitajDokumentIRenderiraj() {
       spinerShow();
       postaviInfo('Učitavam dokument…');
-      var url = API_BASE + 'PDF_Dokument_po_nazivu.php?naziv=' + encodeURIComponent(OBR_DOK_NAZIV);
+      var url = API_BASE + 'PDF_Dokument_po_nazivu.php?naziv=' + encodeURIComponent(_naziv);
       var xhr = new XMLHttpRequest();
       xhr.open('GET', url, true);
       xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) return;
         var data = null;
         try { data = JSON.parse((xhr.responseText || '').replace(/^﻿/, '').trim()); } catch (e) {}
-        if (!data || data.greska || !data.dokument) { krajRendera('Dokument „' + OBR_DOK_NAZIV + '" nije pronađen.'); return; }
+        if (!data || data.greska || !data.dokument) { krajRendera('Dokument „' + _naziv + '" nije pronađen.'); return; }
         _dokument = data;
         _proredStilId = data.dokument.dokument_prored_default_stil ? parseInt(data.dokument.dokument_prored_default_stil, 10) : null;
         renderiraj();
@@ -2183,13 +2193,19 @@
       xhr.send();
     }
 
-    obrPdfBtn.addEventListener('click', function () {
-      if (obrPdfBtn.disabled) return;
+    /* Otvori modal za zadani dokument (001a ili 001) — dijeli iframe; state pamti koji je aktivan. */
+    function otvoriZaDokument(naziv, naslov, btn) {
+      if (btn && btn.disabled) return;
       if (_obrazac001RowId == null) return;
+      _naziv = naziv;
+      _izvorBtn = btn;
+      if (naslovEl) naslovEl.textContent = naslov;
       _idAktivni = parseInt(_obrazac001RowId, 10);
       otvoriModal();
       ucitajDokumentIRenderiraj();
-    });
+    }
+    obrPdfBtn.addEventListener('click', function () { otvoriZaDokument('Obrazac 001 a', 'PDF Obrasca 001a', obrPdfBtn); });
+    if (obr1bPdfBtn) obr1bPdfBtn.addEventListener('click', function () { otvoriZaDokument('Obrazac 001', 'PDF Obrasca 001', obr1bPdfBtn); });
     if (btnRefresh)  btnRefresh.addEventListener('click', function () { ucitajDokumentIRenderiraj(); });
     if (btnPovratak) btnPovratak.addEventListener('click', zatvoriModal);
     if (overlay)     overlay.addEventListener('click', zatvoriModal);
