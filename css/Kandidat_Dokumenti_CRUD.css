@@ -453,11 +453,23 @@
   flex-direction: row;
   gap: 0.75rem;
   align-items: stretch;
-  min-height: 0;
+  min-height: 408px;    /* izjednači visinu taba s ostalima (≈424px panel, master 001b) */
 }
 .kandidat-dokumenti-crud__skenovi-tablica {
   flex: 2 1 0;          /* 2/3 širine */
   min-width: 0;
+  display: flex;        /* tablica ispuni dostupnu visinu taba */
+  flex-direction: column;
+}
+.kandidat-dokumenti-crud__skenovi-tablica > .kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+.kandidat-dokumenti-crud__skenovi-tablica > .kontrola-tablica .kontrola-tablica__scroll-wrap {
+  flex: 1 1 auto !important;
+  height: auto !important;
+  min-height: 0;
 }
 .kandidat-dokumenti-crud__skenovi-desno {
   flex: 1 1 0;          /* 1/3 širine */
@@ -478,6 +490,79 @@
 @media (max-width: 900px) {
   .kandidat-dokumenti-crud__skenovi { flex-direction: column; }
 }
+
+/* ===== Tab „Zapisnici" (1:N) — isti raspored kao Skenovi (lijevo 2/3 + desno 1/3) ===== */
+.kandidat-dokumenti-crud__tab-panel--zapisnici { padding: 0.5rem; }
+.kandidat-dokumenti-crud__zapisnici {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  align-items: stretch;
+  min-height: 408px;    /* izjednači visinu taba s ostalima (≈424px panel, master 001b) */
+}
+.kandidat-dokumenti-crud__zapisnici-tablica {
+  flex: 2 1 0;
+  min-width: 0;
+  display: flex;        /* tablica ispuni dostupnu visinu taba */
+  flex-direction: column;
+}
+.kandidat-dokumenti-crud__zapisnici-tablica > .kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+.kandidat-dokumenti-crud__zapisnici-tablica > .kontrola-tablica .kontrola-tablica__scroll-wrap {
+  flex: 1 1 auto !important;
+  height: auto !important;
+  min-height: 0;
+}
+.kandidat-dokumenti-crud__zapisnici-desno {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.kandidat-dokumenti-crud__zapisnici-akcije {
+  margin-top: auto;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.kandidat-dokumenti-crud__zapisnici-akcije .kandidat-dokumenti-crud__pdf-btn { margin-left: auto; }
+
+/* Izbor-modal „Postojeći zapisnik": per-red PDF ikona (lijevo od elipsisa) + highlight selektiranog retka */
+.kandidat-dokumenti-crud__lista-pdf-btn svg { display: block; }
+/* Selektirani red: standardni izgled selekcije iz 0-Common (pozadina reda na select).
+   !important jer redovi nose inline pozadinu legende koju selekcija privremeno prekriva. */
+#kandidat_zapisnik_lista_tbody tr.kandidat-dokumenti-crud__lista-red--sel > td {
+  background-color: var(--tablica_row_selected_bg) !important;
+}
+/* Ćelija (.kontrola-tablica__cell-inner) ima tabindex=0 → default crni focus okvir; 0-Kontrole ga
+   uklanja za tr/td ali NE za cell-inner. Uklanjamo ga na razini cijele forme (page-scope na <body>,
+   pokriva sve tablice + body-level modale). Selekcija se vidi po pozadini reda. */
+.vnlh-page-kandidat-dokumenti-crud .kontrola-tablica__cell-inner:focus,
+.vnlh-page-kandidat-dokumenti-crud .kontrola-tablica__cell-inner:focus-visible {
+  outline: none;
+}
+/* PDF pregled zapisnika: stog IZNAD izbor-modala (modal-tablica je z-index 10002) */
+.kandidat-dokumenti-crud__modal-pdf--iznad { z-index: 10060; }
+
+/* Izbor-modal: tablica ISPUNJAVA tijelo i prati resize dialoga (baza: .modal-tablica__dialog { resize: both }).
+   Minimalna (i početna) visina = 5 redova. esej-crud postavlja min-height:0 pa se prazna tablica sažima —
+   vraćamo 5-redni minimum, BEZ pinanja fiksne visine (da može rasti pri resize-u). */
+#kandidatZapisnikListaModal { --tablica_vidljivih_redova: 5; --modal_tablica_vidljivih_redova: 5; }
+#kandidatZapisnikListaModal .esej-crud__modal-lista-tablica.kontrola-tablica {
+  min-height: calc(var(--tablica_head_h) + (var(--tablica_row_h) * 5) + var(--tablica_extra)) !important;
+}
+#kandidatZapisnikListaModal .esej-crud__modal-lista-tablica .kontrola-tablica__scroll-wrap {
+  min-height: calc(var(--tablica_row_h, 2rem) * 5) !important;
+}
+/* Min-visina modala prati min-visinu sadržaja (zaglavlje + legenda + 5-redna tablica + podnožje) —
+   nadjačava bazni fiksni min-height:240px, pa se dialog resize-om ne može smanjiti ispod tablice. */
+#kandidatZapisnikListaModal .modal-tablica__dialog { min-height: min-content; }
+#kandidatZapisnikListaModal .modal-tablica__body,
+#kandidatZapisnikListaModal .modal-tablica__body-table-wrap { min-height: min-content; }
 
 /* ===== Modal „Razgovor" (dodavanje / izmjena / brisanje) ===== */
 .kandidat-dokumenti-crud__modal-razgovor {

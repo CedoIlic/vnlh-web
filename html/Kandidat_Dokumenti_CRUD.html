@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="../css/0-Kontrole_Tab.css?v=1.0.242">
     <link rel="stylesheet" href="../css/Clanovi_CRUD.css?v=1.0.242">
     <link rel="stylesheet" href="../css/Clanovi_Loza_CRUD.css?v=1.0.242">
+    <link rel="stylesheet" href="../css/Esej_CRUD.css?v=1.0.242">
     <link rel="stylesheet" href="../css/Kandidat_Dokumenti_CRUD.css?v=1.0.242">
 </head>
 <body class="vnlh-page-kandidat-dokumenti-crud">
@@ -90,6 +91,7 @@
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart2" aria-selected="false" aria-controls="kandidatKontrolaTabPanel2" data-tab-index="2" tabindex="-1" disabled>Obrazac 001a</button>
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart3" aria-selected="false" aria-controls="kandidatKontrolaTabPanel3" data-tab-index="3" tabindex="-1" disabled>Obrazac 001b</button>
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart4" aria-selected="false" aria-controls="kandidatKontrolaTabPanel4" data-tab-index="4" tabindex="-1" disabled>Skenovi</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart5" aria-selected="false" aria-controls="kandidatKontrolaTabPanel5" data-tab-index="5" tabindex="-1" disabled>Zapisnici</button>
                 </div>
                 <div class="kontrola-tab__tijelo" role="presentation">
                     <div class="kontrola-tab__panel kontrola-tab__panel--aktivna kandidat-dokumenti-crud__tab-panel--zivotopis" role="tabpanel" id="kandidatKontrolaTabPanel0" aria-labelledby="kandidatKontrolaTabKart0">
@@ -443,6 +445,33 @@
                         </div>
                         <input type="file" id="sken_file" accept="application/pdf,.pdf" hidden>
                     </div>
+                    <!-- Tab 5: Zapisnici (1:N) — vezani zapisnici s radova (lijevo 2/3) + dodavanje kroz modal (desno 1/3). -->
+                    <div class="kontrola-tab__panel kandidat-dokumenti-crud__tab-panel--zapisnici" role="tabpanel" id="kandidatKontrolaTabPanel5" aria-labelledby="kandidatKontrolaTabKart5" hidden>
+                        <div class="kandidat-dokumenti-crud__zapisnici">
+                            <div class="kandidat-dokumenti-crud__zapisnici-tablica">
+                                <div id="zapisniciTablicaContainer" class="kontrola-tablica"></div>
+                            </div>
+                            <div class="kandidat-dokumenti-crud__zapisnici-desno">
+                                <label class="kontrola-labela mb-0" for="zapisnik_tip">Tip zapisnika</label>
+                                <div class="kontrola-select"><select id="zapisnik_tip" aria-label="Tip zapisnika"></select></div>
+                                <label class="kontrola-labela mb-0" for="zapisnik_biljeska">Bilješka</label>
+                                <input id="zapisnik_biljeska" type="text" class="kontrola-edit" maxlength="256" autocomplete="off" placeholder="Bilješka...">
+                                <div class="kandidat-dokumenti-crud__zapisnici-akcije" role="group" aria-label="Radnje nad zapisnicima">
+                                    <button type="button" id="zapisnikDodaj" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Dodaj zapisnik (izbor postojećeg)" aria-label="Dodaj zapisnik (izbor postojećeg)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h18v2.5H3V4zm0 5.75h10v2.5H3v-2.5z"/><path d="M16 13h2.5v3.5H22V19h-3.5v3.5H16V19h-3.5v-2.5H16V13z"/></svg></button>
+                                    <button type="button" id="zapisnikObrisi" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Obriši zapisnik" aria-label="Obriši zapisnik"><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
+                                    <button type="button" id="zapisnikDeselekt" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Makni selekciju" aria-label="Makni selekciju"><span class="kontrola-icon--asterisk" aria-hidden="true"></span></button>
+                                    <button type="button" id="zapisnikPdf" class="kandidat-dokumenti-crud__pdf-btn" disabled aria-label="Pregled zapisnika (PDF)" title="Pregled PDF-a">
+                                        <svg class="kandidat-dokumenti-crud__pdf-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="5" y="14" width="14" height="6" rx="1" fill="currentColor"/>
+                                            <text x="12" y="18.4" font-family="Arial, sans-serif" font-size="3.8" font-weight="bold" fill="white" text-anchor="middle">PDF</text>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -649,6 +678,85 @@
         </div>
         <div class="kandidat-dokumenti-crud__modal-razgovor-resize" id="odaberiResizeKut" title="Povuci za promjenu veličine" aria-hidden="true">
             <svg class="kandidat-dokumenti-crud__modal-razgovor-resize-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 14 14 22M22 19 19 22"/></svg>
+        </div>
+    </div>
+</div>
+<!-- Modal: „Postojeći zapisnik" — izbor zapisnika s radova kandidatove lože (klon zapisnikListaModal; footer OK/Odustani; per-red PDF ikonu dodaje JS) -->
+<div id="kandidatZapisnikListaModal" class="modal-tablica esej-crud__modal-lista" role="dialog" aria-label="Odaberi odgovarajući zapisnik" aria-modal="true" aria-hidden="true">
+    <div class="modal-tablica__overlay"></div>
+    <div class="modal-tablica__dialog">
+        <div class="modal-tablica__header esej-crud__modal-autor-header">
+            <div class="esej-crud__modal-autor-naslov">Odaberi odgovarajući zapisnik</div>
+            <div class="esej-crud__modal-autor-trazi-red">
+                <label class="kontrola-labela mb-0" for="kandidat_zapisnik_lista_trazi">Pretraži</label>
+                <div class="kontrola-edit-delete esej-crud__modal-autor-trazi-wrap">
+                    <span class="esej-crud__modal-autor-trazi-lupa" aria-hidden="true"><span class="kontrola-icon--magnifying-glass"></span></span>
+                    <input id="kandidat_zapisnik_lista_trazi" type="text" class="kontrola-edit-delete__input" autocomplete="off" maxlength="200" placeholder="">
+                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Očisti pretragu"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                </div>
+            </div>
+            <div class="esej-crud__modal-lista-legenda">
+                <span class="kontrola-labela mb-0">Legenda</span>
+                <div class="esej-crud__modal-lista-legenda-red">
+                    <span class="esej-crud__modal-lista-legenda-kv" id="kandidat_zapisnik_lista_leg_kv3"></span>
+                    <span class="kontrola-labela mb-0">Loža nije usvojila zapisnik.</span>
+                </div>
+                <div class="esej-crud__modal-lista-legenda-red">
+                    <span class="esej-crud__modal-lista-legenda-kv" id="kandidat_zapisnik_lista_leg_kv2"></span>
+                    <span class="kontrola-labela mb-0">Časni majstor nije ovjerio zapisnik.</span>
+                </div>
+                <div class="esej-crud__modal-lista-legenda-red">
+                    <span class="esej-crud__modal-lista-legenda-kv" id="kandidat_zapisnik_lista_leg_kv1"></span>
+                    <span class="kontrola-labela mb-0">Loža je bila učesnica, ne domaćin radova.</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-tablica__body esej-crud__modal-autor-body">
+            <div class="modal-tablica__body-table-wrap">
+                <div class="kontrola-tablica tablica--podaci-h-linije esej-crud__modal-lista-tablica" aria-label="Zapisnici">
+                    <div class="kontrola-tablica__inner">
+                        <div class="kontrola-tablica__header">
+                            <table><thead><tr><th class="kontrola-tablica__th--no-sort">Datum, stupanj</th></tr></thead></table>
+                        </div>
+                        <div class="kontrola-tablica__scroll-wrap">
+                            <div class="kontrola-tablica__scroll" tabindex="0" id="kandidat_zapisnik_lista_scroll">
+                                <table><tbody id="kandidat_zapisnik_lista_tbody"></tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-tablica__footer">
+            <div class="clanovi-crud__footer-left">
+                <button type="button" id="kandidat_zapisnik_lista_ok" class="kontrola-btn kontrola-btn--crud-upisi" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">OK</span></span></span></button>
+            </div>
+            <div class="clanovi-crud__footer-right">
+                <button type="button" id="kandidat_zapisnik_lista_odustani" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Popup sažetka zapisnika (hover/klik na elipsis u redu modala) -->
+<div id="kandidatZapisnikSazetakPopup" class="esej-crud__kljucne-popup" hidden>
+    <div class="esej-crud__kljucne-popup-tekst" id="kandidat_zapisnik_sazetak_popup_tekst"></div>
+</div>
+<!-- Modal: PDF pregled zapisnika (render dokumenta „Zapisnik"; SAMO pregled — bez alata; stog iznad izbor-modala) -->
+<div id="kandidatZapisnikPdfModal" class="kandidat-dokumenti-crud__modal-pdf kandidat-dokumenti-crud__modal-pdf--iznad" role="dialog" aria-label="PDF zapisnika" aria-modal="true" aria-hidden="true">
+    <div class="kandidat-dokumenti-crud__modal-pdf-overlay"></div>
+    <div class="kandidat-dokumenti-crud__modal-pdf-dialog">
+        <div class="kandidat-dokumenti-crud__modal-pdf-header">
+            <div class="kandidat-dokumenti-crud__modal-pdf-naslov">PDF zapisnika</div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-body">
+            <iframe id="kandidat_zapisnik_pdf_okvir" class="kandidat-dokumenti-crud__modal-pdf-iframe" title="PDF pregled zapisnika"></iframe>
+            <div id="kandidat_zapisnik_pdf_spiner" class="kontrola-spiner-overlay" aria-hidden="true">
+                <span class="kontrola-spiner kontrola-spiner--segment" role="status" aria-label="Učitavanje"></span>
+            </div>
+            <div class="kandidat-dokumenti-crud__modal-pdf-info" id="kandidat_zapisnik_pdf_info" aria-live="polite"></div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-footer">
+            <button type="button" id="kandidat_zapisnik_pdf_povratak" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
         </div>
     </div>
 </div>
