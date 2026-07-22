@@ -387,9 +387,12 @@
     var naSkenovi = getAktivniTabIndex() === 4;
     var naZapisnici = getAktivniTabIndex() === 5;
     var postoji = _zivotopisPostoji || _obrazac001Postoji || _obrazac001bPostoji;
+    /* Footer Upis/Izmjeni je akcija MASTER forme (Životopis + Obrazac 001a/001b). Tabovi
+       Razgovori/Skenovi/Zapisnici imaju vlastiti upis (add/delete/…) pa footer na njima NIJE vidljiv. */
+    var masterUpisTab = getAktivniTabIndex() === 0 || naObrazac || naObrazac1b;
     if (btnUpisi && btnUpisiLabel) {
+      btnUpisi.style.display = masterUpisTab ? '' : 'none';
       var izmjena = imaSelekciju && postoji;
-      if (naZapisnici && zapisnikSelId() != null) izmjena = true;   /* zapisnik red = izmjena tog reda */
       btnUpisi.classList.toggle('kontrola-btn--crud-izmjeni', izmjena);
       btnUpisiLabel.textContent = izmjena ? 'Izmjeni' : 'Upis';
       btnUpisi.setAttribute('aria-label', izmjena ? 'Izmjeni' : 'Upis');
@@ -676,8 +679,6 @@
   function spremiSve() {
     var id = getSelectedRowId();
     if (id == null) return;
-    /* Tab Zapisnici sa selektiranim redom: „Izmjeni" snima tip + bilješku tog reda (ne dira ostatak forme). */
-    if (getAktivniTabIndex() === 5 && zapisnikSelId() != null) { spremiZapisnikSelektirani(); return; }
     /* „Izmjeni" ako postoji ijedan zapis forme (životopis ili redak 001); inače „Upis". */
     var jeIzmjena = _zivotopisPostoji || _obrazac001Postoji || _obrazac001bPostoji;
     _postForma('Kandidat_Dokumenti_CRUD_spremi.php', { id_clan: String(id), zivotopis: zivotopisGetTekst() })
@@ -2250,9 +2251,12 @@
   var _skenoviEnabled = false;
   var SKEN_MAX_BYTES = 16 * 1024 * 1024;   /* klijentska granica 16 MB */
   var skenTipSel = document.getElementById('sken_tip');
+  var _skenTipVal = '';   /* zadnji odabrani tip skena (uhvaćen na 'change' — pouzdaniji od kasnijeg .value) */
+  var _skenoviData = [];  /* [{id, id_sken_tip, biljeska}] — za popunu kontrola na selekciju */
   var skenBiljeska = document.getElementById('sken_biljeska');
   var skenFileInp = document.getElementById('sken_file');
   var skenDodajBtn = document.getElementById('skenDodaj');
+  var skenUrediBtn = document.getElementById('skenUredi');
   var skenObrisiBtn = document.getElementById('skenObrisi');
   var skenDeselektBtn = document.getElementById('skenDeselekt');
   var skenPdfBtn = document.getElementById('skenPdf');
@@ -2260,10 +2264,43 @@
   CommonCRUD.initTablica('skenoviTablicaContainer', SKENOVI_TABLICA, {
     getRowId: function (row) { return row && row[1] != null ? row[1] : null; },   /* redak = [sadrzaj, id] */
     onReady: function (api) { skenoviApi = api; },
-    onSelectionChange: function () { azurirajSkenIkone(); }
+    onSelectionChange: function () { onSkenSelekcija(); }
   });
 
-  function skenSelId() { return CommonCRUD.getSelectedRowId(skenoviApi); }
+  function skenSelId() { return skenoviApi ? CommonCRUD.getSelectedRowId(skenoviApi) : null; }
+  function skenRedById(id) {
+    for (var i = 0; i < _skenoviData.length; i++) { if (String(_skenoviData[i].id) === String(id)) return _skenoviData[i]; }
+    return null;
+  }
+  /* Selekcija retka → puni „Tip" + „Bilješka"; deselekt (rec=null) ih čisti. */
+  function postaviSkenKontrole(rec) {
+    _skenTipVal = rec && rec.id_sken_tip != null ? String(rec.id_sken_tip) : '';
+    if (skenTipSel) {
+      skenTipSel.value = _skenTipVal;
+      if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('sken_tip'); } catch (e) {} }
+    }
+    if (skenBiljeska) skenBiljeska.value = rec && rec.biljeska != null ? rec.biljeska : '';
+    azurirajSkenDodaj();
+  }
+  function onSkenSelekcija() {
+    var id = skenSelId();
+    postaviSkenKontrole(id != null ? skenRedById(id) : null);
+    azurirajSkenIkone();
+  }
+  /* Inline ✏ „Izmijeni": snima tip + bilješku selektiranog skena (_izmjena.php; BLOB se ne dira). */
+  function spremiSkenSelektirani() {
+    var id = skenSelId(); if (id == null) return;
+    var tip = _skenTipVal !== '' ? _skenTipVal : (skenTipSel ? trim(skenTipSel.value) : '');
+    if (tip === '') { skenPorukaOk('105'); return; }   /* tip je obavezan */
+    var fd = new FormData();
+    fd.append('id', String(id));
+    fd.append('id_sken_tip', tip);
+    fd.append('biljeska', skenBiljeska ? skenBiljeska.value : '');
+    fetch(API_BASE + 'Kandidat_Dokumenti_Sken_CRUD_izmjena.php', { method: 'POST', body: fd })
+      .then(function (r) { return r.text(); }).then(function (res) {
+        if ((res || '').trim() === 'OK') { skenPorukaOk('004'); ucitajSkenovi(getSelectedRowId()); } else skenPorukaKod(res);
+      }).catch(function () {});
+  }
   function skenPorukaKod(res) {
     var s = (res || '').trim(); if (s === '' || s === 'OK') return;
     var idx = s.indexOf(','); var code = idx < 0 ? s : s.slice(0, idx); var repl = idx < 0 ? [] : [s.slice(idx + 1)];
@@ -2273,6 +2310,7 @@
 
   function azurirajSkenIkone() {
     var imaSel = skenSelId() != null;
+    if (skenUrediBtn) skenUrediBtn.disabled = !(_skenoviEnabled && imaSel);
     if (skenObrisiBtn) skenObrisiBtn.disabled = !(_skenoviEnabled && imaSel);
     if (skenDeselektBtn) skenDeselektBtn.disabled = !(_skenoviEnabled && imaSel);
     if (skenPdfBtn) skenPdfBtn.disabled = !imaSel;   /* pregled samo treba selekciju (neovisno o edit-modu) */
@@ -2294,7 +2332,7 @@
         while (skenTipSel.options.length) skenTipSel.remove(0);
         var ph = document.createElement('option'); ph.value = ''; ph.textContent = '— Odaberi tip dokumenta —'; skenTipSel.appendChild(ph);
         arr.forEach(function (o) { var op = document.createElement('option'); op.value = String(o.id); op.textContent = o.naziv != null ? o.naziv : ('#' + o.id); skenTipSel.appendChild(op); });
-        skenTipSel.value = '';   /* placeholder — ne postavljati na prvi tip */
+        skenTipSel.value = ''; _skenTipVal = '';   /* placeholder — ne postavljati na prvi tip */
         if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('sken_tip'); } catch (e) {} }
       }
       _skenoviTipoviUcitani = true;
@@ -2312,6 +2350,7 @@
       .then(function (r) { return r.text(); }).then(function (t) {
         t = (t || '').trim(); var arr = [];
         if (t.charAt(0) === '[') { try { arr = JSON.parse(t); } catch (e) { arr = []; } }
+        _skenoviData = arr.map(function (o) { return { id: o.id, id_sken_tip: o.id_sken_tip, biljeska: o.biljeska }; });
         var rows = arr.map(function (o) {
           var tip = o.tip_naziv != null ? o.tip_naziv : '';
           var bil = (o.biljeska != null && trim(o.biljeska) !== '') ? o.biljeska : '';
@@ -2337,7 +2376,11 @@
     azurirajSkenIkone();
   }
 
-  if (skenTipSel) skenTipSel.addEventListener('change', azurirajSkenDodaj);   /* izbor tipa → + enable/disable */
+  if (skenTipSel) skenTipSel.addEventListener('change', function () { _skenTipVal = trim(skenTipSel.value); azurirajSkenDodaj(); });   /* izbor tipa → capture + + enable/disable */
+  if (skenUrediBtn) skenUrediBtn.addEventListener('click', function () {
+    if (skenUrediBtn.disabled) return;
+    spremiSkenSelektirani();   /* snima tip + bilješku selektiranog skena */
+  });
   if (skenDodajBtn) skenDodajBtn.addEventListener('click', function () {
     if (skenDodajBtn.disabled || getSelectedRowId() == null) return;   /* + je disabled dok tip nije izabran */
     if (skenFileInp) { skenFileInp.value = ''; skenFileInp.click(); }
@@ -2352,7 +2395,7 @@
     if (f.size > SKEN_MAX_BYTES) { skenPorukaOk('105'); skenFileInp.value = ''; return; }   /* prevelik */
     var fd = new FormData();
     fd.append('id_clan', String(idClan));
-    fd.append('id_sken_tip', skenTipSel ? String(skenTipSel.value) : '');
+    fd.append('id_sken_tip', _skenTipVal !== '' ? _skenTipVal : (skenTipSel ? String(skenTipSel.value) : ''));
     fd.append('biljeska', skenBiljeska ? skenBiljeska.value : '');
     fd.append('podatak', f, f.name);
     if (skenDodajBtn) skenDodajBtn.disabled = true;
@@ -2362,6 +2405,7 @@
         if (skenDodajBtn) skenDodajBtn.disabled = !_skenoviEnabled;
         if ((res || '').trim() === 'OK') {
           if (skenBiljeska) skenBiljeska.value = '';
+          _skenTipVal = '';
           if (skenTipSel) { skenTipSel.value = ''; if (typeof KontroleRefreshCustomSelect === 'function') { try { KontroleRefreshCustomSelect('sken_tip'); } catch (e) {} } }   /* tip natrag na placeholder */
           azurirajSkenDodaj();   /* → + ponovno disabled dok se ne izabere novi tip */
           skenPorukaOk('001'); ucitajSkenovi(getSelectedRowId());
@@ -2381,7 +2425,7 @@
 
   if (skenDeselektBtn) skenDeselektBtn.addEventListener('click', function () {
     if (skenoviApi && skenoviApi.clearSelection) skenoviApi.clearSelection();
-    azurirajSkenIkone();
+    onSkenSelekcija();   /* očisti i „Tip" + „Bilješka", ne samo ikone */
   });
 
   /* Pregled skena: X-Frame-Options DENY (.htaccess) blokira iframe sa servera, pa PDF dohvaćamo kao
@@ -2439,6 +2483,7 @@
   var _zapisnikTipVal = '';   /* zadnji odabrani tip (uhvaćen na 'change' — pouzdaniji od kasnijeg čitanja .value) */
   var zapisnikBiljeska = document.getElementById('zapisnik_biljeska');
   var zapisnikDodajBtn = document.getElementById('zapisnikDodaj');
+  var zapisnikUrediBtn = document.getElementById('zapisnikUredi');
   var zapisnikObrisiBtn = document.getElementById('zapisnikObrisi');
   var zapisnikDeselektBtn = document.getElementById('zapisnikDeselekt');
   var zapisnikPdfBtn = document.getElementById('zapisnikPdf');
@@ -2480,6 +2525,7 @@
 
   function azurirajZapisnikIkone() {
     var imaSel = zapisnikSelId() != null;
+    if (zapisnikUrediBtn) zapisnikUrediBtn.disabled = !(_zapisniciEnabled && imaSel);
     if (zapisnikObrisiBtn) zapisnikObrisiBtn.disabled = !(_zapisniciEnabled && imaSel);
     if (zapisnikDeselektBtn) zapisnikDeselektBtn.disabled = !(_zapisniciEnabled && imaSel);
     if (zapisnikPdfBtn) zapisnikPdfBtn.disabled = !imaSel;   /* pregled treba samo selekciju */
@@ -2594,6 +2640,11 @@
       .then(function (r) { return r.text(); }).then(function (res) {
         if ((res || '').trim() === 'OK') { zapisnikPorukaOk('003'); ucitajZapisnici(getSelectedRowId()); } else zapisnikPorukaKod(res);
       }).catch(function () {});
+  });
+
+  if (zapisnikUrediBtn) zapisnikUrediBtn.addEventListener('click', function () {
+    if (zapisnikUrediBtn.disabled) return;
+    spremiZapisnikSelektirani();   /* snima tip + bilješku selektiranog reda (_izmjena.php) */
   });
 
   if (zapisnikDeselektBtn) zapisnikDeselektBtn.addEventListener('click', function () {
