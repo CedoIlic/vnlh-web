@@ -218,6 +218,7 @@
                     <option value="slika|staticki">Slika — statička</option>
                     <option value="slika|dinamicki">Slika — dinamička</option>
                     <option value="slika|po_vrijednosti">Slika — po vrijednosti</option>
+                    <option value="linije|linije">Linije — ručno popunjavanje</option>
                 </select></div>
                 <button type="button" id="btnVrsteStavkiPomoc" class="pdf-dokument-crud__ellipsis-btn pdf-dokument-crud__ellipsis-btn--pomoc" title="Opis vrsta stavki" aria-label="Opis svih vrsta stavki i kada se koriste">?</button>
             </div>
@@ -229,6 +230,7 @@
                     <select id="st_vrsta" aria-hidden="true">
                         <option value="tekst">Tekst</option>
                         <option value="slika">Slika</option>
+                        <option value="linije">Linije</option>
                     </select>
                     <select id="st_izvor_tip" aria-hidden="true">
                         <option value="staticki">Statički</option>
@@ -240,6 +242,7 @@
                         <option value="relacija_redak">Relacija — redak</option>
                         <option value="relacija_grupe">Relacija — grupe</option>
                         <option value="relacija_csv">Relacija — CSV</option>
+                        <option value="linije">Linije</option>
                     </select>
                 </div>
                 <div class="pdf-dokument-crud__polje">
@@ -376,6 +379,48 @@
                     <div class="kontrola-select"><select id="st_slika_stil_id" aria-label="Stil slike">
                         <option value="">— odaberi —</option>
                     </select></div>
+                </div>
+                <div id="polje_linije" class="pdf-dokument-crud__linije-grupa" hidden>
+                    <div class="pdf-dokument-crud__polje">
+                        <label class="kontrola-labela mb-0" for="st_linije_labela">Labela (opcionalno)</label>
+                        <input id="st_linije_labela" type="text" class="kontrola-edit" placeholder="npr. Odgovor (prazno = bez labele)" maxlength="1024" autocomplete="off">
+                    </div>
+                    <div class="pdf-dokument-crud__polje-red">
+                        <label class="kontrola-labela mb-0 pdf-dokument-crud__polje-red-labela" for="st_broj_linija">Broj linija</label>
+                        <div class="pdf-dokument-crud__polje-red-sredina">
+                            <input id="st_broj_linija" type="text" class="kontrola-edit pdf-dokument-crud__num" inputmode="numeric" placeholder="4" maxlength="3" autocomplete="off" aria-label="Broj linija za popunjavanje">
+                            <label class="kontrola-labela mb-0" for="st_linija_debljina">Debljina</label>
+                            <div class="pdf-dokument-crud__unos-mjera">
+                                <input id="st_linija_debljina" type="text" class="kontrola-edit pdf-dokument-crud__num" inputmode="decimal" placeholder="0,25" maxlength="6" autocomplete="off" aria-label="Debljina linije u mm">
+                                <span class="pdf-dokument-crud__mjera" aria-hidden="true">mm</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pdf-dokument-crud__polje">
+                        <label class="kontrola-labela mb-0" for="st_stil_linije">Stil linije</label>
+                        <div class="kontrola-select"><select id="st_stil_linije" aria-label="Stil linije">
+                            <option value="crtkano">Crtkano (crtice)</option>
+                            <option value="tockasto">Točkasto</option>
+                            <option value="puno">Puno (kontinuirano)</option>
+                        </select></div>
+                    </div>
+                    <div class="pdf-dokument-crud__polje pdf-dokument-crud__linije-cb">
+                        <label class="kontrola-checkbox-labela"><input id="st_labela_u_istom_redu" type="checkbox" class="kontrola-checkbox"> Prva linija u istom redu s labelom</label>
+                    </div>
+                    <div class="pdf-dokument-crud__polje-red" id="polje_prva_linija" hidden>
+                        <label class="kontrola-labela mb-0 pdf-dokument-crud__polje-red-labela" for="st_prva_linija_nacin">Kraj prve linije</label>
+                        <div class="pdf-dokument-crud__polje-red-sredina">
+                            <div class="kontrola-select"><select id="st_prva_linija_nacin" aria-label="Kraj prve linije">
+                                <option value="margina">Do desne margine</option>
+                                <option value="duzina">Dužina (mm od labele)</option>
+                                <option value="fiksni_x">Do fiksne pozicije (X mm)</option>
+                            </select></div>
+                            <div class="pdf-dokument-crud__unos-mjera" id="red_prva_linija_mm" hidden>
+                                <input id="st_prva_linija_mm" type="text" class="kontrola-edit pdf-dokument-crud__num" inputmode="decimal" placeholder="0,0" maxlength="9" autocomplete="off" aria-label="Dužina ili X pozicija prve linije u mm">
+                                <span class="pdf-dokument-crud__mjera" aria-hidden="true">mm</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="pdf-dokument-crud__polje" id="polje_bez_kraja">
                     <div class="pdf-dokument-crud__cb-red">

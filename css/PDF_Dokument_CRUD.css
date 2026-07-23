@@ -325,6 +325,11 @@
 .pdf-dokument-crud__stavka-modal #polje_mapa .pdf-dokument-crud__edit-with-ellipsis { align-items: flex-start; }
 .pdf-dokument-crud__stavka-modal #polje_mapa .kontrola-napomena { flex: 1 1 auto; min-width: 0; box-sizing: border-box; }
 
+/* ===== Vrsta „linije" (ručno popunjavanje): grupa polja u stupcu (kao sadržaj modala) ===== */
+.pdf-dokument-crud__stavka-modal #polje_linije:not([hidden]) { display: flex; flex-direction: column; gap: 0.55rem; }
+/* Checkbox „Prva linija u istom redu" poravnat s kontrolnim stupcem (ne ispod labele). */
+.pdf-dokument-crud__stavka-modal #polje_linije .pdf-dokument-crud__linije-cb { padding-left: calc(11rem + 0.75rem); }
+
 /* ===== Popup uputa (Mapa vrijednosti) ===== */
 .pdf-dokument-crud__pomoc-modal { min-width: 48rem; max-width: 48rem; }
 /* Centriranje preko absolute+transform da drag ne skoči pri prvom pomaku (kao kod editora). */

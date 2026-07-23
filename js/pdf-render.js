@@ -547,9 +547,89 @@
       return node;
     }
 
+    /* Linije (vrsta=linije): prazan prostor za ručno popunjavanje — opcionalna labela +
+       N linija (puno/crtkano/točkasto). Visina reda = paragraf (velicina × prored × lh fonta).
+       Linija = donji rub tablice-ćelije (crtkanje kroz layout.hLineStyle). */
+    function sastaviLinije(s) {
+      var ps = (s.paragraf_id && parStilovi[s.paragraf_id]) ? parStilovi[s.paragraf_id] : {};
+      var fsPt = broj(ps.velicina_pt) || 12;
+      var prored = broj(ps.prored) || 1;
+      if (opts.proredVrijednost != null && opts.proredStilId && ps && +ps.id === +opts.proredStilId) prored = broj(opts.proredVrijednost);
+      var boja = str(ps.boja) || '#000000';
+      var kljuc = s.font_kljuc || undefined;
+      /* Visina reda iz metrike fonta (server lh), fallback konstanta. */
+      var serverLh = null;
+      (model.fontovi || []).forEach(function (f) { if (f.kljuc === kljuc && f.lh != null) serverLh = broj(f.lh); });
+      var lhFaktor = (serverLh && serverLh > 0.8 && serverLh < 2.2) ? serverLh : OBTJ_LH_FAKTOR;
+      var lhPt = fsPt * prored * lhFaktor * OBTJ_LH_FINO;
+
+      var n = parseInt(s.broj_linija, 10); if (!(n > 0)) n = 1;
+      var debljinaPt = broj(s.linija_debljina_mm) * MM_PT; if (!(debljinaPt > 0)) debljinaPt = 0.25 * MM_PT;
+      var stilLin = s.stil_linije || 'crtkano';
+      var dash = null;
+      if (stilLin === 'tockasto') dash = { length: Math.max(0.4, debljinaPt), space: Math.max(1.5, debljinaPt * 2.5) };
+      else if (stilLin !== 'puno') dash = { length: 3, space: 2 };   /* crtkano (default) */
+
+      var mL = mm(t, 'margina_lijevo_mm'), mR = mm(t, 'margina_desno_mm');
+      var W = dimPt.w - mL - mR;
+      var razT = mm(ps, 'razmak_prije_mm'), razB = mm(ps, 'razmak_poslije_mm');
+
+      var labela = str(s.labela);
+      var uIstom = bool(s.labela_u_istom_redu) && !!labela;
+
+      function linijaLayout() {
+        return {
+          hLineWidth: function (i) { return (i === 0) ? 0 : debljinaPt; },   /* samo donji rub svakog reda */
+          vLineWidth: function () { return 0; },
+          hLineColor: function () { return boja; },
+          hLineStyle: dash ? function () { return { dash: dash }; } : undefined,
+          paddingLeft: function () { return 0; }, paddingRight: function () { return 0; },
+          paddingTop: function () { return 0; }, paddingBottom: function () { return 0; }
+        };
+      }
+      function linijeTablica(brojR, w, margin) {
+        var body = [], heights = [];
+        for (var r = 0; r < brojR; r++) { body.push([{ text: '', fontSize: 1 }]); heights.push(lhPt); }
+        return { table: { widths: [w], heights: heights, body: body }, layout: linijaLayout(), margin: margin || [0, 0, 0, 0] };
+      }
+
+      var out = [];
+      if (uIstom) {
+        var labelaNode = {
+          text: labela, font: kljuc, fontSize: fsPt, color: boja, lineHeight: prored,
+          bold: bool(ps.bold), italics: bool(ps.italic), width: 'auto', margin: [0, 0, 3, 0]
+        };
+        if (bool(ps.podcrtano)) labelaNode.decoration = 'underline';
+        var nacin = s.prva_linija_nacin || 'margina';
+        var prvaLin = linijeTablica(1, '*', [0, 0, 0, 0]);        /* unutarnja tablica uvijek puni svoj stupac */
+        var stupci = [labelaNode];
+        if (nacin === 'duzina' && broj(s.prva_linija_mm) > 0) {
+          prvaLin.width = broj(s.prva_linija_mm) * MM_PT;         /* fiksna dužina linije */
+          stupci.push(prvaLin);
+          stupci.push({ width: '*', text: '' });                 /* prazan ostatak reda */
+        } else if (nacin === 'fiksni_x') {
+          var xLoc = (broj(s.prva_linija_mm) * MM_PT) - mL;       /* apsolutni X → lokalno (0 = lijeva margina) */
+          var filler = W - xLoc; if (filler < 0) filler = 0;
+          prvaLin.width = '*';                                    /* puni do fillera → kraj na X */
+          stupci.push(prvaLin);
+          if (filler > 0) stupci.push({ width: filler, text: '' });
+        } else {
+          prvaLin.width = '*';                                    /* margina: do desne margine */
+          stupci.push(prvaLin);
+        }
+        out.push({ columns: stupci, columnGap: 0, margin: [0, razT, 0, (n > 1 ? 0 : razB)] });
+        if (n > 1) out.push(linijeTablica(n - 1, '*', [0, 0, 0, razB]));
+      } else {
+        if (labela) out.push(sastaviOdlomak(ps, kljuc, labela, {}));
+        out.push(linijeTablica(n, '*', [0, (labela ? 0 : razT), 0, razB]));
+      }
+      return out;
+    }
+
     function elementi(s) {
       if (!s || s.greska || s.sakrij) return [];
       if (s.vrsta === 'tablica') return s.tablica ? [sastaviTablica(s.tablica)] : [];
+      if (s.vrsta === 'linije') return sastaviLinije(s);
       if (s.vrsta === 'slika') {
         var ss = s.slika_stil_id ? slikaStilovi[s.slika_stil_id] : null;
         /* Apsolutno — ishodište po zoni:

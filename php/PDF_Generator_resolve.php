@@ -457,6 +457,7 @@ $tablicaStilIds = [];
 foreach ($stavke as $s) {
     if (($s['vrsta'] ?? '') === 'tekst' && !empty($s['paragraf_id'])) $parIds[(int) $s['paragraf_id']] = true;
     if (($s['vrsta'] ?? '') === 'tekst' && !empty($s['podatak_paragraf_id'])) $parIds[(int) $s['podatak_paragraf_id']] = true;   // stil PODATKA (relacija_csv)
+    if (($s['vrsta'] ?? '') === 'linije' && !empty($s['paragraf_id'])) $parIds[(int) $s['paragraf_id']] = true;   // stil labele/linija
     if (($s['vrsta'] ?? '') === 'slika' && !empty($s['slika_stil_id'])) $slikaIds[(int) $s['slika_stil_id']] = true;
     if (($s['vrsta'] ?? '') === 'tablica' && !empty($s['tablica_stil_id'])) $tablicaStilIds[(int) $s['tablica_stil_id']] = true;
 }
@@ -1307,6 +1308,37 @@ while ($i < $n) {
         }
         $out[] = $rec;
         $i = $k + 1;
+        continue;
+    }
+
+    if ($vrsta === 'linije') {
+        // Linije (ručno popunjavanje): bez dohvata — proslijedi parametre + stil (paragraf) i font.
+        $parId = !empty($s['paragraf_id']) ? (int) $s['paragraf_id'] : 0;
+        $fk = null;
+        if ($parId && isset($parStilovi[$parId]) && !empty($parStilovi[$parId]['font_id'])) {
+            $fid = (int) $parStilovi[$parId]['font_id'];
+            if (isset($fontPoId[$fid])) $fk = $fontPoId[$fid]['pdfmake_kljuc'];
+        }
+        $labela = (isset($s['literal_tekst']) && trim((string) $s['literal_tekst']) !== '') ? str_replace('^', ' ', (string) $s['literal_tekst']) : null;
+        $out[] = [
+            'redoslijed' => isset($s['redoslijed']) ? (int) $s['redoslijed'] : 0,
+            'zona' => $zona,
+            'okvir_id' => !empty($s['okvir_id']) ? (int) $s['okvir_id'] : null,
+            'vrsta' => 'linije',
+            'greska' => null,
+            'prijelom_prije' => ($zona === 'tijelo' && empty($s['okvir_id']) && !empty($s['prijelom_prije'])) ? 1 : 0,
+            'prijelom_poslije' => ($zona === 'tijelo' && empty($s['okvir_id']) && !empty($s['prijelom_poslije'])) ? 1 : 0,
+            'paragraf_id' => $parId ?: null,
+            'font_kljuc' => $fk,
+            'labela' => $labela,
+            'broj_linija' => max(1, (int) ($s['broj_linija'] ?? 1)),
+            'stil_linije' => in_array(($s['stil_linije'] ?? ''), ['puno', 'crtkano', 'tockasto'], true) ? $s['stil_linije'] : 'crtkano',
+            'linija_debljina_mm' => (float) ($s['linija_debljina_mm'] ?? 0),
+            'labela_u_istom_redu' => !empty($s['labela_u_istom_redu']) ? 1 : 0,
+            'prva_linija_nacin' => in_array(($s['prva_linija_nacin'] ?? ''), ['margina', 'duzina', 'fiksni_x'], true) ? $s['prva_linija_nacin'] : 'margina',
+            'prva_linija_mm' => (float) ($s['prva_linija_mm'] ?? 0)
+        ];
+        $i++;
         continue;
     }
 
