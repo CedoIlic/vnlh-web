@@ -1336,7 +1336,8 @@ while ($i < $n) {
             'linija_debljina_mm' => (float) ($s['linija_debljina_mm'] ?? 0),
             'labela_u_istom_redu' => !empty($s['labela_u_istom_redu']) ? 1 : 0,
             'prva_linija_nacin' => in_array(($s['prva_linija_nacin'] ?? ''), ['margina', 'duzina', 'fiksni_x'], true) ? $s['prva_linija_nacin'] : 'margina',
-            'prva_linija_mm' => (float) ($s['prva_linija_mm'] ?? 0)
+            'prva_linija_mm' => (float) ($s['prva_linija_mm'] ?? 0),
+            'pomak_y_mm' => (float) ($s['pomak_y_mm'] ?? 0)
         ];
         $i++;
         continue;

@@ -567,8 +567,8 @@
       var debljinaPt = broj(s.linija_debljina_mm) * MM_PT; if (!(debljinaPt > 0)) debljinaPt = 0.25 * MM_PT;
       var stilLin = s.stil_linije || 'crtkano';
       var dash = null;
-      if (stilLin === 'tockasto') dash = { length: Math.max(0.4, debljinaPt), space: Math.max(1.5, debljinaPt * 2.5) };
-      else if (stilLin !== 'puno') dash = { length: 3, space: 2 };   /* crtkano (default) */
+      if (stilLin === 'tockasto') dash = { length: Math.max(0.5, debljinaPt), space: Math.max(1.1, debljinaPt * 1.6) };   /* gušće točke */
+      else if (stilLin !== 'puno') dash = { length: 2, space: 1.5 };   /* crtkano (default) — gušće crtice */
 
       var mL = mm(t, 'margina_lijevo_mm'), mR = mm(t, 'margina_desno_mm');
       var W = dimPt.w - mL - mR;
@@ -593,7 +593,7 @@
         return { table: { widths: [w], heights: heights, body: body }, layout: linijaLayout(), margin: margin || [0, 0, 0, 0] };
       }
 
-      var out = [];
+      var out = [], linijeCiljevi = [];   /* linijeCiljevi = elementi koje pomak diže (samo linije, ne labela) */
       if (uIstom) {
         var labelaNode = {
           text: labela, font: kljuc, fontSize: fsPt, color: boja, lineHeight: prored,
@@ -618,12 +618,28 @@
           stupci.push(prvaLin);
         }
         out.push({ columns: stupci, columnGap: 0, margin: [0, razT, 0, (n > 1 ? 0 : razB)] });
-        if (n > 1) out.push(linijeTablica(n - 1, '*', [0, 0, 0, razB]));
+        linijeCiljevi.push(prvaLin);                              /* pomak diže SAMO liniju (ne labelu) */
+        if (n > 1) { var ltInline = linijeTablica(n - 1, '*', [0, 0, 0, razB]); out.push(ltInline); linijeCiljevi.push(ltInline); }
       } else {
-        if (labela) out.push(sastaviOdlomak(ps, kljuc, labela, {}));
-        out.push(linijeTablica(n, '*', [0, (labela ? 0 : razT), 0, razB]));
+        if (labela) out.push(sastaviOdlomak(ps, kljuc, labela, {}));   /* labela u svom redu — ostaje na mjestu */
+        var ltBlok = linijeTablica(n, '*', [0, (labela ? 0 : razT), 0, razB]);
+        out.push(ltBlok); linijeCiljevi.push(ltBlok);
       }
+      /* Okomiti pomak (mm, +gore/−dolje): pomiče SAMO linije (labela ostaje). Tok-neutralno po elementu
+         (manja gornja + veća donja margina) → ostatak dokumenta se ne pomakne, a linija se digne/spusti
+         RELATIVNO na labelu i okolinu. */
+      var pomakPt = broj(s.pomak_y_mm) * MM_PT;
+      if (pomakPt) linijeCiljevi.forEach(function (el) { podesiMargin(el, 1, -pomakPt); podesiMargin(el, 3, pomakPt); });
       return out;
+
+      function podesiMargin(el, idx, delta) {
+        if (!el) return;
+        var m = el.margin;
+        if (typeof m === 'number') m = [m, m, m, m];
+        else if (!m) m = [0, 0, 0, 0]; else m = m.slice();
+        m[idx] = (m[idx] || 0) + delta;
+        el.margin = m;
+      }
     }
 
     function elementi(s) {

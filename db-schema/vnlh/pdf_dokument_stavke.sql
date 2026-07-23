@@ -43,6 +43,7 @@ CREATE TABLE `pdf_dokument_stavke` (
   `labela_u_istom_redu` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'vrsta=linije: 1=prva linija kreće desno od labele u istom redu; 0=labela (ako postoji) u svom redu, sve linije pune širine',
   `prva_linija_nacin` enum('margina','duzina','fiksni_x') DEFAULT NULL COMMENT 'vrsta=linije: kraj PRVE (inline) linije — margina=do desne margine; duzina=od kraja labele traje prva_linija_mm; fiksni_x=završava na X=prva_linija_mm (mm od lijevog ruba). Vrijedi samo kad labela_u_istom_redu=1',
   `prva_linija_mm`   decimal(6,2) DEFAULT NULL COMMENT 'vrsta=linije: vrijednost u mm za prva_linija_nacin (duzina=dužina, fiksni_x=X pozicija); ignorira se za margina',
+  `pomak_y_mm`       decimal(6,2) DEFAULT NULL COMMENT 'vrsta=linije: okomiti pomak cijele grupe linija u mm (pozitivno=gore, negativno=dolje); tok-neutralan (ostatak dokumenta se ne pomiče)',
   PRIMARY KEY (`id`),
   KEY `idx_dokument_redoslijed` (`dokument_id`, `redoslijed`),
   KEY `fk_stavka_izvor` (`izvor_id`),

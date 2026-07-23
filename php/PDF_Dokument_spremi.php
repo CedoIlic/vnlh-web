@@ -80,13 +80,13 @@ try {
         $skupina = null;   // povezane stavke (nestaju zajedno ako su svi podaci u skupini prazni)
         $prefiks = null;   // literal ispred vrijednosti samo kad postoji
         $sufiks = null;    // literal iza vrijednosti samo kad postoji
-        $brojLinija = null; $stilLinije = null; $linDebljina = null; $labelaIstiRed = 0; $prvaNacin = null; $prvaMm = null;   // vrsta=linije
+        $brojLinija = null; $stilLinije = null; $linDebljina = null; $labelaIstiRed = 0; $prvaNacin = null; $prvaMm = null; $pomakY = null;   // vrsta=linije
         $ins = $mysqli->prepare(
             'INSERT INTO pdf_dokument_stavke
-             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold, okvir_id, fiksna_pozicija_y, zadrzi_svoj_stil, prijelom_prije, prijelom_poslije, prazno_nacin, skupina, prefiks, sufiks, podatak_paragraf_id, tablica_stil_id, broj_linija, stil_linije, linija_debljina_mm, labela_u_istom_redu, prva_linija_nacin, prva_linija_mm)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             (dokument_id, redoslijed, zona, vrsta, izvor_id, izvor_tip, izvor_red_id, kontekst_kljuc, test_id, trazi_kolona, trazi_vrijednost, literal_tekst, paragraf_id, slika_stil_id, bez_kraja_odlomka, naziv_stavke, preko_izvor_id, mapa_vrijednosti, format_datuma, fiksna_pozicija, sakrij_ako_prazno, relacija_id, lista_nacin, lista_separator, redak_predlozak, labela_bold, okvir_id, fiksna_pozicija_y, zadrzi_svoj_stil, prijelom_prije, prijelom_poslije, prazno_nacin, skupina, prefiks, sufiks, podatak_paragraf_id, tablica_stil_id, broj_linija, stil_linije, linija_debljina_mm, labela_u_istom_redu, prva_linija_nacin, prva_linija_mm, pomak_y_mm)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
-        $ins->bind_param('iissisisisssiiisissdiisssiidiiisissiiisdisd', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold, $okvirId, $fiksy, $zss, $prelom, $prelomPosl, $praznoNacin, $skupina, $prefiks, $sufiks, $podParId, $tablicaStilId, $brojLinija, $stilLinije, $linDebljina, $labelaIstiRed, $prvaNacin, $prvaMm);
+        $ins->bind_param('iissisisisssiiisissdiisssiidiiisissiiisdisdd', $dok, $red, $zona, $vrsta, $izParam, $izTip, $izRed, $kkljuc, $tid, $tkol, $tvrij, $lit, $parId, $sslik, $bezkraj, $nap, $prekoId, $mapa, $fmt, $fiks, $sakrij, $relId, $listaNacin, $listaSep, $redakPred, $labelaBold, $okvirId, $fiksy, $zss, $prelom, $prelomPosl, $praznoNacin, $skupina, $prefiks, $sufiks, $podParId, $tablicaStilId, $brojLinija, $stilLinije, $linDebljina, $labelaIstiRed, $prvaNacin, $prvaMm, $pomakY);
         $dok = $id;
         $i = 0;
         foreach ($stavke as $s) {
@@ -204,6 +204,7 @@ try {
             $labelaIstiRed = ($vrsta === 'linije' && !empty($s['labela_u_istom_redu'])) ? 1 : 0;
             $prvaNacin = ($vrsta === 'linije') ? (in_array(($s['prva_linija_nacin'] ?? ''), ['margina', 'duzina', 'fiksni_x'], true) ? $s['prva_linija_nacin'] : 'margina') : null;
             $prvaMm = ($vrsta === 'linije' && isset($s['prva_linija_mm']) && $s['prva_linija_mm'] !== '' && $s['prva_linija_mm'] !== null) ? (float) $s['prva_linija_mm'] : null;
+            $pomakY = ($vrsta === 'linije' && isset($s['pomak_y_mm']) && $s['pomak_y_mm'] !== '' && $s['pomak_y_mm'] !== null) ? (float) $s['pomak_y_mm'] : null;
             $zadnjiRed = $red;
             $ins->execute();
         }
