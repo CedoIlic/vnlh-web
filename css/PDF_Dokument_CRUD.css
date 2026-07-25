@@ -390,3 +390,14 @@
   border-bottom-left-radius: calc(var(--panel_radius, 12px) - var(--modal_border_w, 1px));
   border-bottom-right-radius: calc(var(--panel_radius, 12px) - var(--modal_border_w, 1px));
 }
+
+/* „Kad je prazno" + „Dužina linije" u istom redu: select raste, mm polje je usko (100px). */
+.pdf-dokument-crud__prazno-select { flex: 1 1 12rem; min-width: 0; }
+.pdf-dokument-crud__prazno-linija { display: flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
+.pdf-dokument-crud__prazno-linija[hidden] { display: none; }
+.pdf-dokument-crud__prazno-linija-input { width: 70px; }
+
+/* Uvjetni ispis stavke: ključ raste, operator uzak, vrijednost kratka. */
+.pdf-dokument-crud__uvjet-kljuc { flex: 1 1 10rem; min-width: 0; }
+.pdf-dokument-crud__uvjet-operator { flex: 0 0 9rem; }
+.pdf-dokument-crud__uvjet-vrijednost { flex: 0 0 100px; }

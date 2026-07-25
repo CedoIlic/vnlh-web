@@ -116,10 +116,86 @@
     return { columns: cols, columnGap: 0, margin: [mL, marT, mR, marB] };
   }
 
+  /* Prazno → linija za ručni upis: INTERNI marker ~L(mm) (ubacuje ga resolver iz prazno_nacin='linija').
+     Reže runove na dijelove {tip:'tekst'|'linija'}; vraća null ako markera nema. */
+  var LINIJA_RE = /~L\((\d+(?:\.\d+)?)\)/;
+  function linijaDijelovi(tekst) {
+    var runovi = (typeof tekst === 'string') ? [{ text: tekst }] : (tekst || []);
+    var ima = false;
+    for (var j = 0; j < runovi.length; j++) {
+      if (runovi[j] && typeof runovi[j].text === 'string' && LINIJA_RE.test(runovi[j].text)) { ima = true; break; }
+    }
+    if (!ima) return null;
+    var out = [{ tip: 'tekst', runovi: [] }];
+    runovi.forEach(function (r) {
+      if (!r || typeof r.text !== 'string') { if (r) out[out.length - 1].runovi.push(r); return; }
+      var rest = r.text, m;
+      while ((m = rest.match(LINIJA_RE))) {
+        var before = rest.slice(0, m.index);
+        if (before !== '') out[out.length - 1].runovi.push(_prenesiRunStil(r, { text: before }));
+        out.push({ tip: 'linija', mm: parseFloat(m[1]) });
+        out.push({ tip: 'tekst', runovi: [] });
+        rest = rest.slice(m.index + m[0].length);
+      }
+      if (rest !== '') out[out.length - 1].runovi.push(_prenesiRunStil(r, { text: rest }));
+    });
+    return out;
+  }
+
+  /* Redak s linijom → pdfmake columns: tekst 'auto', linija fiksne mm širine (donji rub ćelije),
+     zadnji stupac '*' da se linija ne rasteže. Visina ćelije ≈ visina retka teksta. */
+  function sastaviLinijaRedak(stil, kljuc, dijelovi, opts) {
+    opts = opts || {};
+    var mL = mm(stil, 'uvlaka_lijevo_mm'), mR = mm(stil, 'uvlaka_desno_mm');
+    var mT = mm(stil, 'razmak_prije_mm'), mB = mm(stil, 'razmak_poslije_mm');
+    var marT = opts.noGapAbove ? 0 : mT, marB = (opts.fillGapBelow || opts.noGapBelow) ? 0 : mB;
+    var fsPt = broj(stil.velicina_pt) || 12;
+    var prored = (opts.proredVrijednost != null ? broj(opts.proredVrijednost) : (broj(stil.prored) || 1));
+    var boja = str(stil.boja) || '#000000';
+    var debljinaPt = 0.25 * MM_PT;
+    var lhPt = fsPt * prored * OBTJ_LH_FAKTOR;
+    var baza = {
+      font: kljuc, fontSize: fsPt, bold: bool(stil.bold), italics: bool(stil.italic),
+      lineHeight: prored, color: boja, alignment: 'left'
+    };
+    if (bool(stil.podcrtano)) baza.decoration = 'underline';
+    /* Poravnanje odlomka: stupci su 'auto' širine, pa se centriranje/desno postiže praznim
+       '*' spacerima s obje / lijeve strane (pdfmake columns nema alignment). */
+    var por = str(stil.poravnanje) || 'left';
+    var cols = [];
+    if (por === 'center' || por === 'right') cols.push({ width: '*', text: '' });
+    dijelovi.forEach(function (d) {
+      if (d.tip === 'linija') {
+        cols.push({
+          width: (d.mm > 0 ? d.mm : 40) * MM_PT,
+          table: { widths: ['*'], heights: [lhPt], body: [[{ text: '', fontSize: 1 }]] },
+          layout: {
+            hLineWidth: function (i) { return (i === 0) ? 0 : debljinaPt; },
+            vLineWidth: function () { return 0; },
+            hLineColor: function () { return boja; },
+            paddingLeft: function () { return 0; }, paddingRight: function () { return 0; },
+            paddingTop: function () { return 0; }, paddingBottom: function () { return 0; }
+          }
+        });
+        return;
+      }
+      if (!d.runovi.length) return;
+      var col = {}; for (var k in baza) col[k] = baza[k];
+      col.text = d.runovi;
+      col.width = 'auto';
+      cols.push(col);
+    });
+    if (por !== 'right') cols.push({ width: '*', text: '' });
+    return { columns: cols, columnGap: 0, margin: [mL, marT, mR, marB] };
+  }
+
   /* Jedan odlomak (margin = razmaci/uvlake; okvir ili pozadina ga omotaju u tablicu). */
   function sastaviOdlomak(stil, kljuc, tekst, opts) {
     stil = stil || {};
     opts = opts || {};
+    /* Linija za ručni upis ima prednost pred tab-pozicijama (ne kombiniraju se u istom retku). */
+    var _linDijelovi = linijaDijelovi(tekst);
+    if (_linDijelovi) return sastaviLinijaRedak(stil, kljuc, _linDijelovi, opts);
     var _tabSegs = tabSegmenti(tekst);
     if (_tabSegs) {
       if (_tabSegs.length > 1) return sastaviTabRedak(stil, kljuc, _tabSegs, opts);

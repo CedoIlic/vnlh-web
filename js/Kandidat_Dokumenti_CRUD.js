@@ -358,6 +358,9 @@
      Puni se ISKLJUČIVO iz učitanih podataka, nikad iz onoga što je korisnik upravo utipkao —
      dokument se uvijek gradi iz baze. Nakon Upiši/Izmjeni vrijedi tek po ponovnom učitavanju. */
   var _kontekst = { ID_Clan: -1, ID_Zivotopis: -1, ID_Razgovor: -1, ID_Obrazac001: -1, ID_Ostalo: -1 };
+  /* Isti id-evi, ali po IZVORNOJ TABLICI — šifarnik pred-printa govori tablicom, ne ključem.
+     Služi samo za odluku smije li ikona biti aktivna (postoji li glavni slog dokumenta). */
+  var _kontekstPoTablici = {};
   function kontekstBroj(v) {
     if (v == null || v === '') return -1;
     var n = parseInt(v, 10);
@@ -369,6 +372,13 @@
     _kontekst.ID_Obrazac001 = kontekstBroj(_obrazac001RowId);
     _kontekst.ID_Ostalo     = kontekstBroj(_ostaloRowId);
     _kontekst.ID_Razgovor   = kontekstBroj(razgovoriApi ? CommonCRUD.getSelectedRowId(razgovoriApi) : null);
+    _kontekstPoTablici = {
+      clanovi: _kontekst.ID_Clan,
+      kandidat_dokumenti_zivotopis: _kontekst.ID_Zivotopis,
+      kandidat_dokumenti_razgovori: _kontekst.ID_Razgovor,
+      kandidat_dokumenti_001: _kontekst.ID_Obrazac001,
+      kandidat_dokumenti_ostalo: _kontekst.ID_Ostalo
+    };
     azurirajPredPrintIkonu();
   }
 
@@ -436,16 +446,14 @@
       btn.title = 'Generiraj PDF';
       return;
     }
-    var kljucevi = z.kontekst_kljucevi || [];
-    var nedostaje = [];
-    for (var i = 0; i < kljucevi.length; i++) {
-      var k = kljucevi[i];
-      if (!(k in _kontekst) || _kontekst[k] === -1) nedostaje.push(k);
-    }
-    btn.disabled = nedostaje.length > 0;
-    btn.title = nedostaje.length > 0
-      ? 'Nema zapisa u bazi za ovaj dokument'
-      : 'Generiraj PDF';
+    /* Uvjet je SAMO glavni izvor iz šifarnika. Sporedni kontekst ključevi (npr. podatak iz
+       „Ostalo" na obrascu koji se vozi na 001) smiju nedostajati — tada vrijednost ispadne
+       prazna i odradi je ponašanje na prazno (crtica/linija). Da se traže svi ključevi,
+       kandidat bez tog sporednog zapisa ne bi mogao ni otvoriti obrazac. */
+    var glavni = _kontekstPoTablici[z.izvor_tablica];
+    var imaGlavni = (glavni != null && glavni !== -1);
+    btn.disabled = !imaGlavni;
+    btn.title = imaGlavni ? 'Generiraj PDF' : 'Nema zapisa u bazi za ovaj dokument';
   }
 
   /* Zvjezdica: makni selekciju u tablici dokumenata. */
@@ -3265,16 +3273,18 @@
       if (!_dokument || !_dokument.dokument) { krajRendera('Dokument nije pronađen.'); return; }
       var dok = _dokument.dokument;
       var stavke = _dokument.stavke || [];
-      /* Kontekst iz centralne mape forme; ako ijedan traženi ključ nema zapis u bazi — ne renderiraj. */
+      /* Kontekst iz centralne mape forme. Ključ bez zapisa u bazi se NE šalje — resolver ga
+         razriješi kao prazno, pa se primijeni ponašanje na prazno (crtica/linija). Odustajemo
+         samo ako nijedan ključ nema vrijednost (tada bi dokument bio potpuno prazan). */
       var kontekst = {};
-      var nedostaje = [];
+      var trazeni = 0;
       stavke.forEach(function (s) {
         var k = s.kontekst_kljuc != null ? trim(String(s.kontekst_kljuc)) : '';
         if (k === '') return;
-        if (!(k in _kontekst) || _kontekst[k] === -1) { if (nedostaje.indexOf(k) < 0) nedostaje.push(k); return; }
-        kontekst[k] = _kontekst[k];
+        trazeni++;
+        if ((k in _kontekst) && _kontekst[k] !== -1) kontekst[k] = _kontekst[k];
       });
-      if (nedostaje.length) { krajRendera('Nema zapisa u bazi za: ' + nedostaje.join(', ')); return; }
+      if (trazeni > 0 && !Object.keys(kontekst).length) { krajRendera('Nema zapisa u bazi za ovaj dokument.'); return; }
       /* Stavke idu CIJELE, onako kako su došle iz baze (PDF_Dokument_po_id.php radi SELECT *).
          Resolver svako polje čita s ?? default, pa izostavljeno polje ne javlja grešku nego
          tiho renderira po defaultu — tako bi svaka nova kolona stavke (npr. linije: broj_linija,

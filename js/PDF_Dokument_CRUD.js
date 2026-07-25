@@ -94,7 +94,7 @@
       gotovo();
     });
     xhrGet(API + 'PDF_Whitelist_CRUD_sve.php', function (t) {
-      try { var a = JSON.parse(t || '[]'); a.forEach(function (o) { mapaIzvor[String(o.id)] = o; }); napuniSelekt('st_izvor', a, null, true); napuniSelekt('st_preko_izvor', a, null, true); } catch (e) {}
+      try { var a = JSON.parse(t || '[]'); a.forEach(function (o) { mapaIzvor[String(o.id)] = o; }); napuniSelekt('st_izvor', a, null, true); napuniSelekt('st_preko_izvor', a, null, true); napuniSelekt('st_uvjet_izvor', a, null, true); } catch (e) {}
       gotovo();
     });
     xhrGet(API + 'PDF_Stilovi_CRUD_sve.php', function (t) {
@@ -330,6 +330,10 @@
     if (parseInt(s.prijelom_prije, 10)) content.appendChild(popupRed('Prijelom stranice prije', 'da'));
     if (parseInt(s.prijelom_poslije, 10)) content.appendChild(popupRed('Prijelom stranice poslije', 'da'));
     if (s.prazno_nacin && s.prazno_nacin !== 'placeholder') content.appendChild(popupRed('Kad je prazno', s.prazno_nacin));
+    if (s.uvjet_izvor_id) {
+      var uiz = mapaIzvor[String(s.uvjet_izvor_id)];
+      content.appendChild(popupRed('Uvjet ispisa', (uiz ? (uiz.tablica + '.' + uiz.kolona) : ('#' + s.uvjet_izvor_id)) + ' ' + (s.uvjet_operator || '=') + ' ' + (s.uvjet_vrijednost != null ? s.uvjet_vrijednost : '') + (s.uvjet_kontekst_kljuc ? ('  [' + s.uvjet_kontekst_kljuc + ']') : '')));
+    }
     if (s.skupina) content.appendChild(popupRed('Skupina', s.skupina));
     if (s.prefiks) content.appendChild(popupRed('Prefiks', s.prefiks));
     if (s.sufiks) content.appendChild(popupRed('Sufiks', s.sufiks));
@@ -352,7 +356,7 @@
   })();
 
   /* ---- Edit stavke (Tab Podaci) ---- */
-  var STAVKA_POLJA = ['st_naziv_stavke', 'st_zona', 'st_vrsta', 'st_izvor', 'st_izvor_tip', 'st_izvor_red_id', 'st_kontekst_kljuc', 'st_test_id', 'st_preko_izvor', 'st_relacija', 'st_lista_nacin', 'st_lista_separator', 'st_redak_predlozak', 'st_labela_bold', 'st_podatak_paragraf', 'st_mapa_vrijednosti', 'st_format_datuma', 'st_fiksna_pozicija', 'st_fiksna_pozicija_y', 'st_trazi_kolona', 'st_trazi_vrijednost', 'st_literal_tekst', 'st_paragraf_id', 'st_slika_stil_id', 'st_bez_kraja_odlomka', 'st_novi_red_odlomka', 'st_sakrij_ako_prazno', 'st_zadrzi_svoj_stil', 'st_prijelom_prije', 'st_prijelom_poslije', 'st_prazno_nacin', 'st_skupina', 'st_prefiks', 'st_sufiks', 'st_linije_labela', 'st_broj_linija', 'st_stil_linije', 'st_linija_debljina', 'st_labela_u_istom_redu', 'st_prva_linija_nacin', 'st_prva_linija_mm', 'st_pomak_y'];
+  var STAVKA_POLJA = ['st_naziv_stavke', 'st_zona', 'st_vrsta', 'st_izvor', 'st_izvor_tip', 'st_izvor_red_id', 'st_kontekst_kljuc', 'st_test_id', 'st_preko_izvor', 'st_relacija', 'st_lista_nacin', 'st_lista_separator', 'st_redak_predlozak', 'st_labela_bold', 'st_podatak_paragraf', 'st_mapa_vrijednosti', 'st_format_datuma', 'st_fiksna_pozicija', 'st_fiksna_pozicija_y', 'st_trazi_kolona', 'st_trazi_vrijednost', 'st_literal_tekst', 'st_paragraf_id', 'st_slika_stil_id', 'st_bez_kraja_odlomka', 'st_novi_red_odlomka', 'st_sakrij_ako_prazno', 'st_zadrzi_svoj_stil', 'st_prijelom_prije', 'st_prijelom_poslije', 'st_prazno_nacin', 'st_prazno_linija_mm', 'st_uvjet_izvor', 'st_uvjet_kontekst_kljuc', 'st_uvjet_operator', 'st_uvjet_vrijednost', 'st_skupina', 'st_prefiks', 'st_sufiks', 'st_linije_labela', 'st_broj_linija', 'st_stil_linije', 'st_linija_debljina', 'st_labela_u_istom_redu', 'st_prva_linija_nacin', 'st_prva_linija_mm', 'st_pomak_y'];
 
   function azurirajVidljivostStavke() {
     var vrsta = val('st_vrsta');
@@ -382,6 +386,10 @@
     byId('polje_slika_stil').hidden = (vrsta !== 'slika');
     byId('polje_bez_kraja').hidden = (vrsta !== 'tekst');   /* grupa spajanja/prijeloma — samo tekst-stavke */
     byId('polje_prazno').hidden = (vrsta !== 'tekst');            /* ponašanje na prazno — samo tekst */
+    /* Dužina crte samo kad je izabrano „Linija za ručni upis". */
+    if (byId('polje_prazno_linija_mm')) byId('polje_prazno_linija_mm').hidden = (vrsta !== 'tekst' || val('st_prazno_nacin') !== 'linija');
+    /* Usporedba uvjeta ima smisla tek kad je izabrano polje uvjeta. */
+    if (byId('polje_uvjet_red')) byId('polje_uvjet_red').hidden = (trim(val('st_uvjet_izvor')) === '');
     byId('polje_skupina').hidden = (vrsta !== 'tekst');          /* skupina (povezane stavke) — samo tekst */
     byId('polje_prefiks_sufiks').hidden = (vrsta !== 'tekst');   /* prefiks/sufiks — samo tekst */
     byId('polje_preko_izvor').hidden = (tip !== 'dinamicki');   /* indirektni ključ samo za dinamički */
@@ -459,6 +467,11 @@
     var pp = byId('st_prijelom_prije'); if (pp) pp.checked = !!(parseInt(s.prijelom_prije, 10));
     var ppo = byId('st_prijelom_poslije'); if (ppo) ppo.checked = !!(parseInt(s.prijelom_poslije, 10));
     setVal('st_prazno_nacin', s.prazno_nacin || 'placeholder'); refreshSelect('st_prazno_nacin');
+    setVal('st_prazno_linija_mm', s.prazno_linija_mm != null ? s.prazno_linija_mm : '');
+    setVal('st_uvjet_izvor', s.uvjet_izvor_id || ''); refreshSelect('st_uvjet_izvor');
+    setVal('st_uvjet_kontekst_kljuc', s.uvjet_kontekst_kljuc || '');
+    setVal('st_uvjet_operator', s.uvjet_operator || '='); refreshSelect('st_uvjet_operator');
+    setVal('st_uvjet_vrijednost', s.uvjet_vrijednost != null ? s.uvjet_vrijednost : '');
     setVal('st_skupina', s.skupina != null ? s.skupina : '');
     setVal('st_prefiks', s.prefiks != null ? s.prefiks : '');
     setVal('st_sufiks', s.sufiks != null ? s.sufiks : '');
@@ -529,6 +542,13 @@
     var pp = byId('st_prijelom_prije'); s.prijelom_prije = (s.zona === 'tijelo' && !s.okvir_id && pp && pp.checked) ? 1 : 0;
     var ppo = byId('st_prijelom_poslije'); s.prijelom_poslije = (s.zona === 'tijelo' && !s.okvir_id && ppo && ppo.checked) ? 1 : 0;
     s.prazno_nacin = (s.vrsta === 'tekst') ? (val('st_prazno_nacin') || 'placeholder') : 'placeholder';
+    /* Dužina crte ima smisla samo uz „linija"; inače se ne pamti. */
+    s.prazno_linija_mm = (s.prazno_nacin === 'linija' && trim(val('st_prazno_linija_mm')) !== '') ? parseFloat(val('st_prazno_linija_mm')) : null;
+    /* Uvjetni ispis: bez izabranog polja nema uvjeta (ostalo se ne pamti). */
+    s.uvjet_izvor_id = trim(val('st_uvjet_izvor')) ? parseInt(val('st_uvjet_izvor'), 10) : null;
+    s.uvjet_kontekst_kljuc = s.uvjet_izvor_id ? (trim(val('st_uvjet_kontekst_kljuc')) || null) : null;
+    s.uvjet_operator = s.uvjet_izvor_id ? (val('st_uvjet_operator') === '<>' ? '<>' : '=') : '=';
+    s.uvjet_vrijednost = s.uvjet_izvor_id ? (trim(val('st_uvjet_vrijednost')) || null) : null;
     var skRaw = parseInt(trim(val('st_skupina')), 10);
     s.skupina = (s.vrsta === 'tekst' && !isNaN(skRaw) && skRaw > 0) ? skRaw : null;
     s.prefiks = (s.vrsta === 'tekst') ? (trim(val('st_prefiks')) || null) : null;
@@ -580,7 +600,7 @@
     if (!e) return;
     var ev = (e.tagName === 'SELECT' || e.type === 'checkbox') ? 'change' : 'input';
     e.addEventListener(ev, function () {
-      if (id === 'st_izvor_tip' || id === 'st_vrsta' || id === 'st_izvor' || id === 'st_lista_nacin' || id === 'st_labela_u_istom_redu' || id === 'st_prva_linija_nacin') azurirajVidljivostStavke();
+      if (id === 'st_izvor_tip' || id === 'st_vrsta' || id === 'st_izvor' || id === 'st_lista_nacin' || id === 'st_labela_u_istom_redu' || id === 'st_prva_linija_nacin' || id === 'st_prazno_nacin' || id === 'st_uvjet_izvor') azurirajVidljivostStavke();
       if (id === 'st_izvor') popuniTraziKolonu();   /* promjena izvora → kolone iz njegove tablice */
       azurirajStavkaModalStanje();                  /* live: „Spremi/Dodaj" enable kad je validno */
     });
@@ -948,7 +968,12 @@
       zadrzi_svoj_stil: (parseInt(r.zadrzi_svoj_stil, 10) === 1) ? 1 : 0,
       prijelom_prije: (parseInt(r.prijelom_prije, 10) === 1) ? 1 : 0,
       prijelom_poslije: (parseInt(r.prijelom_poslije, 10) === 1) ? 1 : 0,
-      prazno_nacin: (['placeholder', 'crtica', 'izostavi'].indexOf(r.prazno_nacin) >= 0) ? r.prazno_nacin : 'placeholder',
+      prazno_nacin: (['placeholder', 'crtica', 'izostavi', 'linija'].indexOf(r.prazno_nacin) >= 0) ? r.prazno_nacin : 'placeholder',
+      prazno_linija_mm: (r.prazno_linija_mm != null && r.prazno_linija_mm !== '') ? parseFloat(r.prazno_linija_mm) : null,
+      uvjet_izvor_id: r.uvjet_izvor_id ? parseInt(r.uvjet_izvor_id, 10) : null,
+      uvjet_kontekst_kljuc: (r.uvjet_kontekst_kljuc != null && r.uvjet_kontekst_kljuc !== '') ? r.uvjet_kontekst_kljuc : null,
+      uvjet_operator: (r.uvjet_operator === '<>') ? '<>' : '=',
+      uvjet_vrijednost: (r.uvjet_vrijednost != null && r.uvjet_vrijednost !== '') ? r.uvjet_vrijednost : null,
       skupina: (r.skupina != null && r.skupina !== '' && parseInt(r.skupina, 10) > 0) ? parseInt(r.skupina, 10) : null,
       prefiks: (r.prefiks != null && r.prefiks !== '') ? r.prefiks : null,
       sufiks: (r.sufiks != null && r.sufiks !== '') ? r.sufiks : null,
@@ -1008,9 +1033,9 @@
     xhrGet(API + 'PDF_Whitelist_CRUD_sve.php', function (t) {
       try {
         var a = JSON.parse(t || '[]'); mapaIzvor = {}; a.forEach(function (o) { mapaIzvor[String(o.id)] = o; });
-        var v1 = val('st_izvor'), v2 = val('st_preko_izvor');
-        napuniSelekt('st_izvor', a, null, true); napuniSelekt('st_preko_izvor', a, null, true);
-        setVal('st_izvor', v1); refreshSelect('st_izvor'); setVal('st_preko_izvor', v2); refreshSelect('st_preko_izvor');
+        var v1 = val('st_izvor'), v2 = val('st_preko_izvor'), v3 = val('st_uvjet_izvor');
+        napuniSelekt('st_izvor', a, null, true); napuniSelekt('st_preko_izvor', a, null, true); napuniSelekt('st_uvjet_izvor', a, null, true);
+        setVal('st_izvor', v1); refreshSelect('st_izvor'); setVal('st_preko_izvor', v2); refreshSelect('st_preko_izvor'); setVal('st_uvjet_izvor', v3); refreshSelect('st_uvjet_izvor');
       } catch (e) {}
       gotovo();
     });
@@ -1279,7 +1304,9 @@
         if (!trim(String(s.trazi_vrijednost == null ? '' : s.trazi_vrijednost))) manjka.push('Tražena vrijednost');
       } else if (tip === 'korisnicki') {
         if (s.vrsta !== 'tekst') manjka.push('Korisnički tekst je dozvoljen samo za tekst');
-        if (!trim(s.literal_tekst || '')) manjka.push('Korisnički tekst');
+        /* Iznimka: uz „Kad je prazno = Linija" tekst MORA biti prazan — prazna vrijednost je
+           upravo ono što pokreće crtu za ručni upis. */
+        if (!trim(s.literal_tekst || '') && s.prazno_nacin !== 'linija') manjka.push('Korisnički tekst');
       } else if (tip === 'relacija_broj' || tip === 'relacija_lista') {
         if (s.vrsta !== 'tekst') manjka.push('Relacija je dozvoljena samo za tekst');
         if (!(parseInt(s.relacija_id, 10) > 0)) manjka.push('Relacija');
@@ -1340,7 +1367,7 @@
       razvoj_kolona: trim(val('razvoj_kolona')) || null,
       razvoj_izabrani_id: trim(val('razvoj_izabrani_id')) ? parseInt(val('razvoj_izabrani_id'), 10) : null,
       stavke: stavke.map(function (s, i) {
-        return { redoslijed: i + 1, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti, format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno, relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator, redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold, podatak_paragraf_id: s.podatak_paragraf_id, tablica_stil_id: s.tablica_stil_id, zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije, prijelom_poslije: s.prijelom_poslije, prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks, broj_linija: s.broj_linija, stil_linije: s.stil_linije, linija_debljina_mm: s.linija_debljina_mm, labela_u_istom_redu: s.labela_u_istom_redu, prva_linija_nacin: s.prva_linija_nacin, prva_linija_mm: s.prva_linija_mm, pomak_y_mm: s.pomak_y_mm };
+        return { redoslijed: i + 1, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti, format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno, relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator, redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold, podatak_paragraf_id: s.podatak_paragraf_id, tablica_stil_id: s.tablica_stil_id, zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije, prijelom_poslije: s.prijelom_poslije, prazno_nacin: s.prazno_nacin, prazno_linija_mm: s.prazno_linija_mm, uvjet_izvor_id: s.uvjet_izvor_id, uvjet_kontekst_kljuc: s.uvjet_kontekst_kljuc, uvjet_operator: s.uvjet_operator, uvjet_vrijednost: s.uvjet_vrijednost, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks, broj_linija: s.broj_linija, stil_linije: s.stil_linije, linija_debljina_mm: s.linija_debljina_mm, labela_u_istom_redu: s.labela_u_istom_redu, prva_linija_nacin: s.prva_linija_nacin, prva_linija_mm: s.prva_linija_mm, pomak_y_mm: s.pomak_y_mm };
       })
     };
     postJson(URL_SPREMI, payload, function (res) {
@@ -1409,7 +1436,7 @@
       template_id: parseInt(val('edit_template_id'), 10),
       kontekst: kontekst,
       broj_stranice_paragraf_id: trim(val('edit_broj_stranice_paragraf_id')) ? parseInt(val('edit_broj_stranice_paragraf_id'), 10) : null,
-      stavke: stavke.map(function (s) { return { redoslijed: 0, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti, format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno, relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator, redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold, podatak_paragraf_id: s.podatak_paragraf_id, tablica_stil_id: s.tablica_stil_id, zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije, prijelom_poslije: s.prijelom_poslije, prazno_nacin: s.prazno_nacin, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks, broj_linija: s.broj_linija, stil_linije: s.stil_linije, linija_debljina_mm: s.linija_debljina_mm, labela_u_istom_redu: s.labela_u_istom_redu, prva_linija_nacin: s.prva_linija_nacin, prva_linija_mm: s.prva_linija_mm, pomak_y_mm: s.pomak_y_mm }; })
+      stavke: stavke.map(function (s) { return { redoslijed: 0, zona: s.zona, okvir_id: s.okvir_id, vrsta: s.vrsta, izvor_id: s.izvor_id, izvor_tip: s.izvor_tip, izvor_red_id: s.izvor_red_id, kontekst_kljuc: s.kontekst_kljuc, test_id: s.test_id, trazi_kolona: s.trazi_kolona, trazi_vrijednost: s.trazi_vrijednost, literal_tekst: s.literal_tekst, paragraf_id: s.paragraf_id, slika_stil_id: s.slika_stil_id, bez_kraja_odlomka: s.bez_kraja_odlomka, naziv_stavke: s.naziv_stavke, preko_izvor_id: s.preko_izvor_id, mapa_vrijednosti: s.mapa_vrijednosti, format_datuma: s.format_datuma, fiksna_pozicija: s.fiksna_pozicija, fiksna_pozicija_y: s.fiksna_pozicija_y, sakrij_ako_prazno: s.sakrij_ako_prazno, relacija_id: s.relacija_id, lista_nacin: s.lista_nacin, lista_separator: s.lista_separator, redak_predlozak: s.redak_predlozak, labela_bold: s.labela_bold, podatak_paragraf_id: s.podatak_paragraf_id, tablica_stil_id: s.tablica_stil_id, zadrzi_svoj_stil: s.zadrzi_svoj_stil, prijelom_prije: s.prijelom_prije, prijelom_poslije: s.prijelom_poslije, prazno_nacin: s.prazno_nacin, prazno_linija_mm: s.prazno_linija_mm, uvjet_izvor_id: s.uvjet_izvor_id, uvjet_kontekst_kljuc: s.uvjet_kontekst_kljuc, uvjet_operator: s.uvjet_operator, uvjet_vrijednost: s.uvjet_vrijednost, skupina: s.skupina, prefiks: s.prefiks, sufiks: s.sufiks, broj_linija: s.broj_linija, stil_linije: s.stil_linije, linija_debljina_mm: s.linija_debljina_mm, labela_u_istom_redu: s.labela_u_istom_redu, prva_linija_nacin: s.prva_linija_nacin, prva_linija_mm: s.prva_linija_mm, pomak_y_mm: s.pomak_y_mm }; })
     };
     postJson(URL_RESOLVE, payload, function (res) {
       var model;

@@ -288,6 +288,25 @@
                         <option value="">— bez veze (direktno) —</option>
                     </select></div>
                 </div>
+                <!-- Uvjetni ispis: stavka se ispisuje samo ako izabrano polje zadovoljava usporedbu.
+                     Redak uvjetnog izvora dolazi iz vlastitog ključa konteksta (može biti drugi nego ključ stavke). -->
+                <div class="pdf-dokument-crud__polje" id="polje_uvjet_izvor">
+                    <label class="kontrola-labela mb-0" for="st_uvjet_izvor">Uvjet — polje</label>
+                    <div class="kontrola-select"><select id="st_uvjet_izvor" aria-label="Polje čija vrijednost uvjetuje ispis stavke">
+                        <option value="">— bez uvjeta (uvijek ispisuj) —</option>
+                    </select></div>
+                </div>
+                <div class="pdf-dokument-crud__polje-red" id="polje_uvjet_red">
+                    <label class="kontrola-labela mb-0 pdf-dokument-crud__polje-red-labela" for="st_uvjet_kontekst_kljuc">Uvjet — ključ</label>
+                    <div class="pdf-dokument-crud__polje-red-sredina">
+                        <input id="st_uvjet_kontekst_kljuc" type="text" class="kontrola-edit pdf-dokument-crud__uvjet-kljuc" placeholder="npr. ID_Ostalo" maxlength="64" autocomplete="off" aria-label="Ključ konteksta iz kojeg dolazi ID retka uvjetnog izvora">
+                        <div class="kontrola-select pdf-dokument-crud__uvjet-operator"><select id="st_uvjet_operator" aria-label="Usporedba">
+                            <option value="=">jednako</option>
+                            <option value="&lt;&gt;">različito</option>
+                        </select></div>
+                        <input id="st_uvjet_vrijednost" type="text" class="kontrola-edit pdf-dokument-crud__uvjet-vrijednost" placeholder="npr. 0" maxlength="64" autocomplete="off" aria-label="Vrijednost za usporedbu">
+                    </div>
+                </div>
                 <div class="pdf-dokument-crud__polje" id="polje_relacija" hidden>
                     <label class="kontrola-labela mb-0" for="st_relacija">Relacija (1-na-više)</label>
                     <div class="kontrola-select"><select id="st_relacija" aria-label="Relacija">
@@ -447,13 +466,23 @@
                         <span class="kontrola-checkbox-labela">ove stavke.</span>
                     </div>
                 </div>
-                <div class="pdf-dokument-crud__polje" id="polje_prazno">
-                    <label class="kontrola-labela mb-0" for="st_prazno_nacin">Kad je prazno</label>
-                    <div class="kontrola-select"><select id="st_prazno_nacin" aria-label="Ponašanje kad je vrijednost prazna">
-                        <option value="placeholder">Placeholder (XXXX, dev)</option>
-                        <option value="crtica">Crtica „—" (obavezan podatak)</option>
-                        <option value="izostavi">Izostavi (neobavezan)</option>
-                    </select></div>
+                <div class="pdf-dokument-crud__polje-red" id="polje_prazno">
+                    <label class="kontrola-labela mb-0 pdf-dokument-crud__polje-red-labela" for="st_prazno_nacin">Kad je prazno</label>
+                    <div class="pdf-dokument-crud__polje-red-sredina">
+                        <div class="kontrola-select pdf-dokument-crud__prazno-select"><select id="st_prazno_nacin" aria-label="Ponašanje kad je vrijednost prazna">
+                            <option value="placeholder">Placeholder (XXXX, dev)</option>
+                            <option value="crtica">Crtica „—" (obavezan podatak)</option>
+                            <option value="izostavi">Izostavi (neobavezan)</option>
+                            <option value="linija">Linija za ručni upis</option>
+                        </select></div>
+                        <div class="pdf-dokument-crud__prazno-linija" id="polje_prazno_linija_mm">
+                            <label class="kontrola-labela mb-0" for="st_prazno_linija_mm">Dužina</label>
+                            <div class="pdf-dokument-crud__unos-mjera">
+                                <input id="st_prazno_linija_mm" type="text" class="kontrola-edit pdf-dokument-crud__num pdf-dokument-crud__prazno-linija-input" inputmode="decimal" placeholder="40" maxlength="6" autocomplete="off" aria-label="Dužina crte za ručni upis u mm (prazno = 40 mm)">
+                                <span class="pdf-dokument-crud__mjera" aria-hidden="true">mm</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="pdf-dokument-crud__polje" id="polje_skupina">
                     <label class="kontrola-labela mb-0" for="st_skupina">Skupina (poveži)</label>

@@ -55,6 +55,26 @@ function pdf_dinamicki_id($st, $kontekst)
 }
 
 /** Vrijednost {kolona} iz {tablica} za zadani id (identifikatori moraju biti prethodno provjereni). */
+/**
+ * Uvjetni ispis stavke: uspoređuje vrijednost polja (uvjet_izvor_id, redak po uvjet_kontekst_kljuc)
+ * s uvjet_vrijednost. Bez uvjeta ili s nepoznatim izvorom → true (ne filtriramo).
+ * VAŽNO: ako retka nema, vrijednost je prazna — zato „ispiši osim ako je 0" traži operator <>.
+ */
+function pdf_uvjet_zadovoljen($mysqli, $s, $izvori, $kontekst)
+{
+    $uid = isset($s['uvjet_izvor_id']) ? (int) $s['uvjet_izvor_id'] : 0;
+    if ($uid <= 0) return true;
+    $iz = isset($izvori[$uid]) ? $izvori[$uid] : null;
+    if (!$iz || !pdf_ident_ok($iz['tablica']) || !pdf_ident_ok($iz['kolona'])) return true;
+    $kljuc = isset($s['uvjet_kontekst_kljuc']) ? (string) $s['uvjet_kontekst_kljuc'] : '';
+    $id = ($kljuc !== '' && isset($kontekst[$kljuc])) ? (int) $kontekst[$kljuc] : 0;
+    $val = ($id > 0) ? pdf_vrijednost_po_id($mysqli, $iz['tablica'], $iz['kolona'], $id) : null;
+    $stvarno = ($val === null) ? '' : trim((string) $val);
+    $ocek = isset($s['uvjet_vrijednost']) ? trim((string) $s['uvjet_vrijednost']) : '';
+    $op = ((string) ($s['uvjet_operator'] ?? '=') === '<>') ? '<>' : '=';
+    return ($op === '=') ? ($stvarno === $ocek) : ($stvarno !== $ocek);
+}
+
 function pdf_vrijednost_po_id($mysqli, $tablica, $kolona, $id)
 {
     $id = (int) $id;
@@ -1117,7 +1137,11 @@ function pdf_tablica_rec($mysqli, $s, $tablicaStilovi, $kontekst, $zona)
 // --- Razrješavanje stavki -----------------------------------------------
 $out = [];
 $trebaFallback = false;
-$stavke = array_values($stavke);
+// Uvjetni ispis: stavke koje ne zadovoljavaju uvjet ispadaju PRIJE sastavljanja, da se lanci
+// inline-spajanja (bez_kraja_odlomka) preslože kao da stavke nikad nije ni bilo.
+$stavke = array_values(array_filter($stavke, function ($s) use ($mysqli, $izvori, $kontekst) {
+    return pdf_uvjet_zadovoljen($mysqli, $s, $izvori, $kontekst);
+}));
 $n = count($stavke);
 $i = 0;
 while ($i < $n) {
@@ -1217,7 +1241,14 @@ while ($i < $n) {
             $nacin = isset($seg['prazno_nacin']) ? (string) $seg['prazno_nacin'] : 'placeholder';
             if ($prazno) {
                 if ($nacin === 'izostavi') continue;                          // prazan → ništa (i bez sufiksa)
-                if ($nacin === 'crtica') { $segTekst = '—'; $segColor = null; }   // "—" u stilu segmenta (boja podatka)
+                if ($nacin === 'linija') {
+                    // Crta za ručni upis: INTERNI marker ~L(mm) — renderer ga pretvara u stupac s donjim rubom.
+                    $lmm = isset($seg['prazno_linija_mm']) ? (float) $seg['prazno_linija_mm'] : 0;
+                    if (!($lmm > 0)) $lmm = 40;
+                    $segTekst = '~L(' . rtrim(rtrim(sprintf('%.2f', $lmm), '0'), '.') . ')';
+                    $segColor = null;
+                }
+                elseif ($nacin === 'crtica') { $segTekst = '—'; $segColor = null; }   // "—" u stilu segmenta (boja podatka)
                 elseif (($seg['izvor_tip'] ?? '') === 'dinamicki') { $segTekst = 'XXXXXXXX'; $segColor = '#cccccc'; $imaPlaceholder = true; }
                 else continue;                                                 // ostali prazni bez placeholdera → preskoči
             } else {

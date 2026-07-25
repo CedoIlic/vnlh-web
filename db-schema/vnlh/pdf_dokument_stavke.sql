@@ -24,7 +24,12 @@ CREATE TABLE `pdf_dokument_stavke` (
   `fiksna_pozicija`  decimal(6,2) DEFAULT NULL COMMENT 'Fiksna početna pozicija sadržaja stavke u mm od lijevog ruba (tab u tijeku); u apsolutnom modu (fiksna_pozicija_y != -1) to je apsolutni X (mm od lijevog ruba stranice); NULL = bez',
   `fiksna_pozicija_y` decimal(6,2) DEFAULT NULL COMMENT 'Apsolutna Y pozicija stavke (mm od gornjeg ruba stranice). -1 ili NULL = u nastavku reda (tok, X ostaje tab); bilo koja druga vrijednost = apsolutno pozicioniranje na (fiksna_pozicija, fiksna_pozicija_y)',
   `sakrij_ako_prazno` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Ako je vrijednost stavke prazna, sakrij cijeli red (vrijedi i za spojene redove); bez placeholdera',
-  `prazno_nacin`      enum('placeholder','crtica','izostavi') NOT NULL DEFAULT 'placeholder' COMMENT 'Ponašanje kad je vrijednost prazna: placeholder=sivi XXXXXXXX (dev); crtica="—" u stilu segmenta (obavezni podaci); izostavi=ništa (neobavezni, npr. drugi red adrese — nestaje i prefiks/sufiks)',
+  `prazno_nacin`      enum('placeholder','crtica','izostavi','linija') NOT NULL DEFAULT 'placeholder' COMMENT 'Ponašanje kad je vrijednost prazna: placeholder=sivi XXXXXXXX (dev); crtica="—" u stilu segmenta (obavezni podaci); izostavi=ništa (neobavezni, npr. drugi red adrese — nestaje i prefiks/sufiks); linija=vodoravna crta za ručni upis (dužina u prazno_linija_mm)',
+  `prazno_linija_mm`  decimal(6,2) DEFAULT NULL COMMENT 'Dužina linije u mm kad je prazno_nacin=linija; NULL/0 = 40 mm',
+  `uvjet_izvor_id`    int(11) unsigned DEFAULT NULL COMMENT 'Uvjetni ispis: FK na pdf_dozvoljeni_izvori — polje čija se vrijednost uspoređuje; NULL = stavka se uvijek ispisuje',
+  `uvjet_kontekst_kljuc` varchar(64) DEFAULT NULL COMMENT 'Uvjetni ispis: ključ konteksta iz kojeg dolazi ID retka uvjetnog izvora (može biti različit od ključa same stavke)',
+  `uvjet_operator`    enum('=','<>') NOT NULL DEFAULT '=' COMMENT 'Uvjetni ispis: usporedba vrijednosti izvora s uvjet_vrijednost',
+  `uvjet_vrijednost`  varchar(64) DEFAULT NULL COMMENT 'Uvjetni ispis: vrijednost za usporedbu (tekstualna); nepostojeći redak daje praznu vrijednost — zato za „ispiši osim ako je 0" koristi operator <> ',
   `skupina`           smallint(5) unsigned DEFAULT NULL COMMENT 'Povezane stavke: sve stavke istog broja skupine su cjelina koja NESTAJE zajedno ako su svi PODACI (dinamički) u skupini prazni (npr. labela "Zvanje:" + podatak + separator). NULL = samostalna stavka',
   `prefiks`           varchar(16) DEFAULT NULL COMMENT 'Literal koji se doda ISPRED vrijednosti SAMO kad vrijednost postoji; ^ = razmak; NULL/prazno = bez',
   `sufiks`            varchar(16) DEFAULT NULL COMMENT 'Literal koji se doda IZA vrijednosti SAMO kad vrijednost postoji (npr. ", " iza drugog reda adrese); ^ = razmak; NULL/prazno = bez',
@@ -48,6 +53,7 @@ CREATE TABLE `pdf_dokument_stavke` (
   KEY `idx_dokument_redoslijed` (`dokument_id`, `redoslijed`),
   KEY `fk_stavka_izvor` (`izvor_id`),
   KEY `fk_stavka_preko_izvor` (`preko_izvor_id`),
+  KEY `fk_stavka_uvjet_izvor` (`uvjet_izvor_id`),
   KEY `fk_stavka_paragraf` (`paragraf_id`),
   KEY `fk_stavka_slika_stil` (`slika_stil_id`),
   KEY `fk_stavka_relacija` (`relacija_id`),
@@ -62,6 +68,8 @@ CREATE TABLE `pdf_dokument_stavke` (
     FOREIGN KEY (`izvor_id`) REFERENCES `pdf_dozvoljeni_izvori` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_preko_izvor`
     FOREIGN KEY (`preko_izvor_id`) REFERENCES `pdf_dozvoljeni_izvori` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_stavka_uvjet_izvor`
+    FOREIGN KEY (`uvjet_izvor_id`) REFERENCES `pdf_dozvoljeni_izvori` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_paragraf`
     FOREIGN KEY (`paragraf_id`) REFERENCES `pdf_paragraf` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_slika_stil`
