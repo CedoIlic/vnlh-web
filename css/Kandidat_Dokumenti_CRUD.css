@@ -1023,3 +1023,110 @@
     border-top: 1px solid var(--edit_border, #ced4da);
   }
 }
+
+/* ===== Tab „Ostalo" (1:1) — pred-print dokumenti + rezervirana sredina + napomena ===== */
+.kandidat-dokumenti-crud__tab-panel--ostalo { padding: 0.5rem; }
+.kandidat-dokumenti-crud__ostalo {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  align-items: stretch;
+  min-height: 408px;    /* izjednači visinu taba s ostalima */
+}
+.kandidat-dokumenti-crud__ostalo-lijevo,
+.kandidat-dokumenti-crud__ostalo-sredina,
+.kandidat-dokumenti-crud__ostalo-desno {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+/* Tablica dokumenata: zaglavlje + 5 vidljivih redova (ne rasteže se s panelom). */
+.kandidat-dokumenti-crud__ostalo-tablica {
+  flex: 0 0 auto;
+  height: calc(6 * var(--tablica_row_h));
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.kandidat-dokumenti-crud__ostalo-tablica > .kontrola-tablica {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+.kandidat-dokumenti-crud__ostalo-tablica > .kontrola-tablica .kontrola-tablica__scroll-wrap {
+  flex: 1 1 auto !important;
+  height: auto !important;
+  min-height: 0;
+}
+/* Ikone odmah ispod tablice, poravnate desno uz rub tablice (deselekcija pa PDF). */
+.kandidat-dokumenti-crud__ostalo-akcije {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+/* Napomena puni visinu svoje kolone. */
+.kandidat-dokumenti-crud__ostalo-napomena {
+  flex: 1 1 auto;
+  min-height: 0;
+  resize: none;
+}
+/* Pregradne linije između stupaca (dvije crte na tri stupca). */
+.kandidat-dokumenti-crud__ostalo-sredina,
+.kandidat-dokumenti-crud__ostalo-desno {
+  border-left: 1px solid var(--edit_border, #ced4da);
+  padding-left: 0.75rem;
+}
+@media (max-width: 900px) {
+  .kandidat-dokumenti-crud__ostalo { flex-direction: column; }
+  /* Složeni stupci: pregrada postaje vodoravna. */
+  .kandidat-dokumenti-crud__ostalo-sredina,
+  .kandidat-dokumenti-crud__ostalo-desno {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid var(--edit_border, #ced4da);
+    padding-top: 0.75rem;
+  }
+}
+
+/* Grupa „Podaci za oporuku i prisegu" — ispod ikona tablice u prvom stupcu.
+   Labele lijevo od kontrola (svaki red jedna linija) da grupa stane u preostalu visinu stupca. */
+.kandidat-dokumenti-crud__ostalo-grupa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.kandidat-dokumenti-crud__ostalo-naslov {
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--edit_border, #ced4da);
+}
+/* Naslov nema [for] pa ga zajednička sinkronizacija labela ne pokriva — prati stanje kontrola ručno. */
+.kandidat-dokumenti-crud__ostalo-naslov--disabled {
+  color: var(--label_text_disabled);
+}
+.kandidat-dokumenti-crud__ostalo-red {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.kandidat-dokumenti-crud__ostalo-red .kontrola-labela {
+  flex: 0 0 auto;
+}
+/* Odvoji kvačicu od datuma. Dolazi na gap grupe (0,4rem) — ukupno ≈ 18px.
+   Gornja granica je zaliha visine stupca (≈24px), pa ostaje ~12px rezerve da tab ne naraste. */
+.kandidat-dokumenti-crud__ostalo-red + .kandidat-dokumenti-crud__ostalo-red {
+  margin-top: 0.75rem;
+}
+.kandidat-dokumenti-crud__ostalo-red .kontrola-checkbox {
+  flex: 0 0 auto;
+}
+/* Datum puni ostatak reda (labela je fiksna, polje raste do ruba stupca). */
+.kandidat-dokumenti-crud__ostalo-datum {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}

@@ -1,0 +1,48 @@
+/* Kandidat_Dokumenti_Pred_Print_CRUD — šifarnik dokumenata za pred-print (tablica kandidat_dokumenti_pred_print).
+   Footer edit panela dolazi iz zajedničkih [class*="crud__edit-*"] pravila (0-Kontrole.css);
+   redovi su ovdje mreža (grid) s istim stupcima, da se polja poravnaju kroz sve redove
+   (Izvor tablica jednake širine kao Naziv). Sve mjere preko tokena / rem — bez boja i fontova. */
+
+/* Zajednička pravila daju redu flex; ovdje mreža sa stalnim stupcima kroz sve redove. */
+.kandidat-dokumenti-pred-print-crud__edit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 5rem;
+  gap: 0.75rem;
+  align-items: start;
+}
+.kandidat-dokumenti-pred-print-crud__edit-row + .kandidat-dokumenti-pred-print-crud__edit-row {
+  margin-top: var(--panel_body_padding_y);
+}
+
+/* Polje = labela iznad kontrole. */
+.kandidat-dokumenti-pred-print-crud__polje {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+/* Napomena ide preko cijele širine panela. */
+.kandidat-dokumenti-pred-print-crud__polje--napomena {
+  grid-column: 1 / -1;
+}
+
+/* Ključna kolona: počinje u stupcu Dokumenta i ide do kraja panela (preko stupca Reda). */
+.kandidat-dokumenti-pred-print-crud__polje--izvor-kolona {
+  grid-column: 2 / -1;
+}
+
+/* Redosljed — desno poravnat broj. */
+.kandidat-dokumenti-pred-print-crud__polje--redosljed .kontrola-edit {
+  text-align: right;
+}
+
+/* Aktivan: labela lijevo, kvačica uz nju (checkbox ima fiksnu veličinu i ne smije se stiskati). */
+.kandidat-dokumenti-pred-print-crud__edit-row--aktivan {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.kandidat-dokumenti-pred-print-crud__edit-row--aktivan .kontrola-checkbox {
+  flex: 0 0 auto;
+}

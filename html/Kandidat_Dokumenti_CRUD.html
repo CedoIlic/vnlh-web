@@ -92,6 +92,7 @@
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart3" aria-selected="false" aria-controls="kandidatKontrolaTabPanel3" data-tab-index="3" tabindex="-1" disabled>Obrazac 001b</button>
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart4" aria-selected="false" aria-controls="kandidatKontrolaTabPanel4" data-tab-index="4" tabindex="-1" disabled>Skenovi</button>
                     <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart5" aria-selected="false" aria-controls="kandidatKontrolaTabPanel5" data-tab-index="5" tabindex="-1" disabled>Zapisnici</button>
+                    <button type="button" class="kontrola-tab__kartica" role="tab" id="kandidatKontrolaTabKart6" aria-selected="false" aria-controls="kandidatKontrolaTabPanel6" data-tab-index="6" tabindex="-1" disabled>Ostalo</button>
                 </div>
                 <div class="kontrola-tab__tijelo" role="presentation">
                     <div class="kontrola-tab__panel kontrola-tab__panel--aktivna kandidat-dokumenti-crud__tab-panel--zivotopis" role="tabpanel" id="kandidatKontrolaTabPanel0" aria-labelledby="kandidatKontrolaTabKart0">
@@ -474,6 +475,45 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Tab 6: Ostalo (1:1) — pred-print dokumenti (lijevo) + rezervirana sredina + napomena (desno). -->
+                    <div class="kontrola-tab__panel kandidat-dokumenti-crud__tab-panel--ostalo" role="tabpanel" id="kandidatKontrolaTabPanel6" aria-labelledby="kandidatKontrolaTabKart6" hidden>
+                        <div class="kandidat-dokumenti-crud__ostalo">
+                            <div class="kandidat-dokumenti-crud__ostalo-lijevo">
+                                <div class="kandidat-dokumenti-crud__ostalo-tablica">
+                                    <div id="predPrintTablicaContainer" class="kontrola-tablica"></div>
+                                </div>
+                                <div class="kandidat-dokumenti-crud__ostalo-akcije" role="group" aria-label="Radnje nad dokumentima za pred-print">
+                                    <button type="button" id="predPrintDeselekt" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Makni selekciju" aria-label="Makni selekciju"><span class="kontrola-icon--asterisk" aria-hidden="true"></span></button>
+                                    <button type="button" id="predPrintPdf" class="kandidat-dokumenti-crud__pdf-btn" disabled aria-label="Generiraj PDF odabranog dokumenta" title="Generiraj PDF">
+                                        <svg class="kandidat-dokumenti-crud__pdf-icon" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="5" y="14" width="14" height="6" rx="1" fill="currentColor"/>
+                                            <text x="12" y="18.4" font-family="Arial, sans-serif" font-size="3.8" font-weight="bold" fill="white" text-anchor="middle">PDF</text>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Grupa ispod ikona tablice (stane u preostalu visinu stupca). -->
+                                <div class="kandidat-dokumenti-crud__ostalo-grupa">
+                                    <div class="kandidat-dokumenti-crud__ostalo-naslov">Podaci za oporuku i prisegu</div>
+                                    <div class="kandidat-dokumenti-crud__ostalo-red">
+                                        <label class="kontrola-labela mb-0" for="ostalo_planirani_datum">Datum inicijacije</label>
+                                        <input id="ostalo_planirani_datum" type="date" class="kontrola-edit kandidat-dokumenti-crud__ostalo-datum">
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__ostalo-red">
+                                        <label class="kontrola-labela mb-0" for="ostalo_ispis_imena">Ispis imena na obrascima</label>
+                                        <input type="checkbox" id="ostalo_ispis_imena" class="kontrola-checkbox" value="1" checked aria-label="Ispis imena kandidata na obrascima">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Sredina: rezervirano za podatke koji nedostaju PDF obrascima (dodaju se u radu). -->
+                            <div class="kandidat-dokumenti-crud__ostalo-sredina"></div>
+                            <div class="kandidat-dokumenti-crud__ostalo-desno">
+                                <label class="kontrola-labela mb-0" for="ostalo_napomena">Napomena</label>
+                                <textarea id="ostalo_napomena" class="kontrola-napomena kandidat-dokumenti-crud__ostalo-napomena" maxlength="1024" placeholder="Napomena..." spellcheck="true" aria-label="Napomena uz kandidata"></textarea>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -759,6 +799,25 @@
         </div>
         <div class="kandidat-dokumenti-crud__modal-pdf-footer">
             <button type="button" id="kandidat_zapisnik_pdf_povratak" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
+        </div>
+    </div>
+</div>
+<!-- Modal: PDF pred-print dokumenta (dokument iz šifarnika kandidat_dokumenti_pred_print; SAMO pregled — fiksni prored) -->
+<div id="predPrintModalPdf" class="kandidat-dokumenti-crud__modal-pdf" role="dialog" aria-label="PDF dokumenta" aria-modal="true" aria-hidden="true">
+    <div class="kandidat-dokumenti-crud__modal-pdf-overlay"></div>
+    <div class="kandidat-dokumenti-crud__modal-pdf-dialog">
+        <div class="kandidat-dokumenti-crud__modal-pdf-header">
+            <div class="kandidat-dokumenti-crud__modal-pdf-naslov" id="pred_print_pdf_naslov">PDF dokumenta</div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-body">
+            <iframe id="pred_print_pdf_okvir" class="kandidat-dokumenti-crud__modal-pdf-iframe" title="PDF pregled dokumenta"></iframe>
+            <div id="pred_print_pdf_spiner" class="kontrola-spiner-overlay" aria-hidden="true">
+                <span class="kontrola-spiner kontrola-spiner--segment" role="status" aria-label="Učitavanje"></span>
+            </div>
+            <div class="kandidat-dokumenti-crud__modal-pdf-info" id="pred_print_pdf_info" aria-live="polite"></div>
+        </div>
+        <div class="kandidat-dokumenti-crud__modal-pdf-footer">
+            <button type="button" id="pred_print_pdf_povratak" class="kontrola-btn"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
         </div>
     </div>
 </div>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Pred - print dokumenata</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../slike/VNLH_Favicon.png?v=1.0.242" type="image/png" sizes="32x32">
+    <link rel="stylesheet" href="../css/0-Common.css?v=1.0.242">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=1.0.242">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=1.0.242">
+    <link rel="stylesheet" href="../css/Kandidat_Dokumenti_Pred_Print_CRUD.css?v=1.0.242">
+</head>
+<body>
+<div class="naslov-forme"><h2 data-i18n="kandidat_dokumenti_pred_print_crud.naslov">Pred - print dokumenata</h2></div>
+<div class="page-container">
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body kandidat-dokumenti-pred-print-crud__edit-body">
+
+            <!-- 1. red: prikazni naziv (vodeća kontrola) + dokument (FK) + redosljed; labele iznad kontrola -->
+            <div class="kandidat-dokumenti-pred-print-crud__edit-row">
+                <div class="kandidat-dokumenti-pred-print-crud__polje">
+                    <label class="kontrola-labela mb-0" for="edit_naziv" data-i18n="kandidat_dokumenti_pred_print_crud.labela.naziv">Naziv</label>
+                    <div class="kontrola-edit-delete">
+                        <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Naziv u tablici..." maxlength="100" autocomplete="off" data-i18n-placeholder="kandidat_dokumenti_pred_print_crud.placeholder.naziv">
+                        <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                    </div>
+                </div>
+                <div class="kandidat-dokumenti-pred-print-crud__polje">
+                    <label class="kontrola-labela mb-0" for="edit_dokument" data-i18n="kandidat_dokumenti_pred_print_crud.labela.dokument">Dokument</label>
+                    <div class="kontrola-select">
+                        <select id="edit_dokument" aria-label="PDF dokument koji se generira" data-i18n-aria="kandidat_dokumenti_pred_print_crud.dokument.aria"></select>
+                    </div>
+                </div>
+                <div class="kandidat-dokumenti-pred-print-crud__polje kandidat-dokumenti-pred-print-crud__polje--redosljed">
+                    <label class="kontrola-labela mb-0" for="edit_redosljed" data-i18n="kandidat_dokumenti_pred_print_crud.labela.redosljed">Red</label>
+                    <input id="edit_redosljed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" aria-label="Redosljed 0 do 100" data-i18n-aria="kandidat_dokumenti_pred_print_crud.redosljed.aria">
+                </div>
+            </div>
+
+            <!-- 2. red: izvor podataka (tablica s bijele liste + ključna kolona) -->
+            <div class="kandidat-dokumenti-pred-print-crud__edit-row">
+                <div class="kandidat-dokumenti-pred-print-crud__polje">
+                    <label class="kontrola-labela mb-0" for="edit_izvor_tablica" data-i18n="kandidat_dokumenti_pred_print_crud.labela.izvor_tablica">Izvor tablica</label>
+                    <div class="kontrola-select">
+                        <select id="edit_izvor_tablica" aria-label="Tablica koja daje ključ dokumentu" data-i18n-aria="kandidat_dokumenti_pred_print_crud.izvor_tablica.aria"></select>
+                    </div>
+                </div>
+                <div class="kandidat-dokumenti-pred-print-crud__polje kandidat-dokumenti-pred-print-crud__polje--izvor-kolona">
+                    <label class="kontrola-labela mb-0" for="edit_izvor_kolona" data-i18n="kandidat_dokumenti_pred_print_crud.labela.izvor_kolona">Izvor kolona</label>
+                    <div class="kontrola-select">
+                        <select id="edit_izvor_kolona" aria-label="Ključna kolona izvorne tablice" data-i18n-aria="kandidat_dokumenti_pred_print_crud.izvor_kolona.aria"></select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. red: napomena (najduže polje — vlastiti red) -->
+            <div class="kandidat-dokumenti-pred-print-crud__edit-row">
+                <div class="kandidat-dokumenti-pred-print-crud__polje kandidat-dokumenti-pred-print-crud__polje--napomena">
+                    <label class="kontrola-labela mb-0" for="edit_napomena" data-i18n="kandidat_dokumenti_pred_print_crud.labela.napomena">Napomena</label>
+                    <textarea id="edit_napomena" class="kontrola-napomena" rows="2" placeholder="Slobodna bilješka..." maxlength="1024" data-i18n-placeholder="kandidat_dokumenti_pred_print_crud.placeholder.napomena"></textarea>
+                </div>
+            </div>
+
+            <!-- 4. red: Aktivan — kvačica ostaje uz labelu (labela iznad ima smisla samo za edite i selekte) -->
+            <div class="kandidat-dokumenti-pred-print-crud__edit-row kandidat-dokumenti-pred-print-crud__edit-row--aktivan">
+                <label class="kontrola-labela mb-0" for="edit_aktivan" data-i18n="kandidat_dokumenti_pred_print_crud.labela.aktivan">Aktivan</label>
+                <input type="checkbox" id="edit_aktivan" class="kontrola-checkbox" value="1" checked aria-label="Redak je aktivan (prikazuje se u formi kandidata)" data-i18n-aria="kandidat_dokumenti_pred_print_crud.aktivan.aria">
+            </div>
+
+        </div>
+        <div class="kontrola-panel__footer kandidat-dokumenti-pred-print-crud__edit-footer">
+            <div class="kandidat-dokumenti-pred-print-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
+            </div>
+            <div class="kandidat-dokumenti-pred-print-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=1.0.242"></script>
+<script src="../js/0-Kontrole.js?v=1.0.242"></script>
+<script src="../js/0-Common.js?v=1.0.242"></script>
+<script src="../js/0-Poruke.js?v=1.0.242"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=1.0.242"></script>
+<script src="../js/Kandidat_Dokumenti_Pred_Print_CRUD.js?v=1.0.242"></script>
+</body>
+</html>

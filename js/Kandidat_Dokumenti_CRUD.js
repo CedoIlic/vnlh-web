@@ -17,6 +17,8 @@
   var _obrazac001Postoji = false; /* ima li odabrani kandidat zapis u kandidat_dokumenti_001 (Obrazac 001a) */
   var _obrazac001PdfSpreman = false; /* PDF ikona aktivna: zapis postoji + status_pristupa i datum_dokumenta upisani U BAZI */
   var _obrazac001RowId = null;    /* kandidat_dokumenti_001.id (PK) — kontekst ID_Obrazac001 za PDF; null kad nema zapisa */
+  var _ostaloPostoji = false;     /* ima li odabrani kandidat zapis u kandidat_dokumenti_ostalo (tab „Ostalo") */
+  var _ostaloRowId = null;        /* kandidat_dokumenti_ostalo.id (PK) — kontekst ID_Ostalo; null kad nema zapisa */
   var _geoAutoLockedDrzava = false, _geoAutoLockedRegija = false, _geoAutoLockedLoza = false;
   var _pravaCrudUpis = 1, _pravaCrudBrisanje = 1;
 
@@ -96,6 +98,7 @@
   var obrazac1bKartica = document.getElementById('kandidatKontrolaTabKart3');
   var skenoviKartica = document.getElementById('kandidatKontrolaTabKart4');
   var zapisniciKartica = document.getElementById('kandidatKontrolaTabKart5');
+  var ostaloKartica = document.getElementById('kandidatKontrolaTabKart6');
   var obrPdfBtn = document.getElementById('obr_pdf');
   var obr1bPdfBtn = document.getElementById('obr1b_pdf');   /* PDF ikona na tabu 001b — enable/disable u paru s 001a */
   var kandidatTabRoot = document.getElementById('kandidatKontrolaTab');
@@ -183,6 +186,7 @@
     if (obrazac1bKartica) obrazac1bKartica.disabled = !on;
     if (skenoviKartica) skenoviKartica.disabled = !on;
     if (zapisniciKartica) zapisniciKartica.disabled = !on;
+    if (ostaloKartica) ostaloKartica.disabled = !on;
   }
 
   /* ===== Obrazac 001a: aktivni tab, enable, RO/edit popuna, load, save ===== */
@@ -348,6 +352,174 @@
     }
   }
 
+  /* ===== Tab „Ostalo": centralni kontekst + pred-print dokumenti + napomena ===== */
+
+  /* Centralni kontekst forme: kontekst_kljuc → id tekućeg sloga u bazi; -1 = zapisa nema.
+     Puni se ISKLJUČIVO iz učitanih podataka, nikad iz onoga što je korisnik upravo utipkao —
+     dokument se uvijek gradi iz baze. Nakon Upiši/Izmjeni vrijedi tek po ponovnom učitavanju. */
+  var _kontekst = { ID_Clan: -1, ID_Zivotopis: -1, ID_Razgovor: -1, ID_Obrazac001: -1, ID_Ostalo: -1 };
+  function kontekstBroj(v) {
+    if (v == null || v === '') return -1;
+    var n = parseInt(v, 10);
+    return isNaN(n) ? -1 : n;
+  }
+  function osvjeziKontekst() {
+    _kontekst.ID_Clan       = kontekstBroj(getSelectedRowId());
+    _kontekst.ID_Zivotopis  = kontekstBroj(_zivotopisRowId);
+    _kontekst.ID_Obrazac001 = kontekstBroj(_obrazac001RowId);
+    _kontekst.ID_Ostalo     = kontekstBroj(_ostaloRowId);
+    _kontekst.ID_Razgovor   = kontekstBroj(razgovoriApi ? CommonCRUD.getSelectedRowId(razgovoriApi) : null);
+    azurirajPredPrintIkonu();
+  }
+
+  /* --- Pod-tablica: dokumenti za pred-print (šifarnik kandidat_dokumenti_pred_print) --- */
+  var predPrintApi = null;
+  var predPrintData = [];        /* aktivni reci šifarnika (isti za svakog kandidata) */
+  var PRED_PRINT_TABLICA = {
+    Broj_Kolona: 1,
+    Reload_Ikona: 0,
+    CrudCssPrefix: 'clanovi-crud',
+    Tablica_Zaglavlje: [
+      { key: 'naziv', title: 'Dokumenti za pred-print', SQL_Naziv: 'naziv', sortable: 0, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 }
+    ]
+  };
+  CommonCRUD.initTablica('predPrintTablicaContainer', PRED_PRINT_TABLICA, {
+    getRowId: function (row) { return (row && row.id != null) ? row.id : null; },
+    onReady: function (api) { predPrintApi = api; },
+    onSelectionChange: function () { azurirajPredPrintIkonu(); }
+  });
+
+  /* Šifarnik se ne mijenja po kandidatu — učitava se jednom, pri otvaranju forme. */
+  function ucitajPredPrint() {
+    predPrintData = [];
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', API_BASE + 'Kandidat_Dokumenti_Pred_Print_lista.php', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      var text = (xhr.responseText || '').trim();
+      if (text !== '' && text.charAt(0) === '[') {
+        try { predPrintData = JSON.parse(text) || []; } catch (e) { predPrintData = []; }
+      }
+      var rows = [];
+      for (var i = 0; i < predPrintData.length; i++) {
+        var z = predPrintData[i];
+        /* naziv iz šifarnika, a ako ga nema — naziv dokumenta. */
+        var naziv = (z.naziv != null && trim(z.naziv) !== '') ? z.naziv : (z.dokument_naziv != null ? z.dokument_naziv : '');
+        rows.push({ id: z.id != null ? z.id : '', 0: naziv });
+      }
+      if (predPrintApi) CommonCRUD.setDataTablica(predPrintApi, 'predPrintTablicaContainer', rows, PRED_PRINT_TABLICA.Tablica_Zaglavlje);
+      azurirajPredPrintIkonu();
+    };
+    xhr.send();
+  }
+
+  function predPrintOdabrani() {
+    var id = predPrintApi ? CommonCRUD.getSelectedRowId(predPrintApi) : null;
+    if (id == null) return null;
+    for (var i = 0; i < predPrintData.length; i++) {
+      if (String(predPrintData[i].id) === String(id)) return predPrintData[i];
+    }
+    return null;
+  }
+
+  /* PDF ikona: omogućena samo ako za SVE kontekst ključeve odabranog dokumenta postoji
+     id u centralnom kontekstu (tj. zapis je u bazi). Inače disabled + tooltip s razlogom. */
+  function azurirajPredPrintIkonu() {
+    var btn = document.getElementById('predPrintPdf');
+    var btnDesel = document.getElementById('predPrintDeselekt');
+    var z = predPrintOdabrani();
+    var imaSelekciju = getSelectedRowId() != null;
+    if (btnDesel) btnDesel.disabled = !(imaSelekciju && z);
+    if (!btn) return;
+    if (!imaSelekciju || !z) {
+      btn.disabled = true;
+      btn.title = 'Generiraj PDF';
+      return;
+    }
+    var kljucevi = z.kontekst_kljucevi || [];
+    var nedostaje = [];
+    for (var i = 0; i < kljucevi.length; i++) {
+      var k = kljucevi[i];
+      if (!(k in _kontekst) || _kontekst[k] === -1) nedostaje.push(k);
+    }
+    btn.disabled = nedostaje.length > 0;
+    btn.title = nedostaje.length > 0
+      ? 'Nema zapisa u bazi za ovaj dokument'
+      : 'Generiraj PDF';
+  }
+
+  /* Zvjezdica: makni selekciju u tablici dokumenata. */
+  (function () {
+    var btnDesel = document.getElementById('predPrintDeselekt');
+    if (!btnDesel) return;
+    btnDesel.addEventListener('click', function () {
+      if (predPrintApi && typeof predPrintApi.clearSelection === 'function') predPrintApi.clearSelection();
+      azurirajPredPrintIkonu();
+    });
+  })();
+
+  /* --- Napomena (kandidat_dokumenti_ostalo, 1:1 po članu) --- */
+  var OSTALO_POLJA = ['ostalo_napomena', 'ostalo_planirani_datum', 'ostalo_ispis_imena'];
+  function ostaloSetEnabled(on) {
+    for (var i = 0; i < OSTALO_POLJA.length; i++) {
+      var el = document.getElementById(OSTALO_POLJA[i]);
+      if (el) el.disabled = !on;
+    }
+    var tbl = document.getElementById('predPrintTablicaContainer');
+    tbl = tbl && tbl.closest ? tbl.closest('.kontrola-tablica') : null;
+    if (tbl) tbl.classList.toggle('kontrola-tablica--disabled', !on);
+    /* Labele prate stanje svojih kontrola (zajednička logika); naslov nema [for] pa ide ručno. */
+    var panel = document.getElementById('kandidatKontrolaTabPanel6');
+    if (panel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(panel);
+    var naslov = panel ? panel.querySelector('.kandidat-dokumenti-crud__ostalo-naslov') : null;
+    if (naslov) naslov.classList.toggle('kandidat-dokumenti-crud__ostalo-naslov--disabled', !on);
+  }
+  function ostaloFill(o) {
+    o = o || {};
+    var el = document.getElementById('ostalo_napomena');
+    if (el) el.value = (o.napomena != null ? String(o.napomena) : '');
+    var dat = document.getElementById('ostalo_planirani_datum');
+    if (dat) dat.value = isoDatum(o.planirani_datum_inicijacije);
+    var cb = document.getElementById('ostalo_ispis_imena');
+    /* Novi zapis: kvačica uključena — isti default kao u shemi. */
+    if (cb) cb.checked = (o.ispis_imena_kandidata == null) ? true : (String(o.ispis_imena_kandidata) === '1');
+  }
+  function ostaloGetPayload(idClan) {
+    var el = document.getElementById('ostalo_napomena');
+    var dat = document.getElementById('ostalo_planirani_datum');
+    var cb = document.getElementById('ostalo_ispis_imena');
+    return {
+      id_clan: String(idClan),
+      napomena: el ? trim(el.value) : '',
+      planirani_datum_inicijacije: dat ? trim(dat.value) : '',
+      ispis_imena_kandidata: (cb && !cb.checked) ? '0' : '1'
+    };
+  }
+  function ostaloClear() {
+    _ostaloPostoji = false;
+    _ostaloRowId = null;
+    ostaloFill({});
+  }
+  function ucitajOstalo(idClan, cb) {
+    ostaloClear();
+    if (idClan == null || idClan === '' || typeof fetch !== 'function') { if (cb) cb(); return; }
+    fetch(API_BASE + 'Kandidat_Dokumenti_Ostalo_CRUD_jedan.php?id_clan=' + encodeURIComponent(idClan))
+      .then(function (r) { return r.text(); })
+      .then(function (text) {
+        text = (text || '').trim();
+        if (String(getSelectedRowId()) !== String(idClan)) return;   /* selekcija se promijenila */
+        if (text !== '' && text.charAt(0) === '{') {
+          try {
+            var o = JSON.parse(text);
+            _ostaloPostoji = !!o.postoji;
+            _ostaloRowId = (o.id != null && o.id !== '') ? o.id : null;
+            ostaloFill(o);
+          } catch (e) {}
+        }
+        if (cb) cb();
+      }).catch(function () { if (cb) cb(); });
+  }
+
   /* ===== Enable / CRUD stanje ===== */
   function updateEnabledState() {
     var imaLozu = selectLoza && trim(selectLoza.value) !== '';
@@ -361,6 +533,7 @@
     obrazac1bSetEnabled(imaSelekciju);
     skenoviSetEnabled(imaSelekciju);
     zapisniciSetEnabled(imaSelekciju);
+    ostaloSetEnabled(imaSelekciju);
     if (editPanel) editPanel.classList.toggle('kontrola-panel--edit-disabled', !imaSelekciju);
     /* Pod-tablica razgovora disabled kad je tab razgovori disabled (nema izabranog kandidata). */
     var razgTablica = document.getElementById('razgovoriTablicaContainer');
@@ -386,10 +559,11 @@
     var naObrazac1b = getAktivniTabIndex() === 3;
     var naSkenovi = getAktivniTabIndex() === 4;
     var naZapisnici = getAktivniTabIndex() === 5;
-    var postoji = _zivotopisPostoji || _obrazac001Postoji || _obrazac001bPostoji;
-    /* Footer Upis/Izmjeni je akcija MASTER forme (Životopis + Obrazac 001a/001b). Tabovi
+    var naOstalo = getAktivniTabIndex() === 6;
+    var postoji = _zivotopisPostoji || _obrazac001Postoji || _obrazac001bPostoji || _ostaloPostoji;
+    /* Footer Upis/Izmjeni je akcija MASTER forme (Životopis + Obrazac 001a/001b + Ostalo). Tabovi
        Razgovori/Skenovi/Zapisnici imaju vlastiti upis (add/delete/…) pa footer na njima NIJE vidljiv. */
-    var masterUpisTab = getAktivniTabIndex() === 0 || naObrazac || naObrazac1b;
+    var masterUpisTab = getAktivniTabIndex() === 0 || naObrazac || naObrazac1b || naOstalo;
     if (btnUpisi && btnUpisiLabel) {
       btnUpisi.style.display = masterUpisTab ? '' : 'none';
       var izmjena = imaSelekciju && postoji;
@@ -409,6 +583,7 @@
     }
     updatePdfState();
     obrazacUpdatePdfState();
+    azurirajPredPrintIkonu();
   }
 
   /* PDF ikona: omogućena kad je životopis učitan (kontrola ima sadržaj), inače onemogućena. */
@@ -456,12 +631,13 @@
     resetTabNaPrvi();
     updateSlikaPreview();
     var id = getSelectedRowId();
-    ucitajZivotopis(id, function () { updateCrudState(); });
+    ucitajZivotopis(id, function () { updateCrudState(); osvjeziKontekst(); });
     ucitajRazgovori(id);
-    ucitajObrazac(id, function () { updateCrudState(); });
+    ucitajObrazac(id, function () { updateCrudState(); osvjeziKontekst(); });
     ucitajObr1b(id);   /* učitaj 001b (predlagači/glasanja/datumi/časni/VIP); interno očisti + preload mape */
     ucitajSkenovi(id);
     ucitajZapisnici(id);
+    ucitajOstalo(id, function () { updateCrudState(); osvjeziKontekst(); });
     updateEnabledState();
   };
 
@@ -661,6 +837,8 @@
     zivotopisSetEnabled(false);
     obrazacClear();
     obr1bClear();
+    ostaloClear();
+    osvjeziKontekst();
     updateEnabledState();
   }
 
@@ -680,10 +858,11 @@
     var id = getSelectedRowId();
     if (id == null) return;
     /* „Izmjeni" ako postoji ijedan zapis forme (životopis ili redak 001); inače „Upis". */
-    var jeIzmjena = _zivotopisPostoji || _obrazac001Postoji || _obrazac001bPostoji;
+    var jeIzmjena = _zivotopisPostoji || _obrazac001Postoji || _obrazac001bPostoji || _ostaloPostoji;
     _postForma('Kandidat_Dokumenti_CRUD_spremi.php', { id_clan: String(id), zivotopis: zivotopisGetTekst() })
       .then(function () { return _postForma('Kandidat_Dokumenti_001_CRUD_spremi.php', obrazacGetPayload(id)); })
       .then(function () { return _postForma('Kandidat_Dokumenti_001b_CRUD_spremi.php', obr1bGetPayload(id)); })
+      .then(function () { return _postForma('Kandidat_Dokumenti_Ostalo_CRUD_spremi.php', ostaloGetPayload(id)); })
       .then(function () { ocistiNakonCrud(); poruka(jeIzmjena ? '004' : '001', []); })
       .catch(function (err) {
         var p = parseResponseCode(typeof err === 'string' ? err : '200');
@@ -1630,6 +1809,7 @@
     data = [];
     if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], KandidatCRUD.Tablica_Zaglavlje);
     zivotopisSetEnabled(false);
+    ucitajPredPrint();   /* šifarnik pred-printa: isti za sve kandidate, dovoljno jednom */
     updateEnabledState();
 
     /* Slika prati visinu panela tablice (resize trake/window); logo prati visinu zaglavlja. */
@@ -3037,5 +3217,128 @@
     if (povratak) povratak.addEventListener('click', zatvoriModal);
   })();
 
+  /* ===== PDF pred-print dokumenta (dokument iz šifarnika; SAMO pregled — fiksni prored).
+     Kontekst se gradi iz centralnog _kontekst po ključevima koje stavke dokumenta traže;
+     proslijeđeni id UVIJEK pobjeđuje nad razvojnim kontekstom dokumenta (razvoj_izabrani_id),
+     zato se razvojna polja ovdje ni ne čitaju. Napuštanje samo tipkom „Povratak". ===== */
+  (function initPredPrintPdfModal() {
+    var modal = document.getElementById('predPrintModalPdf');
+    if (!modal) return;
+    var okvir    = document.getElementById('pred_print_pdf_okvir');
+    var info     = document.getElementById('pred_print_pdf_info');
+    var spiner   = document.getElementById('pred_print_pdf_spiner');
+    var naslovEl = document.getElementById('pred_print_pdf_naslov');
+    var povratak = document.getElementById('pred_print_pdf_povratak');
+    var _dokument = null, _proredStilId = null, _zauzet = false;
+
+    function postJson(url, data, cb) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+      xhr.onreadystatechange = function () { if (xhr.readyState === 4 && cb) cb(xhr.responseText, xhr.status); };
+      xhr.send(JSON.stringify(data));
+    }
+    function postaviInfo(t) { if (info) info.textContent = t || ''; }
+    function spinerShow() { if (typeof KontroleSpinerShow === 'function') KontroleSpinerShow(spiner); }
+    function spinerHide() { if (typeof KontroleSpinerHide === 'function') KontroleSpinerHide(spiner); }
+    function krajRendera(p) { _zauzet = false; spinerHide(); postaviInfo(p || ''); }
+    function ocistiIframe() { if (okvir) { if (okvir._url) { try { URL.revokeObjectURL(okvir._url); } catch (e) {} okvir._url = null; } okvir.removeAttribute('src'); } }
+    function zatvoriModal() {
+      modal.classList.remove('kandidat-dokumenti-crud__modal-pdf--open');
+      modal.setAttribute('aria-hidden', 'true');
+      ocistiIframe(); spinerHide(); postaviInfo('');
+    }
+    function ucitajFontove(lista, cb, err) {
+      lista = lista || [];
+      if (!lista.length) { cb(); return; }
+      var preostalo = lista.length, greska = false;
+      lista.forEach(function (f) {
+        window.PdfRender.Fontovi.osiguraj(f.kljuc, f.porodica,
+          function () { if (--preostalo === 0) { greska ? err() : cb(); } },
+          function () { greska = true; if (--preostalo === 0) { err(); } });
+      });
+    }
+    function renderiraj() {
+      if (_zauzet) return;
+      spinerShow();
+      if (!window.PdfRender) { krajRendera('PDF biblioteka nije učitana.'); return; }
+      if (!_dokument || !_dokument.dokument) { krajRendera('Dokument nije pronađen.'); return; }
+      var dok = _dokument.dokument;
+      var stavke = _dokument.stavke || [];
+      /* Kontekst iz centralne mape forme; ako ijedan traženi ključ nema zapis u bazi — ne renderiraj. */
+      var kontekst = {};
+      var nedostaje = [];
+      stavke.forEach(function (s) {
+        var k = s.kontekst_kljuc != null ? trim(String(s.kontekst_kljuc)) : '';
+        if (k === '') return;
+        if (!(k in _kontekst) || _kontekst[k] === -1) { if (nedostaje.indexOf(k) < 0) nedostaje.push(k); return; }
+        kontekst[k] = _kontekst[k];
+      });
+      if (nedostaje.length) { krajRendera('Nema zapisa u bazi za: ' + nedostaje.join(', ')); return; }
+      /* Stavke idu CIJELE, onako kako su došle iz baze (PDF_Dokument_po_id.php radi SELECT *).
+         Resolver svako polje čita s ?? default, pa izostavljeno polje ne javlja grešku nego
+         tiho renderira po defaultu — tako bi svaka nova kolona stavke (npr. linije: broj_linija,
+         stil_linije, linija_debljina_mm, pomak_y_mm…) izgledala drukčije nego u PDF_Dokument
+         pregledu. Slanjem cijelog retka to ne može promaknuti. */
+      var payload = {
+        template_id: dok.template_id ? parseInt(dok.template_id, 10) : 0,
+        kontekst: kontekst,
+        broj_stranice_paragraf_id: dok.broj_stranice_paragraf_id ? parseInt(dok.broj_stranice_paragraf_id, 10) : null,
+        stavke: stavke
+      };
+      _zauzet = true;
+      postaviInfo('Dohvaćam…');
+      postJson(API_BASE + 'PDF_Generator_resolve.php', payload, function (res) {
+        var model;
+        try { model = JSON.parse(res); } catch (e) { krajRendera('Greška dohvata modela.'); return; }
+        if (!model || model.greska) { krajRendera('Greška: ' + ((model && model.greska) || 'nepoznata')); return; }
+        postaviInfo('Pripremam slike…');
+        window.PdfRender.pripremiSlike(model, function (model) {
+          postaviInfo('Gradim PDF…');
+          var dd = window.PdfRender.sastaviDocDefinition(model, { proredStilId: _proredStilId });
+          window.PdfRender.Pdf.ucitaj(function () {
+            ucitajFontove(model.fontovi, function () {
+              try {
+                pdfMake.createPdf(dd).getBlob(function (blob) { ocistiIframe(); okvir._url = URL.createObjectURL(blob); okvir.src = okvir._url; krajRendera(''); });
+              } catch (e) { krajRendera('Greška pri renderu: ' + e); }
+            }, function () { krajRendera('Greška pri učitavanju fontova.'); });
+          }, function () { krajRendera('Greška pri učitavanju pdfmake biblioteke.'); });
+        });
+      });
+    }
+    function ucitajDokumentIRenderiraj(idDokumenta) {
+      spinerShow();
+      postaviInfo('Učitavam dokument…');
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', API_BASE + 'PDF_Dokument_po_id.php?id=' + encodeURIComponent(idDokumenta), true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        var data = null;
+        try { data = JSON.parse((xhr.responseText || '').replace(/^﻿/, '').trim()); } catch (e) {}
+        if (!data || data.greska || !data.dokument) { krajRendera('Dokument nije pronađen.'); return; }
+        _dokument = data;
+        _proredStilId = data.dokument.dokument_prored_default_stil ? parseInt(data.dokument.dokument_prored_default_stil, 10) : null;
+        renderiraj();
+      };
+      xhr.send();
+    }
+
+    var btnPdf = document.getElementById('predPrintPdf');
+    if (btnPdf) {
+      btnPdf.addEventListener('click', function () {
+        var z = predPrintOdabrani();
+        if (!z || z.id_dokument == null) return;
+        var naslov = (z.naziv != null && trim(z.naziv) !== '') ? z.naziv : (z.dokument_naziv != null ? z.dokument_naziv : 'PDF dokumenta');
+        if (naslovEl) naslovEl.textContent = naslov;
+        _dokument = null;
+        modal.classList.add('kandidat-dokumenti-crud__modal-pdf--open');
+        modal.setAttribute('aria-hidden', 'false');
+        ucitajDokumentIRenderiraj(z.id_dokument);
+      });
+    }
+    if (povratak) povratak.addEventListener('click', zatvoriModal);
+  })();
+
   zapisniciSetEnabled(false);   /* početno stanje (nema izabranog kandidata) */
+  ostaloSetEnabled(false);
 })();
