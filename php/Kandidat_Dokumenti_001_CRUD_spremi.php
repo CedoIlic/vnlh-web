@@ -61,22 +61,24 @@ if (isset($d['datum_dokumenta'])) {
 $upisao = (int) ($_SESSION['id_korisnik'] ?? 0) ?: null;
 
 try {
-    // Mostovi za PDF (denormalizirano, jedan skok): id_loza←clanovi.loza, id_telefon←clanovi.telefon,
-    // id_adresa←clanovi.adresa, id_drzave←adrese.id_drzave_adrese (države adrese). Postavljaju se i na upisu i na izmjeni.
+    // Mostovi za PDF (denormalizirano, jedan skok): id_loza←clanovi.loza, id_regija←loze.id_regija (preko clanovi.loza),
+    // id_telefon←clanovi.telefon, id_adresa←clanovi.adresa, id_drzave←adrese.id_drzave_adrese (države adrese). Postavljaju se i na upisu i na izmjeni.
     // 1:1 po članu (UNIQUE id_clan) → INSERT ... ON DUPLICATE KEY UPDATE.
     $sql = 'INSERT INTO kandidat_dokumenti_001
-                (id_clan, id_loza, id_telefon, id_adresa, id_drzave, mjesto_rodjenja, drzava_rodjenja, drzavljanstvo, zvanje, zanimanje,
+                (id_clan, id_loza, id_regija, id_telefon, id_adresa, id_drzave, mjesto_rodjenja, drzava_rodjenja, drzavljanstvo, zvanje, zanimanje,
                  gradjanski_status, broj_djece, poznavanje_jezika, pocasni_naslovi,
                  dijete_masona, veza_masoni, zahtjev_druga_loza, status_pristupa, datum_dokumenta,
                  upisao, datum_upisa)
             VALUES (?,
                  (SELECT loza FROM clanovi WHERE id = ?),
+                 (SELECT id_regija FROM loze WHERE id = (SELECT loza FROM clanovi WHERE id = ?)),
                  (SELECT telefon FROM clanovi WHERE id = ?),
                  (SELECT adresa FROM clanovi WHERE id = ?),
                  (SELECT id_drzave_adrese FROM adrese WHERE id = (SELECT adresa FROM clanovi WHERE id = ?)),
                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ON DUPLICATE KEY UPDATE
                 id_loza = VALUES(id_loza),
+                id_regija = VALUES(id_regija),
                 id_telefon = VALUES(id_telefon),
                 id_adresa = VALUES(id_adresa),
                 id_drzave = VALUES(id_drzave),
@@ -95,10 +97,10 @@ try {
                 status_pristupa = VALUES(status_pristupa),
                 datum_dokumenta = VALUES(datum_dokumenta)';
     $stmt = $mysqli->prepare($sql);
-    // Prva 4 'i' = id_clan (kolona + 3 most-subupita: loza, telefon, adresa) + 5. 'i' = id_clan (drzave subupit).
+    // Prvih 6 'i' = id_clan (kolona + 5 most-subupita: loza, regija, telefon, adresa, drzave).
     $stmt->bind_param(
-        'iiiiissssssissiiissi',
-        $id_clan, $id_clan, $id_clan, $id_clan, $id_clan,
+        'iiiiiissssssissiiissi',
+        $id_clan, $id_clan, $id_clan, $id_clan, $id_clan, $id_clan,
         $mjesto_rodjenja, $drzava_rodjenja, $drzavljanstvo, $zvanje, $zanimanje,
         $gradjanski_status, $broj_djece, $poznavanje_jezika, $pocasni_naslovi,
         $dijete_masona, $veza_masoni, $zahtjev_druga_loza, $status_pristupa, $datum_dokumenta,
