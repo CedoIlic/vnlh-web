@@ -68,6 +68,14 @@ function pdf_uvjet_zadovoljen($mysqli, $s, $izvori, $kontekst)
     if (!$iz || !pdf_ident_ok($iz['tablica']) || !pdf_ident_ok($iz['kolona'])) return true;
     $kljuc = isset($s['uvjet_kontekst_kljuc']) ? (string) $s['uvjet_kontekst_kljuc'] : '';
     $id = ($kljuc !== '' && isset($kontekst[$kljuc])) ? (int) $kontekst[$kljuc] : 0;
+    // Most (kao preko_izvor kod podatka): bazni id → FK kolona → id retka uvjetnog izvora.
+    // Tako dokument s JEDNIM kontekstom može uvjetovati poljem iz druge 1:1 tablice.
+    $prekoId = isset($s['uvjet_preko_izvor_id']) ? (int) $s['uvjet_preko_izvor_id'] : 0;
+    if ($id > 0 && $prekoId > 0) {
+        $preko = isset($izvori[$prekoId]) ? $izvori[$prekoId] : null;
+        if (!$preko || !pdf_ident_ok($preko['tablica']) || !pdf_ident_ok($preko['kolona'])) return true;   // most nije u whitelistu → ne filtriramo
+        $id = (int) pdf_vrijednost_po_id($mysqli, $preko['tablica'], $preko['kolona'], $id);
+    }
     $val = ($id > 0) ? pdf_vrijednost_po_id($mysqli, $iz['tablica'], $iz['kolona'], $id) : null;
     $stvarno = ($val === null) ? '' : trim((string) $val);
     $ocek = isset($s['uvjet_vrijednost']) ? trim((string) $s['uvjet_vrijednost']) : '';

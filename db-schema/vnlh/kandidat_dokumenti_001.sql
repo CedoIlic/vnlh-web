@@ -7,6 +7,9 @@ CREATE TABLE `kandidat_dokumenti_001` (
   `id_telefon`         int(11) unsigned DEFAULT NULL COMMENT 'ID telefona kandidata (denormalizirano iz clanovi.telefon) — most za PDF u jednom skoku (→ telefoni.telefon)',
   `id_adresa`          int(11) unsigned DEFAULT NULL COMMENT 'ID adrese kandidata (denormalizirano iz clanovi.adresa) — most za PDF u jednom skoku (→ adrese.*)',
   `id_drzave`          int(11) unsigned DEFAULT NULL COMMENT 'ID države adrese kandidata (denormalizirano iz adrese.id_drzave_adrese) — most za PDF u jednom skoku (→ drzave_adresa.naziv)',
+  `id_zivotopis`       int(11) unsigned DEFAULT NULL COMMENT 'Most za PDF: red životopisa kandidata (kandidat_dokumenti_zivotopis.id)',
+  `id_ostalo`          int(11) unsigned DEFAULT NULL COMMENT 'Most za PDF: red taba „Ostalo" (kandidat_dokumenti_ostalo.id)',
+  `id_loza_pridruzivana` int(11) unsigned DEFAULT NULL COMMENT 'Most za PDF: loža iz koje se kandidat pridružuje (kopija kandidat_dokumenti_ostalo.loza_pridruzivana → loze.id)',
   `datum_dokumenta`    date DEFAULT NULL COMMENT 'Datum obrasca (upisuje korisnik; ispisuje se na obrascu)',
   `mjesto_rodjenja`    varchar(100) NOT NULL DEFAULT '' COMMENT 'Mjesto rođenja',
   `drzava_rodjenja`    varchar(100) NOT NULL DEFAULT '' COMMENT 'Država rođenja (slobodan tekst)',
@@ -40,6 +43,9 @@ CREATE TABLE `kandidat_dokumenti_001` (
   KEY `fk_kd001_telefon` (`id_telefon`),
   KEY `fk_kd001_adresa` (`id_adresa`),
   KEY `fk_kd001_drzave` (`id_drzave`),
+  KEY `fk_kd001_zivotopis` (`id_zivotopis`),
+  KEY `fk_kd001_ostalo` (`id_ostalo`),
+  KEY `fk_kd001_loza_pridruzivana` (`id_loza_pridruzivana`),
   KEY `fk_kd001_upisao` (`upisao`),
   KEY `fk_kd001_casni` (`casni_id`),
   KEY `fk_kd001_vip` (`vip_id`),
@@ -51,5 +57,8 @@ CREATE TABLE `kandidat_dokumenti_001` (
   CONSTRAINT `fk_kd001_telefon` FOREIGN KEY (`id_telefon`) REFERENCES `telefoni` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_kd001_adresa` FOREIGN KEY (`id_adresa`) REFERENCES `adrese` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_kd001_drzave` FOREIGN KEY (`id_drzave`) REFERENCES `drzave_adresa` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_kd001_zivotopis` FOREIGN KEY (`id_zivotopis`) REFERENCES `kandidat_dokumenti_zivotopis` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_kd001_ostalo` FOREIGN KEY (`id_ostalo`) REFERENCES `kandidat_dokumenti_ostalo` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_kd001_loza_pridruzivana` FOREIGN KEY (`id_loza_pridruzivana`) REFERENCES `loze` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_kd001_upisao` FOREIGN KEY (`upisao`) REFERENCES `clanovi` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

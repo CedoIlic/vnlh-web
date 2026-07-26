@@ -1124,9 +1124,22 @@
 .kandidat-dokumenti-crud__ostalo-red .kontrola-checkbox {
   flex: 0 0 auto;
 }
-/* Datum puni ostatak reda (labela je fiksna, polje raste do ruba stupca). */
-.kandidat-dokumenti-crud__ostalo-datum {
-  flex: 1 1 auto;
+/* Red s labelom IZNAD kontrole (npr. select „Loža iz koje se pridružuje") — kontrola punom širinom. */
+.kandidat-dokumenti-crud__ostalo-red--stupac {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+}
+.kandidat-dokumenti-crud__ostalo-red--stupac .kontrola-select {
+  width: 100%;
+}
+/* Unosna polja taba (datumi i Ur. broj): fiksna širina (kao u Clanovi_CRUD / modalu razgovora) —
+   tako su jednako široka u svakom stupcu, bez obzira na duljinu labele lijevo.
+   Uz to idu uz DESNI rub svojeg stupca (labela ostaje lijevo), pa su u istoj okomici. */
+.kandidat-dokumenti-crud__ostalo-polje {
+  flex: 0 0 auto;
   min-width: 0;
-  width: auto;
+  width: 170px;
+  margin-left: auto;
 }

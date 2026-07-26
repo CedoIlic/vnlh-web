@@ -62,10 +62,14 @@ $upisao = (int) ($_SESSION['id_korisnik'] ?? 0) ?: null;
 
 try {
     // Mostovi za PDF (denormalizirano, jedan skok): id_loza←clanovi.loza, id_regija←loze.id_regija (preko clanovi.loza),
-    // id_telefon←clanovi.telefon, id_adresa←clanovi.adresa, id_drzave←adrese.id_drzave_adrese (države adrese). Postavljaju se i na upisu i na izmjeni.
+    // id_telefon←clanovi.telefon, id_adresa←clanovi.adresa, id_drzave←adrese.id_drzave_adrese (države adrese),
+    // id_zivotopis←kandidat_dokumenti_zivotopis.id, id_ostalo←kandidat_dokumenti_ostalo.id,
+    // id_loza_pridruzivana←kandidat_dokumenti_ostalo.loza_pridruzivana (inače bi PDF trebao dva skoka).
+    // Postavljaju se i na upisu i na izmjeni.
     // 1:1 po članu (UNIQUE id_clan) → INSERT ... ON DUPLICATE KEY UPDATE.
     $sql = 'INSERT INTO kandidat_dokumenti_001
-                (id_clan, id_loza, id_regija, id_telefon, id_adresa, id_drzave, mjesto_rodjenja, drzava_rodjenja, drzavljanstvo, zvanje, zanimanje,
+                (id_clan, id_loza, id_regija, id_telefon, id_adresa, id_drzave,
+                 id_zivotopis, id_ostalo, id_loza_pridruzivana, mjesto_rodjenja, drzava_rodjenja, drzavljanstvo, zvanje, zanimanje,
                  gradjanski_status, broj_djece, poznavanje_jezika, pocasni_naslovi,
                  dijete_masona, veza_masoni, zahtjev_druga_loza, status_pristupa, datum_dokumenta,
                  upisao, datum_upisa)
@@ -75,6 +79,9 @@ try {
                  (SELECT telefon FROM clanovi WHERE id = ?),
                  (SELECT adresa FROM clanovi WHERE id = ?),
                  (SELECT id_drzave_adrese FROM adrese WHERE id = (SELECT adresa FROM clanovi WHERE id = ?)),
+                 (SELECT z.id FROM kandidat_dokumenti_zivotopis z WHERE z.id_clan = ?),
+                 (SELECT o.id FROM kandidat_dokumenti_ostalo o WHERE o.id_clan = ?),
+                 (SELECT o2.loza_pridruzivana FROM kandidat_dokumenti_ostalo o2 WHERE o2.id_clan = ?),
                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ON DUPLICATE KEY UPDATE
                 id_loza = VALUES(id_loza),
@@ -82,6 +89,9 @@ try {
                 id_telefon = VALUES(id_telefon),
                 id_adresa = VALUES(id_adresa),
                 id_drzave = VALUES(id_drzave),
+                id_zivotopis = VALUES(id_zivotopis),
+                id_ostalo = VALUES(id_ostalo),
+                id_loza_pridruzivana = VALUES(id_loza_pridruzivana),
                 mjesto_rodjenja = VALUES(mjesto_rodjenja),
                 drzava_rodjenja = VALUES(drzava_rodjenja),
                 drzavljanstvo = VALUES(drzavljanstvo),
@@ -97,10 +107,11 @@ try {
                 status_pristupa = VALUES(status_pristupa),
                 datum_dokumenta = VALUES(datum_dokumenta)';
     $stmt = $mysqli->prepare($sql);
-    // Prvih 6 'i' = id_clan (kolona + 5 most-subupita: loza, regija, telefon, adresa, drzave).
+    // Prvih 9 'i' = id_clan (kolona + 8 most-subupita: loza, regija, telefon, adresa, drzave,
+    // zivotopis, ostalo, loza_pridruzivana).
     $stmt->bind_param(
-        'iiiiiissssssissiiissi',
-        $id_clan, $id_clan, $id_clan, $id_clan, $id_clan, $id_clan,
+        'iiiiiiiiissssssissiiissi',
+        $id_clan, $id_clan, $id_clan, $id_clan, $id_clan, $id_clan, $id_clan, $id_clan, $id_clan,
         $mjesto_rodjenja, $drzava_rodjenja, $drzavljanstvo, $zvanje, $zanimanje,
         $gradjanski_status, $broj_djece, $poznavanje_jezika, $pocasni_naslovi,
         $dijete_masona, $veza_masoni, $zahtjev_druga_loza, $status_pristupa, $datum_dokumenta,

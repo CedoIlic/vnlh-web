@@ -17,6 +17,7 @@
   var _obrazac001Postoji = false; /* ima li odabrani kandidat zapis u kandidat_dokumenti_001 (Obrazac 001a) */
   var _obrazac001PdfSpreman = false; /* PDF ikona aktivna: zapis postoji + status_pristupa i datum_dokumenta upisani U BAZI */
   var _obrazac001RowId = null;    /* kandidat_dokumenti_001.id (PK) — kontekst ID_Obrazac001 za PDF; null kad nema zapisa */
+  var _ostaloEnabled = false;     /* je li tab „Ostalo" uključen (ima odabranog kandidata) */
   var _ostaloPostoji = false;     /* ima li odabrani kandidat zapis u kandidat_dokumenti_ostalo (tab „Ostalo") */
   var _ostaloRowId = null;        /* kandidat_dokumenti_ostalo.id (PK) — kontekst ID_Ostalo; null kad nema zapisa */
   var _geoAutoLockedDrzava = false, _geoAutoLockedRegija = false, _geoAutoLockedLoza = false;
@@ -272,6 +273,7 @@
             if (o.postoji) obrazacFillEdit(o);
           } catch (e) {}
         }
+        ostaloAzurirajLozaPridruzivanja();   /* status je tek sada poznat → enable lože pridruživanja */
         if (cb) cb();
       }).catch(function () { if (cb) cb(); });
   }
@@ -467,20 +469,92 @@
   })();
 
   /* --- Napomena (kandidat_dokumenti_ostalo, 1:1 po članu) --- */
-  var OSTALO_POLJA = ['ostalo_napomena', 'ostalo_planirani_datum', 'ostalo_ispis_imena'];
+  var OSTALO_POLJA = ['ostalo_napomena', 'ostalo_planirani_datum', 'ostalo_ispis_imena',
+                      'ostalo_urudzbeni_broj', 'ostalo_datum_dokumenta',
+                      'ostalo_loza_pridruzivana', 'ostalo_datum_objave_do'];
+
+  /* „Loža iz koje se pridružuje" ovisi o selektu Status na tabu Obrazac 001a:
+     enable SAMO kad je status „Pridružen" (uz uključen tab). Vrijednost se NE briše ovdje
+     (redoslijed učitavanja 001a/Ostalo nije zajamčen) — čisti je promjena statusa rukom. */
+  function jePridruzen() {
+    var st = document.getElementById('obr_status_pristupa');
+    return !!st && trim(st.value) === 'Pridružen';
+  }
+  function ostaloAzurirajLozaPridruzivanja() {
+    var sel = document.getElementById('ostalo_loza_pridruzivana');
+    if (!sel) return;
+    sel.disabled = !(_ostaloEnabled && jePridruzen());
+    if (typeof KontroleRefreshCustomSelect === 'function') {
+      try { KontroleRefreshCustomSelect('ostalo_loza_pridruzivana'); } catch (e) {}
+    }
+    var panel = document.getElementById('kandidatKontrolaTabPanel6');
+    if (panel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(panel);
+  }
+  (function () {
+    var st = document.getElementById('obr_status_pristupa');
+    if (!st) return;
+    st.addEventListener('change', function () {
+      /* Status više nije „Pridružen" → loža pridruživanja se poništava (sprema se NULL). */
+      if (!jePridruzen()) {
+        var sel = document.getElementById('ostalo_loza_pridruzivana');
+        if (sel) sel.value = '';
+      }
+      ostaloAzurirajLozaPridruzivanja();
+    });
+  })();
+
+  /* Select „Loža iz koje se pridružuje": aktivne lože ISTOG tipa kao loža kandidata,
+     ograničene na državu izabranu u geo grupi. Lista ovisi o kandidatu i geo državi,
+     pa se puni na svaku selekciju (prije popune vrijednosti iz baze). */
+  function ostaloPuniLoze(idClan, izabrano, cb) {
+    var sel = document.getElementById('ostalo_loza_pridruzivana');
+    if (!sel) { if (cb) cb(); return; }
+    function postavi(arr) {
+      while (sel.options.length) sel.remove(0);
+      var ph = document.createElement('option');
+      ph.value = ''; ph.textContent = '— Odaberi ložu —';
+      sel.appendChild(ph);
+      for (var i = 0; i < arr.length; i++) {
+        var o = arr[i];
+        var op = document.createElement('option');
+        op.value = String(o.id);
+        op.textContent = (o.naziv != null ? o.naziv : ('#' + o.id)) + (o.grad ? (', ' + o.grad) : '');
+        sel.appendChild(op);
+      }
+      /* Ako spremljene lože nema na listi (npr. ugašena je), select ostaje na placeholderu. */
+      sel.value = (izabrano != null && izabrano !== '') ? String(izabrano) : '';
+      ostaloAzurirajLozaPridruzivanja();   /* nova lista → ponovno primijeni enable pravilo */
+      if (cb) cb();
+    }
+    var idDrzava = selectDrzava ? trim(selectDrzava.value) : '';
+    if (idClan == null || idClan === '' || idDrzava === '' || typeof fetch !== 'function') { postavi([]); return; }
+    fetch(API_BASE + 'Kandidat_Dokumenti_Ostalo_CRUD_loze.php?id_clan=' + encodeURIComponent(idClan) +
+          '&id_drzava=' + encodeURIComponent(idDrzava))
+      .then(function (r) { return r.text(); })
+      .then(function (text) {
+        text = (text || '').trim();
+        var arr = [];
+        if (text.charAt(0) === '[') { try { arr = JSON.parse(text) || []; } catch (e) { arr = []; } }
+        postavi(arr);
+      }).catch(function () { postavi([]); });
+  }
   function ostaloSetEnabled(on) {
+    _ostaloEnabled = !!on;
     for (var i = 0; i < OSTALO_POLJA.length; i++) {
       var el = document.getElementById(OSTALO_POLJA[i]);
       if (el) el.disabled = !on;
     }
+    ostaloAzurirajLozaPridruzivanja();   /* loža pridruživanja: dodatni uvjet — status „Pridružen" */
     var tbl = document.getElementById('predPrintTablicaContainer');
     tbl = tbl && tbl.closest ? tbl.closest('.kontrola-tablica') : null;
     if (tbl) tbl.classList.toggle('kontrola-tablica--disabled', !on);
     /* Labele prate stanje svojih kontrola (zajednička logika); naslov nema [for] pa ide ručno. */
     var panel = document.getElementById('kandidatKontrolaTabPanel6');
     if (panel && typeof KontroleSyncLabelsDisabledState === 'function') KontroleSyncLabelsDisabledState(panel);
-    var naslov = panel ? panel.querySelector('.kandidat-dokumenti-crud__ostalo-naslov') : null;
-    if (naslov) naslov.classList.toggle('kandidat-dokumenti-crud__ostalo-naslov--disabled', !on);
+    var naslovi = panel ? panel.querySelectorAll('.kandidat-dokumenti-crud__ostalo-naslov') : [];
+    for (var n = 0; n < naslovi.length; n++) {
+      naslovi[n].classList.toggle('kandidat-dokumenti-crud__ostalo-naslov--disabled', !on);
+    }
   }
   function ostaloFill(o) {
     o = o || {};
@@ -488,6 +562,13 @@
     if (el) el.value = (o.napomena != null ? String(o.napomena) : '');
     var dat = document.getElementById('ostalo_planirani_datum');
     if (dat) dat.value = isoDatum(o.planirani_datum_inicijacije);
+    /* Obrazac 101 — urudžbeni broj + datum dokumenta. */
+    var urBroj = document.getElementById('ostalo_urudzbeni_broj');
+    if (urBroj) urBroj.value = (o.urudzbeni_broj != null ? String(o.urudzbeni_broj) : '');
+    var datDok = document.getElementById('ostalo_datum_dokumenta');
+    if (datDok) datDok.value = isoDatum(o.datum_dokumenta_101);
+    var datObj = document.getElementById('ostalo_datum_objave_do');
+    if (datObj) datObj.value = isoDatum(o.datum_objave_do);
     var cb = document.getElementById('ostalo_ispis_imena');
     /* Novi zapis: kvačica uključena — isti default kao u shemi. */
     if (cb) cb.checked = (o.ispis_imena_kandidata == null) ? true : (String(o.ispis_imena_kandidata) === '1');
@@ -496,17 +577,27 @@
     var el = document.getElementById('ostalo_napomena');
     var dat = document.getElementById('ostalo_planirani_datum');
     var cb = document.getElementById('ostalo_ispis_imena');
+    var urBroj = document.getElementById('ostalo_urudzbeni_broj');
+    var datDok = document.getElementById('ostalo_datum_dokumenta');
+    var lozaPrid = document.getElementById('ostalo_loza_pridruzivana');
+    var datObj = document.getElementById('ostalo_datum_objave_do');
     return {
       id_clan: String(idClan),
       napomena: el ? trim(el.value) : '',
       planirani_datum_inicijacije: dat ? trim(dat.value) : '',
-      ispis_imena_kandidata: (cb && !cb.checked) ? '0' : '1'
+      ispis_imena_kandidata: (cb && !cb.checked) ? '0' : '1',
+      urudzbeni_broj: urBroj ? trim(urBroj.value) : '',
+      datum_dokumenta_101: datDok ? trim(datDok.value) : '',
+      /* Loža pridruživanja vrijedi samo uz status „Pridružen" — inače se sprema NULL. */
+      loza_pridruzivana: (lozaPrid && jePridruzen()) ? trim(lozaPrid.value) : '',
+      datum_objave_do: datObj ? trim(datObj.value) : ''
     };
   }
   function ostaloClear() {
     _ostaloPostoji = false;
     _ostaloRowId = null;
     ostaloFill({});
+    ostaloPuniLoze(null, null);   /* lista loža ovisi o kandidatu — natrag na placeholder */
   }
   function ucitajOstalo(idClan, cb) {
     ostaloClear();
@@ -522,6 +613,7 @@
             _ostaloPostoji = !!o.postoji;
             _ostaloRowId = (o.id != null && o.id !== '') ? o.id : null;
             ostaloFill(o);
+            ostaloPuniLoze(idClan, o.loza_pridruzivana);
           } catch (e) {}
         }
         if (cb) cb();
@@ -836,8 +928,30 @@
     if (wrap) wrap.addEventListener('kontrole-edit-delete-clear', function () { osvjeziPrikazTablice(); });
   })();
 
+  /* Ukloni selekciju iz svih pod-tablica u tabovima (razgovori, predlagači, skenovi, zapisnici, pred-print). */
+  function ocistiSelekcijeTabova() {
+    var apiji = [razgovoriApi, predlagaciApi, skenoviApi, zapisniciApi, predPrintApi];
+    for (var i = 0; i < apiji.length; i++) {
+      var a = apiji[i];
+      if (a && typeof a.clearSelection === 'function') a.clearSelection();
+    }
+    /* Ikone uz pod-tablice prate selekciju — osvježi ih (clearSelection ne javlja svima). */
+    azurirajRazgovorIkone();
+    azurirajObr1bIkone();
+    azurirajSkenIkone();
+    azurirajZapisnikIkone();
+    azurirajPredPrintIkonu();
+  }
+
+  /* Vrati tab kontrolu na prvu karticu („Životopis"). */
+  function vratiNaPrviTab() {
+    if (kandidatTabRoot && typeof kontrolaTabPostaviAktivni === 'function') kontrolaTabPostaviAktivni(kandidatTabRoot, 0);
+  }
+
   /* Nakon uspješnog upisa/izmjene/brisanja: očisti edit tab i ukloni selekciju iz tablice. */
   function ocistiNakonCrud() {
+    vratiNaPrviTab();
+    ocistiSelekcijeTabova();
     if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
     clearSlika();
     _zivotopisPostoji = false;

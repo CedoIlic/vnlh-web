@@ -27,6 +27,7 @@ CREATE TABLE `pdf_dokument_stavke` (
   `prazno_nacin`      enum('placeholder','crtica','izostavi','linija') NOT NULL DEFAULT 'placeholder' COMMENT 'Ponašanje kad je vrijednost prazna: placeholder=sivi XXXXXXXX (dev); crtica="—" u stilu segmenta (obavezni podaci); izostavi=ništa (neobavezni, npr. drugi red adrese — nestaje i prefiks/sufiks); linija=vodoravna crta za ručni upis (dužina u prazno_linija_mm)',
   `prazno_linija_mm`  decimal(6,2) DEFAULT NULL COMMENT 'Dužina linije u mm kad je prazno_nacin=linija; NULL/0 = 40 mm',
   `uvjet_izvor_id`    int(11) unsigned DEFAULT NULL COMMENT 'Uvjetni ispis: FK na pdf_dozvoljeni_izvori — polje čija se vrijednost uspoređuje; NULL = stavka se uvijek ispisuje',
+  `uvjet_preko_izvor_id` int(11) unsigned DEFAULT NULL COMMENT 'Uvjetni ispis: FK na pdf_dozvoljeni_izvori — most (tablica.FK kolona) preko kojeg se iz baznog id-a dobije red uvjetnog izvora; NULL = izravno po kontekstu',
   `uvjet_kontekst_kljuc` varchar(64) DEFAULT NULL COMMENT 'Uvjetni ispis: ključ konteksta iz kojeg dolazi ID retka uvjetnog izvora (može biti različit od ključa same stavke)',
   `uvjet_operator`    enum('=','<>') NOT NULL DEFAULT '=' COMMENT 'Uvjetni ispis: usporedba vrijednosti izvora s uvjet_vrijednost',
   `uvjet_vrijednost`  varchar(64) DEFAULT NULL COMMENT 'Uvjetni ispis: vrijednost za usporedbu (tekstualna); nepostojeći redak daje praznu vrijednost — zato za „ispiši osim ako je 0" koristi operator <> ',
@@ -54,6 +55,7 @@ CREATE TABLE `pdf_dokument_stavke` (
   KEY `fk_stavka_izvor` (`izvor_id`),
   KEY `fk_stavka_preko_izvor` (`preko_izvor_id`),
   KEY `fk_stavka_uvjet_izvor` (`uvjet_izvor_id`),
+  KEY `fk_stavka_uvjet_preko_izvor` (`uvjet_preko_izvor_id`),
   KEY `fk_stavka_paragraf` (`paragraf_id`),
   KEY `fk_stavka_slika_stil` (`slika_stil_id`),
   KEY `fk_stavka_relacija` (`relacija_id`),
@@ -70,6 +72,8 @@ CREATE TABLE `pdf_dokument_stavke` (
     FOREIGN KEY (`preko_izvor_id`) REFERENCES `pdf_dozvoljeni_izvori` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_uvjet_izvor`
     FOREIGN KEY (`uvjet_izvor_id`) REFERENCES `pdf_dozvoljeni_izvori` (`id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_stavka_uvjet_preko_izvor`
+    FOREIGN KEY (`uvjet_preko_izvor_id`) REFERENCES `pdf_dozvoljeni_izvori` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_paragraf`
     FOREIGN KEY (`paragraf_id`) REFERENCES `pdf_paragraf` (`id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_stavka_slika_stil`
