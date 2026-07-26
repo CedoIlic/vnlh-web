@@ -69,6 +69,23 @@
   min-height: 0;
   width: 100%;
 }
+/* --- Jedinstvena visina SVIH tabova = visina taba „Obrazac 001b" (najviši sadržaj) ---
+   Izvedena iz tokena, a ne iz fiksnog broja, da prati promjene visine kontrola:
+     zaglavlje „Rezultati glasanja" = PDF ikona (edit_height) + padding 0,5 + margina 0,75 + linija 1px
+     matrica glasanja              = red naslova (1,4rem) + 5 × edit_height + 5 × row-gap 0,7rem
+     Časni/Sekretar/VIP            = padding 0,5rem + 3 × edit_height + 2 × gap 0,35rem
+     padding panela                = 2 × 0,5rem
+   Fino podešavanje ide SAMO kroz ovu varijablu. */
+.kandidat-dokumenti-crud__tab {
+  --kandidat_dok_tab_visina: calc(
+      var(--edit_height) + 0.5rem + 0.75rem + 1px
+    + 1.4rem + 5 * var(--edit_height) + 5 * 0.7rem
+    + 0.5rem + 3 * var(--edit_height) + 2 * 0.35rem
+    + 1rem);
+}
+.kandidat-dokumenti-crud__tab > .kontrola-tab__tijelo > .kontrola-tab__panel {
+  min-height: var(--kandidat_dok_tab_visina);
+}
 .kandidat-dokumenti-crud__tab-panel--zivotopis {
   display: flex;
   flex-direction: column;
@@ -146,13 +163,14 @@
 }
 
 /* --- Scrol-omot: wrapper s okvirom/radiusom, kliP scrollbara (uzor esej) ---
-   Fiksna zadana visina (ne rasteže se na učitavanju dugog teksta — tekst scrolla unutra);
-   korisnik može povući visinu (resize: vertical). */
+   Ne rasteže se na učitavanju dugog teksta (tekst scrolla unutra), nego popuni visinu panela
+   koju drži zajednička varijabla --kandidat_dok_tab_visina (tab „Obrazac 001b" je mjerilo);
+   korisnik i dalje može povući visinu (resize: vertical). */
 .kandidat-dokumenti-crud__scrol-omot {
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
-  height: 26.5rem;           /* ≈424px — izjednačeno s masterom 001b (inicijalna visina; resize povlači) */
+  height: var(--kandidat_dok_tab_visina);   /* točno visina taba (panel životopisa nema padding) */
   min-height: 10rem;
   resize: vertical;
   border: 1px solid var(--napomena_border);
@@ -400,10 +418,11 @@
 .kandidat-dokumenti-crud__razgovori-glavni .kandidat-dokumenti-crud__razgovori-tablica {
   flex: 1 1 auto;
   min-width: 0;
-  /* Izjednačavanje visine taba na master 001b (≈424px): viša tablica (inicijalna visina). */
+  /* Tablica popuni cijelu zajedničku visinu taba: ukupna visina − padding panela (2 × 0,5rem)
+     − razmak do reda ikona (0,5rem) − visina reda ikona (--edit_height). */
   display: flex;
   flex-direction: column;
-  min-height: 364px;
+  min-height: calc(var(--kandidat_dok_tab_visina) - 1rem - 0.5rem - var(--edit_height));
 }
 .kandidat-dokumenti-crud__razgovori-glavni .kandidat-dokumenti-crud__razgovori-tablica > .kontrola-tablica {
   flex: 1 1 auto;
@@ -453,7 +472,7 @@
   flex-direction: row;
   gap: 0.75rem;
   align-items: stretch;
-  min-height: 408px;    /* izjednači visinu taba s ostalima (≈424px panel, master 001b) */
+  min-height: calc(var(--kandidat_dok_tab_visina) - 1rem);   /* puni zajedničku visinu taba (bez paddinga panela) */
 }
 .kandidat-dokumenti-crud__skenovi-tablica {
   flex: 2 1 0;          /* 2/3 širine */
@@ -498,7 +517,7 @@
   flex-direction: row;
   gap: 0.75rem;
   align-items: stretch;
-  min-height: 408px;    /* izjednači visinu taba s ostalima (≈424px panel, master 001b) */
+  min-height: calc(var(--kandidat_dok_tab_visina) - 1rem);   /* puni zajedničku visinu taba (bez paddinga panela) */
 }
 .kandidat-dokumenti-crud__zapisnici-tablica {
   flex: 2 1 0;
@@ -724,6 +743,8 @@
   flex-direction: column;
   gap: 1rem;
   padding: 0.25rem;
+  /* Popuni zajedničku visinu taba (panel nema padding; ovaj omot ima 2 × 0,25rem). */
+  min-height: calc(var(--kandidat_dok_tab_visina) - 0.5rem);
 }
 /* Zaglavlje obrasca: Status | Datum dokumenta | PDF (desno) + linija preko sve tri kolone. */
 .kandidat-dokumenti-crud__obrazac-zaglavlje {
@@ -784,10 +805,15 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem 1.5rem;
+  flex: 1 1 auto;          /* preuzmi slobodnu visinu taba */
+  align-items: stretch;
 }
+/* Redovi se razmaknu preko cijele visine stupca (umjesto praznine na dnu);
+   0,5rem je MINIMALNI razmak, ostatak slobodnog prostora se ravnomjerno raspodijeli. */
 .kandidat-dokumenti-crud__obrazac-stupac {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 0.5rem;
   position: relative;
 }
@@ -886,13 +912,14 @@
   padding-left: 1.5rem;
   border-left: 1px solid var(--edit_border, #ced4da);
 }
-/* Matrica ide odmah ispod zaglavlja; Časni/VIP (obr1b-clanovi) gurnuti na DNO desnog stupca. */
+/* Matrica ide odmah ispod zaglavlja; Časni/Sekretar/VIP (obr1b-clanovi) gurnuti na DNO desnog stupca.
+   Razmaci su stisnuti (padding 1→0,5rem, gap 0,5→0,35rem) da treći red stane u postojeću visinu taba. */
 .kandidat-dokumenti-crud__obr1b-clanovi {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 1rem;
+  gap: 0.35rem;
+  padding-top: 0.5rem;
 }
 /* Razlog odbijanja (lijevi stupac): labela IZNAD; textarea raste (flex) da se visina lijevog
    stupca izjednači s desnim (obr1b ima align-items:stretch). */
@@ -1031,7 +1058,7 @@
   flex-direction: row;
   gap: 0.75rem;
   align-items: stretch;
-  min-height: 408px;    /* izjednači visinu taba s ostalima */
+  min-height: calc(var(--kandidat_dok_tab_visina) - 1rem);   /* puni zajedničku visinu taba (bez paddinga panela) */
 }
 .kandidat-dokumenti-crud__ostalo-lijevo,
 .kandidat-dokumenti-crud__ostalo-sredina,
@@ -1043,10 +1070,10 @@
   gap: 0.4rem;
 }
 /* Tablica dokumenata: zaglavlje + 5 vidljivih redova (ne rasteže se s panelom). */
+/* Tablica raste do dna stupca (5 vidljivih redova je MINIMUM, ostatak slobodne visine dobiva ona). */
 .kandidat-dokumenti-crud__ostalo-tablica {
-  flex: 0 0 auto;
-  height: calc(6 * var(--tablica_row_h));
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: calc(6 * var(--tablica_row_h));
   display: flex;
   flex-direction: column;
 }

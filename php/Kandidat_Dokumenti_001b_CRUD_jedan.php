@@ -1,9 +1,9 @@
 <?php
 require_once __DIR__ . '/require_login_api.php';
 // Kandidat_Dokumenti_001b_CRUD_jedan.php – učitavanje Obrasca 001b za kandidata (GET id_clan).
-// Čita 001b kolone iz kandidat_dokumenti_001; razrješava predlagaci/casni_id/vip_id u podatke člana
+// Čita 001b kolone iz kandidat_dokumenti_001; razrješava predlagaci/casni_id/sekretar_id/vip_id u podatke člana
 // (prezime, ime, loža, grad, stupanj + id_obred za klijentski filter stupnja). Glasanja parsira u objekte.
-// Vraća JSON { postoji, predlagaci:[...], glasanje_1/2/3:{...}, datum_razmatranja, datum_odbijanja, casni, vip }.
+// Vraća JSON { postoji, predlagaci:[...], glasanje_1/2/3:{...}, datum_razmatranja, datum_odbijanja, casni, sekretar, vip }.
 $db_ret = require_once __DIR__ . '/00_db.php';
 if ($db_ret !== -1) { header('Content-Type: text/plain'); echo $db_ret; exit; }
 
@@ -24,7 +24,7 @@ function decode_glasanje($s) {
     return $out;
 }
 
-$sql = 'SELECT predlagaci, glasanje_1, glasanje_2, glasanje_3, datum_razmatranja, datum_odbijanja, razlog_odbijanja, casni_id, vip_id
+$sql = 'SELECT predlagaci, glasanje_1, glasanje_2, glasanje_3, datum_razmatranja, datum_odbijanja, razlog_odbijanja, casni_id, sekretar_id, vip_id
         FROM kandidat_dokumenti_001 WHERE id_clan = ? LIMIT 1';
 $stmt = $mysqli->prepare($sql);
 if (!$stmt) { echo json_encode(['postoji' => false]); $mysqli->close(); exit; }
@@ -49,10 +49,12 @@ if ($row['predlagaci'] !== null && $row['predlagaci'] !== '') {
     }
 }
 $casniId = $row['casni_id'] !== null ? (int) $row['casni_id'] : 0;
+$sekretarId = $row['sekretar_id'] !== null ? (int) $row['sekretar_id'] : 0;
 $vipId   = $row['vip_id'] !== null ? (int) $row['vip_id'] : 0;
 
 $sviIds = $predIds;
 if ($casniId > 0) $sviIds[] = $casniId;
+if ($sekretarId > 0) $sviIds[] = $sekretarId;
 if ($vipId > 0)   $sviIds[] = $vipId;
 $sviIds = array_values(array_unique(array_filter($sviIds, static function ($v) { return $v > 0; })));
 
@@ -78,6 +80,7 @@ foreach ($predIds as $pid) {
     if (isset($clanMap[(string) $pid])) $predlagaci[] = $clanMap[(string) $pid];
 }
 $casni = ($casniId > 0 && isset($clanMap[(string) $casniId])) ? $clanMap[(string) $casniId] : null;
+$sekretar = ($sekretarId > 0 && isset($clanMap[(string) $sekretarId])) ? $clanMap[(string) $sekretarId] : null;
 $vip   = ($vipId > 0 && isset($clanMap[(string) $vipId])) ? $clanMap[(string) $vipId] : null;
 
 echo json_encode([
@@ -90,6 +93,7 @@ echo json_encode([
     'datum_odbijanja'   => $row['datum_odbijanja'] !== null ? $row['datum_odbijanja'] : '',
     'razlog_odbijanja'  => $row['razlog_odbijanja'] !== null ? $row['razlog_odbijanja'] : '',
     'casni'             => $casni,
+    'sekretar'          => $sekretar,
     'vip'               => $vip,
 ], JSON_UNESCAPED_UNICODE);
 

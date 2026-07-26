@@ -240,7 +240,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- 2. kolona (RO Boravište; Ulica dvoredna: adresa_1 + adresa_2) -->
+                                <!-- 2. kolona (RO Boravište): Ulica / Ulica (2. red) / Grad / Poštanski broj / Država + Telefon -->
                                 <div class="kandidat-dokumenti-crud__obrazac-stupac">
                                     <div class="kandidat-dokumenti-crud__obrazac-red">
                                         <div class="kandidat-dokumenti-crud__polje">
@@ -259,6 +259,8 @@
                                             <label class="kontrola-labela mb-0" for="obr_ro_grad">Grad</label>
                                             <input id="obr_ro_grad" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
                                         </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obrazac-red">
                                         <div class="kandidat-dokumenti-crud__polje">
                                             <label class="kontrola-labela mb-0" for="obr_ro_posta">Poštanski broj</label>
                                             <input id="obr_ro_posta" type="text" class="kontrola-edit kontrola-edit--readonly" readonly tabindex="-1" aria-readonly="true">
@@ -392,7 +394,7 @@
                                     <input id="obr1b_g2_suzdrzani" type="text" inputmode="numeric" class="kontrola-edit" maxlength="4" autocomplete="off" aria-label="2. glasanje — suzdržani">
                                     <input id="obr1b_g3_suzdrzani" type="text" inputmode="numeric" class="kontrola-edit" maxlength="4" autocomplete="off" aria-label="3. glasanje — suzdržani">
                                 </div>
-                                <!-- Časni majstor / VIP: RO edit + elipsis → modal „Odaberi" (izbor člana); na DNU desnog stupca, labela lijevo -->
+                                <!-- Časni majstor / Sekretar / VIP: RO edit + elipsis → modal „Odaberi" (izbor člana); na DNU desnog stupca, labela lijevo -->
                                 <div class="kandidat-dokumenti-crud__obr1b-clanovi">
                                     <div class="kandidat-dokumenti-crud__obr1b-clan-red">
                                         <label class="kontrola-labela mb-0" for="obr1b_casni_majstor">Časni majstor</label>
@@ -402,6 +404,16 @@
                                                 <button type="button" class="kontrola-edit-delete__clear" tabindex="-1" title="Očisti" aria-label="Očisti Časnog majstora"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
                                             </div>
                                             <button type="button" id="obr1b_casni_majstor_btn" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Odaberi člana" aria-label="Odaberi Časnog majstora"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
+                                        </div>
+                                    </div>
+                                    <div class="kandidat-dokumenti-crud__obr1b-clan-red">
+                                        <label class="kontrola-labela mb-0" for="obr1b_sekretar">Sekretar</label>
+                                        <div class="kandidat-dokumenti-crud__obr1b-clan-izbor">
+                                            <div class="kontrola-edit-delete kontrola-edit-delete--readonly">
+                                                <input id="obr1b_sekretar" type="text" class="kontrola-edit-delete__input" readonly tabindex="-1" aria-readonly="true" aria-label="Sekretar">
+                                                <button type="button" class="kontrola-edit-delete__clear" tabindex="-1" title="Očisti" aria-label="Očisti Sekretara"><span class="kontrola-icon--x-mark" aria-hidden="true"></span></button>
+                                            </div>
+                                            <button type="button" id="obr1b_sekretar_btn" class="kandidat-dokumenti-crud__razgovor-akcija" disabled title="Odaberi člana" aria-label="Odaberi Sekretara"><span class="kontrola-icon--ellipsis-horizontal" aria-hidden="true"></span></button>
                                         </div>
                                     </div>
                                     <div class="kandidat-dokumenti-crud__obr1b-clan-red">

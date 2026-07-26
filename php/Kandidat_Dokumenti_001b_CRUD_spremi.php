@@ -3,7 +3,7 @@ require_once __DIR__ . '/require_login_api.php';
 // Kandidat_Dokumenti_001b_CRUD_spremi.php – upsert Obrasca 001b u kandidat_dokumenti_001 (1:1 po id_clan;
 // dijeli redak s 001a). Dira SAMO 001b kolone (+ id_loza most, upisao/datum_upisa na prvom upisu).
 // POST JSON { id_clan, predlagaci:[id,...], glasanje_1:{datum,glasaca,za,protiv,suzdrzani}, glasanje_2, glasanje_3,
-//   datum_razmatranja, datum_odbijanja, casni_id, vip_id }.
+//   datum_razmatranja, datum_odbijanja, casni_id, sekretar_id, vip_id }.
 // Kodiranje glasanja: "datum,glasača,za,protiv,suzdržani"; prazno polje → -1; cijeli stupac prazan → NULL.
 // Vraća 'OK' ili kod greške (105 ulaz, 200,<errno> SQL).
 
@@ -65,6 +65,8 @@ $razlog_odbijanja = ($datum_odbijanja !== null && $razlog_raw !== '') ? mb_subst
 // Časni majstor / VIP: id člana ili NULL (FK na clanovi provjerava postojanje).
 $casni_id = isset($d['casni_id']) && $d['casni_id'] !== '' ? (int) $d['casni_id'] : 0;
 $casni_id = $casni_id > 0 ? $casni_id : null;
+$sekretar_id = isset($d['sekretar_id']) && $d['sekretar_id'] !== '' ? (int) $d['sekretar_id'] : 0;
+$sekretar_id = $sekretar_id > 0 ? $sekretar_id : null;
 $vip_id   = isset($d['vip_id']) && $d['vip_id'] !== '' ? (int) $d['vip_id'] : 0;
 $vip_id   = $vip_id > 0 ? $vip_id : null;
 
@@ -76,9 +78,9 @@ try {
     // Na prvom upisu (npr. prije 001a) 001a kolone dobiju DEFAULT; izmjena dira samo 001b kolone.
     $sql = 'INSERT INTO kandidat_dokumenti_001
                 (id_clan, id_loza, predlagaci, glasanje_1, glasanje_2, glasanje_3,
-                 datum_razmatranja, datum_odbijanja, razlog_odbijanja, casni_id, vip_id, upisao, datum_upisa)
+                 datum_razmatranja, datum_odbijanja, razlog_odbijanja, casni_id, sekretar_id, vip_id, upisao, datum_upisa)
             VALUES (?, (SELECT loza FROM clanovi WHERE id = ?),
-                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ON DUPLICATE KEY UPDATE
                 id_loza = VALUES(id_loza),
                 predlagaci = VALUES(predlagaci),
@@ -89,14 +91,15 @@ try {
                 datum_odbijanja = VALUES(datum_odbijanja),
                 razlog_odbijanja = VALUES(razlog_odbijanja),
                 casni_id = VALUES(casni_id),
+                sekretar_id = VALUES(sekretar_id),
                 vip_id = VALUES(vip_id)';
     $stmt = $mysqli->prepare($sql);
-    // i id_clan, i id_clan(subupit loza), s predlagaci, s g1, s g2, s g3, s dat_razm, s dat_odb, s razlog, i casni, i vip, i upisao
+    // i id_clan, i id_clan(subupit loza), s predlagaci, s g1, s g2, s g3, s dat_razm, s dat_odb, s razlog, i casni, i sekretar, i vip, i upisao
     $stmt->bind_param(
-        'iisssssssiii',
+        'iisssssssiiii',
         $id_clan, $id_clan,
         $predlagaci, $glasanje_1, $glasanje_2, $glasanje_3,
-        $datum_razmatranja, $datum_odbijanja, $razlog_odbijanja, $casni_id, $vip_id,
+        $datum_razmatranja, $datum_odbijanja, $razlog_odbijanja, $casni_id, $sekretar_id, $vip_id,
         $upisao
     );
     $stmt->execute();
