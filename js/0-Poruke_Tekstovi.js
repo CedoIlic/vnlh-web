@@ -112,6 +112,9 @@ var MODAL_MESSAGES = {
   '128': '128|Promjena lože|OK,(Cancel)|warning||Jesi li siguran da želiš poništiti ovu stavku?',   /* Clanovi_Promjena_Loze_Izlazak_CRUD: potvrda brisanja (poništavanja) zapisa; OK / Odustani, default Odustani */
   '129': '129|Dokumenti kandidata|OK,(Cancel)|warning||Jesi li siguran da želiš obrisati ovaj razgovor?',   /* Kandidat_Dokumenti Razgovori: potvrda brisanja razgovora; OK / Odustani, default Odustani */
   '130': '130|Dokumenti kandidata|(OK)|error||Za spremanje razgovora potrebno je upisati naslov, datum razgovora i ispitivača.',   /* Kandidat_Dokumenti Razgovori: obavezna polja pri upisu/izmjeni */
+  '131': '131|MOK|OK,(Cancel)|warning||Jesi li siguran da želiš obrisati ovu bilješku?',   /* Clanovi_MOK_CRUD: potvrda brisanja bilješke; OK / Odustani, default Odustani */
+  '132': '132|MOK|(OK)|error||Ova se bilješka više ne može mijenjati ni brisati — istekao je rok ili nisi njezin autor.',   /* Clanovi_MOK_CRUD: server odbio izmjenu/brisanje (nije autor ili je prošao rok iz sustav_varijable 128) */
+  '133': '133|MOK|(OK)|error||Bilješka ne može biti prazna — upiši tekst prije spremanja.',   /* Clanovi_MOK_CRUD: prazan tekst pri upisu/izmjeni */
   '154': '154|Baza podataka|(OK)|error||Shema tablica za ovu formu nije ažurna (nedostaje stupac, npr. redosljed). Pokreni u bazi sql/sustav_odgovori_razvoja_dodaj_redosljed_obje_tablice.sql (ili pojedinačno *_boje_* i *_poruke_*), zatim osvježi stranicu.',
   '155': '155|Odgovori razvoja|(OK)|error||Tekst predloška ne smije sadržavati znak „#“ (korišten je u formatu odgovora).',
   '156': '156|Odgovori razvoja||ok||Svi odgovori su uklonjeni; poruka je snimljena bez sufiksnih odgovora.',   /* Gumb „Ukloni sve odgovore“: očisti #kod*tekst# i UPDATE polja poruka */
