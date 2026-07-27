@@ -2108,10 +2108,12 @@
           window.PdfRender.Pdf.ucitaj(function () {
             ucitajFontove(model.fontovi, function () {
               try {
-                /* data URL (ne blob:) — izbjegava Chrome particioniranje blob URL-ova u iframeu. */
-                pdfMake.createPdf(dd).getDataUrl(function (dataUrl) {
+                /* blob: URL (ne data:) — Chrome ne prikaže veći PDF iz data: URL-a u iframeu
+                   (spinner nestane bez greške, okvir ostane prazan); isto rade zapisnik i pred-print. */
+                pdfMake.createPdf(dd).getBlob(function (blob) {
                   ocistiIframe();
-                  okvir.src = dataUrl;
+                  okvir._url = URL.createObjectURL(blob);
+                  okvir.src = okvir._url;
                   krajRendera('');
                 });
               } catch (e) { krajRendera('Greška pri renderu: ' + e); }
@@ -2327,7 +2329,8 @@
           window.PdfRender.Pdf.ucitaj(function () {
             ucitajFontove(model.fontovi, function () {
               try {
-                pdfMake.createPdf(dd).getDataUrl(function (dataUrl) { ocistiIframe(); okvir.src = dataUrl; krajRendera(''); });
+                /* blob:, ne data: — veći PDF iz data: URL-a Chrome ne prikaže u iframeu (v. modal životopisa). */
+                pdfMake.createPdf(dd).getBlob(function (blob) { ocistiIframe(); okvir._url = URL.createObjectURL(blob); okvir.src = okvir._url; krajRendera(''); });
               } catch (e) { krajRendera('Greška pri renderu: ' + e); }
             }, function () { krajRendera('Greška pri učitavanju fontova.'); });
           }, function () { krajRendera('Greška pri učitavanju pdfmake biblioteke.'); });
@@ -2500,7 +2503,8 @@
           window.PdfRender.Pdf.ucitaj(function () {
             ucitajFontove(model.fontovi, function () {
               try {
-                pdfMake.createPdf(dd).getDataUrl(function (dataUrl) { ocistiIframe(); okvir.src = dataUrl; krajRendera(''); });
+                /* blob:, ne data: — veći PDF iz data: URL-a Chrome ne prikaže u iframeu (v. modal životopisa). */
+                pdfMake.createPdf(dd).getBlob(function (blob) { ocistiIframe(); okvir._url = URL.createObjectURL(blob); okvir.src = okvir._url; krajRendera(''); });
               } catch (e) { krajRendera('Greška pri renderu: ' + e); }
             }, function () { krajRendera('Greška pri učitavanju fontova.'); });
           }, function () { krajRendera('Greška pri učitavanju pdfmake biblioteke.'); });
