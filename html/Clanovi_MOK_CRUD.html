@@ -92,28 +92,54 @@
                     </div>
                     <div class="clanovi-mok-crud__biljeske-akcije" role="group" aria-label="Radnje nad bilješkama">
                         <button type="button" id="mokNova" class="clanovi-mok-crud__akcija" disabled title="Nova bilješka" aria-label="Nova bilješka"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h18v2.5H3V4zm0 5.75h10v2.5H3v-2.5z"/><path d="M16 13h2.5v3.5H22V19h-3.5v3.5H16V19h-3.5v-2.5H16V13z"/></svg></button>
+                        <button type="button" id="mokUredi" class="clanovi-mok-crud__akcija" disabled title="Izmijeni bilješku" aria-label="Izmijeni bilješku"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18v2H3V5zm0 4h12v2H3V9zm0 4h8v2H3v-2zm0 4h8v2H3v-2z"/><path d="M21.41 11.59l-2-2a1.5 1.5 0 0 0-2.12 0l-5.79 5.79V19h3.62l5.79-5.79a1.5 1.5 0 0 0 0-2.12l.5.5zm-7.29 5.41h-1v-1l4.79-4.79 1 1L14.12 17z"/></svg></button>
                         <button type="button" id="mokObrisi" class="clanovi-mok-crud__akcija" disabled title="Obriši bilješku" aria-label="Obriši bilješku"><span class="kontrola-icon--trash" aria-hidden="true"></span></button>
                         <button type="button" id="mokDeselekt" class="clanovi-mok-crud__akcija" disabled title="Makni selekciju" aria-label="Makni selekciju"><span class="kontrola-icon--asterisk" aria-hidden="true"></span></button>
                     </div>
                 </div>
+                <!-- Desno: PRIKAZ selektirane bilješke (uređivanje ide kroz modal).
+                     Zaglavlje: „datum, autor" bold → dužnost autora bold → linija → tekst. -->
                 <div class="clanovi-mok-crud__biljeske-desno">
-                    <div class="clanovi-mok-crud__tekst-zaglavlje">
-                        <label class="kontrola-labela mb-0" for="mok_tekst">Bilješka</label>
-                        <span class="clanovi-mok-crud__status" id="mok_status" aria-live="polite"></span>
-                    </div>
                     <div class="clanovi-mok-crud__scrol-omot">
-                        <div id="mok_tekst" class="kontrola-napomena clanovi-mok-crud__tekst-kontrola" contenteditable="false" role="textbox" aria-multiline="true" aria-label="Tekst bilješke" spellcheck="true"></div>
+                        <div class="clanovi-mok-crud__prikaz" id="mok_prikaz">
+                            <div class="clanovi-mok-crud__prikaz-zaglavlje" id="mok_prikaz_zaglavlje" hidden>
+                                <div class="clanovi-mok-crud__prikaz-red" id="mok_prikaz_datum_autor"></div>
+                                <div class="clanovi-mok-crud__prikaz-red" id="mok_prikaz_duznost"></div>
+                            </div>
+                            <div class="clanovi-mok-crud__prikaz-linija" id="mok_prikaz_linija" hidden aria-hidden="true"></div>
+                            <div class="clanovi-mok-crud__prikaz-tekst" id="mok_prikaz_tekst" role="region" aria-label="Tekst bilješke"></div>
+                        </div>
                     </div>
+                    <div class="clanovi-mok-crud__status" id="mok_status" aria-live="polite"></div>
                 </div>
             </div>
         </div>
         <div class="kontrola-panel__footer clanovi-crud__edit-footer">
-            <div class="clanovi-crud__footer-left">
-                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi" disabled><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
-            </div>
+            <div class="clanovi-crud__footer-left"></div>
             <div class="clanovi-crud__footer-right">
                 <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Povratak</span></span></span></button>
             </div>
+        </div>
+    </div>
+</div>
+<!-- Modal: unos / izmjena bilješke (premještanje po zaglavlju, resize kut; pozicija i veličina se pamte) -->
+<div id="mokModal" class="clanovi-mok-crud__modal" role="dialog" aria-label="Bilješka" aria-modal="true" aria-hidden="true">
+    <div class="clanovi-mok-crud__modal-overlay"></div>
+    <div class="clanovi-mok-crud__modal-dialog">
+        <div class="clanovi-mok-crud__modal-header" id="mokModalNaslov">Nova bilješka</div>
+        <div class="clanovi-mok-crud__modal-body">
+            <textarea id="mok_modal_tekst" class="kontrola-napomena clanovi-mok-crud__modal-tekst" spellcheck="true" aria-label="Tekst bilješke"></textarea>
+        </div>
+        <div class="clanovi-mok-crud__modal-footer">
+            <div class="clanovi-crud__footer-left">
+                <button type="button" id="mokModalUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upiši</span></span></span></button>
+            </div>
+            <div class="clanovi-crud__footer-right">
+                <button type="button" id="mokModalOdustani" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Odustani</span></span></span></button>
+            </div>
+        </div>
+        <div class="clanovi-mok-crud__modal-resize" id="mokModalResizeKut" title="Povuci za promjenu veličine" aria-hidden="true">
+            <svg class="clanovi-mok-crud__modal-resize-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M22 14 14 22M22 19 19 22"/></svg>
         </div>
     </div>
 </div>

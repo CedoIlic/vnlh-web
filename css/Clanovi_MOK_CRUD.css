@@ -171,21 +171,63 @@
 }
 .clanovi-mok-crud__akcija:active:not(:disabled) { transform: translateY(1px); }
 
-/* --- Zaglavlje desne kolone: labela + status (autor / rok / samo čitanje) --- */
-.clanovi-mok-crud__tekst-zaglavlje {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 1.4rem;
-}
+/* --- Status ispod prikaza (rok / samo čitanje) — tipografija iz tokena (0-Common) --- */
 .clanovi-mok-crud__status {
-  margin-left: auto;
-  font-family: var(--label_font_family);
+  flex: 0 0 auto;
+  min-height: 1.2rem;
+  font-family: var(--font_family);
   font-size: var(--label_font_size);
+  font-weight: var(--font_weight);
+  letter-spacing: var(--label_letter_spacing);
   color: var(--label_text_muted);
 }
-.clanovi-mok-crud__status:empty { display: none; }
+
+/* --- Prikaz selektirane bilješke (uređivanje ide kroz modal) ---
+   Zaglavlje „datum, autor" + dužnost autora (oboje bold), linija preko cijele širine, pa tekst. */
+.clanovi-mok-crud__prikaz {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--napomena_padding_y, 0.5rem) var(--napomena_padding_x, 0.75rem);
+  box-sizing: border-box;
+  gap: 0.25rem;
+}
+.clanovi-mok-crud__prikaz-zaglavlje {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+/* Zaglavlje prikaza (datum+autor, dužnost): bold prema tokenu labele. */
+.clanovi-mok-crud__prikaz-red {
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--label_font_weight);
+  line-height: 1.4;
+  color: var(--napomena_text);
+}
+.clanovi-mok-crud__prikaz-linija {
+  flex: 0 0 auto;
+  width: 100%;
+  height: 1px;
+  margin: 0.35rem 0 0.5rem 0;
+  background: var(--napomena_border);
+}
+.clanovi-mok-crud__prikaz-tekst {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: 1.5;
+  color: var(--napomena_text);
+}
+.clanovi-mok-crud__prikaz-tekst > p {
+  margin: 0 0 0.6em 0;
+}
+.clanovi-mok-crud__prikaz-tekst > p:last-child { margin-bottom: 0; }
 
 /* --- Okvir oko teksta bilješke (uzor Dokumenti kandidata: scrol-omot) --- */
 .clanovi-mok-crud__scrol-omot {
@@ -196,12 +238,20 @@
   border: 1px solid var(--napomena_border);
   border-radius: var(--napomena_radius);
   background: var(--napomena_bg);
+  box-shadow: var(--tablica_sjena);   /* mirno stanje — kao ostale kontrole */
   overflow: hidden;
   box-sizing: border-box;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+@media (hover: hover) {
+  .clanovi-mok-crud__scrol-omot:not(.clanovi-mok-crud__scrol-omot--disabled):hover {
+    border-color: var(--edit_border_focus);
+    box-shadow: var(--edit_focus_shadow);
+  }
 }
 .clanovi-mok-crud__scrol-omot:focus-within {
-  border-color: var(--napomena_border_focus, var(--edit_border_focus));
-  box-shadow: var(--edit_focus_shadow);
+  border-color: var(--edit_border_focus);
+  box-shadow: var(--napomena_focus_shadow);
 }
 .clanovi-mok-crud__scrol-omot .kontrola-napomena {
   border: none;
@@ -209,55 +259,150 @@
   background: transparent;
 }
 
-/* --- Contenteditable tekst bilješke --- */
-.clanovi-mok-crud__tekst-kontrola.kontrola-napomena {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-}
-.clanovi-mok-crud__tekst-kontrola[contenteditable] {
-  cursor: text;
-  text-align: left;
-  line-height: 1.5;
-}
-.clanovi-mok-crud__tekst-kontrola[contenteditable] > div,
-.clanovi-mok-crud__tekst-kontrola[contenteditable] > p {
-  line-height: 1.5;
-  margin: 0 0 0.6em 0;
-}
-.clanovi-mok-crud__tekst-kontrola[contenteditable] > div:last-child,
-.clanovi-mok-crud__tekst-kontrola[contenteditable] > p:last-child {
-  margin-bottom: 0;
-}
-.clanovi-mok-crud__tekst-kontrola[contenteditable="false"] {
-  cursor: default;
-}
-/* ONEMOGUĆENO stanje (nema odabranog člana) — contenteditable div ne hvata :disabled,
-   pa disable izgled nosi eksplicitna klasa. Razlikuje se od „samo čitanje" (tuđa bilješka /
-   istekao rok), gdje tekst ostaje normalno čitljiv. */
-.clanovi-mok-crud__tekst-kontrola--disabled.kontrola-napomena {
-  background: var(--napomena_bg_disabled);
-  color: var(--napomena_text_disabled);
-  cursor: var(--napomena_cursor_disabled);
-}
+/* ONEMOGUĆENO stanje prikaza (nema odabranog člana / nema selektirane bilješke). */
 .clanovi-mok-crud__scrol-omot--disabled {
   background: var(--napomena_bg_disabled);
   border-color: var(--napomena_border_disabled);
   box-shadow: var(--napomena_focus_shadow_disabled);
 }
+.clanovi-mok-crud__scrol-omot--disabled .clanovi-mok-crud__prikaz-tekst,
+.clanovi-mok-crud__scrol-omot--disabled .clanovi-mok-crud__prikaz-red {
+  color: var(--napomena_text_disabled);
+}
 
 /* Scrollbar (uzor esej/tablica) */
 @supports not selector(::-webkit-scrollbar) {
-  .clanovi-mok-crud__tekst-kontrola {
+  .clanovi-mok-crud__prikaz-tekst,
+  .clanovi-mok-crud__modal-tekst {
     scrollbar-width: thin;
     scrollbar-color: var(--tablica_scroll_klizac) var(--tablica_scroll_bg);
   }
 }
-.clanovi-mok-crud__tekst-kontrola::-webkit-scrollbar {
+.clanovi-mok-crud__prikaz-tekst::-webkit-scrollbar,
+.clanovi-mok-crud__modal-tekst::-webkit-scrollbar {
   width: var(--tablica_sirina_scrol_bara);
   background: var(--tablica_scroll_bg);
 }
-.clanovi-mok-crud__tekst-kontrola::-webkit-scrollbar-thumb {
+.clanovi-mok-crud__prikaz-tekst::-webkit-scrollbar-thumb,
+.clanovi-mok-crud__modal-tekst::-webkit-scrollbar-thumb {
   background: var(--tablica_scroll_klizac);
   border-radius: 6px;
 }
+
+/* =====================================================
+   Modal: unos / izmjena bilješke (shell = klon razgovor-modala iz Dokumenata kandidata)
+   Premještanje po zaglavlju, resize kut; poziciju i veličinu pamti JS (localStorage).
+   ===================================================== */
+.clanovi-mok-crud__modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10002;
+  display: none;
+  box-sizing: border-box;
+}
+.clanovi-mok-crud__modal.clanovi-mok-crud__modal--open { display: block; }
+.clanovi-mok-crud__modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--modal_tablica_overlay_bg);
+}
+.clanovi-mok-crud__modal-dialog {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(640px, 95vw);
+  height: min(60vh, 520px);
+  min-width: 360px;
+  min-height: 260px;
+  max-width: 96vw;
+  max-height: 95vh;
+  border: var(--modal_tablica_border_w) solid var(--modal_tablica_border);
+  border-radius: var(--modal_tablica_border_radius);
+  box-shadow: var(--modal_tablica_sjena);
+  background: var(--modal_tablica_body_bg);
+  overflow: hidden;
+}
+.clanovi-mok-crud__modal-header {
+  flex: 0 0 auto;
+  padding: var(--modal_tablica_header_padding_y) var(--modal_tablica_header_padding_x);
+  background: var(--modal_tablica_header_bg);
+  color: var(--modal_tablica_header_text);
+  border-bottom: var(--modal_tablica_header_border_bottom);
+  font-family: var(--modal_tablica_header_font_family);
+  font-size: var(--modal_tablica_header_font_size);
+  font-weight: var(--modal_tablica_header_font_weight);
+  cursor: move;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.clanovi-mok-crud__modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+.clanovi-mok-crud__modal-tekst.kontrola-napomena {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  resize: none;              /* veličinu mijenja modal, ne textarea */
+  box-sizing: border-box;
+  font-family: var(--font_family);
+  font-size: var(--font_size);
+  font-weight: var(--font_weight);
+  line-height: 1.5;
+  /* Stanja kao kod ostalih kontrola (edit/napomena), sve iz tokena: mirno / hover / fokus / disabled. */
+  border: 1px solid var(--napomena_border);
+  box-shadow: var(--tablica_sjena);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+@media (hover: hover) {
+  .clanovi-mok-crud__modal-tekst.kontrola-napomena:hover:not(:disabled) {
+    border-color: var(--edit_border_focus);
+    box-shadow: var(--edit_focus_shadow);
+  }
+}
+.clanovi-mok-crud__modal-tekst.kontrola-napomena:focus,
+.clanovi-mok-crud__modal-tekst.kontrola-napomena:active:not(:disabled) {
+  border-color: var(--edit_border_focus);
+  box-shadow: var(--napomena_focus_shadow);
+}
+.clanovi-mok-crud__modal-tekst.kontrola-napomena:disabled {
+  background: var(--napomena_bg_disabled);
+  color: var(--napomena_text_disabled);
+  border-color: var(--napomena_border_disabled);
+  cursor: var(--napomena_cursor_disabled);
+  box-shadow: var(--napomena_focus_shadow_disabled);
+}
+.clanovi-mok-crud__modal-footer {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: var(--modal_tablica_footer_padding_y, 0.6rem) var(--modal_tablica_footer_padding_x, 0.75rem);
+  border-top: 1px solid var(--edit_border, #ced4da);
+  background: var(--modal_tablica_body_bg, #fff);
+}
+/* Ručka za promjenu veličine (donji desni kut). */
+.clanovi-mok-crud__modal-resize {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: var(--modal_tablica_resize_corner_size, 20px);
+  height: var(--modal_tablica_resize_corner_size, 20px);
+  padding: 2px;
+  box-sizing: border-box;
+  color: var(--c-gray-500, #9ca3af);
+  cursor: var(--modal_tablica_resize_corner_cursor, nwse-resize);
+  -webkit-user-select: none;
+  user-select: none;
+}
+.clanovi-mok-crud__modal-resize-icon { display: block; width: 14px; height: 14px; }

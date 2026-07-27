@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="hr">
 <head>
-    <script>window.VNLH_SESSION_ID_DUZNOSNIK=__VNLH_SESSION_MASTER_ID_DUZNOSNIK__;</script>
+    <script>window.VNLH_SESSION_ID_DUZNOSNIK=__VNLH_SESSION_MASTER_ID_DUZNOSNIK__;window.VNLH_ID_KORISNIK=__VNLH_ID_KORISNIK__;</script>
     <meta charset="UTF-8">
     <title>Dužnosnici</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -325,9 +325,21 @@
                     </select>
                 </div>
             </div>
-            <div class="duznosnici-crud__edit-row duznosnici-crud__edit-row--aktivnost" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
-                <label class="kontrola-labela mb-0" for="edit_aktivnost" style="text-align: left;">Aktivnost</label>
-                <input type="checkbox" id="edit_aktivnost" class="kontrola-checkbox" checked disabled aria-label="Aktivnost">
+            <div class="duznosnici-crud__edit-row duznosnici-crud__edit-row--aktivnost" style="display: flex; flex-direction: row; align-items: flex-end; gap: 0.75rem;">
+                <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                    <label class="kontrola-labela mb-0" for="edit_aktivnost" style="text-align: left;">Aktivnost</label>
+                    <input type="checkbox" id="edit_aktivnost" class="kontrola-checkbox" checked disabled aria-label="Aktivnost">
+                </div>
+                <!-- Toggle „Prikaži ID" — krajnje desno u istom redu. Vidljivost: sustav_varijable 1004 = 1
+                     I id_korisnik u listi retka 1002 (isti uvjet kao toggle „Sva prava" na formi Prava dužnosnika).
+                     Uključen → tablica prikazuje „(id) naziv"; svaka promjena osvježava tablicu; pri otvaranju forme uvijek isključen. -->
+                <div id="toggle_prikazi_id_wrap" style="margin-left: auto;" hidden>
+                    <label class="poruke__toggle-label" for="toggle_prikazi_id">
+                        <input type="checkbox" id="toggle_prikazi_id" class="poruke__toggle-input" autocomplete="off" disabled aria-label="Prikaži ID dužnosnika">
+                        <span class="poruke__toggle-slider" aria-hidden="true"></span>
+                        <span class="poruke__toggle-text">Prikaži ID</span>
+                    </label>
+                </div>
             </div>
         </div>
         <div class="kontrola-panel__footer duznosnici-crud__edit-footer">

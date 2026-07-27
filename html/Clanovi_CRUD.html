@@ -7,6 +7,7 @@
 -->
 <html lang="hr">
 <head>
+    <script>window.VNLH_ID_KORISNIK=__VNLH_ID_KORISNIK__;</script>
     <meta charset="UTF-8">
     <title>Članovi</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -57,6 +58,17 @@
                                 <option value="">— Odaberi ložu —</option>
                             </select>
                         </div>
+                        <!-- Toggle „Prikaži ID" — lijevo od checkboxa „Neaktivni". Vidljivost: sustav_varijable 1004 = 1
+                             I id_korisnik u listi retka 1002 (isti uvjet kao toggle „Sva prava" / „Prikaži ID" u Dužnosnicima).
+                             Uključen → tablica dobiva kolonu „ID" iza kolone „Spol"; promjena osvježava tablicu;
+                             pri otvaranju forme uvijek isključen. -->
+                        <span id="toggle_prikazi_id_wrap" hidden>
+                            <label class="poruke__toggle-label" for="toggle_prikazi_id">
+                                <input type="checkbox" id="toggle_prikazi_id" class="poruke__toggle-input" autocomplete="off" disabled aria-label="Prikaži ID člana">
+                                <span class="poruke__toggle-slider" aria-hidden="true"></span>
+                                <span class="poruke__toggle-text">Prikaži ID</span>
+                            </label>
+                        </span>
                         <span class="clanovi-crud__neaktivni-wrap">
                             <input type="checkbox" id="chk_neaktivni" class="kontrola-checkbox" value="1" aria-label="Prikaži samo neaktivne članove">
                             <label class="kontrola-labela mb-0" for="chk_neaktivni">Neaktivni</label>

@@ -43,15 +43,18 @@
     } else if (typeof cb === 'function') { cb(); }
   }
 
-  /* --- Tablica članova (Prezime, Ime, Stupanj) --- */
+  /* --- Tablica članova (Prezime, Ime, Stupanj, Bilježaka) ---
+     „Bilježaka" = broj bilješki vidljivih ULOGIRANOM (server računa po istom pravilu kao popis:
+     vlastite u svojoj loži, a za kontrolnu razinu sve bilješke o tom članu). */
   var MokCRUD = {
-    Broj_Kolona: 3,
+    Broj_Kolona: 4,
     Reload_Ikona: 0,
     CrudCssPrefix: 'clanovi-crud',
     Tablica_Zaglavlje: [
       { key: 'prezime', title: 'Prezime', SQL_Naziv: 'prezime', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
       { key: 'ime', title: 'Ime', SQL_Naziv: 'ime', sortable: 1, sortable_icon: 0, type: 't', width: 0, suffix: '', align: 'L', row_align: 'L', mobitel_prikaz: 1 },
-      { key: 'stupanj', title: 'St.', SQL_Naziv: 'stupanj', sortable: 0, sortable_icon: 0, type: 't', width: 70, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 0 }
+      { key: 'stupanj', title: 'St.', SQL_Naziv: 'stupanj', sortable: 0, sortable_icon: 0, type: 't', width: 70, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 0 },
+      { key: 'biljezaka', title: 'Bilježaka', SQL_Naziv: 'biljezaka', sortable: 0, sortable_icon: 0, type: 't', width: 100, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 }
     ]
   };
   var tablicaApi = null;
@@ -84,82 +87,55 @@
   var selectRegija = document.getElementById('select_regija');
   var selectLoza = document.getElementById('select_loza');
   var btnReloadTablica = document.getElementById('btn_reload_tablica');
-  var btnUpisi = document.getElementById('btnUpisi');
-  var btnUpisiLabel = btnUpisi ? btnUpisi.querySelector('.kontrola-btn__label') : null;
-  var tekstEl = document.getElementById('mok_tekst');
+  var prikazOmot = document.querySelector('.clanovi-mok-crud__scrol-omot');
+  var prikazZaglavlje = document.getElementById('mok_prikaz_zaglavlje');
+  var prikazDatumAutor = document.getElementById('mok_prikaz_datum_autor');
+  var prikazDuznost = document.getElementById('mok_prikaz_duznost');
+  var prikazLinija = document.getElementById('mok_prikaz_linija');
+  var prikazTekst = document.getElementById('mok_prikaz_tekst');
   var statusEl = document.getElementById('mok_status');
   var btnNova = document.getElementById('mokNova');
+  var btnUredi = document.getElementById('mokUredi');
   var btnObrisi = document.getElementById('mokObrisi');
   var btnDeselekt = document.getElementById('mokDeselekt');
 
   function getSelectedRowId() { return CommonCRUD.getSelectedRowId(tablicaApi); }
   function getSelectedBiljeskaId() { return biljeskeApi ? CommonCRUD.getSelectedRowId(biljeskeApi) : null; }
 
-  /* ===== Tekst bilješke: contenteditable get/set (uzor životopis) =====
-     <br> → razmak; blok DIV/P = odlomak → \n. */
-  function tekstGet() {
-    if (!tekstEl) return null;
-    var clone = tekstEl.cloneNode(true);
-    var brs = clone.querySelectorAll('br');
-    for (var bi = 0; bi < brs.length; bi++) {
-      var br = brs[bi];
-      br.parentNode.insertBefore(document.createTextNode(' '), br);
-      br.parentNode.removeChild(br);
-    }
-    var paras = [];
-    function dodaj(txt) {
-      var s = String(txt == null ? '' : txt).replace(/\s+/g, ' ').trim();
-      if (s) paras.push(s);
-    }
-    var buf = '';
-    var kids = clone.childNodes;
-    for (var i = 0; i < kids.length; i++) {
-      var n = kids[i];
-      if (n.nodeType === 1 && (n.tagName === 'DIV' || n.tagName === 'P')) {
-        dodaj(buf); buf = '';
-        dodaj(n.textContent);
-      } else {
-        buf += (n.textContent || '');
+  /* ===== Prikaz bilješke (desna kolona; uređivanje ide kroz modal) =====
+     Zaglavlje: „datum, autor" bold → dužnost autora bold → linija → tekst u odlomcima. */
+  function prikazOcisti() {
+    if (prikazZaglavlje) prikazZaglavlje.hidden = true;
+    if (prikazLinija) prikazLinija.hidden = true;
+    if (prikazDatumAutor) prikazDatumAutor.textContent = '';
+    if (prikazDuznost) prikazDuznost.textContent = '';
+    if (prikazTekst) prikazTekst.innerHTML = '';
+  }
+  function prikaziBiljesku(b) {
+    if (!b) { prikazOcisti(); return; }
+    var autor = trim((b.autor_prezime || '') + ' ' + (b.autor_ime || ''));
+    var datum = fmtDatum(b.datum_upisa);
+    if (prikazDatumAutor) prikazDatumAutor.textContent = datum + (autor ? (', ' + autor) : '');
+    if (prikazDuznost) prikazDuznost.textContent = trim(b.autor_duznost || '');
+    if (prikazZaglavlje) prikazZaglavlje.hidden = false;
+    if (prikazLinija) prikazLinija.hidden = false;
+    if (prikazTekst) {
+      prikazTekst.innerHTML = '';
+      var ps = String(b.tekst == null ? '' : b.tekst).split(/\n+/);
+      for (var i = 0; i < ps.length; i++) {
+        var t = ps[i].trim();
+        if (!t) continue;
+        var p = document.createElement('p');
+        p.textContent = t;
+        prikazTekst.appendChild(p);
       }
     }
-    dodaj(buf);
-    return paras.join('\n') || null;
   }
-  function tekstSet(tekst) {
-    if (!tekstEl) return;
-    tekstEl.innerHTML = '';
-    if (!tekst) return;
-    var paragraphs = String(tekst).split(/\n+/);
-    for (var pi = 0; pi < paragraphs.length; pi++) {
-      var pText = paragraphs[pi].trim();
-      if (!pText) continue;
-      var p = document.createElement('p');
-      p.textContent = pText;
-      tekstEl.appendChild(p);
-    }
-  }
-  function tekstSetEnabled(on) {
-    if (!tekstEl) return;
-    tekstEl.contentEditable = on ? 'true' : 'false';
-    tekstEl.setAttribute('aria-readonly', on ? 'false' : 'true');
-  }
-  /* ONEMOGUĆENO stanje teksta (nema odabranog člana): disable izgled + labela „Bilješka" siva.
-     Odvojeno od „samo čitanje" (tuđa bilješka / istekao rok) gdje tekst ostaje normalno čitljiv. */
-  function tekstSetDisabledIzgled(disabled) {
-    var omot = tekstEl && tekstEl.closest ? tekstEl.closest('.clanovi-mok-crud__scrol-omot') : null;
-    var labela = document.querySelector('.kontrola-labela[for="mok_tekst"]');
-    if (tekstEl) {
-      if (disabled) tekstEl.classList.add('clanovi-mok-crud__tekst-kontrola--disabled');
-      else tekstEl.classList.remove('clanovi-mok-crud__tekst-kontrola--disabled');
-    }
-    if (omot) {
-      if (disabled) omot.classList.add('clanovi-mok-crud__scrol-omot--disabled');
-      else omot.classList.remove('clanovi-mok-crud__scrol-omot--disabled');
-    }
-    if (labela) {
-      if (disabled) labela.classList.add('kontrola-labela--disabled');
-      else labela.classList.remove('kontrola-labela--disabled');
-    }
+  /* ONEMOGUĆENO stanje prikaza (nema odabranog člana / nema selekcije). */
+  function prikazSetDisabledIzgled(disabled) {
+    if (!prikazOmot) return;
+    if (disabled) prikazOmot.classList.add('clanovi-mok-crud__scrol-omot--disabled');
+    else prikazOmot.classList.remove('clanovi-mok-crud__scrol-omot--disabled');
   }
   function postaviStatus(t) { if (statusEl) statusEl.textContent = t || ''; }
 
@@ -200,8 +176,7 @@
     biljeskeData = [];
     if (biljeskeApi) CommonCRUD.setDataTablica(biljeskeApi, 'mokTablicaContainer', [], BILJESKE_TABLICA.Tablica_Zaglavlje);
     _editId = 0;
-    tekstSet('');
-    tekstSetEnabled(false);
+    prikazOcisti();
     postaviStatus('');
     azurirajIkone();
   }
@@ -224,8 +199,7 @@
       }
       if (biljeskeApi) CommonCRUD.setDataTablica(biljeskeApi, 'mokTablicaContainer', biljeskeURedove(biljeskeData), BILJESKE_TABLICA.Tablica_Zaglavlje);
       _editId = 0;
-      tekstSet('');
-      tekstSetEnabled(false);
+      prikazOcisti();
       postaviStatus('');
       azurirajIkone();
       if (cb) cb();
@@ -239,13 +213,12 @@
     return null;
   }
 
-  /* Selekcija retka u popisu: puni tekst i odlučuje smije li se uređivati. */
+  /* Selekcija retka u popisu: prikaz bilješke desno + status (rok / samo čitanje). */
   function naSelekcijuBiljeske() {
     var id = getSelectedBiljeskaId();
     if (id == null) {
       _editId = 0;
-      tekstSet('');
-      tekstSetEnabled(false);
+      prikazOcisti();
       postaviStatus('');
       azurirajIkone();
       return;
@@ -253,9 +226,8 @@
     var b = biljeskaPoId(id);
     if (!b) { azurirajIkone(); return; }
     _editId = parseInt(b.id, 10) || 0;
-    tekstSet(b.tekst);
+    prikaziBiljesku(b);
     var smije = !!parseInt(b.smijem_mijenjati, 10) && _pravaCrudUpis === 1;
-    tekstSetEnabled(smije);
     if (smije) {
       var do_ = datumIsteka(b.datum_upisa, _rokMjeseci);
       postaviStatus(do_ ? ('izmjena moguća do ' + do_) : '');
@@ -300,8 +272,9 @@
     if (!traziOn && trazi) trazi.value = '';
   }
 
-  /* Ikone i footer prate stanje: odabran član, selektirana bilješka, prava, rok.
-     Bez odabranog člana CIJELI edit panel je onemogućen (popis bilješki, tekst, ikone, footer). */
+  /* Ikone prate stanje: odabran član, selektirana bilješka, prava, rok.
+     Bez odabranog člana CIJELI edit panel je onemogućen (popis bilješki, prikaz, ikone).
+     Izmjena je moguća samo za vlastitu bilješku u roku (server ponovno provjerava). */
   function azurirajIkone() {
     var imaClana = getSelectedRowId() != null;
     var id = getSelectedBiljeskaId();
@@ -309,20 +282,13 @@
     var smije = !!(b && parseInt(b.smijem_mijenjati, 10));
 
     tablicaSetEnabled('mokTablicaContainer', imaClana);
-    if (!imaClana) { tekstSetEnabled(false); postaviStatus(''); }
-    tekstSetDisabledIzgled(!imaClana);
+    if (!imaClana) postaviStatus('');
+    prikazSetDisabledIzgled(!imaClana || id == null);
 
     if (btnNova) btnNova.disabled = !(imaClana && _pravaCrudUpis === 1);
+    if (btnUredi) btnUredi.disabled = !(imaClana && smije && _pravaCrudUpis === 1);
     if (btnObrisi) btnObrisi.disabled = !(imaClana && smije && _pravaCrudBrisanje === 1);
     if (btnDeselekt) btnDeselekt.disabled = !(imaClana && id != null);
-
-    /* Footer: „Upis" za novu bilješku, „Izmjeni" kad je selektirana vlastita u roku. */
-    var jeIzmjena = (_editId > 0);
-    if (btnUpisiLabel) btnUpisiLabel.textContent = jeIzmjena ? 'Izmjeni' : 'Upis';
-    if (btnUpisi) {
-      var moze = imaClana && _pravaCrudUpis === 1 && (jeIzmjena ? smije : (tekstEl && tekstEl.contentEditable === 'true'));
-      btnUpisi.disabled = !moze;
-    }
   }
 
   /* ===== Slika člana — SAMO PRIKAZ ===== */
@@ -470,6 +436,50 @@
     });
   }
 
+  /* ===== Stupanj prema ograničenjima ulogiranog (tip 6, po obredu) =====
+     Isti obrazac kao Lista / Članovi lože / Obrazac 001b: stupanj viši od dozvoljenog za obred
+     članove lože prikazuje se kao NAJVIŠI DOZVOLJENI. Mapa se dohvaća jednom, lijeno. */
+  var _ogrMap = {};
+  var _ogrLoaded = false;
+  var _ogrReq = null;
+  var _ogrWait = [];
+  function ucitajStupnjeviOgr(done) {
+    if (_ogrLoaded) { if (typeof done === 'function') done(); return; }
+    if (typeof done === 'function') _ogrWait.push(done);
+    if (_ogrReq) return;
+    var url = API_BASE + 'duznosnici_ogranicenja_stupnjevi_po_obredu.php';
+    if (typeof window.vnlhGeoUrlDodajDuznosnikTest === 'function') url = window.vnlhGeoUrlDodajDuznosnikTest(url);
+    var xhr = new XMLHttpRequest();
+    _ogrReq = xhr;
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      _ogrReq = null; _ogrLoaded = true;
+      var t = (xhr.responseText || '').trim();
+      _ogrMap = {};
+      if (t !== '' && t.charAt(0) === '{') { try { _ogrMap = JSON.parse(t); } catch (e) { _ogrMap = {}; } }
+      var cek = _ogrWait; _ogrWait = [];
+      for (var i = 0; i < cek.length; i++) { try { if (cek[i]) cek[i](); } catch (e) {} }
+    };
+    xhr.send();
+  }
+  /* Prikaz stupnja s primjenom ograničenja. Vraća {broj, naziv}. */
+  function capStupanj(c) {
+    var brojStr = (c && c.stupanj_broj != null) ? String(c.stupanj_broj) : '';
+    var nazivStr = (c && c.stupanj_naziv != null) ? String(c.stupanj_naziv) : '';
+    if (typeof window.vnlhFilteriPrimijeniStupnjevaPoOgranicenjima === 'function') {
+      var row = {
+        id_obred: (c && c.id_obred != null && c.id_obred !== '') ? (parseInt(c.id_obred, 10) || 0) : 0,
+        id_stupnj_clan: (c && c.stupanj != null && c.stupanj !== '') ? (parseInt(c.stupanj, 10) || 0) : 0,
+        Stupanj: brojStr, StupanjBroj: brojStr, StupanjNaziv: nazivStr
+      };
+      window.vnlhFilteriPrimijeniStupnjevaPoOgranicenjima(1, [row], _ogrMap);
+      brojStr = row.StupanjBroj != null ? String(row.StupanjBroj) : '';
+      nazivStr = row.StupanjNaziv != null ? String(row.StupanjNaziv) : '';
+    }
+    return { broj: brojStr, naziv: nazivStr };
+  }
+
   /* ===== Tablica članova: punjenje + filter ===== */
   function podaciURedove(arr) {
     var rows = [];
@@ -479,7 +489,8 @@
         id: r.id != null ? r.id : '',
         0: r.prezime != null ? r.prezime : '',
         1: r.ime != null ? r.ime : '',
-        2: r.stupanj_broj != null ? String(r.stupanj_broj) : ''
+        2: capStupanj(r).broj,
+        3: r.broj_biljeski != null ? String(r.broj_biljeski) : '0'
       });
     }
     return rows;
@@ -515,8 +526,11 @@
       if (text !== '' && text.charAt(0) === '[') {
         try { data = JSON.parse(text) || []; } catch (e) { data = []; }
       }
-      osvjeziPrikazTablice();
-      if (cb) cb();
+      /* Stupanj se prikazuje kroz ograničenja ulogiranog — mapa mora biti tu prije crtanja. */
+      ucitajStupnjeviOgr(function () {
+        osvjeziPrikazTablice();
+        if (cb) cb();
+      });
     };
     xhr.send();
   }
@@ -525,6 +539,18 @@
       azurirajTablicuClanova();
       azurirajIkone();
       if (cb) cb();
+    });
+  }
+  /* Nakon upisa/izmjene/brisanja bilješke mijenja se stupac „Bilježaka" — ponovno učitaj
+     članove, ali zadrži selektiranog (inače bi edit panel iskočio iz konteksta). */
+  function osvjeziBrojBiljeski() {
+    var sel = getSelectedRowId();
+    ucitajClanove(selectLoza ? trim(selectLoza.value) : '', function () {
+      if (sel != null && tablicaApi && typeof tablicaApi.setSelectedRowIds === 'function') {
+        tablicaApi.setSelectedRowIds([String(sel)]);
+      }
+      azurirajTablicuClanova();
+      azurirajIkone();
     });
   }
 
@@ -661,16 +687,16 @@
     if (wrap) wrap.addEventListener('kontrole-edit-delete-clear', function () { osvjeziPrikazTablice(); });
   })();
 
-  /* Nova bilješka: prazan tekst, editabilno, footer prelazi na „Upis". */
+  /* Nova bilješka / izmjena — oboje kroz modal (＋ i ✏). */
   if (btnNova) btnNova.addEventListener('click', function () {
     if (btnNova.disabled) return;
-    if (biljeskeApi && typeof biljeskeApi.clearSelection === 'function') biljeskeApi.clearSelection();
-    _editId = 0;
-    tekstSet('');
-    tekstSetEnabled(true);
-    postaviStatus('nova bilješka');
-    azurirajIkone();
-    if (tekstEl) tekstEl.focus();
+    otvoriModal(0);
+  });
+  if (btnUredi) btnUredi.addEventListener('click', function () {
+    if (btnUredi.disabled) return;
+    var id = getSelectedBiljeskaId();
+    if (id == null) return;
+    otvoriModal(parseInt(id, 10) || 0);
   });
 
   /* Deselekt: makni selekciju u popisu bilješki. */
@@ -693,7 +719,7 @@
           res = (res || '').trim();
           if (res === 'OK') {
             var idClan = getSelectedRowId();
-            ucitajBiljeske(idClan, function () { poruka('003', []); });
+            ucitajBiljeske(idClan, function () { osvjeziBrojBiljeski(); poruka('003', []); });
           } else {
             var p = parseResponseCode(res);
             poruka(p ? p.code : '200', p ? p.replacements : []);
@@ -707,30 +733,152 @@
     }
   });
 
-  /* Upis / Izmjeni — po tome je li selektirana postojeća bilješka (_editId). */
-  if (btnUpisi) btnUpisi.addEventListener('click', function () {
-    if (btnUpisi.disabled) return;
+  /* ============================================================
+   * ▒▒ MODAL: unos / izmjena bilješke ▒▒
+   * ＋ → „Nova bilješka" (tipka Upiši); ✏ → „Izmjena bilješke" (tipka Izmjeni).
+   * Odustani zatvara bez ikakve akcije; spremanje osvježava popis lijevo.
+   * Premještanje po zaglavlju + resize kut; pozicija i veličina se pamte (localStorage).
+   * ============================================================ */
+  var mokModal        = document.getElementById('mokModal');
+  var mokModalDialog  = mokModal ? mokModal.querySelector('.clanovi-mok-crud__modal-dialog') : null;
+  var mokModalNaslov  = document.getElementById('mokModalNaslov');
+  var mokModalTekst   = document.getElementById('mok_modal_tekst');
+  var mokModalUpisi   = document.getElementById('mokModalUpisi');
+  var mokModalUpisiLabel = mokModalUpisi ? mokModalUpisi.querySelector('.kontrola-btn__label') : null;
+  var mokModalOdustani = document.getElementById('mokModalOdustani');
+  var _modalEditId = 0;   /* 0 = nova bilješka, inače id koji se mijenja */
+
+  var MOK_MODAL_KEY = 'clanovi-mok-modal';   /* localStorage: pozicija + veličina */
+  function getModalStanje() {
+    try {
+      var s = localStorage.getItem(MOK_MODAL_KEY);
+      if (s) { var o = JSON.parse(s); if (o && typeof o.width === 'number' && typeof o.height === 'number') return o; }
+    } catch (e) {}
+    return null;
+  }
+  function spremiModalStanje(left, top, width, height) {
+    try { localStorage.setItem(MOK_MODAL_KEY, JSON.stringify({ left: left, top: top, width: width, height: height })); } catch (e) {}
+  }
+  /* Na otvaranju: zapamćeno stanje ili centriranje (CSS default veličina). */
+  function primijeniModalStanje() {
+    if (!mokModalDialog) return;
+    var st = getModalStanje();
+    if (st) {
+      mokModalDialog.style.left = st.left + 'px';
+      mokModalDialog.style.top = st.top + 'px';
+      mokModalDialog.style.transform = 'none';
+      mokModalDialog.style.width = st.width + 'px';
+      mokModalDialog.style.height = st.height + 'px';
+    } else {
+      mokModalDialog.style.left = '50%';
+      mokModalDialog.style.top = '50%';
+      mokModalDialog.style.transform = 'translate(-50%, -50%)';
+      mokModalDialog.style.width = '';
+      mokModalDialog.style.height = '';
+    }
+  }
+  /* Pri izlasku: zapamti stvarnu poziciju (px) i veličinu. */
+  function spremiModalGeom() {
+    if (!mokModalDialog) return;
+    var r = mokModalDialog.getBoundingClientRect();
+    spremiModalStanje(Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height));
+  }
+
+  function otvoriModal(id) {
+    if (!mokModal) return;
+    _modalEditId = parseInt(id, 10) || 0;
+    var jeIzmjena = _modalEditId > 0;
+    var b = jeIzmjena ? biljeskaPoId(_modalEditId) : null;
+    if (mokModalNaslov) mokModalNaslov.textContent = jeIzmjena ? 'Izmjena bilješke' : 'Nova bilješka';
+    if (mokModalUpisiLabel) mokModalUpisiLabel.textContent = jeIzmjena ? 'Izmjeni' : 'Upiši';
+    /* Boja tipke prati radnju: kanonska klasa --crud-izmjeni nadjačava --crud-upisi (0-Kontrole). */
+    if (mokModalUpisi) mokModalUpisi.classList.toggle('kontrola-btn--crud-izmjeni', jeIzmjena);
+    if (mokModalTekst) mokModalTekst.value = (jeIzmjena && b && b.tekst != null) ? String(b.tekst) : '';
+    primijeniModalStanje();
+    mokModal.classList.add('clanovi-mok-crud__modal--open');
+    mokModal.setAttribute('aria-hidden', 'false');
+    if (mokModalTekst) { try { mokModalTekst.focus(); } catch (e) {} }
+  }
+  function zatvoriModal() {
+    if (!mokModal) return;
+    spremiModalGeom();
+    mokModal.classList.remove('clanovi-mok-crud__modal--open');
+    mokModal.setAttribute('aria-hidden', 'true');
+    _modalEditId = 0;
+  }
+
+  /* Spremanje iz modala: upis nove ili izmjena postojeće; nakon uspjeha osvježi popis lijevo. */
+  if (mokModalUpisi) mokModalUpisi.addEventListener('click', function () {
     var idClan = getSelectedRowId();
     if (idClan == null) return;
-    var tekst = tekstGet();
+    var tekst = mokModalTekst ? trim(mokModalTekst.value) : '';
     if (!tekst) { poruka('133', []); return; }
-    var jeIzmjena = (_editId > 0);
+    var jeIzmjena = _modalEditId > 0;
     var fd = new FormData();
     fd.append('tekst', tekst);
-    if (jeIzmjena) fd.append('id', String(_editId));
+    if (jeIzmjena) fd.append('id', String(_modalEditId));
     else fd.append('id_clan', String(idClan));
     fetch(API_BASE + (jeIzmjena ? 'Clanovi_MOK_CRUD_izmjena.php' : 'Clanovi_MOK_CRUD_upis.php'), { method: 'POST', body: fd })
       .then(function (r) { return r.text(); })
       .then(function (res) {
         res = (res || '').trim();
         if (res === 'OK' || res.indexOf('OK|') === 0) {
-          ucitajBiljeske(idClan, function () { poruka(jeIzmjena ? '004' : '001', []); });
+          zatvoriModal();
+          ucitajBiljeske(idClan, function () { osvjeziBrojBiljeski(); poruka(jeIzmjena ? '004' : '001', []); });
         } else {
           var p = parseResponseCode(res);
           poruka(p ? p.code : '200', p ? p.replacements : []);
         }
       }).catch(function () { poruka('200', []); });
   });
+
+  /* Odustani: izlaz bez ikakve akcije (veličina i pozicija se svejedno pamte). */
+  if (mokModalOdustani) mokModalOdustani.addEventListener('click', zatvoriModal);
+
+  /* Premještanje (klik-povuci po zaglavlju) i promjena veličine (ručka u donjem desnom kutu). */
+  (function () {
+    if (!mokModalDialog) return;
+    function fiksirajPoziciju() {
+      var r = mokModalDialog.getBoundingClientRect();
+      mokModalDialog.style.left = Math.round(r.left) + 'px';
+      mokModalDialog.style.top = Math.round(r.top) + 'px';
+      mokModalDialog.style.transform = 'none';
+      return r;
+    }
+    var header = mokModal ? mokModal.querySelector('.clanovi-mok-crud__modal-header') : null;
+    if (header) {
+      header.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var r = fiksirajPoziciju();
+        var l0 = r.left, t0 = r.top, x0 = e.clientX, y0 = e.clientY;
+        function move(ev) {
+          mokModalDialog.style.left = Math.max(0, l0 + ev.clientX - x0) + 'px';
+          mokModalDialog.style.top = Math.max(0, t0 + ev.clientY - y0) + 'px';
+        }
+        function stop() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); }
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', stop);
+        e.preventDefault();
+      });
+    }
+    var kut = document.getElementById('mokModalResizeKut');
+    if (kut) {
+      kut.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        var r = fiksirajPoziciju();
+        var w0 = r.width, h0 = r.height, x0 = e.clientX, y0 = e.clientY;
+        function move(ev) {
+          mokModalDialog.style.width = Math.max(360, w0 + ev.clientX - x0) + 'px';
+          mokModalDialog.style.height = Math.max(260, h0 + ev.clientY - y0) + 'px';
+        }
+        function stop() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', stop); }
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', stop);
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    }
+  })();
 
   /* Povratak */
   var btnPovratak = document.getElementById('btnPovratak');

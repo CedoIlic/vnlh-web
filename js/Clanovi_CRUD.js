@@ -218,14 +218,111 @@
     ]
   };
 
+  /* Kolona „ID" — dodaje se IZA kolone „Spol" samo dok je uključen toggle „Prikaži ID". */
+  var KOLONA_ID = { key: 'id_sloga', title: 'ID', SQL_Naziv: 'id_sloga', sortable: 1, sortable_icon: 0, type: 'n', width: 80, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 };
+
+  /* ============================================================
+   * Toggle „Prikaži ID" (lijevo od checkboxa „Neaktivni")
+   * VIDLJIVOST: sustav_varijable 1004 = '1' I id_korisnik (sesija) u listi retka 1002 —
+   * isti uvjet kao toggle „Sva prava" (Prava dužnosnika) i „Prikaži ID" (Dužnosnici).
+   * PONAŠANJE: uključen → tablica dobiva kolonu „ID" s id-em sloga; svaka promjena osvježava
+   * tablicu; pri otvaranju forme UVIJEK isključen (stanje se ne pamti).
+   * ============================================================ */
+  var cachedVar1004 = null;   /* null = još nije učitano */
+  var cachedVar1002 = null;
+  var var10041002Loading = false;
+  var var10041002Pending = [];
+
+  function prikaziIdUkljucen() {
+    var el = document.getElementById('toggle_prikazi_id');
+    return !!(el && !el.disabled && el.checked);
+  }
+  /** Zaglavlje tablice ovisno o toggleu (osnovne kolone + „ID" na kraju). */
+  function zaglavljeTablice() {
+    if (!prikaziIdUkljucen()) return ClanoviCRUD.Tablica_Zaglavlje;
+    return ClanoviCRUD.Tablica_Zaglavlje.concat([KOLONA_ID]);
+  }
+  /** Iz teksta varijable 1002 izvuci sve id-eve korisnika. */
+  function parsirajIdKorisnikaIzVar1002(t) {
+    if (t == null || String(t).trim() === '') return [];
+    var out = [], seen = {}, re = /\d+/g, m;
+    while ((m = re.exec(String(t))) !== null) {
+      var n = parseInt(m[0], 10);
+      if (n > 0 && !seen[n]) { seen[n] = true; out.push(n); }
+    }
+    return out;
+  }
+  function korisnikJeUVar1002Listi() {
+    var me = typeof window.VNLH_ID_KORISNIK !== 'undefined' ? parseInt(window.VNLH_ID_KORISNIK, 10) : 0;
+    if (isNaN(me) || me <= 0) return false;
+    var ids = parsirajIdKorisnikaIzVar1002(cachedVar1002);
+    for (var i = 0; i < ids.length; i++) { if (ids[i] === me) return true; }
+    return false;
+  }
+  /** Jednokratni paralelni dohvat varijabli 1004 i 1002. */
+  function ucitajVars1004I1002(callback) {
+    if (cachedVar1004 !== null && cachedVar1002 !== null) { if (callback) callback(); return; }
+    if (typeof callback === 'function') var10041002Pending.push(callback);
+    if (var10041002Loading) return;
+    var10041002Loading = true;
+    var pending = 2;
+    function gotov() {
+      pending--;
+      if (pending > 0) return;
+      var10041002Loading = false;
+      var cbs = var10041002Pending.slice();
+      var10041002Pending = [];
+      for (var j = 0; j < cbs.length; j++) { try { if (cbs[j]) cbs[j](); } catch (e) {} }
+    }
+    var x4 = new XMLHttpRequest();
+    x4.open('GET', API_BASE + 'common_sustav_varijable.php?id=1004', true);
+    x4.onreadystatechange = function () {
+      if (x4.readyState !== 4) return;
+      var t = (x4.responseText || '').trim();
+      cachedVar1004 = (t === '120' || t === '100' || t === '401') ? '0' : t;
+      gotov();
+    };
+    x4.send();
+    var x2 = new XMLHttpRequest();
+    x2.open('GET', API_BASE + 'common_sustav_varijable.php?id=1002', true);
+    x2.onreadystatechange = function () {
+      if (x2.readyState !== 4) return;
+      var t2 = (x2.responseText || '').trim();
+      cachedVar1002 = (t2 === '120' || t2 === '100' || t2 === '401') ? '' : t2;
+      gotov();
+    };
+    x2.send();
+  }
+  function primijeniVidljivostTogglePrikaziId() {
+    var wrap = document.getElementById('toggle_prikazi_id_wrap');
+    var inp = document.getElementById('toggle_prikazi_id');
+    if (!wrap || !inp) return;
+    inp.checked = false;   /* pri dizanju forme uvijek isključen */
+    var prikazi = cachedVar1004 !== null && String(cachedVar1004).trim() === '1' && korisnikJeUVar1002Listi();
+    if (prikazi) { wrap.removeAttribute('hidden'); inp.removeAttribute('disabled'); }
+    else { wrap.setAttribute('hidden', ''); inp.setAttribute('disabled', ''); }
+  }
+
   var tablicaApi = null;
   var onCrudSelectionChange = null;
 
-  CommonCRUD.initTablica('tablicaContainer', ClanoviCRUD, {
-    getRowId: function (row) { return (row && row.id != null) ? row.id : null; },
-    onReady: function (api) { tablicaApi = api; },
-    onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
-  });
+  /* Tablica se gradi s brojem kolona iz konfiguracije (KontroleTablica gradi zaglavlje u build()),
+     pa se pri promjeni togglea „Prikaži ID" mora RE-INICIJALIZIRATI — samo zamjena zaglavlja ne
+     bi stvorila peti <th>. build() prazni container, pa je ponovni init siguran. */
+  function initTablicaClanova() {
+    var cfg = {
+      Broj_Kolona: prikaziIdUkljucen() ? 5 : 4,
+      Reload_Ikona: ClanoviCRUD.Reload_Ikona,
+      CrudCssPrefix: ClanoviCRUD.CrudCssPrefix,
+      Tablica_Zaglavlje: zaglavljeTablice()
+    };
+    CommonCRUD.initTablica('tablicaContainer', cfg, {
+      getRowId: function (row) { return (row && row.id != null) ? row.id : null; },
+      onReady: function (api) { tablicaApi = api; },
+      onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
+    });
+  }
+  initTablicaClanova();
 
   var selectDrzava = document.getElementById('select_drzava');
   var selectRegija = document.getElementById('select_regija');
@@ -870,7 +967,7 @@
       popuniLozeIzKeša('', function () {});
       lozeData = [];
       data = [];
-      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje);
+      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], zaglavljeTablice());
       scrollTablicaClanoviToTop();
       if (callback) callback();
       return;
@@ -910,7 +1007,7 @@
       selectLoza.disabled = true;
       lozeData = [];
       data = [];
-      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje);
+      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], zaglavljeTablice());
       scrollTablicaClanoviToTop();
       if (callback) callback();
       return;
@@ -946,7 +1043,7 @@
     } else {
       selectLoza.disabled = (filtrirano.length === 0);
       data = [];
-      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje);
+      if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], zaglavljeTablice());
       scrollTablicaClanoviToTop();
       if (callback) callback();
     }
@@ -973,7 +1070,7 @@
    * ========================================================================= */
 
   function ucitajClanove(idLoza, callback) {
-    if (!idLoza) { data = []; if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje); scrollTablicaClanoviToTop(); populateNaPrijedlog(null); if (callback) callback(); return; }
+    if (!idLoza) { data = []; if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], zaglavljeTablice()); scrollTablicaClanoviToTop(); populateNaPrijedlog(null); if (callback) callback(); return; }
     var xhr = new XMLHttpRequest();
     var chkNeaktivni = document.getElementById('chk_neaktivni');
     var endpoint = (chkNeaktivni && chkNeaktivni.checked) ? 'Clanovi_CRUD_sve_neaktivni.php' : 'Clanovi_CRUD_sve.php';
@@ -993,11 +1090,14 @@
             var jeOtpust = !!r.otpust_od;
             var stupanjShow = jeKandidat ? 'K' : (r.stupanj_show != null ? String(r.stupanj_show) + '°' : '');
             var spolDisplay = (r.spol === 1 || r.spol === '1') ? 'Ženski' : 'Muški';
-            rows.push({ id: r.id != null ? r.id : '', 0: r.prezime != null ? r.prezime : '', 1: r.ime != null ? r.ime : '', 2: stupanjShow, 3: spolDisplay, _kandidat: jeKandidat, _otpust: jeOtpust });
+            var red = { id: r.id != null ? r.id : '', 0: r.prezime != null ? r.prezime : '', 1: r.ime != null ? r.ime : '', 2: stupanjShow, 3: spolDisplay, _kandidat: jeKandidat, _otpust: jeOtpust };
+            /* Kolona „ID" (5. po redu) postoji samo dok je toggle uključen. */
+            if (prikaziIdUkljucen()) red[4] = r.id != null ? String(r.id) : '';
+            rows.push(red);
           }
         } catch (e) {}
       }
-      CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, ClanoviCRUD.Tablica_Zaglavlje);
+      CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, zaglavljeTablice());
       clanoviPrimijenKandidatStil(rows);
       scrollTablicaClanoviToTop();
       populateNaPrijedlog(getSelectedRowId());
@@ -1197,6 +1297,25 @@
       osvjeziTablicu();
     });
   }
+
+  /* Toggle „Prikaži ID": vidljivost po varijablama 1004 + 1002; promjena → refresh tablice
+     (mijenja se skup kolona, pa tablicu treba ponovno iscrtati). Uvijek kreće isključen. */
+  (function () {
+    ucitajVars1004I1002(function () {
+      primijeniVidljivostTogglePrikaziId();
+      var inp = document.getElementById('toggle_prikazi_id');
+      if (!inp) return;
+      inp.addEventListener('change', function () {
+        if (tablicaApi && tablicaApi.clearSelection) tablicaApi.clearSelection();
+        clearControlsFromSelection();
+        clearSlikaFromControl();
+        initTablicaClanova();   /* mijenja se broj kolona → tablica se gradi ispočetka */
+        osvjeziTablicu();
+        updateEnabledState();
+        updateCrudUpisiState();
+      });
+    });
+  })();
 
   /* Checkbox „Neaktivni": 1 = puni tablicu samo neaktivnima (aktivnost=0); mijenja endpoint + refresh. */
   (function () {
@@ -3460,7 +3579,7 @@
     if (selectRegija) selectRegija.disabled = true;
     if (selectLoza) selectLoza.disabled = true;
     data = [];
-    if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], ClanoviCRUD.Tablica_Zaglavlje);
+    if (tablicaApi) CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', [], zaglavljeTablice());
     updateEnabledState();
     updateCrudUpisiState();
 

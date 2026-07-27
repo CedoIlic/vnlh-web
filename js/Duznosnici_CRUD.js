@@ -47,6 +47,94 @@
   /** 1 = opcije selecta Odgovornost već učitane za mod upis (nema odabranog retka); izbjegava ponavljanje GET pri svakom slovu. */
   var upisOdgovornostOpcijeUcitane = false;
 
+  /* ============================================================
+   * Toggle „Prikaži ID" (edit panel, krajnje desno u redu s Aktivnosti)
+   * VIDLJIVOST: sustav_varijable 1004 = '1' I id_korisnik (sesija) u listi retka 1002 —
+   * isti uvjet kao toggle „Sva prava" na formi Prava dužnosnika.
+   * PONAŠANJE: uključen → tablica ispisuje „(id) naziv"; svaka promjena osvježava tablicu;
+   * pri otvaranju forme je UVIJEK isključen (stanje se ne pamti).
+   * ============================================================ */
+  var cachedVar1004 = null;   /* null = još nije učitano */
+  var cachedVar1002 = null;
+  var var10041002Loading = false;
+  var var10041002Pending = [];
+
+  function prikaziIdUkljucen() {
+    var el = document.getElementById('toggle_prikazi_id');
+    return !!(el && !el.disabled && el.checked);
+  }
+  /** Kolona „ID" — umeće se LIJEVO od kolone „A." dok je toggle uključen.
+      Dužnosnik i Odgovornost su auto-širine (0), pa prostor za ovu kolonu same podijele. */
+  var KOLONA_ID = { key: 'id_sloga', title: 'ID', SQL_Naziv: 'id_sloga', sortable: 1, sortable_icon: 0, type: 'n', width: 70, suffix: '', align: 'C', row_align: 'C', mobitel_prikaz: 1 };
+  /** Zaglavlje tablice ovisno o toggleu (ID ide na 2. mjesto, ispred „A."). */
+  function zaglavljeTablice() {
+    var z = DuznosniciCRUD.Tablica_Zaglavlje;
+    if (!prikaziIdUkljucen()) return z;
+    return [z[0], KOLONA_ID].concat(z.slice(1));
+  }
+  /** Indeks stupca s checkboxom „A." (pomiče se za jedan kad je ID kolona vidljiva). */
+  function indeksKoloneAktivnost() { return prikaziIdUkljucen() ? 2 : 1; }
+  /** Iz teksta varijable 1002 izvuci sve id-eve korisnika (isti princip kao na formi Prava). */
+  function parsirajIdKorisnikaIzVar1002(t) {
+    if (t == null || String(t).trim() === '') return [];
+    var out = [], seen = {}, re = /\d+/g, m;
+    while ((m = re.exec(String(t))) !== null) {
+      var n = parseInt(m[0], 10);
+      if (n > 0 && !seen[n]) { seen[n] = true; out.push(n); }
+    }
+    return out;
+  }
+  function korisnikJeUVar1002Listi() {
+    var me = typeof window.VNLH_ID_KORISNIK !== 'undefined' ? parseInt(window.VNLH_ID_KORISNIK, 10) : 0;
+    if (isNaN(me) || me <= 0) return false;
+    var ids = parsirajIdKorisnikaIzVar1002(cachedVar1002);
+    for (var i = 0; i < ids.length; i++) { if (ids[i] === me) return true; }
+    return false;
+  }
+  /** Jednokratni paralelni dohvat varijabli 1004 i 1002. */
+  function ucitajVars1004I1002(callback) {
+    if (cachedVar1004 !== null && cachedVar1002 !== null) { if (callback) callback(); return; }
+    if (typeof callback === 'function') var10041002Pending.push(callback);
+    if (var10041002Loading) return;
+    var10041002Loading = true;
+    var pending = 2;
+    function gotov() {
+      pending--;
+      if (pending > 0) return;
+      var10041002Loading = false;
+      var cbs = var10041002Pending.slice();
+      var10041002Pending = [];
+      for (var j = 0; j < cbs.length; j++) { try { if (cbs[j]) cbs[j](); } catch (e) {} }
+    }
+    var x4 = new XMLHttpRequest();
+    x4.open('GET', API_BASE + 'common_sustav_varijable.php?id=1004', true);
+    x4.onreadystatechange = function () {
+      if (x4.readyState !== 4) return;
+      var t = (x4.responseText || '').trim();
+      cachedVar1004 = (t === '120' || t === '100' || t === '401') ? '0' : t;
+      gotov();
+    };
+    x4.send();
+    var x2 = new XMLHttpRequest();
+    x2.open('GET', API_BASE + 'common_sustav_varijable.php?id=1002', true);
+    x2.onreadystatechange = function () {
+      if (x2.readyState !== 4) return;
+      var t2 = (x2.responseText || '').trim();
+      cachedVar1002 = (t2 === '120' || t2 === '100' || t2 === '401') ? '' : t2;
+      gotov();
+    };
+    x2.send();
+  }
+  function primijeniVidljivostTogglePrikaziId() {
+    var wrap = document.getElementById('toggle_prikazi_id_wrap');
+    var inp = document.getElementById('toggle_prikazi_id');
+    if (!wrap || !inp) return;
+    inp.checked = false;   /* pri dizanju forme uvijek isključen */
+    var prikazi = cachedVar1004 !== null && String(cachedVar1004).trim() === '1' && korisnikJeUVar1002Listi();
+    if (prikazi) { wrap.removeAttribute('hidden'); inp.removeAttribute('disabled'); }
+    else { wrap.setAttribute('hidden', ''); inp.setAttribute('disabled', ''); }
+  }
+
   /** ID dužnosti prijavljenog korisnika (PHP umeće u stranicu). Master za API opcija Odgovornosti. */
   function getSessionDuznosnikId() {
     if (typeof window.VNLH_SESSION_ID_DUZNOSNIK === 'undefined') return 0;
@@ -54,16 +142,31 @@
     return isNaN(x) || x < 0 ? 0 : x;
   }
 
-  CommonCRUD.initTablica('tablicaContainer', DuznosniciCRUD, {
-    getRowId: function (row) {
-      if (!row || !row.length) return undefined;
-      if (row.length > 4) return row[4];
-      if (row.length > 3) return row[3];
-      return row.length > 2 ? row[2] : row[1];
-    },
-    onReady: function (api) { tablicaApi = api; },
-    onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
-  });
+  /* ID sloga je UVIJEK zadnji element retka (skriveni ključ), neovisno o tome je li vidljiva
+     kolona „ID" — zato ključ čitamo sa zadnje pozicije, ne s fiksnog indeksa. */
+  function rowIdIzRetka(row) {
+    if (!row || !row.length) return undefined;
+    return row[row.length - 1];
+  }
+  /* Broj kolona određuje build() u KontroleTablica, pa promjena togglea traži RE-INIT tablice.
+     Reload ikona se dodaje samo pri PRVOM initu (živi u zaglavlju panela i preživi rebuild). */
+  var tablicaInicijalizirana = false;
+  function initTablicaDuznosnika() {
+    var cfg = {
+      Broj_Kolona: prikaziIdUkljucen() ? 5 : 4,
+      Reload_Ikona: tablicaInicijalizirana ? 0 : DuznosniciCRUD.Reload_Ikona,
+      CrudCssPrefix: DuznosniciCRUD.CrudCssPrefix,
+      Tablica_Zaglavlje: zaglavljeTablice()
+    };
+    CommonCRUD.initTablica('tablicaContainer', cfg, {
+      getRowId: rowIdIzRetka,
+      onReady: function (api) { tablicaApi = api; },
+      onSelectionChange: function () { if (onCrudSelectionChange) onCrudSelectionChange(); }
+      /* Klik na reload ikonu veže se zasebno (niže u kodu), pa ovdje NEMA onReloadClick — inače dvostruki refresh. */
+    });
+    tablicaInicijalizirana = true;
+  }
+  initTablicaDuznosnika();
 
   var selectOdgovornost = document.getElementById('select_odgovornost');
   var chkEditAktivnost = document.getElementById('edit_aktivnost');
@@ -91,9 +194,18 @@
     var data = tablicaApi.getData();
     var idNadredjeni = 0;
     for (var i = 0; i < data.length; i++) {
-      if (data[i][4] == id) {
+      if (rowIdIzRetka(data[i]) == id) {
         var editEl = document.getElementById('edit_naziv');
-        if (editEl) { editEl.value = data[i][0] != null ? data[i][0] : ''; editEl.dispatchEvent(new Event('input', { bubbles: true })); }
+        /* Naziv u edit polje ide iz SIROVIH podataka (duznosniciLista), NE iz prikaza u tablici:
+           uz uključen toggle „Prikaži ID" prikaz je „(id) naziv", a id nije dio podatka. */
+        var sirovNaziv = null;
+        for (var jn = 0; jn < duznosniciLista.length; jn++) {
+          if (duznosniciLista[jn].id == id) { sirovNaziv = duznosniciLista[jn].naziv != null ? duznosniciLista[jn].naziv : ''; break; }
+        }
+        if (editEl) {
+          editEl.value = (sirovNaziv !== null) ? sirovNaziv : (data[i][0] != null ? data[i][0] : '');
+          editEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
         for (var j = 0; j < duznosniciLista.length; j++) {
           if (duznosniciLista[j].id == id) {
             idNadredjeni = duznosniciLista[j].id_nadredjeni != null ? duznosniciLista[j].id_nadredjeni : 0;
@@ -389,7 +501,11 @@
             var rz = r.razina != null ? Number(r.razina) : 0;
             if (isNaN(rz) || rz < 0) rz = 0;
             var rzPrikaz = rz >= 1 && rz <= 99 ? String(rz) : '';
-            rows.push([r.naziv != null ? r.naziv : '', akt, rzPrikaz, nadr, r.id != null ? r.id : 0]);
+            /* Redoslijed stupaca prati zaglavljeTablice(); ID SLOGA je UVIJEK zadnji element
+               retka (skriveni ključ), pa getRowId čita zadnji, a ne fiksni indeks. */
+            var idSloga = r.id != null ? r.id : 0;
+            if (prikaziIdUkljucen()) rows.push([r.naziv != null ? r.naziv : '', String(idSloga), akt, rzPrikaz, nadr, idSloga]);
+            else rows.push([r.naziv != null ? r.naziv : '', akt, rzPrikaz, nadr, idSloga]);
           }
         } catch (e) {}
       }
@@ -437,7 +553,7 @@
   }
 
   function setDataTablica(rows) {
-    CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, DuznosniciCRUD.Tablica_Zaglavlje);
+    CommonCRUD.setDataTablica(tablicaApi, 'tablicaContainer', rows, zaglavljeTablice());
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         primijeniStilRetkaAktivnost();
@@ -501,7 +617,9 @@
       var tr = t.closest ? t.closest('tr') : null;
       if (!tr || !tc.contains(tr)) return;
       var cells = tr.cells;
-      if (!cells || cells.length < 2 || t.parentElement !== cells[1]) return;
+      /* Stupac „A." se pomiče udesno kad je vidljiva kolona „ID". */
+      var idxA = indeksKoloneAktivnost();
+      if (!cells || cells.length <= idxA || t.parentElement !== cells[idxA]) return;
       var rowId = tr.dataset.rowId;
       if (rowId == null || rowId === '') return;
       var novi = t.checked ? 1 : 0;
@@ -542,10 +660,21 @@
     });
   })();
 
-  ucitajPodatkeTablica(function (rows) {
-    setDataTablica(rows);
-    upisOdgovornostOpcijeUcitane = false;
-    puniSelectOdgovornost(0);
+  /* Vidljivost togglea „Prikaži ID" (1004 + 1002) → tek onda prvo punjenje tablice,
+     da naziv odmah bude u ispravnom obliku. Promjena togglea uvijek osvježi tablicu. */
+  ucitajVars1004I1002(function () {
+    primijeniVidljivostTogglePrikaziId();
+    var inp = document.getElementById('toggle_prikazi_id');
+    if (inp) inp.addEventListener('change', function () {
+      if (tablicaApi && typeof tablicaApi.clearSelection === 'function') tablicaApi.clearSelection();
+      initTablicaDuznosnika();   /* mijenja se broj kolona → tablica se gradi ispočetka */
+      osvjeziTablicu();
+    });
+    ucitajPodatkeTablica(function (rows) {
+      setDataTablica(rows);
+      upisOdgovornostOpcijeUcitane = false;
+      puniSelectOdgovornost(0);
+    });
   });
 
   function getSelectedRowId() {
