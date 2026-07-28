@@ -1,7 +1,9 @@
 /* =========================================================
    Duznosnici_Osobe_CRUD.js
    Lijevo: dužnosti (Traži + tablica). Desno: aktivni članovi (Traži + tablica), prikaz imena „prezime, ime“.
-   Donji panel: readonly Dužnost, Nosioc; CRUD – upis u sustav_korisnici (UPDATE/INSERT po id_korisnik), brisanje retka dodjele.
+   Donji panel: readonly Dužnost, Nosioc; CRUD – upis u sustav_korisnici, brisanje retka dodjele.
+   Pravilo: dužnost ima najviše jednog nosioca (UNIQUE u bazi), osoba smije imati više dužnosti.
+   Zauzeta dužnost → gumb „Zamjeni“ + potvrda (poruka 134) → upis sa zamjena=1 (server briše starog u transakciji).
    Koristi CommonCRUD, 0-Kontrole, 0-Common.
    API: Duznosnici_CRUD_opcije_pod_masterom.php (lijevo: potomci, JSON s razina; 0-Razine: ispod, povrat 0, ukljuci_mastera 0), Clanovi_CRUD_sve_aktivni.php,
    Toggle „Sve“: 1004+1002. Uključeno: GET kao Ogr „Svi“ (povrat_cijelog_seta=1, ukljuci_mastera=1) — cijeli aktivni skup dužnosnika, i bez filtra R. Isključeno: ispod+0+0, uz filtar samo retci s razina>0. Bez togglea: kao dosad samo ispod+0+0, bez R-filtra.
@@ -594,33 +596,54 @@
     if (editNosioc) editNosioc.value = '';
   }
 
+  /* Dužnost ima najviše jednog nosioca: upis na zauzetu dužnost = zamjena (server briše starog uz zamjena=1). */
+  function posaljiUpisNosioca(idD, idC, jeZamjeni) {
+    if (typeof window.CommonPostFormData !== 'function') return;
+    var podaci = {
+      id_duznosnik: String(idD),
+      id_clanovi: String(idC)
+    };
+    if (jeZamjeni) podaci.zamjena = '1';
+    window.CommonPostFormData(API_BASE + 'Duznosnici_Osobe_CRUD_upis.php', podaci, function (res) {
+      res = (res || '').trim();
+      if (res === 'OK') {
+        assignmentClanByDuznost[String(idD)] = parseInt(String(idC), 10);
+        ocistiTraziEditPanelISelekteTablica();
+        if (typeof window.showPorukaModal === 'function') {
+          window.showPorukaModal(jeZamjeni ? '004' : '001', []);
+        }
+        ucitajSvePodatke(null);
+      } else {
+        var p = parseResponseCode(res);
+        if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') {
+          window.showPorukaModal(p.code, p.replacements || []);
+        } else if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['101'] && typeof window.showPorukaModal === 'function') {
+          window.showPorukaModal('101', []);
+        }
+        /* 135 = dužnost je u međuvremenu dobila nosioca: osvježi mapu dodjela da „Zamjeni“ pokaže stvarno stanje. */
+        if (p && p.code === '135') ucitajSvePodatke(null);
+      }
+    });
+  }
+
   if (btnUpisi) {
     btnUpisi.addEventListener('click', function () {
       var idD = CommonCRUD.getSelectedRowId(tablicaDuznostApi);
       var idC = CommonCRUD.getSelectedRowId(tablicaOsobaApi);
       if (idD == null || idC == null) return;
-      var jeZamjeni = assignmentClanByDuznost[String(idD)] != null;
-      if (typeof window.CommonPostFormData !== 'function') return;
-      window.CommonPostFormData(API_BASE + 'Duznosnici_Osobe_CRUD_upis.php', {
-        id_duznosnik: String(idD),
-        id_clanovi: String(idC)
-      }, function (res) {
-        res = (res || '').trim();
-        if (res === 'OK') {
-          assignmentClanByDuznost[String(idD)] = parseInt(String(idC), 10);
-          ocistiTraziEditPanelISelekteTablica();
-          if (typeof window.showPorukaModal === 'function') {
-            window.showPorukaModal(jeZamjeni ? '004' : '001', []);
-          }
-          ucitajSvePodatke(null);
-        } else {
-          var p = parseResponseCode(res);
-          if (p && typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES[p.code] && typeof window.showPorukaModal === 'function') {
-            window.showPorukaModal(p.code, p.replacements || []);
-          } else if (typeof MODAL_MESSAGES !== 'undefined' && MODAL_MESSAGES['101'] && typeof window.showPorukaModal === 'function') {
-            window.showPorukaModal('101', []);
-          }
-        }
+      var dodjelaClan = assignmentClanByDuznost[String(idD)];
+      if (dodjelaClan == null) {
+        posaljiUpisNosioca(idD, idC, false);
+        return;
+      }
+      /* Zauzeta dužnost: potvrda prije nego stari nosioc bude zamijenjen (poruka 134, default Odustani). */
+      if (typeof window.showPorukaModal !== 'function' || typeof MODAL_MESSAGES === 'undefined' || !MODAL_MESSAGES['134']) {
+        posaljiUpisNosioca(idD, idC, true);
+        return;
+      }
+      var nazivDuznosti = editDuznost ? editDuznost.value : '';
+      window.showPorukaModal('134', [nazivDuznosti, getNosiocTekstZaClanId(dodjelaClan)], function (buttonKey) {
+        if (buttonKey === 'OK') posaljiUpisNosioca(idD, idC, true);
       });
     });
   }

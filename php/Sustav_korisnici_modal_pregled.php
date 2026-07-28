@@ -26,9 +26,10 @@ while ($row = $resD->fetch_assoc()) {
 // --- Blok: Mapa id_duznosnik -> id_korisnik -> tekst prikaza osobe ---
 $byDuz = [];
 $resS = $mysqli->query(
-    'SELECT sk.id_duznosnik, sk.id_korisnik, sk.login, c.prezime, c.ime,
+    'SELECT sk.id_duznosnik, sk.id_korisnik, skl.login, c.prezime, c.ime,
             l.naziv AS loza_naziv, l.grad AS loza_grad
      FROM sustav_korisnici sk
+     LEFT JOIN sustav_korisnici_login skl ON skl.id_korisnik = sk.id_korisnik
      LEFT JOIN clanovi c ON c.id = sk.id_korisnik
      LEFT JOIN loze l ON l.id = c.loza'
 );

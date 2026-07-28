@@ -2,9 +2,11 @@
 require_once __DIR__ . '/require_login_api.php';
 // Clanovi_MOK_CRUD_clanovi.php — popis članova za tablicu forme MOK (GET id_loza).
 // SAMO puni članovi odabrane lože: aktivnost = 1 AND kandidat = 0 (kandidati nemaju MOK).
-// Uz svakog člana ide `broj_biljeski` — brojka po ISTOM pravilu vidljivosti kao popis bilješki:
-//   • radna razina    → samo VLASTITE bilješke zapisane u loži u kojoj je autor i sada;
-//   • kontrolna razina (sustav_varijable 127) → SVE bilješke o tom članu, bez obzira na autora.
+// Uz svakog člana ide `broj_biljeski` — brojka po ISTOM pravilu vidljivosti kao popis bilješki, dakle
+// koliko ih ulogirani SMIJE vidjeti, ne ukupno stanje:
+//   • radna razina    → vlastite bilješke (upisao = ja) zapisane pod dužnošću pod kojom sam sada ulogiran,
+//                       i to samo dok je član još u loži iz zapisa (m.id_loza_clan = c.loza);
+//   • kontrolna razina (sustav_varijable 127) → SVE bilješke o tom članu = ukupno stanje.
 $db_ret = require_once __DIR__ . '/00_db.php';
 if ($db_ret !== -1) { header('Content-Type: text/plain'); echo $db_ret; exit; }
 require_once __DIR__ . '/Clanovi_MOK_CRUD_prava.php';
@@ -14,11 +16,11 @@ if ($id_loza <= 0) { header('Content-Type: application/json'); echo '[]'; exit; 
 
 $ja = (int) ($_SESSION['id_korisnik'] ?? 0);
 $kontrolna = mok_kontrolna_razina($mysqli);
-$mojaLoza = mok_moja_loza($mysqli);
+$mojaDuznost = mok_moja_duznost();
 
 $brojSql = $kontrolna
     ? "(SELECT COUNT(*) FROM clanovi_mok m WHERE m.id_clan = c.id)"
-    : "(SELECT COUNT(*) FROM clanovi_mok m WHERE m.id_clan = c.id AND m.upisao = ? AND m.id_loza_upisao = ?)";
+    : "(SELECT COUNT(*) FROM clanovi_mok m WHERE m.id_clan = c.id AND m.upisao = ? AND m.upisao_duznost = ? AND m.id_loza_clan = c.loza)";
 
 $sql = "SELECT c.id, c.prezime, c.ime, c.loza, c.stupanj,
                s.stupanj AS stupanj_broj, s.naziv AS stupanj_naziv,
@@ -33,7 +35,7 @@ $stmt = $mysqli->prepare($sql);
 if (!$stmt) { header('Content-Type: text/plain'); echo '200,' . $mysqli->errno; exit; }
 /* Redoslijed bindanja prati redoslijed upitnika u SQL-u: podupit u SELECT-u ide PRIJE WHERE-a. */
 if ($kontrolna) $stmt->bind_param('i', $id_loza);
-else $stmt->bind_param('iii', $ja, $mojaLoza, $id_loza);
+else $stmt->bind_param('iii', $ja, $mojaDuznost, $id_loza);
 $stmt->execute();
 $res = $stmt->get_result();
 $rows = [];

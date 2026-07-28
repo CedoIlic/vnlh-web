@@ -5,9 +5,11 @@
    Ispod: popis bilješki odabranog člana + tekst bilješke.
 
    DISKRECIJA (server je mjerodavan, ovo je samo UI):
-     • radna razina — vidiš SAMO svoje bilješke zapisane u loži u kojoj si i sada;
+     • radna razina — vidiš SAMO svoje bilješke, i to zapisane pod dužnošću pod kojom si sada ulogiran,
+       i samo dok je član još u loži u kojoj je bio pri upisu;
      • kontrolna razina (sustav_varijable 127) — vidi sve, ali NE mijenja i NE briše;
-     • izmjena/brisanje — samo autor i samo unutar roka (sustav_varijable 128, mjeseci od upisa).
+     • izmjena/brisanje — samo autor, unutar roka (sustav_varijable 128, mjeseci od upisa) i dok mu je vidljiva.
+     Kolona „Bilježaka“ u tablici članova broji samo vidljive; ukupan broj vidi jedino kontrolna razina.
    Server uz svaki redak vraća `smijem_mijenjati`; UI po tome gasi kontrole.
 
    Uzor: Kandidat_Dokumenti_CRUD (geo/tablica/slika/pod-tablica), Esej_CRUD (contenteditable).
