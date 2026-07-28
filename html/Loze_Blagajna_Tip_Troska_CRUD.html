@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!--
+  Loze_Blagajna_Tip_Troska_CRUD.html — šifarnik tipova troškova blagajne lože (naziv + redosljed).
+  Tablica: loze_blagajna_tip_troska. Meni: Sustav → Uvijeti → Blagajna Lože.
+-->
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tipovi troškova blagajne lože</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="../slike/VNLH_Favicon.png?v=1.0.247" type="image/png" sizes="32x32">
+<link rel="stylesheet" href="../css/0-Common.css?v=1.0.247">
+    <link rel="stylesheet" href="../css/0-Kontrole.css?v=1.0.247">
+    <link rel="stylesheet" href="../css/0-Poruke.css?v=1.0.247">
+    <link rel="stylesheet" href="../css/Loze_Blagajna_Tip_Troska_CRUD.css?v=1.0.247">
+</head>
+<body>
+<div class="naslov-forme"><h2 data-i18n="loze_blagajna_tip_troska_crud.naslov">Tipovi troškova blagajne lože</h2></div>
+<div class="page-container">
+    <div class="kontrola-panel-tablica kontrola-panel kontrola-panel--resize-y mb-3">
+        <div class="kontrola-panel__body">
+            <div id="tablicaContainer" class="kontrola-tablica"></div>
+        </div>
+    </div>
+    <div class="kontrola-panel mb-3" id="edit_panel">
+        <div class="kontrola-panel__body loze-blagajna-tip-troska-crud__edit-body">
+            <div class="loze-blagajna-tip-troska-crud__edit-row">
+                <label class="kontrola-labela mb-0" for="edit_naziv" data-i18n="loze_blagajna_tip_troska_crud.labela.naziv">Tip troška</label>
+                <div class="kontrola-edit-delete">
+                    <input id="edit_naziv" type="text" class="kontrola-edit-delete__input" placeholder="Tip troška..." data-i18n-placeholder="loze_blagajna_tip_troska_crud.placeholder.naziv">
+                    <button type="button" class="kontrola-edit-delete__clear" aria-label="Obriši sadržaj">×</button>
+                </div>
+                <label class="kontrola-labela mb-0" for="edit_redosljed" data-i18n="loze_blagajna_tip_troska_crud.labela.redosljed">Redosljed</label>
+                <input id="edit_redosljed" type="text" class="kontrola-edit" inputmode="numeric" placeholder="0" aria-label="Redosljed 0 do 100" data-i18n-aria="loze_blagajna_tip_troska_crud.redosljed.aria" style="width: 5rem; text-align: right; flex: 0 0 auto;">
+            </div>
+        </div>
+        <div class="kontrola-panel__footer loze-blagajna-tip-troska-crud__edit-footer">
+            <div class="loze-blagajna-tip-troska-crud__footer-left">
+                <button type="button" id="btnUpisi" class="kontrola-btn kontrola-btn--crud-upisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label">Upis</span></span></span></button>
+                <button type="button" id="btnIzbrisi" class="kontrola-btn kontrola-btn--crud-izbrisi"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.izbrisi">Izbriši</span></span></span></button>
+            </div>
+            <div class="loze-blagajna-tip-troska-crud__footer-right">
+                <button type="button" id="btnPovratak" class="kontrola-btn kontrola-btn--crud-povratak"><span class="kontrola-btn__outer"><span class="kontrola-btn__inner"><span class="kontrola-btn__label" data-i18n="global.gumb.povratak">Povratak</span></span></span></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../js/00-Version.js?v=1.0.247"></script>
+<script src="../js/0-Kontrole.js?v=1.0.247"></script>
+<script src="../js/0-Common.js?v=1.0.247"></script>
+<script src="../js/0-Poruke.js?v=1.0.247"></script>
+<script src="../js/0-Poruke_Tekstovi.js?v=1.0.247"></script>
+<script src="../js/Loze_Blagajna_Tip_Troska_CRUD.js?v=1.0.247"></script>
+</body>
+</html>

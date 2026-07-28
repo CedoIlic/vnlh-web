@@ -1,0 +1,20 @@
+<?php
+require_once __DIR__ . '/require_login_api.php';
+// Loze_Blagajna_Tip_Troska_CRUD_sve.php — svi tipovi troškova blagajne lože (šifarnik).
+$db_ret = require_once __DIR__ . '/00_db.php';
+if ($db_ret !== -1) {
+    header('Content-Type: text/plain');
+    echo $db_ret;
+    exit;
+}
+$result = $mysqli->query("SELECT id, naziv, redosljed FROM loze_blagajna_tip_troska ORDER BY redosljed ASC, naziv ASC");
+$rows = [];
+if (!$result) {
+    header('Content-Type: text/plain');
+    echo '200,' . $mysqli->errno;
+    exit;
+}
+while ($row = $result->fetch_assoc()) $rows[] = $row;
+header('Content-Type: application/json');
+echo json_encode($rows);
+$mysqli->close();

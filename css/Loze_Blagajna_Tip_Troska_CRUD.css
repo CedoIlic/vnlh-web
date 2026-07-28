@@ -1,0 +1,4 @@
+/* Loze_Blagajna_Tip_Troska_CRUD — šifarnik tipova troškova blagajne lože.
+   Nema vlastitih stilova: layout edit-reda/footera dolazi iz zajedničkih
+   [class*="crud__edit-*"] pravila (0-Kontrole.css); koristi 0-Common/0-Kontrole tokene i klase.
+   (Datoteka postoji radi konzistentnosti forme i budućih dorada.) */
